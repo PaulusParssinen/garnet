@@ -16,7 +16,7 @@ namespace Garnet.common
         /// </summary>
         public static bool WriteArrayLength(int len, ref byte* curr, byte* end)
         {
-            int numDigits = NumUtils.NumDigits(len);
+            int numDigits = NumUtils.NumDigits((uint)len);
             int totalLen = 1 + numDigits + 2;
             if (totalLen > (int)(end - curr))
                 return false;
@@ -33,7 +33,7 @@ namespace Garnet.common
         {
             int integerLen = NumUtils.NumDigitsInLong(integer);
             byte sign = (byte)(integer < 0 ? 1 : 0);
-            int integerLenLen = NumUtils.NumDigits(sign + integerLen);
+            int integerLenLen = NumUtils.NumDigits((uint)(sign + integerLen));
 
             //$[integerLen]\r\n[integer]\r\n
             int totalLen = 1 + integerLenLen + 2 + sign + integerLen + 2;
@@ -180,7 +180,7 @@ namespace Garnet.common
         /// </summary>
         public static bool WriteBulkString(ReadOnlySpan<byte> item, ref byte* curr, byte* end)
         {
-            var itemDigits = NumUtils.NumDigits(item.Length);
+            var itemDigits = NumUtils.NumDigits((uint)item.Length);
             int totalLen = 1 + itemDigits + 2 + item.Length + 2;
             if (totalLen > (int)(end - curr))
                 return false;
@@ -199,7 +199,7 @@ namespace Garnet.common
         /// </summary>
         public static bool WriteBulkString(ReadOnlySpan<char> item, ref byte* curr, byte* end)
         {
-            var itemDigits = NumUtils.NumDigits(item.Length);
+            var itemDigits = NumUtils.NumDigits((uint)item.Length);
             int totalLen = 1 + itemDigits + 2 + item.Length + 2;
             if (totalLen > (int)(end - curr))
                 return false;
@@ -218,7 +218,7 @@ namespace Garnet.common
         /// </summary>
         public static bool WriteBulkString(Span<byte> item, ref byte* curr, byte* end)
         {
-            var itemDigits = NumUtils.NumDigits(item.Length);
+            var itemDigits = NumUtils.NumDigits((uint)item.Length);
             int totalLen = 1 + itemDigits + 2 + item.Length + 2;
             if (totalLen > (int)(end - curr))
                 return false;
@@ -236,7 +236,7 @@ namespace Garnet.common
         /// Get length of bulk string
         /// </summary>
         public static int GetBulkStringLength(int length)
-            => 1 + NumUtils.NumDigits(length) + 2 + length + 2;
+            => 1 + NumUtils.NumDigits((uint)length) + 2 + length + 2;
 
         /// <summary>
         /// Write integer
@@ -323,7 +323,7 @@ namespace Garnet.common
             int integerLen = NumUtils.NumDigitsInLong(integer);
             byte sign = (byte)(integer < 0 ? 1 : 0);
 
-            int integerLenSize = NumUtils.NumDigits(integerLen + sign);
+            int integerLenSize = NumUtils.NumDigits((uint)(integerLen + sign));
 
             //$size\r\ninteger\r\n
             int totalLen = 1 + integerLenSize + 2 + sign + integerLen + 2;
@@ -348,7 +348,7 @@ namespace Garnet.common
             int integerLen = NumUtils.NumDigitsInLong(integer);
             byte sign = (byte)(integer < 0 ? 1 : 0);
 
-            int integerLenSize = NumUtils.NumDigits(integerLen + sign);
+            int integerLenSize = NumUtils.NumDigits((uint)(integerLen + sign));
 
             //$size\r\ninteger\r\n
             totalLen = 1 + integerLenSize + 2 + sign + integerLen + 2;
@@ -373,7 +373,7 @@ namespace Garnet.common
             int integerLen = NumUtils.NumDigitsInLong(integer);
             byte sign = (byte)(integer < 0 ? 1 : 0);
 
-            int integerLenSize = NumUtils.NumDigits(integerLen + sign);
+            int integerLenSize = NumUtils.NumDigits((uint)(integerLen + sign));
 
             //$size\r\ninteger\r\n
             return 1 + integerLenSize + 2 + sign + integerLen + 2;
@@ -441,7 +441,7 @@ namespace Garnet.common
         /// </summary>
         public static bool WriteArrayWithNullElements(int len, ref byte* curr, byte* end)
         {
-            int numDigits = NumUtils.NumDigits(len);
+            int numDigits = NumUtils.NumDigits((uint)len);
             int totalLen = 1 + numDigits + 2;
             totalLen += len * 5; // 5 is the length of $-1\r\n
 

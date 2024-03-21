@@ -3,6 +3,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -167,167 +169,142 @@ namespace Garnet.common
             result += length;
         }
 
-        static ReadOnlySpan<byte> digits => "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"u8;
-
         /// <summary>
-        /// Return number of digits in given number
+        /// Returns number of digits in given number.
         /// </summary>
-        /// <param name="v"></param>
-        /// <returns></returns>
-        public static int NumDigits(int v)
+        public static int NumDigits(int value)
         {
-            v = v < 0 ? ((~v) + 1) : v;
+            value = value < 0 ? ((~value) + 1) : value;
 
-            if (v < 10) return 1;
-            if (v < 100) return 2;
-            if (v < 1000) return 3;
-            if (v < 100000000L)
-            {
-                if (v < 1000000)
-                {
-                    if (v < 10000) return 4;
-                    return 5 + (v >= 100000 ? 1 : 0);
-                }
-                return 7 + (v >= 10000000L ? 1 : 0);
-            }
-            return 9 + (v >= 1000000000L ? 1 : 0);
+            return NumDigits((uint)value);
         }
 
-        /// <summary>
-        /// Num digits in long divide n conquer.
-        /// </summary>
-        /// <param name="v"></param>
-        /// <returns>returns digit count not including sign.</returns>
-        public static int NumDigitsInLong(long v)
+        /// <inheritdoc cref="NumDigits(int)"/>
+        public static int NumDigits(uint value)
         {
-            if (v == long.MinValue) return 19;
-            v = v < 0 ? -v : v;
-            int c = 0;
+            // Taken from .NET runtime at https://github.com/dotnet/runtime/blob/e4abc2d7b708811580d381e7150ee6599e51b78c/src/libraries/System.Private.CoreLib/src/System/Buffers/Text/FormattingHelpers.CountDigits.cs#L107
+            // Algorithm based on https://lemire.me/blog/2021/06/03/computing-the-number-of-digits-of-an-integer-even-faster.
+            ReadOnlySpan<long> table =
+            [
+                4294967296,
+                8589934582,
+                8589934582,
+                8589934582,
+                12884901788,
+                12884901788,
+                12884901788,
+                17179868184,
+                17179868184,
+                17179868184,
+                21474826480,
+                21474826480,
+                21474826480,
+                21474826480,
+                25769703776,
+                25769703776,
+                25769703776,
+                30063771072,
+                30063771072,
+                30063771072,
+                34349738368,
+                34349738368,
+                34349738368,
+                34349738368,
+                38554705664,
+                38554705664,
+                38554705664,
+                41949672960,
+                41949672960,
+                41949672960,
+                42949672960,
+                42949672960,
+            ];
+            Debug.Assert(table.Length == 32, "Every result of uint.Log2(value) needs a long entry in the table.");
 
-            if (v < 10000000000L)//1 - 10000000000L
-            {
-                if (v < 100000) //1 - 100000
-                {
-                    if (v < 100) //1 - 100
-                    {
-                        if (v < 10) return c + 1; else return c + 2;
-                    }
-                    else//100 - 100000
-                    {
-                        if (v < 10000)//100 - 10000
-                        {
-                            if (v < 1000) return c + 3; else return c + 4;
-                        }
-                        else//10000 - 100000
-                        {
-                            return c + 5;
-                        }
-                    }
-                }
-                else // 100 000 - 10 000 000 000L
-                {
-                    if (v < 10000000) // 100 000 - 10 000 000
-                    {
-                        if (v < 1000000) return c + 6; else return c + 7;
-                    }
-                    else // 10 000 000 - 10 000 000 000L
-                    {
-                        if (v < 1000000000)
-                        {
-                            if (v < 100000000) return c + 8; else return c + 9;
-                        }
-                        else // 1 000 000 000 - 10 000 000 000L
-                        {
-                            return c + 10;
-                        }
-                    }
-                }
-            }
-            else // 10 000 000 000L - 1 000 000 000 000 000 000L
-            {
-                if (v < 100000000000000L) //10 000 000 000L - 100 000 000 000 000L
-                {
-                    if (v < 1000000000000L) // 10 000 000 000L - 1 000 000 000 000L
-                    {
-                        if (v < 100000000000L) return c + 11; else return c + 12;
-                    }
-                    else // 1 000 000 000 000L - 100 000 000 000 000L
-                    {
-                        if (v < 10000000000000L) // 1 000 000 000 000L - 10 000 000 000 000L
-                        {
-                            return c + 13;
-                        }
-                        else
-                        {
-                            return c + 14;
-                        }
-                    }
-                }
-                else//100 000 000 000 000L - 1 000 000 000 000 000 000L
-                {
-                    if (v < 10000000000000000L)//100 000 000 000 000L - 10 000 000 000 000 000L                    
-                    {
-                        if (v < 1000000000000000L) return c + 15; else return c + 16;
-                    }
-                    else
-                    {
-                        if (v < 1000000000000000000L)
-                        {
-                            if (v < 100000000000000000L) return c + 17; else return c + 18;
-                        }
-                        else
-                        {
-                            return c + 19;
-                        }
-                    }
-                }
-            }
+            // TODO: Replace with table[BitOperations.Log2(value)] once https://github.com/dotnet/runtime/issues/79257 is fixed
+            long tableValue = Unsafe.Add(ref MemoryMarshal.GetReference(table), BitOperations.Log2(value));
+            return (int)((value + tableValue) >> 32);
         }
 
-        /// <summary>
-        /// Return number of digits in given number
-        /// </summary>
-        /// <param name="v"></param>
-        /// <param name="fNeg"></param>
-        /// <returns></returns>
-        public static int NumDigitsInLong(long v, ref bool fNeg)
+        /// <inheritdoc cref="NumDigits(int)"/>
+        public static int NumDigitsInLong(long value)
         {
-            if (v == long.MinValue)
+            if (value == long.MinValue) return 19;
+            value = value < 0 ? -value : value;
+
+            return NumDigitsInLong((ulong)value);
+        }
+        
+        /// <inheritdoc cref="NumDigits(int)"/>
+        public static int NumDigitsInLong(long value, ref bool isNegative)
+        {
+            if (value == long.MinValue)
             {
-                fNeg = true;
+                isNegative = true;
                 return 19;
             }
 
-            fNeg = false;
-            if (v < 0)
+            isNegative = false;
+            if (value < 0)
             {
-                fNeg = true;
-                v = -(v);
+                isNegative = true;
+                value = -value;
             }
 
-            if (v < 10) return 1;
-            if (v < 100) return 2;
-            if (v < 1000) return 3;
-            if (v < 1_000_000_00L) // 9 digit
-            {
-                if (v < 1000000)// 7 dgiit
-                {
-                    if (v < 10000) return 4;
-                    return 5 + (v >= 100000 ? 1 : 0); // 5 or 6 digit
-                }
-                return 7 + (v >= 1_000_000_0L ? 1 : 0);
-            }
-            if (v < 1000000000L) return 9;
-            if (v < 10000000000L) return 10;
-            if (v < 100000000000L) return 11;
-            if (v < 1000000000000L) return 12;
-            if (v < 10000000000000L) return 13;
-            if (v < 100000000000000L) return 14;
-            if (v < 1000000000000000L) return 15;
-            if (v < 10000000000000000L) return 16;
-            if (v < 100000000000000000L) return 17;
-            if (v < 1000000000000000000L) return 18;
-            return 19;
+            return NumDigitsInLong((ulong)value);
+        }
+
+        /// <inheritdoc cref="NumDigits(int)"/>
+        public static int NumDigitsInLong(ulong value)
+        {
+            // Taken from .NET runtime at https://github.com/dotnet/runtime/blob/e4abc2d7b708811580d381e7150ee6599e51b78c/src/libraries/System.Private.CoreLib/src/System/Buffers/Text/FormattingHelpers.CountDigits.cs#L57
+            // Based on do_count_digits from https://github.com/fmtlib/fmt/blob/662adf4f33346ba9aba8b072194e319869ede54a/include/fmt/format.h#L1124
+
+            // Map the log2(value) to a power of 10.
+            ReadOnlySpan<byte> log2ToPow10 =
+            [
+                1,  1,  1,  2,  2,  2,  3,  3,  3,  4,  4,  4,  4,  5,  5,  5,
+                6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9,  10, 10, 10,
+                10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 13, 14, 14, 14, 15, 15,
+                15, 16, 16, 16, 16, 17, 17, 17, 18, 18, 18, 19, 19, 19, 19, 20
+            ];
+            Debug.Assert(log2ToPow10.Length == 64);
+
+            // TODO: Replace with log2ToPow10[BitOperations.Log2(value)] once https://github.com/dotnet/runtime/issues/79257 is fixed
+            uint index = Unsafe.Add(ref MemoryMarshal.GetReference(log2ToPow10), BitOperations.Log2(value));
+
+            // Read the associated power of 10.
+            ReadOnlySpan<ulong> powersOf10 =
+            [
+                0, // unused entry to avoid needing to subtract
+                0,
+                10,
+                100,
+                1000,
+                10000,
+                100000,
+                1000000,
+                10000000,
+                100000000,
+                1000000000,
+                10000000000,
+                100000000000,
+                1000000000000,
+                10000000000000,
+                100000000000000,
+                1000000000000000,
+                10000000000000000,
+                100000000000000000,
+                1000000000000000000,
+                10000000000000000000,
+            ];
+            Debug.Assert((index + 1) <= powersOf10.Length);
+            ulong powerOf10 = Unsafe.Add(ref MemoryMarshal.GetReference(powersOf10), index);
+
+            // Return the number of digits based on the power of 10, shifted by 1
+            // if it falls below the threshold.
+            bool lessThan = value < powerOf10;
+            return (int)(index - Unsafe.As<bool, byte>(ref lessThan)); // while arbitrary bools may be non-0/1, comparison operators are expected to return 0/1
         }
 
         internal static unsafe int IndexOfByte(byte* src, byte value, int index, int count)
