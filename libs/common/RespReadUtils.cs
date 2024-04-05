@@ -197,7 +197,7 @@ namespace Garnet.common
         /// <summary>
         /// Read byte array with length header
         /// </summary>
-        public static bool ReadByteArrayWithLengthHeader(out byte[] result, ref byte* ptr, byte* end)
+        public static bool ReadByteArrayWithLengthHeader(out ReadOnlySpan<byte> result, ref byte* ptr, byte* end)
         {
             result = null;
             if (ptr + 3 >= end)
@@ -231,7 +231,7 @@ namespace Garnet.common
             Debug.Assert(*(ptr - 2) == '\r');
             Debug.Assert(*(ptr - 1) == '\n');
 
-            result = new Span<byte>(keyPtr, ksize).ToArray();
+            result = new ReadOnlySpan<byte>(keyPtr, ksize);
             return true;
         }
 
