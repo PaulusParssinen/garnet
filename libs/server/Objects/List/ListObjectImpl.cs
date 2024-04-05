@@ -100,7 +100,7 @@ namespace Garnet.server
                 current = list.Nodes().DefaultIfEmpty(null).FirstOrDefault(i => i.Value.SequenceEqual(pivot));
                 var newNode = current != default ? (fBefore ? list.AddBefore(current, insertitem) : list.AddAfter(current, insertitem)) : default;
                 if (current != null)
-                    this.UpdateSize(insertitem);
+                    UpdateSize(insertitem);
                 _output->opsDone = current != default ? list.Count : -1;
                 _output->countDone = _output->opsDone;
             }
@@ -291,19 +291,21 @@ namespace Garnet.server
 
             for (int c = 0; c < count; c++)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var valueSpan, ref ptr, end))
                     return;
 
                 if (c < _input->done)
                     continue;
 
-                //Add the value to the top of the list
-                if (fAddAtHead)
-                    list.AddFirst(value);
-                else
-                    list.AddLast(value);
 
-                this.UpdateSize(value);
+                //Add the value to the top of the list
+                var valueArray = valueSpan.ToArray(); 
+                if (fAddAtHead)
+                    list.AddFirst(valueArray);
+                else
+                    list.AddLast(valueArray);
+
+                UpdateSize(valueSpan);
                 _output->countDone = list.Count;
                 _output->opsDone++;
                 _output->bytesDone = (int)(ptr - startptr);

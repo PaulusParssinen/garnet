@@ -57,7 +57,7 @@ namespace Garnet.server
                 inputPtr->count = inputCount;
                 inputPtr->done = zaddDoneCount;
 
-                var status = storageApi.GeoAdd(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.GeoAdd(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -162,7 +162,7 @@ namespace Garnet.server
 
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.GeoCommands(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.GeoCommands(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input buffer
                 *inputPtr = save;

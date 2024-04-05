@@ -322,10 +322,10 @@ namespace Garnet.cluster
             FlushConfig();
         }
 
-        private bool slotBitmapGetBit(ref byte[] bitmap, int pos)
+        private static bool SlotBitmapIsBitSet(ReadOnlySpan<byte> bitmap, int bitPosition)
         {
-            int BYTE = (pos / 8);
-            int BIT = pos & 7;
+            int BYTE = (bitPosition / 8);
+            int BIT = bitPosition & 7;
             return (bitmap[BYTE] & (1 << BIT)) != 0;
         }
 
@@ -337,7 +337,7 @@ namespace Garnet.cluster
         /// <param name="requestedEpoch"></param>
         /// <param name="claimedSlots"></param>
         /// <returns></returns>
-        public bool AuthorizeFailover(string requestingNodeId, long requestedEpoch, byte[] claimedSlots)
+        public bool AuthorizeFailover(string requestingNodeId, long requestedEpoch, ReadOnlySpan<byte> claimedSlots)
         {
             while (true)
             {
@@ -360,7 +360,7 @@ namespace Garnet.cluster
                 //Check if configEpoch for claimed slots is lower than the config of the requested epoch.
                 for (int i = 0; i < ClusterConfig.MAX_HASH_SLOT_VALUE; i++)
                 {
-                    if (slotBitmapGetBit(ref claimedSlots, i)) continue;
+                    if (SlotBitmapIsBitSet(claimedSlots, i)) continue;
                     if (current.GetConfigEpochFromSlot(i) < requestedEpoch) continue;
                     return false;
                 }

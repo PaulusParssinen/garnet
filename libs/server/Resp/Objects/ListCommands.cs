@@ -75,9 +75,9 @@ namespace Garnet.server
             var status = GarnetStatus.OK;
 
             if (lop == ListOperation.LPUSH || lop == ListOperation.LPUSHX)
-                status = storageApi.ListLeftPush(sskey, input, out output);
+                status = storageApi.ListLeftPush(sskey.ToArray(), input, out output);
             else
-                status = storageApi.ListRightPush(sskey, input, out output);
+                status = storageApi.ListRightPush(sskey.ToArray(), input, out output);
 
             //restore input buffer
             *inputPtr = save;
@@ -166,9 +166,9 @@ namespace Garnet.server
             GarnetStatus statusOp = GarnetStatus.NOTFOUND;
 
             if (lop == ListOperation.LPOP)
-                statusOp = storageApi.ListLeftPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                statusOp = storageApi.ListLeftPop(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
             else
-                statusOp = storageApi.ListRightPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                statusOp = storageApi.ListRightPop(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             // Reset input buffer
             *inputPtr = save;
@@ -236,7 +236,7 @@ namespace Garnet.server
                 inputPtr->count = count;
                 inputPtr->done = 0;
 
-                var status = storageApi.ListLength(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.ListLength(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -313,7 +313,7 @@ namespace Garnet.server
                 inputPtr->count = start;
                 inputPtr->done = stop;
 
-                var statusOp = storageApi.ListTrim(key, new ArgSlice((byte*)inputPtr, inputLength));
+                var statusOp = storageApi.ListTrim(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength));
 
                 //restore input buffer
                 *inputPtr = save;
@@ -381,7 +381,7 @@ namespace Garnet.server
                 inputPtr->count = start;
                 inputPtr->done = end;
 
-                var statusOp = storageApi.ListRange(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var statusOp = storageApi.ListRange(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 // Reset input buffer
                 *inputPtr = save;
@@ -455,7 +455,7 @@ namespace Garnet.server
                 inputPtr->count = index;
                 inputPtr->done = 0;
 
-                var statusOp = storageApi.ListIndex(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var statusOp = storageApi.ListIndex(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input
                 *inputPtr = save;
@@ -530,7 +530,7 @@ namespace Garnet.server
                 inputPtr->done = 0;
                 inputPtr->count = 0;
 
-                var statusOp = storageApi.ListInsert(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var statusOp = storageApi.ListInsert(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -617,7 +617,7 @@ namespace Garnet.server
                 inputPtr->count = nCount;
                 inputPtr->done = 0;
 
-                var statusOp = storageApi.ListRemove(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var statusOp = storageApi.ListRemove(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
                 //restore input buffer
                 *inputPtr = save;
 

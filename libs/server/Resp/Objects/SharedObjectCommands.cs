@@ -101,7 +101,7 @@ namespace Garnet.server
 
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
-                var status = storageApi.ObjectScan(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.ObjectScan(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input buffer
                 *inputPtr = save;

@@ -135,11 +135,11 @@ namespace Garnet.server
             return true;
         }
 
-        private void UpdateSize(byte[] item, bool add = true)
+        private void UpdateSize(ReadOnlySpan<byte> item, bool add = true)
         {
             var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.HashSetEntryOverhead;
-            this.Size += add ? size : -size;
-            Debug.Assert(this.Size >= MemoryUtils.HashSetOverhead);
+            Size += add ? size : -size;
+            Debug.Assert(Size >= MemoryUtils.HashSetOverhead);
         }
 
         /// <inheritdoc />

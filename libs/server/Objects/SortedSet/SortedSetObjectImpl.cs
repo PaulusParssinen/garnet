@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -46,7 +47,7 @@ namespace Garnet.server
             {
                 if (!RespReadUtils.ReadDoubleWithLengthHeader(out var score, out var parsed, ref ptr, end))
                     return;
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberSpan, ref ptr, end))
                     return;
 
                 if (c < _input->done)
@@ -56,20 +57,21 @@ namespace Garnet.server
 
                 if (parsed)
                 {
-                    if (!sortedSetDict.TryGetValue(member, out var _scoreStored))
+                    var memberByteArray = memberSpan.ToArray();
+                    if (!sortedSetDict.TryGetValue(memberByteArray, out var _scoreStored))
                     {
                         _output->opsDone++;
-                        sortedSetDict.Add(member, score);
-                        sortedSet.Add((score, member));
+                        sortedSetDict.Add(memberByteArray, score);
+                        sortedSet.Add((score, memberByteArray));
 
-                        this.UpdateSize(member);
+                        this.UpdateSize(memberSpan);
                     }
                     else if (_scoreStored != score)
                     {
-                        sortedSetDict[member] = score;
-                        var success = sortedSet.Remove((_scoreStored, member));
+                        sortedSetDict[memberByteArray] = score;
+                        var success = sortedSet.Remove((_scoreStored, memberByteArray));
                         Debug.Assert(success);
-                        success = sortedSet.Add((score, member));
+                        success = sortedSet.Add((score, memberByteArray));
                         Debug.Assert(success);
                     }
                 }
@@ -91,7 +93,7 @@ namespace Garnet.server
 
             for (int c = 0; c < count; c++)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var valueSpan, ref ptr, end))
                     return;
 
                 if (c < _input->done)
@@ -99,13 +101,14 @@ namespace Garnet.server
 
                 _output->countDone++;
 
-                if (sortedSetDict.TryGetValue(value, out var _key))
+                var valueByteArray = valueSpan.ToArray();
+                if (sortedSetDict.TryGetValue(valueByteArray, out var _key))
                 {
                     _output->opsDone++;
-                    sortedSetDict.Remove(value);
-                    sortedSet.Remove((_key, value));
+                    sortedSetDict.Remove(valueByteArray);
+                    sortedSet.Remove((_key, valueByteArray));
 
-                    this.UpdateSize(value, false);
+                    UpdateSize(valueSpan, false);
                 }
 
                 _output->bytesDone = (int)(ptr - startptr);
@@ -190,9 +193,9 @@ namespace Garnet.server
 
                 for (int c = 0; c < count; c++)
                 {
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var scoreKey, ref input_currptr, input_endptr))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var scoreKeySpan, ref input_currptr, input_endptr))
                         return;
-                    if (!sortedSetDict.TryGetValue(scoreKey, out var score))
+                    if (!sortedSetDict.TryGetValue(scoreKeySpan.ToArray(), out var score))
                     {
                         while (!RespWriteUtils.WriteNull(ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -240,7 +243,8 @@ namespace Garnet.server
                 return;
 
             //check if parameters are valid
-            if (!TryParseParameter(minParamByteArray, out var minValue, out var minExclusive) || !TryParseParameter(maxParamByteArray, out var maxValue, out var maxExclusive))
+            if (!TryParseParameter(minParamByteArray, out var minValue, out var minExclusive) || 
+                !TryParseParameter(maxParamByteArray, out var maxValue, out var maxExclusive))
             {
                 count = Int32.MaxValue;
             }
@@ -288,7 +292,7 @@ namespace Garnet.server
                     return;
 
                 // read member
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberSpan, ref input_currptr, input + length))
                     return;
 
                 //check if increment value is valid
@@ -298,6 +302,7 @@ namespace Garnet.server
                 }
                 else
                 {
+                    var memberByteArray = memberSpan.ToArray();
                     if (sortedSetDict.TryGetValue(memberByteArray, out double score))
                     {
                         sortedSetDict[memberByteArray] += incrValue;
@@ -309,7 +314,7 @@ namespace Garnet.server
                         sortedSetDict.Add(memberByteArray, incrValue);
                         sortedSet.Add((incrValue, memberByteArray));
 
-                        this.UpdateSize(memberByteArray);
+                        UpdateSize(memberSpan);
                     }
 
                     // write the new score
@@ -846,12 +851,13 @@ namespace Garnet.server
         /// <param name="errorCode">errorCode</param>
         /// <param name="limit">offset and count values</param>
         /// <returns></returns>
-        private List<(double, byte[])> GetElementsInRangeByLex(byte[] minParamByteArray, byte[] maxParamByteArray, bool doReverse, bool validLimit, bool rem, out int errorCode, (int, int) limit = default)
+        private List<(double, byte[])> GetElementsInRangeByLex(ReadOnlySpan<byte> minParamByteArray, ReadOnlySpan<byte> maxParamByteArray, bool doReverse, bool validLimit, bool rem, out int errorCode, (int, int) limit = default)
         {
             var elementsInLex = new List<(double, byte[])>();
 
             // parse boundaries
-            if (!TryParseLexParameter(minParamByteArray, out var minValue) || !TryParseLexParameter(maxParamByteArray, out var maxValue))
+            if (!TryParseLexParameter(minParamByteArray, out var minValueChars, out var minValueExclusive) || 
+                !TryParseLexParameter(maxParamByteArray, out var maxValueChars, out var maxValueExclusive))
             {
                 errorCode = int.MaxValue;
                 return elementsInLex;
@@ -859,17 +865,17 @@ namespace Garnet.server
 
             try
             {
-                var iterator = sortedSet.GetViewBetween((sortedSet.Min.Item1, minValue.chars), sortedSet.Max);
+                var iterator = sortedSet.GetViewBetween((sortedSet.Min.Item1, minValueChars.ToArray()), sortedSet.Max);
 
                 // using ToList method so we avoid the Invalid operation ex. when removing
                 foreach (var item in iterator.ToList())
                 {
-                    var inRange = new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(minValue.chars);
-                    if (inRange < 0 || (inRange == 0 && minValue.exclusive))
+                    var inRange = new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(minValueChars);
+                    if (inRange < 0 || (inRange == 0 && minValueExclusive))
                         continue;
 
-                    var outRange = maxValue.chars == null ? -1 : new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(maxValue.chars);
-                    if (outRange > 0 || (outRange == 0 && maxValue.exclusive))
+                    var outRange = maxValueChars == default ? -1 : item.Item2.AsSpan().SequenceCompareTo(maxValueChars);
+                    if (outRange > 0 || (outRange == 0 && maxValueExclusive))
                         break;
 
                     if (rem)
@@ -879,7 +885,7 @@ namespace Garnet.server
                             sortedSetDict.Remove(item.Item2);
                             sortedSet.Remove((_key, item.Item2));
 
-                            this.UpdateSize(item.Item2, false);
+                            UpdateSize(item.Item2, false);
                         }
                     }
                     elementsInLex.Add(item);
@@ -1042,16 +1048,15 @@ namespace Garnet.server
         /// <param name="valueDouble"></param>
         /// <param name="exclusive"></param>
         /// <returns></returns>
-        private static bool TryParseParameter(byte[] val, out double valueDouble, out bool exclusive)
+        private static bool TryParseParameter(ReadOnlySpan<byte> val, out double valueDouble, out bool exclusive)
         {
             exclusive = false;
-            var strVal = Encoding.ASCII.GetString(val);
-            if (string.Compare("+inf", strVal, StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (val.SequenceEqual("+inf"u8))
             {
                 valueDouble = double.PositiveInfinity;
                 return true;
             }
-            else if (string.Compare("-inf", strVal, StringComparison.InvariantCultureIgnoreCase) == 0)
+            else if (val.SequenceEqual("-inf"u8))
             {
                 valueDouble = double.NegativeInfinity;
                 return true;
@@ -1060,35 +1065,34 @@ namespace Garnet.server
             // adjust for exclusion
             if (val[0] == '(')
             {
-                strVal = strVal[1..];
+                val = val[1..];
                 exclusive = true;
             }
 
-            return double.TryParse(strVal, out valueDouble);
+            return Utf8Parser.TryParse(val, out valueDouble, out _, default);
         }
 
         /// <summary>
         /// Helper method to parse parameter when using Lexicographical ranges
         /// </summary>
-        /// <param name="val"></param>
-        /// <param name="limit"></param>
-        /// <returns></returns>
-        private static bool TryParseLexParameter(byte[] val, out (byte[] chars, bool exclusive) limit)
+        private static bool TryParseLexParameter(ReadOnlySpan<byte> val, out ReadOnlySpan<byte> limitChars, out bool limitExclusive)
         {
+            limitChars = default;
+            limitExclusive = false;
             switch ((char)val[0])
             {
                 case '+':
                 case '-':
-                    limit = (null, false);
                     return true;
                 case '[':
-                    limit = (new Span<byte>(val)[1..].ToArray(), false);
+                    limitChars = val.Slice(1);
+                    limitExclusive = false;
                     return true;
                 case '(':
-                    limit = (new Span<byte>(val)[1..].ToArray(), true);
+                    limitChars = val.Slice(1);
+                    limitExclusive = true;
                     return true;
                 default:
-                    limit = default;
                     return false;
             }
         }

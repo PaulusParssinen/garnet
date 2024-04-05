@@ -87,7 +87,7 @@ namespace Garnet.server
                     return;
                 if (!RespReadUtils.ReadDoubleWithLengthHeader(out var latitude, out parsed, ref input_currptr, input + length))
                     return;
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberSpan, ref input_currptr, input + length))
                     return;
 
                 if (c < _input->done)
@@ -100,23 +100,24 @@ namespace Garnet.server
                     var score = server.GeoHash.GeoToLongValue(latitude, longitude);
                     if (score != -1)
                     {
-                        if (!sortedSetDict.TryGetValue(member, out double scoreStored))
+                        var memberByteArray = memberSpan.ToArray();
+                        if (!sortedSetDict.TryGetValue(memberByteArray, out double scoreStored))
                         {
                             if (nx)
                             {
-                                sortedSetDict.Add(member, score);
-                                sortedSet.Add((score, member));
+                                sortedSetDict.Add(memberByteArray, score);
+                                sortedSet.Add((score, memberByteArray));
                                 _output->opsDone++;
 
-                                this.UpdateSize(member);
+                                UpdateSize(memberByteArray);
                             }
                         }
                         else if (!nx && scoreStored != score)
                         {
-                            sortedSetDict[member] = score;
-                            var success = sortedSet.Remove((scoreStored, member));
+                            sortedSetDict[memberByteArray] = score;
+                            var success = sortedSet.Remove((scoreStored, memberByteArray));
                             Debug.Assert(success);
-                            success = sortedSet.Add((score, member));
+                            success = sortedSet.Add((score, memberByteArray));
                             Debug.Assert(success);
                             elementsChanged++;
                         }
@@ -157,7 +158,7 @@ namespace Garnet.server
                 while (countDone < count)
                 {
                     // Read member
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref input_currptr, input + length))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberSpan, ref input_currptr, input + length))
                         break;
 
                     countDone++;
@@ -173,7 +174,7 @@ namespace Garnet.server
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                     }
 
-                    if (sortedSetDict.TryGetValue(member, out var value52Int))
+                    if (sortedSetDict.TryGetValue(memberSpan.ToArray(), out var value52Int))
                     {
                         var geohash = server.GeoHash.GetGeoHashCode((long)value52Int);
                         while (!RespWriteUtils.WriteAsciiBulkString(geohash, ref curr, end))
@@ -220,23 +221,28 @@ namespace Garnet.server
             try
             {
                 // Read member
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member1ByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member1Span, ref input_currptr, input + length))
                     return;
 
                 // Read member
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member2ByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member2Span, ref input_currptr, input + length))
                     return;
 
-                Byte[] units = "M"u8.ToArray();
+                ReadOnlySpan<byte> units = "M"u8;
 
                 // Read units
                 if (count > 2)
                 {
+#pragma warning disable CS9091 // This returns local by reference but it is not a ref local
                     if (!RespReadUtils.ReadByteArrayWithLengthHeader(out units, ref input_currptr, input + length))
                         return;
+#pragma warning restore CS9091 // This returns local by reference but it is not a ref local
                 }
 
-                if (sortedSetDict.TryGetValue(member1ByteArray, out double scoreMember1) && sortedSetDict.TryGetValue(member2ByteArray, out double scoreMember2))
+                var member1ByteArray = member1Span.ToArray();
+                var member2ByteArray = member2Span.ToArray();
+                if (sortedSetDict.TryGetValue(member1ByteArray, out double scoreMember1) &&
+                    sortedSetDict.TryGetValue(member2ByteArray, out double scoreMember2))
                 {
 
                     (double lat, double lon) = server.GeoHash.GetCoordinatesFromLong((long)scoreMember1);
@@ -305,7 +311,7 @@ namespace Garnet.server
                 while (countDone < count)
                 {
                     // read member
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberByteArray, ref input_currptr, input + length))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberSpan, ref input_currptr, input + length))
                         break;
 
                     countDone++;
@@ -321,7 +327,7 @@ namespace Garnet.server
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                     }
 
-                    if (sortedSetDict.TryGetValue(memberByteArray, out double scoreMember1))
+                    if (sortedSetDict.TryGetValue(memberSpan.ToArray(), out double scoreMember1))
                     {
                         (double lat, double lon) = server.GeoHash.GetCoordinatesFromLong((long)scoreMember1);
 
@@ -376,8 +382,8 @@ namespace Garnet.server
             {
                 var opts = new GeoSearchOptions();
                 var opsStr = "FROMMEMBERFROMLONLATBYRADIUSBYBOXASCDESCCOUNTANYWITHCOORDWITHDISTWITHHASH";
-                byte[] fromMember = null;
-                byte[] byBoxUnits = "M"u8.ToArray();
+                ReadOnlySpan<byte> fromMemberSpan = default;
+                ReadOnlySpan<byte> byBoxUnits = "M"u8;
                 var byRadiusUnits = byBoxUnits;
                 double width = 0, height = 0;
                 int countValue = 0;
@@ -394,7 +400,7 @@ namespace Garnet.server
                         switch (stringToken)
                         {
                             case "FROMMEMBER":
-                                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out fromMember, ref input_currptr, input + length))
+                                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out fromMemberSpan, ref input_currptr, input + length))
                                     return;
                                 opts.FromMember = true;
                                 --count;
@@ -412,8 +418,10 @@ namespace Garnet.server
                                 if (!RespReadUtils.ReadDoubleWithLengthHeader(out var radius, out parsed, ref input_currptr, input + length))
                                     return;
                                 // Read units
+#pragma warning disable CS9091 // This returns local by reference but it is not a ref local
                                 if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byRadiusUnits, ref input_currptr, input + length))
                                     return;
+#pragma warning restore CS9091 // This returns local by reference but it is not a ref local
                                 count -= 2;
                                 opts.ByRadius = true;
                                 break;
@@ -423,8 +431,10 @@ namespace Garnet.server
                                 if (!RespReadUtils.ReadDoubleWithLengthHeader(out height, out parsed, ref input_currptr, input + length))
                                     return;
                                 // Read units
+#pragma warning disable CS9091 // This returns local by reference but it is not a ref local
                                 if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byBoxUnits, ref input_currptr, input + length))
                                     return;
+#pragma warning restore CS9091 // This returns local by reference but it is not a ref local
                                 count -= 3;
                                 opts.ByBox = true;
                                 break;
@@ -470,7 +480,7 @@ namespace Garnet.server
 
                 // Get the results
                 // FROMMEMBER
-                if (opts.FromMember && sortedSetDict.TryGetValue(fromMember, out var centerPointScore))
+                if (opts.FromMember && sortedSetDict.TryGetValue(fromMemberSpan.ToArray(), out var centerPointScore))
                 {
                     (double lat, double lon) = server.GeoHash.GetCoordinatesFromLong((long)centerPointScore);
 

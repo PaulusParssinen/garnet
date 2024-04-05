@@ -70,7 +70,7 @@ namespace Garnet.server
                 inputPtr->count = inputCount;
                 inputPtr->done = setOpsCount;
 
-                storageApi.SetAdd(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                storageApi.SetAdd(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -142,7 +142,7 @@ namespace Garnet.server
                 inputPtr->count = inputCount;
                 inputPtr->done = setItemsDoneCount;
 
-                var status = storageApi.SetRemove(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.SetRemove(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -222,7 +222,7 @@ namespace Garnet.server
                 inputPtr->count = 1;
                 inputPtr->done = 0;
 
-                var status = storageApi.SetLength(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.SetLength(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -292,7 +292,7 @@ namespace Garnet.server
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.SetMembers(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SetMembers(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -408,7 +408,7 @@ namespace Garnet.server
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.SetPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            var status = storageApi.SetPop(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             // Reset input buffer
             *inputPtr = save;

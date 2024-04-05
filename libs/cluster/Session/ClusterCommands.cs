@@ -415,8 +415,8 @@ namespace Garnet.cluster
                     {
                         if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var withMeet, ref ptr, recvBufferPtr + bytesRead))
                             return false;
-                        Debug.Assert(withMeet.SequenceEqual(CmdStrings.WITHMEET.ToArray()));
-                        if (withMeet.SequenceEqual(CmdStrings.WITHMEET.ToArray()))
+                        Debug.Assert(withMeet.SequenceEqual(CmdStrings.WITHMEET));
+                        if (withMeet.SequenceEqual(CmdStrings.WITHMEET))
                             gossipWithMeet = true;
                     }
 
@@ -430,7 +430,7 @@ namespace Garnet.cluster
                     // Try merge if not just a ping message
                     if (gossipMessage.Length > 0)
                     {
-                        var other = ClusterConfig.FromByteArray(gossipMessage);
+                        var other = ClusterConfig.FromByteArray(gossipMessage.ToArray());
                         // Accept gossip message if it is a gossipWithMeet or node from node that is already known and trusted
                         // GossipWithMeet messages are only send through a call to CLUSTER MEET at the remote node
                         if (gossipWithMeet || current.IsKnown(other.GetLocalNodeId()))
@@ -1444,7 +1444,7 @@ namespace Garnet.cluster
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
-                var remoteEntry = CheckpointEntry.FromByteArray(cEntryByteArray);
+                var remoteEntry = CheckpointEntry.FromByteArray(cEntryByteArray.ToArray());
                 var resp = clusterProvider.replicationManager.BeginReplicaSyncSession(nodeId, primary_replid, remoteEntry, replicaAofBeginAddress, replicaAofTailAddress);
                 while (!RespWriteUtils.WriteDirect(resp, ref dcurr, dend))
                     SendAndReset();
@@ -1462,7 +1462,7 @@ namespace Garnet.cluster
 
                 var fileToken = new Guid(fileTokenBytes);
                 var fileType = (CheckpointFileType)fileTypeInt;
-                clusterProvider.replicationManager.ProcessCheckpointMetadata(fileToken, fileType, checkpointMetadata);
+                clusterProvider.replicationManager.ProcessCheckpointMetadata(fileToken, fileType, checkpointMetadata.ToArray());
                 while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
                     SendAndReset();
             }
@@ -1511,7 +1511,7 @@ namespace Garnet.cluster
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
-                var entry = CheckpointEntry.FromByteArray(cEntryByteArray);
+                var entry = CheckpointEntry.FromByteArray(cEntryByteArray.ToArray());
                 var replicationOffset = clusterProvider.replicationManager.BeginReplicaRecover(
                     recoverMainStoreFromToken,
                     recoverObjectStoreFromToken,

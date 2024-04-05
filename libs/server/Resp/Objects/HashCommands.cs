@@ -73,7 +73,7 @@ namespace Garnet.server
                 inputPtr->count = inputCount;
                 inputPtr->done = hashOpsCount;
 
-                storageApi.HashSet(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                storageApi.HashSet(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 *inputPtr = save; // reset input buffer
 
@@ -165,10 +165,10 @@ namespace Garnet.server
                 if (op == HashOperation.HRANDFIELD)
                 {
                     includeCountParameter = inputPtr->count > 2; // 4 tokens are: command key count WITHVALUES
-                    status = storageApi.HashRandomField(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                    status = storageApi.HashRandomField(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
                 }
                 else
-                    status = storageApi.HashGet(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                    status = storageApi.HashGet(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 // Reset input buffer
                 *inputPtr = save;
@@ -257,7 +257,7 @@ namespace Garnet.server
                 inputPtr->count = 1;
                 inputPtr->done = 0;
 
-                var status = storageApi.HashLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.HashLength(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -327,7 +327,7 @@ namespace Garnet.server
                 inputPtr->count = 1;
                 inputPtr->done = 0;
 
-                var status = storageApi.HashStrLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.HashStrLength(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -401,7 +401,7 @@ namespace Garnet.server
                 inputPtr->count = inputCount;
                 inputPtr->done = hashItemsDoneCount;
 
-                var status = storageApi.HashDelete(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.HashDelete(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -478,7 +478,7 @@ namespace Garnet.server
                 inputPtr->count = 1;
                 inputPtr->done = 0;
 
-                var status = storageApi.HashExists(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.HashExists(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 // Restore input buffer
                 *inputPtr = save;
@@ -556,9 +556,9 @@ namespace Garnet.server
             GarnetStatus status = GarnetStatus.NOTFOUND;
 
             if (op == HashOperation.HKEYS)
-                status = storageApi.HashKeys(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                status = storageApi.HashKeys(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
             else
-                status = storageApi.HashVals(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                status = storageApi.HashVals(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             // Restore input buffer
             *inputPtr = save;
@@ -641,7 +641,7 @@ namespace Garnet.server
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.HashIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.HashIncrement(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 // Restore input
                 *inputPtr = save;

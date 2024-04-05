@@ -212,7 +212,7 @@ namespace Garnet.server
         /// <param name="value"></param>
         /// <param name="units"></param>
         /// <returns></returns>
-        public static double ConvertValueToMeters(double value, byte[] units)
+        public static double ConvertValueToMeters(double value, ReadOnlySpan<byte> units)
         {
             if (units.Length == 2)
             {
@@ -243,7 +243,7 @@ namespace Garnet.server
         /// <param name="value"></param>
         /// <param name="units"></param>
         /// <returns></returns>
-        public static double ConvertMetersToUnits(double value, byte[] units)
+        public static double ConvertMetersToUnits(double value, ReadOnlySpan<byte> units)
         {
             if (units.Length == 2)
             {

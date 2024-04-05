@@ -383,13 +383,13 @@ namespace Garnet.server
 
         #endregion
 
-        private void UpdateSize(byte[] item, bool add = true)
+        private void UpdateSize(ReadOnlySpan<byte> item, bool add = true)
         {
             // item's length + overhead to store item + value of type double added to sorted set and dictionary + overhead for those datastructures
             var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + (2 * sizeof(double))
                 + MemoryUtils.SortedSetEntryOverhead + MemoryUtils.DictionaryEntryOverhead;
-            this.Size += add ? size : -size;
-            Debug.Assert(this.Size >= MemoryUtils.SortedSetOverhead + MemoryUtils.DictionaryOverhead);
+            Size += add ? size : -size;
+            Debug.Assert(Size >= MemoryUtils.SortedSetOverhead + MemoryUtils.DictionaryOverhead);
         }
     }
 }

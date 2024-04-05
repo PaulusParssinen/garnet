@@ -78,7 +78,7 @@ namespace Garnet.server
             inputPtr->count = inputCount;
             inputPtr->done = zaddDoneCount;
 
-            storageApi.SortedSetAdd(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            storageApi.SortedSetAdd(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Reset input buffer
             *inputPtr = save;
@@ -147,7 +147,7 @@ namespace Garnet.server
                 rmwInput->count = inputCount;
                 rmwInput->done = zaddDoneCount;
 
-                var status = storageApi.SortedSetRemove(key, new ArgSlice((byte*)rmwInput, inputLength), out ObjectOutputHeader rmwOutput);
+                var status = storageApi.SortedSetRemove(key.ToArray(), new ArgSlice((byte*)rmwInput, inputLength), out ObjectOutputHeader rmwOutput);
 
                 // Reset input buffer
                 *rmwInput = save;
@@ -230,7 +230,7 @@ namespace Garnet.server
                 inputPtr->count = 1;
                 inputPtr->done = 0;
 
-                var status = storageApi.SortedSetLength(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+                var status = storageApi.SortedSetLength(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output);
 
                 // Reset input buffer
                 *inputPtr = save;
@@ -318,7 +318,7 @@ namespace Garnet.server
 
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.SortedSetRange(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SortedSetRange(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 // Reset input buffer
                 *inputPtr = save;
@@ -418,7 +418,7 @@ namespace Garnet.server
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.SortedSetScore(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SortedSetScore(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input
                 *inputPtr = save;
@@ -492,7 +492,7 @@ namespace Garnet.server
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.SortedSetScores(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SortedSetScores(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input
                 *inputPtr = save;
@@ -579,7 +579,7 @@ namespace Garnet.server
                 // Prepare output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(SpanByte.FromPointer(dcurr, (int)(dend - dcurr))) };
 
-                var status = storageApi.SortedSetPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SortedSetPop(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -653,7 +653,7 @@ namespace Garnet.server
                 inputPtr->count = 0;
                 inputPtr->done = 0;
 
-                var status = storageApi.SortedSetCount(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.SortedSetCount(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -745,8 +745,8 @@ namespace Garnet.server
                 inputPtr->done = 0;
 
                 var status = op == SortedSetOperation.ZREMRANGEBYLEX ?
-                             storageApi.SortedSetRemoveRangeByLex(key, new ArgSlice((byte*)inputPtr, inputLength), out var output) :
-                             storageApi.SortedSetLengthByValue(key, new ArgSlice((byte*)inputPtr, inputLength), out output);
+                             storageApi.SortedSetRemoveRangeByLex(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out var output) :
+                             storageApi.SortedSetLengthByValue(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -832,7 +832,7 @@ namespace Garnet.server
                 // Prepare GarnetObjectStore output
                 var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-                var status = storageApi.SortedSetIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                var status = storageApi.SortedSetIncrement(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
                 //restore input
                 *inputPtr = save;
@@ -932,7 +932,7 @@ namespace Garnet.server
                 inputPtr->count = memberSize;
                 inputPtr->done = 0;
 
-                var status = storageApi.SortedSetRank(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.SortedSetRank(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 // Reset input buffer
                 *inputPtr = save;
@@ -1004,7 +1004,7 @@ namespace Garnet.server
                 inputPtr->count = 0;
                 inputPtr->done = 0;
 
-                var status = storageApi.SortedSetRemoveRange(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+                var status = storageApi.SortedSetRemoveRange(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
                 //restore input buffer
                 *inputPtr = save;
@@ -1073,7 +1073,7 @@ namespace Garnet.server
 
                 var paramCount = 0;
                 ReadOnlySpan<byte> withScoresSpan = "WITHSCORES"u8;
-                Byte[] includeWithScores = default;
+                ReadOnlySpan<byte> includeWithScores = default;
 
                 bool includedCount = false;
 
@@ -1088,8 +1088,10 @@ namespace Garnet.server
                     // Read withscores
                     if (count == 3)
                     {
+#pragma warning disable CS9087 // This returns a parameter by reference but it is not a ref parameter
                         if (!RespReadUtils.ReadByteArrayWithLengthHeader(out includeWithScores, ref ptr, recvBufferPtr + bytesRead))
                             return false;
+#pragma warning restore CS9087 // This returns a parameter by reference but it is not a ref parameter
                     }
                 }
 
@@ -1116,7 +1118,7 @@ namespace Garnet.server
                 {
                     // Prepare GarnetObjectStore output
                     outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
-                    status = storageApi.SortedSetRandomMember(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+                    status = storageApi.SortedSetRandomMember(key.ToArray(), new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
                 }
 
                 //restore input buffer

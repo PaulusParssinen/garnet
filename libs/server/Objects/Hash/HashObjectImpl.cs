@@ -3,9 +3,11 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Text;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Unicode;
 using Garnet.common;
 using Tsavorite.core;
 
@@ -71,7 +73,7 @@ namespace Garnet.server
 
                 while (count > 0)
                 {
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref input_currptr, input + length))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var keySpan, ref input_currptr, input + length))
                         break;
 
                     if (countDone < prevDone) // Skip processing previously done entries
@@ -81,7 +83,7 @@ namespace Garnet.server
                         continue;
                     }
 
-                    if (hash.TryGetValue(key, out var _value))
+                    if (hash.TryGetValue(keySpan.ToArray(), out var _value))
                     {
 
                         while (!RespWriteUtils.WriteBulkString(_value, ref curr, end))
@@ -125,7 +127,7 @@ namespace Garnet.server
 
             for (int c = 0; c < count; c++)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var keySpan, ref ptr, end))
                     return;
 
                 if (c < _input->done)
@@ -133,10 +135,10 @@ namespace Garnet.server
 
                 _output->countDone++;
 
-                if (hash.Remove(key, out var _value))
+                if (hash.Remove(keySpan.ToArray(), out var _value))
                 {
                     _output->opsDone++;
-                    this.UpdateSize(key, _value, false);
+                    this.UpdateSize(keySpan, _value, false);
                 }
 
                 _output->bytesDone = (int)(ptr - startptr);
@@ -160,7 +162,7 @@ namespace Garnet.server
                 return;
 
             _output->opsDone = 1;
-            _output->countDone = hash.TryGetValue(key, out var _value) ? _value.Length : 0;
+            _output->countDone = hash.TryGetValue(key.ToArray(), out var _value) ? _value.Length : 0;
             _output->bytesDone = (int)(ptr - startptr);
         }
 
@@ -180,7 +182,7 @@ namespace Garnet.server
                 return;
 
             _output->countDone = 1;
-            _output->opsDone = hash.ContainsKey(field) ? 1 : 0;
+            _output->opsDone = hash.ContainsKey(field.ToArray()) ? 1 : 0;
             _output->bytesDone = (int)(ptr - startptr);
         }
 
@@ -348,26 +350,27 @@ namespace Garnet.server
 
             for (int c = 0; c < count; c++)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var keySpan, ref ptr, end))
                     return;
 
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var valueSpan, ref ptr, end))
                     return;
 
                 if (c < _input->done)
                     continue;
 
-                byte[] _value = default;
-                if (!hash.TryGetValue(key, out _value))
+                var keyByteArray = keySpan.ToArray();
+                var valueByteArray = valueSpan.ToArray();
+                if (!hash.TryGetValue(valueByteArray, out var _value))
                 {
-                    hash.Add(key, value);
-                    this.UpdateSize(key, value);
+                    hash.Add(keyByteArray, valueByteArray);
+                    UpdateSize(keySpan, valueByteArray);
                     _output->opsDone++;
                 }
-                else if ((_input->header.HashOp == HashOperation.HSET || _input->header.HashOp == HashOperation.HMSET) && _value != default && !_value.SequenceEqual(value))
+                else if ((_input->header.HashOp == HashOperation.HSET || _input->header.HashOp == HashOperation.HMSET) && _value != default && !_value.AsSpan().SequenceEqual(valueByteArray))
                 {
-                    hash[key] = value;
-                    this.Size += Utility.RoundUp(value.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size); // Skip overhead as existing item is getting replaced.
+                    hash[keyByteArray] = valueByteArray;
+                    Size += Utility.RoundUp(valueByteArray.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size); // Skip overhead as existing item is getting replaced.
                 }
                 _output->countDone++;
                 _output->bytesDone = (int)(ptr - startptr);
@@ -399,17 +402,18 @@ namespace Garnet.server
 
             try
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var keySpan, ref input_currptr, input + length))
                     return;
 
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var incr, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var incrSpan, ref input_currptr, input + length))
                     return;
 
-                if (hash.TryGetValue(key, out var _value))
+                var keyByteArray = keySpan.ToArray();
+                if (hash.TryGetValue(keyByteArray, out var _value))
                 {
-                    if (Single.TryParse(Encoding.ASCII.GetString(_value), out var result))
+                    if (Utf8Parser.TryParse(_value, out float result, out _, default))
                     {
-                        if (Single.TryParse(Encoding.ASCII.GetString(incr), out var resultIncr))
+                        if (Utf8Parser.TryParse(_value, out float resultIncr, out _, default))
                         {
                             result += resultIncr;
 
@@ -424,8 +428,8 @@ namespace Garnet.server
                                     byte* resultRef = resultBytesPtr;
                                     NumUtils.LongToBytes((long)result, numDigits, ref resultRef);
 
-                                    hash[key] = resultBytes;
-                                    this.Size += Utility.RoundUp(resultBytes.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size);
+                                    hash[keyByteArray] = resultBytes;
+                                    Size += Utility.RoundUp(resultBytes.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size);
 
                                     while (!RespWriteUtils.WriteIntegerFromBytes(resultBytesPtr, sign + numDigits, ref curr, end))
                                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -434,8 +438,8 @@ namespace Garnet.server
                             else
                             {
                                 var resultBytes = Encoding.ASCII.GetBytes(result.ToString());
-                                hash[key] = resultBytes;
-                                this.Size += Utility.RoundUp(resultBytes.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size);
+                                hash[keyByteArray] = resultBytes;
+                                Size += Utility.RoundUp(resultBytes.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size);
 
                                 while (!RespWriteUtils.WriteBulkString(resultBytes, ref curr, end))
                                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -451,7 +455,7 @@ namespace Garnet.server
                 }
                 else
                 {
-                    if (!Single.TryParse(Encoding.ASCII.GetString(incr), out var resultIncr))
+                    if (!Utf8Parser.TryParse(_value, out float resultIncr, out _, default))
                     {
                         ReadOnlySpan<byte> errorMessage = "-ERR field value is not a number\r\n"u8;
                         while (!RespWriteUtils.WriteDirect(errorMessage, ref curr, end))
@@ -459,8 +463,8 @@ namespace Garnet.server
                     }
                     else
                     {
-                        hash.Add(key, incr);
-                        this.UpdateSize(key, incr);
+                        hash.Add(keySpan.ToArray(), incrSpan.ToArray());
+                        UpdateSize(keySpan, incrSpan);
                         if (op == HashOperation.HINCRBY)
                         {
                             while (!RespWriteUtils.WriteInteger((long)resultIncr, ref curr, end))
@@ -468,7 +472,6 @@ namespace Garnet.server
                         }
                         else
                         {
-
                             while (!RespWriteUtils.WriteAsciiBulkString(resultIncr.ToString(), ref curr, end))
                                 ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                         }

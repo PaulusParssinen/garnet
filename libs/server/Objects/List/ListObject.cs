@@ -178,16 +178,16 @@ namespace Garnet.server
                         throw new GarnetException($"Unsupported operation {(ListOperation)_input[0]} in ListObject.Operate");
                 }
 
-                sizeChange = this.Size - previouseSize;
+                sizeChange = Size - previouseSize;
             }
             return true;
         }
 
-        internal void UpdateSize(byte[] item, bool add = true)
+        internal void UpdateSize(ReadOnlySpan<byte> item, bool add = true)
         {
             var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.ListEntryOverhead;
-            this.Size += add ? size : -size;
-            Debug.Assert(this.Size >= MemoryUtils.ListOverhead);
+            Size += add ? size : -size;
+            Debug.Assert(Size >= MemoryUtils.ListOverhead);
         }
 
         /// <inheritdoc />

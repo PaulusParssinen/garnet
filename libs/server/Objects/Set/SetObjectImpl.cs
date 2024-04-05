@@ -32,10 +32,10 @@ namespace Garnet.server
                 if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref ptr, end))
                     return;
 
-                if (set.Add(member))
+                if (set.Add(member.ToArray()))
                 {
                     _output->countDone++;
-                    this.UpdateSize(member);
+                    UpdateSize(member);
                 }
                 _output->opsDone++;
             }
@@ -118,10 +118,10 @@ namespace Garnet.server
                     continue;
                 }
 
-                if (set.Remove(field))
+                if (set.Remove(field.ToArray()))
                 {
                     countDone++;
-                    this.UpdateSize(field, false);
+                    UpdateSize(field, false);
                 }
 
                 count--;
