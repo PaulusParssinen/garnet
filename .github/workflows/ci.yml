@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-  
+
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
@@ -24,20 +24,20 @@ jobs:
       website: ${{ steps.filter.outputs.website }}
       garnet: ${{ steps.filter.outputs.garnet }}
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-    - name: Apply filter
-      uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          tsavorite:
-            - 'libs/storage/Tsavorite/**'
-          website:
-            - 'website/**'
-          garnet:
-            - '!((*.md)|(website/**))'
-  
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Apply filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            tsavorite:
+              - 'libs/storage/Tsavorite/**'
+            website:
+              - 'website/**'
+            garnet:
+              - '!((*.md)|(website/**))'
+
   format-garnet:
     name: Format Garnet
     needs: changes
@@ -68,10 +68,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Install dependencies
-        run: dotnet restore .\libs\storage\Tsavorite\cs\Tsavorite.sln
+        run: dotnet restore libs/storage/Tsavorite/cs/Tsavorite.sln
       - name: Check style format
-        run: dotnet format .\libs\storage\Tsavorite\cs\Tsavorite.sln --no-restore --verify-no-changes --verbosity diagnostic
-  
+        run: dotnet format libs/storage/Tsavorite/cs/Tsavorite.sln --no-restore --verify-no-changes --verbosity diagnostic
+
   # Job to build and test Garnet code
   build-test-garnet:
     name: Garnet
@@ -80,10 +80,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        framework: [ 'net6.0', 'net8.0' ]
-        configuration: [ 'Debug', 'Release' ]
-        test: [ 'Garnet.test', 'Garnet.test.cluster' ]
+        os: [ubuntu-latest, windows-latest]
+        framework: ["net6.0", "net8.0"]
+        configuration: ["Debug", "Release"]
+        test: ["Garnet.test", "Garnet.test.cluster"]
     if: needs.changes.outputs.garnet == 'true'
     steps:
       - name: Check out code
@@ -98,7 +98,7 @@ jobs:
         run: dotnet build --configuration ${{ matrix.configuration }}
       - name: Run tests ${{ matrix.test }}
         run: dotnet test test/${{ matrix.test }} -f ${{ matrix.framework }} --logger "console;verbosity=detailed" --logger trx --results-directory "GarnetTestResults-${{ matrix.os }}-${{ matrix.framework }}-${{ matrix.configuration }}-${{ matrix.test }}"
-        timeout-minutes: 30 
+        timeout-minutes: 30
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
@@ -107,17 +107,17 @@ jobs:
         if: ${{ always() }}
 
   # Job to build and test Tsavorite code (only if there were changes to it)
-  build-test-tsavorite:        
+  build-test-tsavorite:
     name: Tsavorite
     needs: [changes, format-tsavorite]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        framework: [ 'net6.0', 'net8.0' ]
-        configuration: [ 'Debug', 'Release' ]
-    if: needs.changes.outputs.tsavorite == 'true'   
+        os: [ubuntu-latest, windows-latest]
+        framework: ["net6.0", "net8.0"]
+        configuration: ["Debug", "Release"]
+    if: needs.changes.outputs.tsavorite == 'true'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -134,7 +134,7 @@ jobs:
       - name: Setup Node.js for Azurite
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Install and Run Azurite
         shell: bash
         run: |
@@ -146,7 +146,7 @@ jobs:
         run: dotnet build libs/storage/Tsavorite/cs/test/Tsavorite.test.csproj --configuration ${{ matrix.configuration }}
       - name: Run Tsavorite tests
         run: dotnet test libs/storage/Tsavorite/cs/test/Tsavorite.test.csproj -f ${{ matrix.framework }} --logger "console;verbosity=detailed" --logger trx --results-directory "TsavoriteTestResults-${{ matrix.os }}-${{ matrix.framework }}-${{ matrix.configuration }}"
-        timeout-minutes: 30 
+        timeout-minutes: 30
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
@@ -156,12 +156,12 @@ jobs:
 
   build-website:
     name: Build Website
-    needs: changes    
+    needs: changes
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: website
-    if: needs.changes.outputs.website == 'true'   
+    if: needs.changes.outputs.website == 'true'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -177,7 +177,7 @@ jobs:
   pipeline-success:
     name: Garnet CI (Complete)
     runs-on: ubuntu-latest
-    needs: [ build-test-garnet,  build-test-tsavorite, build-website ]
+    needs: [build-test-garnet, build-test-tsavorite, build-website]
     steps:
-    - run: echo Done!
+      - run: echo Done!
     if: ${{ !(failure() || cancelled()) }}
