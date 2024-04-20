@@ -8,16 +8,19 @@ using System.Threading.Tasks;
 
 namespace Tsavorite.core
 {
+
+
+
     /// <summary>
     /// Asynchronous pool of fixed pre-filled capacity
     /// Supports sync get (TryGet) for fast path
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class AsyncPool<T> : IDisposable where T : IDisposable
+    public class AsyncPool<T> : IDisposable where T : IDisposable        
     {
         readonly int size;
         readonly Func<T> creator;
-        readonly SemaphoreSlim handleAvailable;
+           readonly SemaphoreSlim handleAvailable;
         readonly ConcurrentQueue<T> itemQueue;
 
         bool disposed = false;
@@ -45,11 +48,13 @@ namespace Tsavorite.core
         {
             for (; ; )
             {
-                if (disposed)
+                if (     disposed)
                     throw new TsavoriteException("Getting handle in disposed device");
 
                 if (GetOrAdd(itemQueue, out T item))
                     return item;
+
+
 
                 handleAvailable.Wait(token);
             }
@@ -83,7 +88,7 @@ namespace Tsavorite.core
         {
             if (disposed)
             {
-                item = default;
+                   item = default;
                 return false;
             }
             return GetOrAdd(itemQueue, out item);
