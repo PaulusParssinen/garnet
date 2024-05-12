@@ -10,7 +10,7 @@ internal class EnqueueTests
 {
     private TsavoriteLog log;
     private IDevice device;
-    static byte[] entry;
+    private static byte[] entry;
 
     public enum EnqueueIteratorType
     {

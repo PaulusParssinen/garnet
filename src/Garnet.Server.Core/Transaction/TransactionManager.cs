@@ -20,37 +20,37 @@ public sealed unsafe partial class TransactionManager
     /// <summary>
     /// Session for main store
     /// </summary>
-    readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
+    private readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
 
     /// <summary>
     /// Lockable context for main store
     /// </summary>
-    readonly LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext;
+    private readonly LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext;
 
     /// <summary>
     /// Session for object store
     /// </summary>
-    readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession;
+    private readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession;
 
     /// <summary>
     /// Lockable context for object store
     /// </summary>
-    readonly LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreLockableContext;
+    private readonly LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreLockableContext;
 
     // Not readonly to avoid defensive copy
-    GarnetWatchApi<BasicGarnetApi> garnetTxPrepareApi;
+    private GarnetWatchApi<BasicGarnetApi> garnetTxPrepareApi;
 
     // Cluster session
-    IClusterSession clusterSession;
+    private IClusterSession clusterSession;
 
     // Not readonly to avoid defensive copy
-    LockableGarnetApi garnetTxMainApi;
+    private LockableGarnetApi garnetTxMainApi;
 
     // Not readonly to avoid defensive copy
-    BasicGarnetApi garnetTxFinalizeApi;
+    private BasicGarnetApi garnetTxFinalizeApi;
 
     private readonly RespServerSession respSession;
-    readonly FunctionsState functionsState;
+    private readonly FunctionsState functionsState;
     internal readonly ScratchBufferManager scratchBufferManager;
     private readonly TsavoriteLog appendOnlyFile;
     internal readonly WatchedKeysContainer watchContainer;
@@ -63,8 +63,8 @@ public sealed unsafe partial class TransactionManager
     public TxnState state;
     private const int initialSliceBufferSize = 1 << 10;
     private const int initialKeyBufferSize = 1 << 10;
-    StoreType transactionStoreType;
-    readonly ILogger logger;
+    private StoreType transactionStoreType;
+    private readonly ILogger logger;
 
     internal LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> LockableContext
         => lockableContext;
@@ -85,19 +85,19 @@ public sealed unsafe partial class TransactionManager
         bool clusterEnabled,
         ILogger logger = null)
     {
-        this.session = storageSession.session;
+        session = storageSession.session;
         lockableContext = session.LockableContext;
 
-        this.objectStoreSession = storageSession.objectStoreSession;
+        objectStoreSession = storageSession.objectStoreSession;
         if (objectStoreSession != null)
             objectStoreLockableContext = objectStoreSession.LockableContext;
 
-        this.functionsState = storageSession.functionsState;
-        this.appendOnlyFile = functionsState.appendOnlyFile;
+        functionsState = storageSession.functionsState;
+        appendOnlyFile = functionsState.appendOnlyFile;
         this.logger = logger;
 
         this.respSession = respSession;
-        this.clusterSession = respSession.clusterSession;
+        clusterSession = respSession.clusterSession;
 
         watchContainer = new WatchedKeysContainer(initialSliceBufferSize, functionsState.watchVersionMap);
         keyEntries = new TxnKeyEntries(initialSliceBufferSize, lockableContext, objectStoreLockableContext);
@@ -131,15 +131,15 @@ public sealed unsafe partial class TransactionManager
                 objectStoreLockableContext.EndLockable();
             }
         }
-        this.txnStartHead = 0;
-        this.operationCntTxn = 0;
-        this.state = TxnState.None;
-        this.transactionStoreType = 0;
+        txnStartHead = 0;
+        operationCntTxn = 0;
+        state = TxnState.None;
+        transactionStoreType = 0;
         functionsState.StoredProcMode = false;
 
         // Reset cluster variables used for slot verification
-        this.saveKeyRecvBufferPtr = null;
-        this.keyCount = 0;
+        saveKeyRecvBufferPtr = null;
+        keyCount = 0;
     }
 
     internal bool RunTransactionProc(byte id, ArgSlice input, CustomTransactionProcedure proc, ref MemoryResult<byte> output)
@@ -236,7 +236,7 @@ public sealed unsafe partial class TransactionManager
             objectStoreSession?.ResetModified(key.ToArray());
     }
 
-    void UpdateTransactionStoreType(StoreType type)
+    private void UpdateTransactionStoreType(StoreType type)
     {
         if (transactionStoreType != StoreType.All)
         {
@@ -296,7 +296,7 @@ public sealed unsafe partial class TransactionManager
         {
             if (!lockSuccess)
             {
-                this.logger?.LogError("Transaction failed to acquire all the locks on keys to proceed.");
+                logger?.LogError("Transaction failed to acquire all the locks on keys to proceed.");
             }
             Reset(true);
             if (!internal_txn)

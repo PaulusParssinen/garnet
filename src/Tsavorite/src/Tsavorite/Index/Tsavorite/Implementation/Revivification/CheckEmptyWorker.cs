@@ -23,12 +23,11 @@ internal sealed class CheckEmptyWorker<Key, Value>
                 _ => "Unknown"
             };
     }
-    long state;
-    bool disposed;
 
-    CancellationTokenSource cts = new();
-
-    readonly FreeRecordPool<Key, Value> recordPool;
+    private long state;
+    private bool disposed;
+    private CancellationTokenSource cts = new();
+    private readonly FreeRecordPool<Key, Value> recordPool;
 
     internal CheckEmptyWorker(FreeRecordPool<Key, Value> recordPool) => this.recordPool = recordPool;
 

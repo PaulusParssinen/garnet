@@ -18,8 +18,8 @@ public class CustomCommandManager
     internal int ObjectTypeId = 0;
     internal int TransactionProcId = 0;
 
-    internal int CustomCommandsInfoCount => this.customCommandsInfo.Count;
-    internal IEnumerable<RespCommandsInfo> CustomCommandsInfo => this.customCommandsInfo.Values;
+    internal int CustomCommandsInfoCount => customCommandsInfo.Count;
+    internal IEnumerable<RespCommandsInfo> CustomCommandsInfo => customCommandsInfo.Values;
 
     private readonly Dictionary<string, RespCommandsInfo> customCommandsInfo = new(StringComparer.OrdinalIgnoreCase);
 
@@ -175,9 +175,9 @@ public class CustomCommandManager
     internal bool TryGetCustomCommandInfo(string cmdName, out RespCommandsInfo respCommandsInfo)
     {
         respCommandsInfo = default;
-        if (!this.customCommandsInfo.ContainsKey(cmdName)) return false;
+        if (!customCommandsInfo.ContainsKey(cmdName)) return false;
 
-        respCommandsInfo = this.customCommandsInfo[cmdName];
+        respCommandsInfo = customCommandsInfo[cmdName];
         return true;
     }
 }

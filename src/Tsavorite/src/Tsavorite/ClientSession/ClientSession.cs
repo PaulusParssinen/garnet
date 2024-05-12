@@ -23,24 +23,20 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     internal CompletedOutputIterator<Key, Value, Input, Output, Context> completedOutputs;
 
     internal readonly InternalTsavoriteSession TsavoriteSession;
-
-    readonly UnsafeContext<Key, Value, Input, Output, Context, Functions> uContext;
-    readonly LockableUnsafeContext<Key, Value, Input, Output, Context, Functions> luContext;
-    readonly LockableContext<Key, Value, Input, Output, Context, Functions> lContext;
-    readonly BasicContext<Key, Value, Input, Output, Context, Functions> bContext;
+    private readonly UnsafeContext<Key, Value, Input, Output, Context, Functions> uContext;
+    private readonly LockableUnsafeContext<Key, Value, Input, Output, Context, Functions> luContext;
+    private readonly LockableContext<Key, Value, Input, Output, Context, Functions> lContext;
+    private readonly BasicContext<Key, Value, Input, Output, Context, Functions> bContext;
 
     internal const string NotAsyncSessionErr = "Session does not support async operations";
-
-    readonly ILoggerFactory loggerFactory;
-    readonly ILogger logger;
+    private readonly ILoggerFactory loggerFactory;
+    private readonly ILogger logger;
 
     internal ulong TotalLockCount => sharedLockCount + exclusiveLockCount;
     internal ulong sharedLockCount;
     internal ulong exclusiveLockCount;
-
-    bool isAcquiredLockable;
-
-    ScanCursorState<Key, Value> scanCursorState;
+    private bool isAcquiredLockable;
+    private ScanCursorState<Key, Value> scanCursorState;
 
     internal void AcquireLockable()
     {
@@ -87,7 +83,7 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
             throw new TsavoriteException("Lockable method call when BeginLockable has not been called");
     }
 
-    void CheckIsNotAcquiredLockable()
+    private void CheckIsNotAcquiredLockable()
     {
         if (isAcquiredLockable)
             throw new TsavoriteException("BeginLockable cannot be called twice (call EndLockable first)");

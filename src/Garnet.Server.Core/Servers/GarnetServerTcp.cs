@@ -15,11 +15,11 @@ namespace Garnet.Server;
 /// </summary>
 public class GarnetServerTcp : GarnetServerBase, IServerHook
 {
-    readonly SocketAsyncEventArgs acceptEventArg;
-    readonly Socket servSocket;
-    readonly IGarnetTlsOptions tlsOptions;
-    readonly int networkSendThrottleMax;
-    readonly LimitedFixedBufferPool networkPool;
+    private readonly SocketAsyncEventArgs acceptEventArg;
+    private readonly Socket servSocket;
+    private readonly IGarnetTlsOptions tlsOptions;
+    private readonly int networkSendThrottleMax;
+    private readonly LimitedFixedBufferPool networkPool;
 
     /// <summary>
     /// Get active consumers
@@ -55,7 +55,7 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     {
         this.tlsOptions = tlsOptions;
         this.networkSendThrottleMax = networkSendThrottleMax;
-        this.networkPool = new LimitedFixedBufferPool(BufferSizeUtils.ServerBufferSize(new MaxSizeSettings()), logger: logger);
+        networkPool = new LimitedFixedBufferPool(BufferSizeUtils.ServerBufferSize(new MaxSizeSettings()), logger: logger);
         IPAddress ip = string.IsNullOrEmpty(Address) ? IPAddress.Any : IPAddress.Parse(Address);
         servSocket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         acceptEventArg = new SocketAsyncEventArgs();

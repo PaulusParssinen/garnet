@@ -3,7 +3,7 @@
 
 namespace Garnet.Server;
 
-class CustomTransaction
+internal class CustomTransaction
 {
     public readonly string nameStr;
     public readonly int NumParams;

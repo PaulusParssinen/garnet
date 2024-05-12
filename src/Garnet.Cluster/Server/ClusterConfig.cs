@@ -31,8 +31,8 @@ internal sealed partial class ClusterConfig
     /// </summary>
     public int NumWorkers => workers.Length - 1;
 
-    readonly HashSlot[] slotMap;
-    readonly Worker[] workers;
+    private readonly HashSlot[] slotMap;
+    private readonly Worker[] workers;
 
     /// <summary>
     /// Create default cluster config
@@ -905,7 +905,7 @@ internal sealed partial class ClusterConfig
             }
         }
 
-        Worker[] newWorkers = this.workers;
+        Worker[] newWorkers = workers;
         if (workerId == 0)
         {
             newWorkers = new Worker[workers.Length + 1];
@@ -923,7 +923,7 @@ internal sealed partial class ClusterConfig
         newWorkers[workerId].ReplicaOfNodeId = replicaOfNodeId;
         newWorkers[workerId].hostname = hostname;
 
-        HashSlot[] newSlotMap = this.slotMap;
+        HashSlot[] newSlotMap = slotMap;
         if (slots != null)
         {
             foreach (int slot in slots)

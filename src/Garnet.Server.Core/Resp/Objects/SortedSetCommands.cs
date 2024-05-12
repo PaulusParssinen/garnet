@@ -15,14 +15,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Session counter of number of ZADD entries partially done
     /// </summary>
-    int zaddDoneCount;
+    private int zaddDoneCount;
 
     /// <summary>
     /// Session counter of number of ZADD adds partially done
     /// </summary>
-    int zaddAddCount;
+    private int zaddAddCount;
 
-    static ReadOnlySpan<byte> withscores => "WITHSCORES"u8;
+    private static ReadOnlySpan<byte> withscores => "WITHSCORES"u8;
 
     /// <summary>
     /// Adds all the specified members with the specified scores to the sorted set stored at key.
@@ -622,13 +622,13 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     // Process response
-                    if (output.countDone == Int32.MaxValue)
+                    if (output.countDone == int.MaxValue)
                     {
                         // Error in arguments
                         while (!RespWriteUtils.WriteError("ERR max or min value is not a float value."u8, ref dcurr, dend))
                             SendAndReset();
                     }
-                    else if (output.countDone == Int32.MinValue)  // command partially executed
+                    else if (output.countDone == int.MinValue)  // command partially executed
                         return false;
                     else
                         while (!RespWriteUtils.WriteInteger(output.opsDone, ref dcurr, dend))
@@ -709,13 +709,13 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     // Process response
-                    if (output.countDone == Int32.MaxValue)
+                    if (output.countDone == int.MaxValue)
                     {
                         // Error in arguments
                         while (!RespWriteUtils.WriteError("ERR max or min value not in a valid range."u8, ref dcurr, dend))
                             SendAndReset();
                     }
-                    else if (output.countDone == Int32.MinValue)  // command partially executed
+                    else if (output.countDone == int.MinValue)  // command partially executed
                         return false;
                     else
                         while (!RespWriteUtils.WriteInteger(output.opsDone, ref dcurr, dend))
@@ -1006,7 +1006,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             int paramCount = 0;
             ReadOnlySpan<byte> withScoresSpan = "WITHSCORES"u8;
-            Byte[] includeWithScores = default;
+            byte[] includeWithScores = default;
 
             bool includedCount = false;
 

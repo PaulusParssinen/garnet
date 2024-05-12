@@ -31,7 +31,7 @@ internal sealed class SystemMetrics
         public int ThreadCount;
     }
 
-    public static Int64 GetTotalMemory(long units = 1)
+    public static long GetTotalMemory(long units = 1)
     {
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
@@ -52,7 +52,7 @@ internal sealed class SystemMetrics
         }
     }
 
-    public static Int64 GetPhysicalAvailableMemory(long units = 1)
+    public static long GetPhysicalAvailableMemory(long units = 1)
     {
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
@@ -73,49 +73,49 @@ internal sealed class SystemMetrics
         }
     }
 
-    public static Int64 GetPagedMemorySize(long units = 1)
+    public static long GetPagedMemorySize(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PagedMemorySize64 / units;
     }
 
-    public static Int64 GetPagedSystemMemorySize(long units = 1)
+    public static long GetPagedSystemMemorySize(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PagedSystemMemorySize64 / units;
     }
 
-    public static Int64 GetPeakPagedMemorySize(long units = 1)
+    public static long GetPeakPagedMemorySize(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PeakPagedMemorySize64 / units;
     }
 
-    public static Int64 GetVirtualMemorySize64(long units = 1)
+    public static long GetVirtualMemorySize64(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.VirtualMemorySize64 / units;
     }
 
-    public static Int64 GetPrivateMemorySize64(long units = 1)
+    public static long GetPrivateMemorySize64(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PrivateMemorySize64 / units;
     }
 
-    public static Int64 GetPeakVirtualMemorySize64(long units = 1)
+    public static long GetPeakVirtualMemorySize64(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PeakVirtualMemorySize64 / units;
     }
 
-    public static Int64 GetPhysicalMemoryUsage(long units = 1)
+    public static long GetPhysicalMemoryUsage(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.WorkingSet64 / units;
     }
 
-    public static Int64 GetPeakPhysicalMemoryUsage(long units = 1)
+    public static long GetPeakPhysicalMemoryUsage(long units = 1)
     {
         var cproc = Process.GetCurrentProcess();
         return cproc.PeakWorkingSet64 / units;

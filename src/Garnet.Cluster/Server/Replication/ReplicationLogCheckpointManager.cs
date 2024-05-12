@@ -21,11 +21,9 @@ internal sealed class ReplicationLogCheckpointManager(
 
     public string CurrentReplicationId = string.Empty;
     public string RecoveredReplicationId = string.Empty;
-
-    readonly bool isMainStore = isMainStore;
+    private readonly bool isMainStore = isMainStore;
     public Action<bool, long, long> checkpointVersionShift;
-
-    readonly bool safelyRemoveOutdated = removeOutdated;
+    private readonly bool safelyRemoveOutdated = removeOutdated;
 
     public override void CheckpointVersionShift(long oldVersion, long newVersion)
     {
@@ -65,7 +63,7 @@ internal sealed class ReplicationLogCheckpointManager(
     /// </summary>        
     private unsafe byte[] AddCookie(byte[] commitMetadata)
     {
-        int cookieSize = sizeof(long) + this.CurrentReplicationId.Length;
+        int cookieSize = sizeof(long) + CurrentReplicationId.Length;
         byte[] commitMetadataWithCookie = new byte[sizeof(int) + cookieSize + commitMetadata.Length];
         byte[] primaryReplIdBytes = Encoding.ASCII.GetBytes(CurrentReplicationId);
         fixed (byte* ptr = commitMetadataWithCookie)

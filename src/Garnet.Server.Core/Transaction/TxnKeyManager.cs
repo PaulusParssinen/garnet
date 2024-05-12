@@ -5,7 +5,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class TransactionManager
+public sealed partial class TransactionManager
 {
     /// <summary>
     /// Save key entry
@@ -26,7 +26,7 @@ sealed partial class TransactionManager
         bool readOnly = type == LockType.Shared;
         if (!clusterSession.CheckSingleKeySlotVerify(key, readOnly, respSession.SessionAsking))
         {
-            this.state = TxnState.Aborted;
+            state = TxnState.Aborted;
             return;
         }
     }

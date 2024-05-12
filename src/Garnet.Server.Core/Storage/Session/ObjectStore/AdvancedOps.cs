@@ -5,7 +5,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     public GarnetStatus RMW_ObjectStore<TObjectContext>(ref byte[] key, ref SpanByte input, ref GarnetObjectStoreOutput output, ref TObjectContext objectStoreContext)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>

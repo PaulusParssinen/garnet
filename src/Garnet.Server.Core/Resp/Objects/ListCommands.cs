@@ -11,12 +11,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Session counter of number of List entries(PUSH,POP etc.) partially done
     /// </summary>
-    int listItemsDoneCount;
+    private int listItemsDoneCount;
 
     /// <summary>
     /// Session counter of number of List operations partially done
     /// </summary>
-    int listOpsCount;
+    private int listOpsCount;
 
     /// <summary>
     /// LPUSH key element[element...]
@@ -78,7 +78,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         listOpsCount += output.opsDone;
 
         //return if command is only partially done
-        if (output.countDone == Int32.MinValue && listOpsCount < inputCount)
+        if (output.countDone == int.MinValue && listOpsCount < inputCount)
             return false;
 
         // FIXME: Need to use ptr += output.bytesDone; instead of ReadLeftToken

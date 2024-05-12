@@ -13,7 +13,7 @@ internal class TryEnqueueTests
 {
     private TsavoriteLog log;
     private IDevice device;
-    static readonly byte[] entry = new byte[100];
+    private static readonly byte[] entry = new byte[100];
 
     public enum TryEnqueueIteratorType
     {

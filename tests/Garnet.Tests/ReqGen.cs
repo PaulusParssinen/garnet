@@ -13,17 +13,15 @@ public enum OpType
 /// </summary>
 public unsafe class ReqGen
 {
-    const int BufferSize = 1 << 18;
-
-    readonly Random r;
-    readonly OpType opType;
-    readonly byte[] opHeader;
-
-    readonly int srcKeys;
+    private const int BufferSize = 1 << 18;
+    private readonly Random r;
+    private readonly OpType opType;
+    private readonly byte[] opHeader;
+    private readonly int srcKeys;
 
     public ReqGen(OpType opType, int srcKeys = 1)
     {
-        this.r = new Random(Guid.NewGuid().GetHashCode());
+        r = new Random(Guid.NewGuid().GetHashCode());
         this.opType = opType;
         this.srcKeys = srcKeys;
 
@@ -41,7 +39,7 @@ public unsafe class ReqGen
         };
     }
 
-    public long LongRandom() => ((long)this.r.Next() << 32) | (long)this.r.Next();
+    public long LongRandom() => ((long)r.Next() << 32) | (long)r.Next();
 
     public (List<long>, int) GenSingleKeyValueReqs(ref byte[] buffer, byte[] key, int reqNum, List<long> inputValues = null, int offset = 0)
     {

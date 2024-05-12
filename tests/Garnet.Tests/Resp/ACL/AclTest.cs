@@ -8,7 +8,7 @@ namespace Garnet.Tests.Resp.ACL;
 /// <summary>
 /// Base class used for all RESP ACL tests
 /// </summary>
-abstract class AclTest
+internal abstract class AclTest
 {
     /// <summary>
     /// Dummy password used by some of the tests.

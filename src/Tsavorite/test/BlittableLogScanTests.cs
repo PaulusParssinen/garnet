@@ -11,12 +11,12 @@ internal class BlittableLogScanTests
 {
     private TsavoriteKV<KeyStruct, ValueStruct> store;
     private IDevice log;
-    const int totalRecords = 2000;
-    const int PageSizeBits = 10;
+    private const int totalRecords = 2000;
+    private const int PageSizeBits = 10;
 
-    struct KeyStructComparerModulo : ITsavoriteEqualityComparer<KeyStruct>
+    private struct KeyStructComparerModulo : ITsavoriteEqualityComparer<KeyStruct>
     {
-        readonly long mod;
+        private readonly long mod;
 
         internal KeyStructComparerModulo(long mod) => this.mod = mod;
 
@@ -348,9 +348,9 @@ internal class BlittableLogScanTests
             => ConcurrentReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
     }
 
-    class LogObserver : IObserver<ITsavoriteScanIterator<KeyStruct, ValueStruct>>
+    private class LogObserver : IObserver<ITsavoriteScanIterator<KeyStruct, ValueStruct>>
     {
-        int val = 0;
+        private int val = 0;
 
         public void OnCompleted()
         {

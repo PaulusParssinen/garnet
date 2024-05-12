@@ -10,9 +10,9 @@ namespace Tsavorite;
 /// </summary>
 public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointManager
 {
-    const byte indexTokenCount = 2;
-    const byte logTokenCount = 1;
-    const byte flogCommitCount = 1;
+    private const byte indexTokenCount = 2;
+    private const byte logTokenCount = 1;
+    private const byte flogCommitCount = 1;
 
     /// <summary>
     /// deviceFactory
@@ -34,11 +34,10 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
     private readonly Guid[] indexTokenHistory, logTokenHistory;
     private readonly long[] flogCommitHistory;
     private byte indexTokenHistoryOffset, logTokenHistoryOffset, flogCommitHistoryOffset;
-
-    readonly ILogger logger;
-    readonly WorkQueueFIFO<long> deleteQueue;
-    readonly int fastCommitThrottleFreq;
-    int commitCount;
+    private readonly ILogger logger;
+    private readonly WorkQueueFIFO<long> deleteQueue;
+    private readonly int fastCommitThrottleFreq;
+    private int commitCount;
 
     /// <summary>
     /// Create new instance of log commit manager

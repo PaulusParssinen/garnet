@@ -35,7 +35,7 @@ internal sealed class RecoveryStatus
                           long endPage, long untilAddress, CheckpointType checkpointType)
     {
         this.capacity = capacity;
-        this.usableCapacity = capacity - emptyPageCount;
+        usableCapacity = capacity - emptyPageCount;
         this.endPage = endPage;
         this.untilAddress = untilAddress;
         this.checkpointType = checkpointType;

@@ -12,7 +12,7 @@ namespace Garnet.Server;
 /// </summary>
 public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
 {
-    static void CopyTo(ref SpanByte src, ref SpanByteAndMemory dst, MemoryPool<byte> memoryPool)
+    private static void CopyTo(ref SpanByte src, ref SpanByteAndMemory dst, MemoryPool<byte> memoryPool)
     {
         int srcLength = src.LengthWithoutMetadata;
 
@@ -32,7 +32,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         src.AsReadOnlySpan().CopyTo(dst.Memory.Memory.Span);
     }
 
-    void CopyRespTo(ref SpanByte src, ref SpanByteAndMemory dst, int start = 0, int end = -1)
+    private void CopyRespTo(ref SpanByte src, ref SpanByteAndMemory dst, int start = 0, int end = -1)
     {
         int srcLength = end == -1 ? src.LengthWithoutMetadata : ((start < end) ? (end - start) : 0);
         if (srcLength == 0)
@@ -80,7 +80,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
     }
 
-    void CopyRespToWithInput(ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory dst)
+    private void CopyRespToWithInput(ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory dst)
     {
         byte* inputPtr = input.ToPointer();
         switch ((RespCommand)(*inputPtr))
@@ -203,7 +203,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
     }
 
-    bool EvaluateExpireInPlace(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory output)
+    private bool EvaluateExpireInPlace(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory output)
     {
         ObjectOutputHeader* o = (ObjectOutputHeader*)output.SpanByte.ToPointer();
         if (expiryExists)
@@ -257,7 +257,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
     }
 
-    void EvaluateExpireCopyUpdate(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output)
+    private void EvaluateExpireCopyUpdate(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output)
     {
         ObjectOutputHeader* o = (ObjectOutputHeader*)output.SpanByte.ToPointer();
         if (expiryExists)
@@ -313,7 +313,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
     }
 
-    static (int, int) NormalizeRange(int start, int end, int len)
+    private static (int, int) NormalizeRange(int start, int end, int len)
     {
         if (start >= 0 && start <= len)//start in [0,len]
         {
@@ -338,7 +338,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
     internal static bool CheckExpiry(ref SpanByte src) => src.ExtraMetadata < DateTimeOffset.UtcNow.Ticks;
 
-    static bool InPlaceUpdateNumber(long val, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
+    private static bool InPlaceUpdateNumber(long val, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
         bool fNeg = false;
         int ndigits = NumUtils.NumDigitsInLong(val, ref fNeg);
@@ -356,7 +356,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         return true;
     }
 
-    static bool TryInPlaceUpdateNumber(ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo, long input)
+    private static bool TryInPlaceUpdateNumber(ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo, long input)
     {
         // Check if value contains a valid number
         if (!IsValidNumber(value.LengthWithoutMetadata, value.ToPointer(), output.SpanByte.AsSpan(), out long val))
@@ -375,7 +375,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         return InPlaceUpdateNumber(val, ref value, ref output, ref rmwInfo, ref recordInfo);
     }
 
-    static void CopyUpdateNumber(long next, ref SpanByte newValue, ref SpanByteAndMemory output)
+    private static void CopyUpdateNumber(long next, ref SpanByte newValue, ref SpanByteAndMemory output)
     {
         NumUtils.LongToSpanByte(next, newValue.AsSpan());
         newValue.AsReadOnlySpan().CopyTo(output.SpanByte.AsSpan());
@@ -389,7 +389,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <param name="newValue">New value copying to</param>
     /// <param name="output">Output value</param>
     /// <param name="input">Parsed input value</param>
-    static void TryCopyUpdateNumber(ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output, long input)
+    private static void TryCopyUpdateNumber(ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output, long input)
     {
         newValue.ExtraMetadata = oldValue.ExtraMetadata;
 
@@ -425,7 +425,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <param name="output">Output error flag</param>
     /// <param name="val">Parsed long value</param>
     /// <returns>True if input contained only ASCII decimal characters, otherwise false</returns>
-    static bool IsValidNumber(int length, byte* source, Span<byte> output, out long val)
+    private static bool IsValidNumber(int length, byte* source, Span<byte> output, out long val)
     {
         val = 0;
         try
@@ -447,7 +447,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         return true;
     }
 
-    void CopyDefaultResp(ReadOnlySpan<byte> resp, ref SpanByteAndMemory dst)
+    private void CopyDefaultResp(ReadOnlySpan<byte> resp, ref SpanByteAndMemory dst)
     {
         if (resp.Length < dst.SpanByte.Length)
         {
@@ -462,7 +462,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         resp.CopyTo(dst.Memory.Memory.Span);
     }
 
-    void CopyRespNumber(long number, ref SpanByteAndMemory dst)
+    private void CopyRespNumber(long number, ref SpanByteAndMemory dst)
     {
         byte* curr = dst.SpanByte.ToPointer();
         byte* end = curr + dst.SpanByte.Length;
@@ -489,7 +489,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <summary>
     /// Copy length of value to output (as ASCII bytes)
     /// </summary>
-    static void CopyValueLengthToOutput(ref SpanByte value, ref SpanByteAndMemory output)
+    private static void CopyValueLengthToOutput(ref SpanByte value, ref SpanByteAndMemory output)
     {
         int numDigits = NumUtils.NumDigits(value.LengthWithoutMetadata);
         byte* outputPtr = output.SpanByte.ToPointer();
@@ -502,7 +502,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// a. ConcurrentWriter
     /// b. PostSingleWriter
     /// </summary>
-    void WriteLogUpsert(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
+    private void WriteLogUpsert(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
 
@@ -521,7 +521,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// b. InPlaceUpdater
     /// c. PostCopyUpdater
     /// </summary>
-    void WriteLogRMW(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
+    private void WriteLogRMW(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
 
@@ -535,7 +535,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     ///  a. ConcurrentDeleter
     ///  b. PostSingleDeleter
     /// </summary>
-    void WriteLogDelete(ref SpanByte key, long version, int sessionID)
+    private void WriteLogDelete(ref SpanByte key, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
         SpanByte def = default;

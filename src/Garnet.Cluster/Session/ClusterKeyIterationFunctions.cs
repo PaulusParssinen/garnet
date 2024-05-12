@@ -14,7 +14,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         internal struct MainStoreCountKeys : IScanIteratorFunctions<SpanByte, SpanByte>
         {
             internal int keyCount;
-            readonly int slot;
+            private readonly int slot;
 
             internal MainStoreCountKeys(int slot) => this.slot = slot;
 
@@ -35,7 +35,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         internal struct ObjectStoreCountKeys : IScanIteratorFunctions<byte[], IGarnetObject>
         {
             internal int keyCount;
-            readonly int slot;
+            private readonly int slot;
 
             internal ObjectStoreCountKeys(int slot) => this.slot = slot;
 
@@ -58,8 +58,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
         internal readonly struct MainStoreGetKeysInSlot : IScanIteratorFunctions<SpanByte, SpanByte>
         {
-            readonly List<byte[]> keys;
-            readonly int slot, maxKeyCount;
+            private readonly List<byte[]> keys;
+            private readonly int slot, maxKeyCount;
 
             internal MainStoreGetKeysInSlot(List<byte[]> keys, int slot, int maxKeyCount)
             {
@@ -84,8 +84,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
         internal readonly struct ObjectStoreGetKeysInSlot : IScanIteratorFunctions<byte[], IGarnetObject>
         {
-            readonly List<byte[]> keys;
-            readonly int slot;
+            private readonly List<byte[]> keys;
+            private readonly int slot;
 
             internal ObjectStoreGetKeysInSlot(List<byte[]> keys, int slot)
             {

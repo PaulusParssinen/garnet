@@ -10,10 +10,9 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespAofTests
 {
-    GarnetServer server;
+    private GarnetServer server;
     private IReadOnlyDictionary<string, RespCommandsInfo> respCustomCommandsInfo;
-
-    static readonly SortedSetEntry[] entries =
+    private static readonly SortedSetEntry[] entries =
     [
         new SortedSetEntry("a", 1),
         new SortedSetEntry("b", 2),

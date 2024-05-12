@@ -118,7 +118,7 @@ public partial class TsavoriteKV<Key, Value>
             MakeTransitionWorker(intermediate, nextState);
     }
 
-    void MakeTransitionWorker(SystemState intermediate, SystemState nextState)
+    private void MakeTransitionWorker(SystemState intermediate, SystemState nextState)
     {
         // Execute custom task logic
         currentSyncStateMachine.GlobalBeforeEnteringState(nextState, this);

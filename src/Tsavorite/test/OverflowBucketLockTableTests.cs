@@ -18,8 +18,8 @@ public enum UseSingleBucketComparer { UseSingleBucket }
 [TestFixture]
 internal class OverflowBucketLockTableTests
 {
-    ITsavoriteEqualityComparer<long> comparer = new LongTsavoriteEqualityComparer();
-    long SingleBucketKey = 1;   // We use a single bucket here for most tests so this lets us use 'ref' easily
+    private ITsavoriteEqualityComparer<long> comparer = new LongTsavoriteEqualityComparer();
+    private long SingleBucketKey = 1;   // We use a single bucket here for most tests so this lets us use 'ref' easily
 
     // For OverflowBucketLockTable, we need an instance of TsavoriteKV
     private TsavoriteKV<long, long> store;
@@ -57,7 +57,7 @@ internal class OverflowBucketLockTableTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void TryLock(long key, LockType lockType, bool transient, int expectedCurrentReadLocks, bool expectedLockResult)
+    private void TryLock(long key, LockType lockType, bool transient, int expectedCurrentReadLocks, bool expectedLockResult)
     {
         HashEntryInfo hei = new(comparer.GetHashCode64(ref key));
         PopulateHei(ref hei);
@@ -72,7 +72,7 @@ internal class OverflowBucketLockTableTests
             Assert.AreEqual(expectedLockResult, store.LockTable.TryLockManual(ref key, ref hei, lockType));
     }
 
-    void Unlock(long key, LockType lockType)
+    private void Unlock(long key, LockType lockType)
     {
         HashEntryInfo hei = new(comparer.GetHashCode64(ref key));
         PopulateHei(ref hei);
@@ -268,7 +268,7 @@ internal class OverflowBucketLockTableTests
         AssertTotalLockCounts(0, 0);
     }
 
-    FixedLengthLockableKeyStruct<long>[] CreateKeys(Random rng, int numKeys, int numRecords)
+    private FixedLengthLockableKeyStruct<long>[] CreateKeys(Random rng, int numKeys, int numRecords)
     {
         FixedLengthLockableKeyStruct<long> createKey()
         {
@@ -285,7 +285,7 @@ internal class OverflowBucketLockTableTests
         return Enumerable.Range(0, numRecords).Select(ii => createKey()).ToArray();
     }
 
-    void AssertSorted(FixedLengthLockableKeyStruct<long>[] keys, int count)
+    private void AssertSorted(FixedLengthLockableKeyStruct<long>[] keys, int count)
     {
         long prevCode = default;
         long lastXcode = default;
@@ -350,8 +350,8 @@ internal class OverflowBucketLockTableTests
             keys[ii].KeyHash = -ii;
     }
 
-    const int NumTestIterations = 15;
-    const int maxSleepMs = 5;
+    private const int NumTestIterations = 15;
+    private const int maxSleepMs = 5;
 
     private void AddThreads(List<Task> tasks, ref int lastTid, int numThreads, int maxNumKeys, int lowKey, int highKey, LockType lockType)
     {

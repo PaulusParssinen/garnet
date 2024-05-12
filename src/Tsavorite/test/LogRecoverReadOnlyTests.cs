@@ -9,14 +9,13 @@ namespace Tsavorite.Tests.recovery;
 [TestFixture]
 public class LogRecoverReadOnlyTests
 {
-    const int ProducerPauseMs = 1;
-    const int CommitPeriodMs = 20;
-    const int RestorePeriodMs = 5;
-    const int NumElements = 100;
-
-    string deviceName;
-    CancellationTokenSource cts;
-    SemaphoreSlim done;
+    private const int ProducerPauseMs = 1;
+    private const int CommitPeriodMs = 20;
+    private const int RestorePeriodMs = 5;
+    private const int NumElements = 100;
+    private string deviceName;
+    private CancellationTokenSource cts;
+    private SemaphoreSlim done;
 
     [SetUp]
     public void Setup()

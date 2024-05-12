@@ -9,12 +9,11 @@ namespace Garnet.Cluster;
 
 internal class GarnetClusterConnectionStore
 {
-    readonly ILogger logger;
-    GarnetServerNode[] connections;
-    int numConnection;
-    bool _disposed;
-
-    SingleWriterMultiReaderLock _lock;
+    private readonly ILogger logger;
+    private GarnetServerNode[] connections;
+    private int numConnection;
+    private bool _disposed;
+    private SingleWriterMultiReaderLock _lock;
 
     public int Count => numConnection;
 

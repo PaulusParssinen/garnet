@@ -9,11 +9,11 @@ namespace Garnet.Server;
 /// <summary>
 /// Storage Session - the internal layer that Garnet uses to perform storage operations
 /// </summary>
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
-    int bitmapBufferSize = 1 << 15;
-    SectorAlignedMemory sectorAlignedMemoryBitmap;
-    readonly long HeadAddress;
+    private int bitmapBufferSize = 1 << 15;
+    private SectorAlignedMemory sectorAlignedMemoryBitmap;
+    private readonly long HeadAddress;
 
     /// <summary>
     /// Session for main store
@@ -22,10 +22,9 @@ sealed partial class StorageSession : IDisposable
 
     public BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> basicContext;
     public LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext;
-
-    SectorAlignedMemory sectorAlignedMemoryHll;
-    readonly int hllBufferSize = HyperLogLog.DefaultHLL.DenseBytes;
-    readonly int sectorAlignedMemoryPoolAlignment = 32;
+    private SectorAlignedMemory sectorAlignedMemoryHll;
+    private readonly int hllBufferSize = HyperLogLog.DefaultHLL.DenseBytes;
+    private readonly int sectorAlignedMemoryPoolAlignment = 32;
 
     /// <summary>
     /// Session for object store
@@ -39,7 +38,7 @@ sealed partial class StorageSession : IDisposable
     public readonly FunctionsState functionsState;
 
     public TransactionManager txnManager;
-    readonly ILogger logger;
+    private readonly ILogger logger;
 
     public int SessionID => session.ID;
     public int ObjectStoreSessionID => objectStoreSession.ID;

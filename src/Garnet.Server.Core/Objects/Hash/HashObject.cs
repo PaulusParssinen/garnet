@@ -38,7 +38,7 @@ public enum HashOperation : byte
 /// </summary>
 public unsafe partial class HashObject : GarnetObjectBase
 {
-    readonly Dictionary<byte[], byte[]> hash;
+    private readonly Dictionary<byte[], byte[]> hash;
 
     /// <summary>
     ///  Constructor
@@ -64,7 +64,7 @@ public unsafe partial class HashObject : GarnetObjectBase
             byte[] value = reader.ReadBytes(reader.ReadInt32());
             hash.Add(item, value);
 
-            this.UpdateSize(item, value);
+            UpdateSize(item, value);
         }
     }
 
@@ -119,7 +119,7 @@ public unsafe partial class HashObject : GarnetObjectBase
                 return true;
             }
 
-            long previousSize = this.Size;
+            long previousSize = Size;
             switch (header->HashOp)
             {
                 case HashOperation.HSET:
@@ -178,7 +178,7 @@ public unsafe partial class HashObject : GarnetObjectBase
                     throw new GarnetException($"Unsupported operation {(HashOperation)_input[0]} in HashObject.Operate");
             }
 
-            sizeChange = this.Size - previousSize;
+            sizeChange = Size - previousSize;
         }
         return true;
     }
@@ -187,8 +187,8 @@ public unsafe partial class HashObject : GarnetObjectBase
     {
         int size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
             + (2 * MemoryUtils.ByteArrayOverhead) + MemoryUtils.DictionaryEntryOverhead;
-        this.Size += add ? size : -size;
-        Debug.Assert(this.Size >= MemoryUtils.DictionaryOverhead);
+        Size += add ? size : -size;
+        Debug.Assert(Size >= MemoryUtils.DictionaryOverhead);
     }
 
     /// <inheritdoc />

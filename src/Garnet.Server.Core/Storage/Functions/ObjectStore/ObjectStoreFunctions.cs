@@ -10,7 +10,7 @@ namespace Garnet.Server;
 /// </summary>
 public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
 {
-    readonly FunctionsState functionsState;
+    private readonly FunctionsState functionsState;
 
     /// <summary>
     /// Constructor

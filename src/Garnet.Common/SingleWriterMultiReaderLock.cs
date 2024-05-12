@@ -14,7 +14,7 @@ namespace Garnet.Common;
 public struct SingleWriterMultiReaderLock
 {
     [FieldOffset(0)]
-    int _lock;
+    private int _lock;
 
     /// <summary>
     /// Check if write locked

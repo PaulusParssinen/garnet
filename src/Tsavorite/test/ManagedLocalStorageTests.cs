@@ -12,7 +12,7 @@ internal class ManageLocalStorageTests
     private IDevice device;
     private TsavoriteLog logFullParams;
     private IDevice deviceFullParams;
-    static readonly byte[] entry = new byte[100];
+    private static readonly byte[] entry = new byte[100];
 
     [SetUp]
     public void Setup()

@@ -9,20 +9,20 @@ namespace Tsavorite.Tests.Expiration;
 [TestFixture]
 internal class ExpirationTests
 {
-    const int StackAllocMax = 12;
-    const int NumRecs = 5000;
-    const int RandSeed = 100;
-    const int ModifyKey = NumRecs / 2 + 3;
-    const int NoValue = -1;
-    const int NoKey = -100;
-    const int SetIncrement = 1000000;
-    const int MinValueLen = 2 * sizeof(int); // SpanByte Length plus at least one int element
+    private const int StackAllocMax = 12;
+    private const int NumRecs = 5000;
+    private const int RandSeed = 100;
+    private const int ModifyKey = NumRecs / 2 + 3;
+    private const int NoValue = -1;
+    private const int NoKey = -100;
+    private const int SetIncrement = 1000000;
+    private const int MinValueLen = 2 * sizeof(int); // SpanByte Length plus at least one int element
 
-    static int TestValue => GetValue(ModifyKey);
+    private static int TestValue => GetValue(ModifyKey);
 
-    static int GetRandomLength(Random rng) => rng.Next(StackAllocMax) + 1;    // +1 for 0 to StackAllocMax inclusive
+    private static int GetRandomLength(Random rng) => rng.Next(StackAllocMax) + 1;    // +1 for 0 to StackAllocMax inclusive
 
-    static int GetValue(int key) => key + NumRecs * 10;
+    private static int GetValue(int key) => key + NumRecs * 10;
 
     [Flags]
     internal enum Funcs
@@ -158,7 +158,7 @@ internal class ExpirationTests
                 Assert.AreEqual(key, valueSpan[j]);
         }
 
-        static bool IsExpired(int key, int value) => value == GetValue(key) + 2;
+        private static bool IsExpired(int key, int value) => value == GetValue(key) + 2;
 
         public override unsafe bool NeedInitialUpdate(ref SpanByte key, ref ExpirationInput input, ref ExpirationOutput output, ref RMWInfo rmwInfo)
         {
@@ -508,10 +508,10 @@ internal class ExpirationTests
             => SpanByteFunctions<Empty>.DoSafeCopy(ref src, ref dst, ref upsertInfo, ref recordInfo);
     }
 
-    IDevice log;
-    ExpirationFunctions functions;
-    TsavoriteKV<SpanByte, SpanByte> store;
-    ClientSession<SpanByte, SpanByte, ExpirationInput, ExpirationOutput, Empty, ExpirationFunctions> session;
+    private IDevice log;
+    private ExpirationFunctions functions;
+    private TsavoriteKV<SpanByte, SpanByte> store;
+    private ClientSession<SpanByte, SpanByte, ExpirationInput, ExpirationOutput, Empty, ExpirationFunctions> session;
 
     [SetUp]
     public void Setup()
@@ -607,7 +607,7 @@ internal class ExpirationTests
         return new(flushMode == FlushMode.NoFlush ? StatusCode.InPlaceUpdatedRecord : StatusCode.Found);
     }
 
-    void InitialIncrement()
+    private void InitialIncrement()
     {
         Populate(new Random(RandSeed));
         InitialRead(FlushMode.NoFlush, afterIncrement: false);

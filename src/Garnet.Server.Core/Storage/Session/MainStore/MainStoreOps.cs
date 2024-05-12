@@ -8,7 +8,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     public GarnetStatus GET<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>

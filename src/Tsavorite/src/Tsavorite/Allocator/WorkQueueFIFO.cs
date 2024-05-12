@@ -10,9 +10,9 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class WorkQueueFIFO<T> : IDisposable
 {
-    const int kMaxQueueSize = 1 << 30;
-    readonly ConcurrentQueue<T> _queue;
-    readonly Action<T> _work;
+    private const int kMaxQueueSize = 1 << 30;
+    private readonly ConcurrentQueue<T> _queue;
+    private readonly Action<T> _work;
     private int _count;
     private bool _disposed;
 

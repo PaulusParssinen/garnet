@@ -7,7 +7,7 @@ using Garnet.Common;
 
 namespace Garnet.Server;
 
-class GarnetInfoMetrics
+internal class GarnetInfoMetrics
 {
     public static readonly InfoMetricsType[] defaultInfo = Enum.GetValues<InfoMetricsType>()
         .Where(e => e switch
@@ -19,21 +19,20 @@ class GarnetInfoMetrics
             _ => true
         })
         .ToArray();
-
-    MetricsItem[] serverInfo = null;
-    MetricsItem[] memoryInfo = null;
-    MetricsItem[] clusterInfo = null;
-    MetricsItem[] replicationInfo = null;
-    MetricsItem[] statsInfo = null;
-    MetricsItem[] storeInfo = null;
-    MetricsItem[] objectStoreInfo = null;
-    MetricsItem[] storeHashDistrInfo = null;
-    MetricsItem[] objectStoreHashDistrInfo = null;
-    MetricsItem[] storeRevivInfo = null;
-    MetricsItem[] objectStoreRevivInfo = null;
-    MetricsItem[] persistenceInfo = null;
-    MetricsItem[] clientsInfo = null;
-    MetricsItem[] keyspaceInfo = null;
+    private MetricsItem[] serverInfo = null;
+    private MetricsItem[] memoryInfo = null;
+    private MetricsItem[] clusterInfo = null;
+    private MetricsItem[] replicationInfo = null;
+    private MetricsItem[] statsInfo = null;
+    private MetricsItem[] storeInfo = null;
+    private MetricsItem[] objectStoreInfo = null;
+    private MetricsItem[] storeHashDistrInfo = null;
+    private MetricsItem[] objectStoreHashDistrInfo = null;
+    private MetricsItem[] storeRevivInfo = null;
+    private MetricsItem[] objectStoreRevivInfo = null;
+    private MetricsItem[] persistenceInfo = null;
+    private MetricsItem[] clientsInfo = null;
+    private MetricsItem[] keyspaceInfo = null;
 
     public GarnetInfoMetrics() { }
 
@@ -147,26 +146,26 @@ class GarnetInfoMetrics
         bool clusterEnabled = storeWrapper.serverOptions.EnableCluster;
         bool metricsDisabled = storeWrapper.monitor == null;
         GarnetServerMetrics globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
-        double tt = metricsDisabled ? 0 : (double)(globalMetrics.globalSessionMetrics.get_total_found() + globalMetrics.globalSessionMetrics.get_total_notfound());
-        double garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? (double)globalMetrics.globalSessionMetrics.get_total_found() / tt : 0) * 100;
+        double tt = metricsDisabled ? 0 : (double)(globalMetrics.GlobalSessionMetrics.get_total_found() + globalMetrics.GlobalSessionMetrics.get_total_notfound());
+        double garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? (double)globalMetrics.GlobalSessionMetrics.get_total_found() / tt : 0) * 100;
         statsInfo =
             [
-                new("total_connections_active", metricsDisabled ? "0" : globalMetrics.total_connections_received.ToString()),
-                new("total_connections_disposed", metricsDisabled ? "0" : globalMetrics.total_connections_disposed.ToString()),
-                new("total_commands_processed", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_commands_processed().ToString()),
-                new("instantaneous_ops_per_sec", metricsDisabled ? "0" : globalMetrics.instantaneous_cmd_per_sec.ToString()),
-                new("total_net_input_bytes", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_net_input_bytes().ToString()),
-                new("total_net_output_bytes", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_net_output_bytes().ToString()),
-                new("instantaneous_net_input_KBps", metricsDisabled ? "0" : globalMetrics.instantaneous_net_input_tpt.ToString()),
-                new("instantaneous_net_output_KBps", metricsDisabled ? "0" : globalMetrics.instantaneous_net_output_tpt.ToString()),
-                new("total_pending", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_pending().ToString()),
-                new("total_found", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_found().ToString()),
-                new("total_notfound", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_notfound().ToString()),
+                new("total_connections_active", metricsDisabled ? "0" : globalMetrics.TotalConnectionsReceived.ToString()),
+                new("total_connections_disposed", metricsDisabled ? "0" : globalMetrics.TotalConnectionsDisposed.ToString()),
+                new("total_commands_processed", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_commands_processed().ToString()),
+                new("instantaneous_ops_per_sec", metricsDisabled ? "0" : globalMetrics.Instantaneous_cmd_per_sec.ToString()),
+                new("total_net_input_bytes", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_net_input_bytes().ToString()),
+                new("total_net_output_bytes", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_net_output_bytes().ToString()),
+                new("instantaneous_net_input_KBps", metricsDisabled ? "0" : globalMetrics.Instantaneous_net_input_tpt.ToString()),
+                new("instantaneous_net_output_KBps", metricsDisabled ? "0" : globalMetrics.Instantaneous_net_output_tpt.ToString()),
+                new("total_pending", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_pending().ToString()),
+                new("total_found", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_found().ToString()),
+                new("total_notfound", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_notfound().ToString()),
                 new("garnet_hit_rate", garnet_hit_rate.ToString("N2", CultureInfo.InvariantCulture)),
-                new("total_cluster_commands_processed", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_cluster_commands_processed().ToString()),
-                new("total_write_commands_processed", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_write_commands_processed().ToString()),
-                new("total_read_commands_processed", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_read_commands_processed().ToString()),
-                new("total_number_resp_server_session_exceptions", metricsDisabled ? "0" : globalMetrics.globalSessionMetrics.get_total_number_resp_server_session_exceptions().ToString())
+                new("total_cluster_commands_processed", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_cluster_commands_processed().ToString()),
+                new("total_write_commands_processed", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_write_commands_processed().ToString()),
+                new("total_read_commands_processed", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_read_commands_processed().ToString()),
+                new("total_number_resp_server_session_exceptions", metricsDisabled ? "0" : globalMetrics.GlobalSessionMetrics.get_total_number_resp_server_session_exceptions().ToString())
             ];
 
         if (clusterEnabled)
@@ -247,7 +246,7 @@ class GarnetInfoMetrics
     {
         bool metricsDisabled = storeWrapper.monitor == null;
         GarnetServerMetrics globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
-        clientsInfo = [new("connected_clients", metricsDisabled ? "0" : (globalMetrics.total_connections_received - globalMetrics.total_connections_disposed).ToString())];
+        clientsInfo = [new("connected_clients", metricsDisabled ? "0" : (globalMetrics.TotalConnectionsReceived - globalMetrics.TotalConnectionsDisposed).ToString())];
     }
 
     private void PopulateKeyspaceInfo(StoreWrapper storeWrapper)

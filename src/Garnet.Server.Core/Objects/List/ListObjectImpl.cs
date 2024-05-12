@@ -25,7 +25,7 @@ public unsafe partial class ListObject : IGarnetObject
         *_output = default;
 
         //indicates partial execution
-        _output->countDone = Int32.MinValue;
+        _output->countDone = int.MinValue;
 
         // get the source string to remove
         if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] item, ref ptr, end))
@@ -39,7 +39,7 @@ public unsafe partial class ListObject : IGarnetObject
         if (count == 0)
         {
             int elements = list.Count;
-            list.Where(i => i.SequenceEqual(item)).ToList().ForEach(i => { list.Remove(i); this.UpdateSize(i, false); });
+            list.Where(i => i.SequenceEqual(item)).ToList().ForEach(i => { list.Remove(i); UpdateSize(i, false); });
             rem_count = elements - list.Count;
         }
         else
@@ -50,7 +50,7 @@ public unsafe partial class ListObject : IGarnetObject
                 if (node != null)
                 {
                     list.Remove(node);
-                    this.UpdateSize(node, false);
+                    UpdateSize(node, false);
                     rem_count++;
                 }
                 else
@@ -97,7 +97,7 @@ public unsafe partial class ListObject : IGarnetObject
             current = list.Nodes().DefaultIfEmpty(null).FirstOrDefault(i => i.Value.SequenceEqual(pivot));
             LinkedListNode<byte[]> newNode = current != default ? (fBefore ? list.AddBefore(current, insertitem) : list.AddAfter(current, insertitem)) : default;
             if (current != null)
-                this.UpdateSize(insertitem);
+                UpdateSize(insertitem);
             _output->opsDone = current != default ? list.Count : -1;
             _output->countDone = _output->opsDone;
         }
@@ -241,7 +241,7 @@ public unsafe partial class ListObject : IGarnetObject
                     {
                         byte[] _value = list.Last.Value;
                         list.RemoveLast();
-                        this.UpdateSize(_value, false);
+                        UpdateSize(_value, false);
                     }
                     _output->opsDone = numDeletes;
                 }
@@ -254,7 +254,7 @@ public unsafe partial class ListObject : IGarnetObject
                         if (!(i >= start && i <= end))
                         {
                             list.Remove(node);
-                            this.UpdateSize(node, false);
+                            UpdateSize(node, false);
                         }
                         i++;
                     }
@@ -284,7 +284,7 @@ public unsafe partial class ListObject : IGarnetObject
         byte* end = input + length;
 
         //this value is used in the validations for partial execution
-        _output->countDone = Int32.MinValue;
+        _output->countDone = int.MinValue;
 
         for (int c = 0; c < count; c++)
         {
@@ -300,7 +300,7 @@ public unsafe partial class ListObject : IGarnetObject
             else
                 list.AddLast(value);
 
-            this.UpdateSize(value);
+            UpdateSize(value);
             _output->countDone = list.Count;
             _output->opsDone++;
             _output->bytesDone = (int)(ptr - startptr);

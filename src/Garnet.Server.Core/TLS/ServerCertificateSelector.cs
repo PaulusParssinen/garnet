@@ -14,51 +14,50 @@ public sealed class ServerCertificateSelector
     /// <summary>
     /// Ssl certificate retry duration in case of failures.
     /// </summary>
-    readonly TimeSpan certificateRefreshRetryInterval = TimeSpan.FromSeconds(5);
+    private readonly TimeSpan certificateRefreshRetryInterval = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Ssl certificate subject name.
     /// </summary>
-    readonly string sslCertificateSubjectName;
+    private readonly string sslCertificateSubjectName;
 
     /// <summary>
     /// Ssl certificate file name.
     /// </summary>
-    readonly string sslCertificateFileName;
+    private readonly string sslCertificateFileName;
 
     /// <summary>
     /// Ssl certificate file password
     /// </summary>
-    readonly string sslCertificatePassword;
-
-    readonly Timer _refreshTimer;
-    readonly ILogger _logger;
+    private readonly string sslCertificatePassword;
+    private readonly Timer _refreshTimer;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Ssl certificate retry duration
     /// </summary>
-    readonly TimeSpan certRefreshFrequency;
+    private readonly TimeSpan certRefreshFrequency;
 
     /// <summary>
     /// Ssl server certificate.
     /// </summary>
-    X509Certificate2 sslServerCertificate;
+    private X509Certificate2 sslServerCertificate;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ServerCertificateSelector"/> class.
     /// </summary>
     public ServerCertificateSelector(string subjectName, int certRefreshFrequencyInSeconds = 0, ILogger logger = null)
     {
-        this._logger = logger;
-        this.sslCertificateSubjectName = subjectName;
+        _logger = logger;
+        sslCertificateSubjectName = subjectName;
 
         // First get certificate synchronously on current call
-        this.certRefreshFrequency = TimeSpan.Zero;
+        certRefreshFrequency = TimeSpan.Zero;
         GetServerCertificate(null);
 
         // Set up future timer, if needed
         // If the sync call failed to fetch certificate, we schedule the first call earlier (after certificateRefreshRetryInterval)
-        this.certRefreshFrequency = TimeSpan.FromSeconds(certRefreshFrequencyInSeconds);
+        certRefreshFrequency = TimeSpan.FromSeconds(certRefreshFrequencyInSeconds);
         if (certRefreshFrequency > TimeSpan.Zero)
             _refreshTimer = new Timer(GetServerCertificate, null, sslServerCertificate == null ? certificateRefreshRetryInterval : certRefreshFrequency, certRefreshFrequency);
     }
@@ -68,17 +67,17 @@ public sealed class ServerCertificateSelector
     /// </summary>changed th
     public ServerCertificateSelector(string fileName, string filePassword, int certRefreshFrequencyInSeconds = 0, ILogger logger = null)
     {
-        this._logger = logger;
-        this.sslCertificateFileName = fileName;
-        this.sslCertificatePassword = filePassword;
+        _logger = logger;
+        sslCertificateFileName = fileName;
+        sslCertificatePassword = filePassword;
 
         // First get certificate synchronously on current call
-        this.certRefreshFrequency = TimeSpan.Zero;
+        certRefreshFrequency = TimeSpan.Zero;
         GetServerCertificate(null);
 
         // Set up future timer, if needed
         // If the sync call failed to fetch certificate, we schedule the first call earlier (after certificateRefreshRetryInterval)
-        this.certRefreshFrequency = TimeSpan.FromSeconds(certRefreshFrequencyInSeconds);
+        certRefreshFrequency = TimeSpan.FromSeconds(certRefreshFrequencyInSeconds);
         if (certRefreshFrequency > TimeSpan.Zero)
             _refreshTimer = new Timer(GetServerCertificate, null, sslServerCertificate == null ? certificateRefreshRetryInterval : certRefreshFrequency, certRefreshFrequency);
     }
@@ -97,31 +96,31 @@ public sealed class ServerCertificateSelector
     /// <returns>The X.509 certificate to use for server authentication.</returns>
     public X509Certificate2 GetSslServerCertificate()
     {
-        return this.sslServerCertificate;
+        return sslServerCertificate;
     }
 
-    void GetServerCertificate(object _)
+    private void GetServerCertificate(object _)
     {
         try
         {
             if (sslCertificateSubjectName != null)
             {
-                this.sslServerCertificate =
+                sslServerCertificate =
                     CertificateUtils.GetMachineCertificateBySubjectName(
-                        this.sslCertificateSubjectName);
+                        sslCertificateSubjectName);
             }
             else
             {
-                this.sslServerCertificate =
+                sslServerCertificate =
                     CertificateUtils.GetMachineCertificateByFile(
-                        this.sslCertificateFileName, this.sslCertificatePassword);
+                        sslCertificateFileName, sslCertificatePassword);
             }
         }
         catch (Exception ex)
         {
             if (certRefreshFrequency > TimeSpan.Zero)
             {
-                this._logger?.LogError(ex, $"Unable to fetch certificate. It will be retried after {certificateRefreshRetryInterval}");
+                _logger?.LogError(ex, $"Unable to fetch certificate. It will be retried after {certificateRefreshRetryInterval}");
                 try
                 {
                     _refreshTimer?.Change(certificateRefreshRetryInterval, certRefreshFrequency);
@@ -134,7 +133,7 @@ public sealed class ServerCertificateSelector
             else
             {
                 // This is not a background timer based call
-                this._logger?.LogError(ex, "Unable to fetch certificate using the provided filename and password. Make sure you specify a correct CertFileName and CertPassword.");
+                _logger?.LogError(ex, "Unable to fetch certificate using the provided filename and password. Make sure you specify a correct CertFileName and CertPassword.");
             }
         }
     }

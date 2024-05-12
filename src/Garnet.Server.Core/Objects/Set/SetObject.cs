@@ -35,7 +35,7 @@ public enum SetOperation : byte
 /// </summary>
 public unsafe partial class SetObject : GarnetObjectBase
 {
-    readonly HashSet<byte[]> set;
+    private readonly HashSet<byte[]> set;
 
     /// <summary>
     ///  Constructor
@@ -60,7 +60,7 @@ public unsafe partial class SetObject : GarnetObjectBase
             byte[] item = reader.ReadBytes(reader.ReadInt32());
             set.Add(item);
 
-            this.UpdateSize(item);
+            UpdateSize(item);
         }
     }
 
@@ -106,7 +106,7 @@ public unsafe partial class SetObject : GarnetObjectBase
         {
             var header = (RespInputHeader*)_input;
             Debug.Assert(header->type == GarnetObjectType.Set);
-            long prevSize = this.Size;
+            long prevSize = Size;
             switch (header->SetOp)
             {
                 case SetOperation.SADD:
@@ -140,7 +140,7 @@ public unsafe partial class SetObject : GarnetObjectBase
                 default:
                     throw new GarnetException($"Unsupported operation {(SetOperation)_input[0]} in SetObject.Operate");
             }
-            sizeChange = this.Size - prevSize;
+            sizeChange = Size - prevSize;
         }
         return true;
     }
@@ -148,8 +148,8 @@ public unsafe partial class SetObject : GarnetObjectBase
     internal void UpdateSize(byte[] item, bool add = true)
     {
         int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.HashSetEntryOverhead;
-        this.Size += add ? size : -size;
-        Debug.Assert(this.Size >= MemoryUtils.HashSetOverhead);
+        Size += add ? size : -size;
+        Debug.Assert(Size >= MemoryUtils.HashSetOverhead);
     }
 
     /// <inheritdoc />

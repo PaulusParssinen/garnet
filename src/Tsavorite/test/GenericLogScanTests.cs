@@ -11,13 +11,12 @@ internal class GenericLogScanTests
 {
     private TsavoriteKV<MyKey, MyValue> store;
     private IDevice log, objlog;
-    const int totalRecords = 250;
-
-    ITsavoriteEqualityComparer<MyKey> comparer = null;
+    private const int totalRecords = 250;
+    private ITsavoriteEqualityComparer<MyKey> comparer = null;
 
     public class MyObjectComparerModulo : ITsavoriteEqualityComparer<MyKey>
     {
-        readonly long mod;
+        private readonly long mod;
 
         internal MyObjectComparerModulo(long mod) => this.mod = mod;
 
@@ -134,9 +133,9 @@ internal class GenericLogScanTests
         scanAndVerify(ScanBufferingMode.DoublePageBuffering);
     }
 
-    class LogObserver : IObserver<ITsavoriteScanIterator<MyKey, MyValue>>
+    private class LogObserver : IObserver<ITsavoriteScanIterator<MyKey, MyValue>>
     {
-        int val = 0;
+        private int val = 0;
 
         public void OnCompleted()
         {

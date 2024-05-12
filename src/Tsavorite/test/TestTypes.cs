@@ -261,7 +261,7 @@ public class FunctionsCopyOnWrite : FunctionsBase<KeyStruct, ValueStruct, InputS
     }
 }
 
-class RMWSimpleFunctions<Key, Value> : SimpleFunctions<Key, Value>
+internal class RMWSimpleFunctions<Key, Value> : SimpleFunctions<Key, Value>
 {
     public RMWSimpleFunctions(Func<Value, Value, Value> merger) : base(merger) { }
 

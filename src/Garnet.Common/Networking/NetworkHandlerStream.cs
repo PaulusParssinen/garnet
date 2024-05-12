@@ -12,8 +12,8 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender>
 {
     private sealed class NetworkHandlerStream : Stream
     {
-        readonly NetworkHandler<TServerHook, TNetworkSender> garnetNetworkHandler;
-        readonly ILogger logger;
+        private readonly NetworkHandler<TServerHook, TNetworkSender> garnetNetworkHandler;
+        private readonly ILogger logger;
 
         public NetworkHandlerStream(NetworkHandler<TServerHook, TNetworkSender> garnetNetworkHandler, ILogger logger = null)
         {

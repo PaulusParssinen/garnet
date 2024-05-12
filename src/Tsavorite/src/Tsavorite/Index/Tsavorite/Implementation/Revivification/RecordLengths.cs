@@ -127,7 +127,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             : GetRecordLengths(physicalAddress, ref hlog.GetValue(physicalAddress), ref recordInfo).fullRecordLength;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static void ClearExtraValueSpace(ref RecordInfo recordInfo, ref Value recordValue, int usedValueLength, int fullValueLength)
+    private static void ClearExtraValueSpace(ref RecordInfo recordInfo, ref Value recordValue, int usedValueLength, int fullValueLength)
     {
         // SpanByte's implementation of GetAndInitializeValue does not clear the space after usedValueLength. This may be
         // considerably less than the previous value length, so we clear it here before DisposeForRevivification. This space
@@ -143,7 +143,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     // Do not try to inline this; it causes TryAllocateRecord to bloat and slow
-    bool TryTakeFreeRecord<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, int requiredSize, ref int allocatedSize, int newKeySize, long minRevivAddress,
+    private bool TryTakeFreeRecord<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, int requiredSize, ref int allocatedSize, int newKeySize, long minRevivAddress,
                 out long logicalAddress, out long physicalAddress)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {

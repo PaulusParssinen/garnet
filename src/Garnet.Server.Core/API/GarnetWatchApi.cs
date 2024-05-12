@@ -9,10 +9,10 @@ namespace Garnet.Server;
 /// <summary>
 /// Garnet API implementation for watch purposes
 /// </summary>
-struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
+internal struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     where TGarnetApi : IGarnetReadApi, IGarnetWatchApi
 {
-    TGarnetApi garnetApi;
+    private TGarnetApi garnetApi;
 
     public GarnetWatchApi(TGarnetApi garnetApi)
     {

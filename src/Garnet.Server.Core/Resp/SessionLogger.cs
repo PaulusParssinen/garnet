@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Garnet.Server;
 
-class SessionLogger : ILogger
+internal class SessionLogger : ILogger
 {
     private readonly ILogger _logger;
     private readonly string _sessionIdPrefix;

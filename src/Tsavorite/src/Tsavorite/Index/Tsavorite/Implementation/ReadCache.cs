@@ -81,7 +81,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool ReadCacheNeedToWaitForEviction(ref OperationStackContext<Key, Value> stackCtx)
+    private bool ReadCacheNeedToWaitForEviction(ref OperationStackContext<Key, Value> stackCtx)
     {
         if (stackCtx.recSrc.LatestLogicalAddress < readcache.HeadAddress)
         {
@@ -292,7 +292,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ReadCacheAbandonRecord(long physicalAddress)
+    private void ReadCacheAbandonRecord(long physicalAddress)
     {
         // TODO: We currently don't save readcache allocations for retry, but we could
         ref RecordInfo ri = ref readcache.GetInfo(physicalAddress);

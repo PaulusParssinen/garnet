@@ -25,7 +25,7 @@ internal class MemoryLogger : ILogger
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
     {
-        this._memoryLog.Add((logLevel, exception, formatter(state, exception)));
+        _memoryLog.Add((logLevel, exception, formatter(state, exception)));
     }
 
     /// <summary>
@@ -34,11 +34,11 @@ internal class MemoryLogger : ILogger
     /// <param name="dstLogger">The logger to which to flush log entries</param>
     public void FlushLogger(ILogger dstLogger)
     {
-        foreach ((LogLevel, Exception, string) entry in this._memoryLog)
+        foreach ((LogLevel, Exception, string) entry in _memoryLog)
         {
             dstLogger.Log(entry.Item1, entry.Item2, entry.Item3);
         }
-        this._memoryLog.Clear();
+        _memoryLog.Clear();
     }
 }
 
@@ -49,7 +49,7 @@ internal class MemoryLoggerProvider : ILoggerProvider
 {
     private readonly ConcurrentDictionary<string, MemoryLogger> _memoryLoggers = new(StringComparer.OrdinalIgnoreCase);
 
-    public ILogger CreateLogger(string categoryName) => this._memoryLoggers.GetOrAdd(categoryName, _ => new MemoryLogger());
+    public ILogger CreateLogger(string categoryName) => _memoryLoggers.GetOrAdd(categoryName, _ => new MemoryLogger());
 
     public void Dispose()
     {

@@ -20,7 +20,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     /// </summary>
     private struct GeoSearchData
     {
-        public Byte[] Member;
+        public byte[] Member;
         public double Distance;
         public string GeoHashCode;
         public (double, double) Coords;
@@ -107,7 +107,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                             sortedSet.Add((score, member));
                             _output->opsDone++;
 
-                            this.UpdateSize(member);
+                            UpdateSize(member);
                         }
                     }
                     else if (!nx && scoreStored != score)
@@ -226,7 +226,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member2ByteArray, ref input_currptr, input + length))
                 return;
 
-            Byte[] units = "M"u8.ToArray();
+            byte[] units = "M"u8.ToArray();
 
             // Read units
             if (count > 2)

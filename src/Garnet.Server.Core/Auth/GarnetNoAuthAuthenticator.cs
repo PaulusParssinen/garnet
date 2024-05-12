@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Garnet.Server.Auth;
 
-class GarnetNoAuthAuthenticator : IGarnetAuthenticator
+internal class GarnetNoAuthAuthenticator : IGarnetAuthenticator
 {
     public bool IsAuthenticated => true;
 

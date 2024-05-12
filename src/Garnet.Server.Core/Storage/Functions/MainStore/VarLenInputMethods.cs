@@ -18,7 +18,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <param name="source">Pointer to byte array</param>
     /// <param name="val">Parsed long value</param>
     /// <returns>True if input contained only ASCII decimal characters, otherwise false</returns>
-    static bool IsValidNumber(int length, byte* source, out long val)
+    private static bool IsValidNumber(int length, byte* source, out long val)
     {
         val = 0;
         try

@@ -9,10 +9,10 @@ namespace Tsavorite.Tests.async;
 [TestFixture]
 public class SimpleAsyncTests
 {
-    IDevice log;
-    TsavoriteKV<long, long> store;
-    const int numOps = 5000;
-    AdId[] inputArray;
+    private IDevice log;
+    private TsavoriteKV<long, long> store;
+    private const int numOps = 5000;
+    private AdId[] inputArray;
 
     [SetUp]
     public void Setup()

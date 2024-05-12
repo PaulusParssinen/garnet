@@ -15,7 +15,7 @@ internal sealed class GarnetLatencyMetrics
     public static readonly LatencyMetricsType[] defaultLatencyTypes = Enum.GetValues<LatencyMetricsType>();
 
     // Whether each latency type in LatencyMetricsType enum is in ticks or is a directly reported value
-    static readonly bool[] defaultLatencyTypesTicks = new bool[6] { true, true, true, false, false, true };
+    private static readonly bool[] defaultLatencyTypesTicks = new bool[6] { true, true, true, false, false, true };
 
     public LatencyMetricsEntry[] metrics;
 
@@ -24,7 +24,7 @@ internal sealed class GarnetLatencyMetrics
         Init();
     }
 
-    void Init()
+    private void Init()
     {
         Debug.Assert(defaultLatencyTypes.Length == defaultLatencyTypesTicks.Length);
         metrics = new LatencyMetricsEntry[defaultLatencyTypes.Length];

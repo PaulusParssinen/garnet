@@ -8,15 +8,15 @@ namespace Garnet.Cluster;
 
 internal sealed class AofSyncTaskInfo : IBulkLogEntryConsumer, IDisposable
 {
-    readonly ClusterProvider clusterProvider;
-    readonly AofTaskStore aofTaskStore;
-    readonly string localNodeId;
+    private readonly ClusterProvider clusterProvider;
+    private readonly AofTaskStore aofTaskStore;
+    private readonly string localNodeId;
     public readonly string remoteNodeId;
-    readonly ILogger logger;
+    private readonly ILogger logger;
     public readonly GarnetClientSession garnetClient;
-    readonly CancellationTokenSource cts;
-    TsavoriteLogScanIterator iter;
-    readonly long startAddress;
+    private readonly CancellationTokenSource cts;
+    private TsavoriteLogScanIterator iter;
+    private readonly long startAddress;
     public long previousAddress;
 
     public AofSyncTaskInfo(

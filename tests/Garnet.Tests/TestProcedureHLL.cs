@@ -16,7 +16,7 @@ namespace Garnet;
 /// Description: Exercise PFADD PFCOUNT
 /// </summary>
 
-sealed class TestProcedureHLL : CustomTransactionProcedure
+internal sealed class TestProcedureHLL : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

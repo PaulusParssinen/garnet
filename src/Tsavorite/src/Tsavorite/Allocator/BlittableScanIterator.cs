@@ -202,7 +202,7 @@ public sealed class BlittableScanIterator<Key, Value> : ScanIteratorBase, ITsavo
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    long GetPhysicalAddress(long currentAddress, long headAddress, long currentPage, long offset)
+    private long GetPhysicalAddress(long currentAddress, long headAddress, long currentPage, long offset)
     {
         if (currentAddress >= headAddress)
         {

@@ -15,7 +15,7 @@ namespace Garnet;
 /// Description: Exercise SADD SREM SCARD
 /// </summary>
 
-sealed class TestProcedureSet : CustomTransactionProcedure
+internal sealed class TestProcedureSet : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

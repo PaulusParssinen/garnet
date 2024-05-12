@@ -9,7 +9,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
 
     /// <summary>

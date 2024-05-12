@@ -62,7 +62,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
     {
     }
 
-    void _callback(uint errorCode, uint numBytes, NativeOverlapped* pOVERLAP)
+    private void _callback(uint errorCode, uint numBytes, NativeOverlapped* pOVERLAP)
     {
         Interlocked.Decrement(ref numPending);
         var result = (SimpleAsyncResult)Overlapped.Unpack(pOVERLAP).AsyncResult;
@@ -505,7 +505,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
     }
 }
 
-sealed unsafe class SimpleAsyncResult : IAsyncResult
+internal sealed unsafe class SimpleAsyncResult : IAsyncResult
 {
     public DeviceIOCompletionCallback callback;
     public object context;
@@ -522,7 +522,7 @@ sealed unsafe class SimpleAsyncResult : IAsyncResult
 }
 
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-sealed unsafe class LocalStorageDeviceCompletionWorker
+internal sealed unsafe class LocalStorageDeviceCompletionWorker
 {
     public static void Start(IntPtr ioCompletionPort, IOCompletionCallback _callback)
     {

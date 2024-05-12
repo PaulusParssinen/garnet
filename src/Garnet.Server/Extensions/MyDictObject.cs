@@ -8,7 +8,7 @@ using Tsavorite;
 
 namespace Garnet;
 
-class MyDictFactory : CustomObjectFactory
+internal class MyDictFactory : CustomObjectFactory
 {
     public override CustomObjectBase Create(byte type)
         => new MyDict(type);
@@ -17,9 +17,9 @@ class MyDictFactory : CustomObjectFactory
         => new MyDict(type, reader);
 }
 
-class MyDict : CustomObjectBase
+internal class MyDict : CustomObjectBase
 {
-    readonly Dictionary<byte[], byte[]> dict;
+    private readonly Dictionary<byte[], byte[]> dict;
 
     public MyDict(byte type)
         : base(type, 0, MemoryUtils.DictionaryOverhead)
@@ -156,7 +156,7 @@ class MyDict : CustomObjectBase
     {
         int size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
             + (2 * MemoryUtils.ByteArrayOverhead) + MemoryUtils.DictionaryEntryOverhead;
-        this.Size += add ? size : -size;
-        Debug.Assert(this.Size >= MemoryUtils.DictionaryOverhead);
+        Size += add ? size : -size;
+        Debug.Assert(Size >= MemoryUtils.DictionaryOverhead);
     }
 }

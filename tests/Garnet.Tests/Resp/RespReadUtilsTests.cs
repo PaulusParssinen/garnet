@@ -11,7 +11,7 @@ namespace Garnet.Tests.Resp;
 /// <summary>
 /// Tests for RespReadUtils parsing functions.
 /// </summary>
-unsafe class RespReadUtilsTests
+internal unsafe class RespReadUtilsTests
 {
     /// <summary>
     /// Tests that ReadLengthHeader successfully parses valid numbers.

@@ -29,7 +29,7 @@ public sealed class ByteArrayComparer : IEqualityComparer<byte[]>
         }
     }
 
-    static unsafe long HashBytes(byte* pbString, int len)
+    private static unsafe long HashBytes(byte* pbString, int len)
     {
         const long magicno = 40343;
         char* pwString = (char*)pbString;

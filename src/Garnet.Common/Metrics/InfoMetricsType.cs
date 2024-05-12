@@ -73,7 +73,7 @@ public enum InfoMetricsType : byte
 /// </summary>
 public static class InfoCommandUtils
 {
-    static readonly byte[][] infoSections = Enum.GetValues<InfoMetricsType>()
+    private static readonly byte[][] infoSections = Enum.GetValues<InfoMetricsType>()
         .Select(x => Encoding.ASCII.GetBytes($"${x.ToString().Length}\r\n{x}\r\n")).ToArray();
 
     /// <summary>

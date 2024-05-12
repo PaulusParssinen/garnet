@@ -13,12 +13,12 @@ internal class SpanByteLogScanTests
 {
     private TsavoriteKV<SpanByte, SpanByte> store;
     private IDevice log;
-    const int totalRecords = 2000;
-    const int PageSizeBits = 15;
+    private const int totalRecords = 2000;
+    private const int PageSizeBits = 15;
 
-    struct SpanByteComparerModulo : ITsavoriteEqualityComparer<SpanByte>
+    private struct SpanByteComparerModulo : ITsavoriteEqualityComparer<SpanByte>
     {
-        readonly long mod;
+        private readonly long mod;
 
         internal SpanByteComparerModulo(long mod) => this.mod = mod;
 
@@ -262,7 +262,7 @@ internal class SpanByteLogScanTests
 
     internal sealed class ScanCursorFuncs : IScanIteratorFunctions<SpanByte, SpanByte>
     {
-        readonly TsavoriteKV<SpanByte, SpanByte> store;
+        private readonly TsavoriteKV<SpanByte, SpanByte> store;
 
         internal int numRecords;
         internal long lastAddress;
@@ -291,7 +291,7 @@ internal class SpanByteLogScanTests
             this.filter = filter;
         }
 
-        unsafe void CheckForRCU()
+        private unsafe void CheckForRCU()
         {
             if (rcuLocation == RCULocation.RCUBefore && rcuRecord == numRecords + 1
                 || rcuLocation == RCULocation.RCUAfter && rcuRecord == numRecords - 1)

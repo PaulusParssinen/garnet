@@ -99,7 +99,7 @@ internal sealed partial class ReplicationManager : IDisposable
         }
     }
 
-    unsafe int GetFirstAofEntryLength(byte* ptr)
+    private unsafe int GetFirstAofEntryLength(byte* ptr)
     {
         int entryLength = storeWrapper.appendOnlyFile.HeaderSize;
         int payloadLength = storeWrapper.appendOnlyFile.UnsafeGetLength(ptr);

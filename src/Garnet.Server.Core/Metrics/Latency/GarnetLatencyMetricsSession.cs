@@ -11,9 +11,10 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed class GarnetLatencyMetricsSession
 {
-    readonly GarnetServerMonitor monitor;
-    static readonly LatencyMetricsType[] defaultLatencyTypes = Enum.GetValues<LatencyMetricsType>();
-    int Version => (int)(monitor.monitor_iterations % 2);
+    private readonly GarnetServerMonitor monitor;
+    private static readonly LatencyMetricsType[] defaultLatencyTypes = Enum.GetValues<LatencyMetricsType>();
+
+    private int Version => (int)(monitor.monitor_iterations % 2);
     public int PriorVersion => 1 - Version;
     public LatencyMetricsEntrySession[] metrics;
 

@@ -15,9 +15,9 @@ public class BlittableLogCompactionTests
     private TsavoriteKV<KeyStruct, ValueStruct> store;
     private IDevice log;
 
-    struct HashModuloComparer : ITsavoriteEqualityComparer<KeyStruct>
+    private struct HashModuloComparer : ITsavoriteEqualityComparer<KeyStruct>
     {
-        readonly HashModulo modRange;
+        private readonly HashModulo modRange;
 
         internal HashModuloComparer(HashModulo mod) => modRange = mod;
 
@@ -67,7 +67,7 @@ public class BlittableLogCompactionTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void VerifyRead(ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session, int totalRecords, Func<int, bool> isDeleted)
+    private void VerifyRead(ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session, int totalRecords, Func<int, bool> isDeleted)
     {
         InputStruct input = default;
         int numPending = 0;

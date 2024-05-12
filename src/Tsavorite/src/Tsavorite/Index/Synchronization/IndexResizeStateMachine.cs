@@ -8,7 +8,7 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class IndexResizeTask : ISynchronizationTask
 {
-    bool allThreadsInPrepareGrow;
+    private bool allThreadsInPrepareGrow;
 
     /// <inheritdoc />
     public void GlobalBeforeEnteringState<Key, Value>(

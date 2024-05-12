@@ -27,7 +27,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     /// <summary>
     /// Reusable SeaaBuffer
     /// </summary>
-    readonly LightConcurrentStack<GarnetSaeaBuffer> saeaStack;
+    private readonly LightConcurrentStack<GarnetSaeaBuffer> saeaStack;
 
     /// <summary>
     /// Throttle
@@ -43,10 +43,8 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     /// Max concurrent sends (per session) for throttling
     /// </summary>
     protected readonly int ThrottleMax = 8;
-
-    readonly string remoteEndpoint;
-
-    readonly LimitedFixedBufferPool networkPool;
+    private readonly string remoteEndpoint;
+    private readonly LimitedFixedBufferPool networkPool;
 
     /// <summary>
     /// 
@@ -59,9 +57,9 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     {
         this.networkPool = networkPool;
         this.socket = socket;
-        this.saeaStack = new(2 * ThrottleMax);
-        this.responseObject = null;
-        this.ThrottleMax = throttleMax;
+        saeaStack = new(2 * ThrottleMax);
+        responseObject = null;
+        ThrottleMax = throttleMax;
 
         var endpoint = socket.RemoteEndPoint as IPEndPoint;
         if (endpoint != null)
@@ -89,7 +87,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
         }
     }
 
-    static void ThrowDisposed()
+    private static void ThrowDisposed()
         => throw new ObjectDisposedException("GarnetTcpNetworkSender");
 
     /// <inheritdoc />
@@ -103,7 +101,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
         }
     }
 
-    void ReturnBuffer(GarnetSaeaBuffer buffer)
+    private void ReturnBuffer(GarnetSaeaBuffer buffer)
     {
         Debug.Assert(buffer != null);
         if (!saeaStack.TryPush(buffer))

@@ -9,7 +9,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     public unsafe GarnetStatus StringSetBit<TContext>(ArgSlice key, ArgSlice offset, bool bit, out bool previous, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>

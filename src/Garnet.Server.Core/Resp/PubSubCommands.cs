@@ -12,9 +12,9 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed unsafe partial class RespServerSession : ServerSessionBase
 {
-    readonly SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker;
-    bool isSubscriptionSession = false;
-    int numActiveChannels = 0;
+    private readonly SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker;
+    private bool isSubscriptionSession = false;
+    private int numActiveChannels = 0;
 
     /// <inheritdoc />
     public override unsafe void Publish(ref byte* keyPtr, int keyLength, ref byte* valPtr, int valLength, ref byte* inputPtr, int sid)

@@ -10,7 +10,7 @@ namespace Garnet.Common;
 /// Circular buffer
 /// </summary>
 [DataContract]
-sealed class CircularBuffer<T>
+internal sealed class CircularBuffer<T>
 {
     public const int DefaultCapacity = 0xfff;
     [DataMember]
@@ -188,7 +188,7 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// </summary>
     public bool IsEmpty() => (head.Value.IsEmpty() && (head == tail));
 
-    IEnumerable<T> Iterate()
+    private IEnumerable<T> Iterate()
     {
         foreach (CircularBuffer<T> buffer in buffers)
         {

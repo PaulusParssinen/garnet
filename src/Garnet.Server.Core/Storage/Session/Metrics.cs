@@ -5,11 +5,12 @@ using Garnet.Common;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession
+internal sealed partial class StorageSession
 {
     public GarnetLatencyMetricsSession latencyMetrics => LatencyMetrics;
-    readonly GarnetSessionMetrics sessionMetrics;
-    readonly GarnetLatencyMetricsSession LatencyMetrics;
+
+    private readonly GarnetSessionMetrics sessionMetrics;
+    private readonly GarnetLatencyMetricsSession LatencyMetrics;
 
     public void incr_session_found()
         => sessionMetrics?.incr_total_found();

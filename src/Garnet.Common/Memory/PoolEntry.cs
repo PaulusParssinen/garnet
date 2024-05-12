@@ -21,11 +21,10 @@ public unsafe class PoolEntry : IDisposable
     /// Entry pointer
     /// </summary>
     public byte* entryPtr;
-
-    readonly bool useHandlesForPin;
-    GCHandle handle;
-    readonly LimitedFixedBufferPool pool;
-    bool disposed;
+    private readonly bool useHandlesForPin;
+    private GCHandle handle;
+    private readonly LimitedFixedBufferPool pool;
+    private bool disposed;
 
     /// <summary>
     /// Constructor
@@ -35,7 +34,7 @@ public unsafe class PoolEntry : IDisposable
         Debug.Assert(pool != null);
         this.pool = pool;
         this.useHandlesForPin = useHandlesForPin;
-        this.disposed = false;
+        disposed = false;
         if (useHandlesForPin)
         {
             entry = new byte[size];
@@ -70,7 +69,7 @@ public unsafe class PoolEntry : IDisposable
     /// <summary>
     /// Pin
     /// </summary>
-    void Pin()
+    private void Pin()
     {
         if (useHandlesForPin)
         {
@@ -82,7 +81,7 @@ public unsafe class PoolEntry : IDisposable
     /// <summary>
     /// Unpin
     /// </summary>
-    void Unpin()
+    private void Unpin()
     {
         if (useHandlesForPin) handle.Free();
     }

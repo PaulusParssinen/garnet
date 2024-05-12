@@ -11,19 +11,19 @@ namespace Garnet.Cluster;
 
 internal sealed class CheckpointStore
 {
-    readonly StoreWrapper storeWrapper;
-    readonly ClusterProvider clusterProvider;
-    volatile CheckpointEntry head;
-    volatile CheckpointEntry tail;
-    readonly bool safelyRemoveOutdated;
-    readonly ILogger logger;
+    private readonly StoreWrapper storeWrapper;
+    private readonly ClusterProvider clusterProvider;
+    private volatile CheckpointEntry head;
+    private volatile CheckpointEntry tail;
+    private readonly bool safelyRemoveOutdated;
+    private readonly ILogger logger;
 
     public CheckpointStore(StoreWrapper storeWrapper, ClusterProvider clusterProvider, bool safelyRemoveOutdated, ILogger logger = null)
     {
         this.storeWrapper = storeWrapper;
         this.clusterProvider = clusterProvider;
         this.safelyRemoveOutdated = safelyRemoveOutdated;
-        this.head = this.tail = null;
+        head = tail = null;
         this.logger = logger;
 
         if (safelyRemoveOutdated)

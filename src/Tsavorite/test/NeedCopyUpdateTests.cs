@@ -155,9 +155,8 @@ internal class NeedCopyUpdateTestsSinglePage
 {
     private TsavoriteKV<long, long> store;
     private IDevice log;
-
-    const int pageSizeBits = 16;
-    const int recsPerPage = (1 << pageSizeBits) / 24;   // 24 bits in RecordInfo, key, value
+    private const int pageSizeBits = 16;
+    private const int recsPerPage = (1 << pageSizeBits) / 24;   // 24 bits in RecordInfo, key, value
 
     [SetUp]
     public void Setup()

@@ -20,7 +20,7 @@ public static class Extensions
 
     internal sealed class RecordObservable<Key, Value> : IObservable<Record<Key, Value>>
     {
-        readonly IObservable<ITsavoriteScanIterator<Key, Value>> o;
+        private readonly IObservable<ITsavoriteScanIterator<Key, Value>> o;
 
         public RecordObservable(IObservable<ITsavoriteScanIterator<Key, Value>> o)
         {

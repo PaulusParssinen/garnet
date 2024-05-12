@@ -14,21 +14,20 @@ internal sealed unsafe class WatchedKeysContainer
     /// <summary>
     /// Array to keep slice of keys inside keyBuffer
     /// </summary>
-    WatchedKeySlice[] keySlices;
+    private WatchedKeySlice[] keySlices;
 
     /// <summary>
     /// Array to keep slice of keys inside keyBuffer
     /// </summary>
-    readonly WatchVersionMap versionMap;
-
-    readonly int initialWatchBufferSize = 1 << 16;
-    readonly int initialSliceBufferSize;
-    int sliceBufferSize;
-    int watchBufferSize;
-    byte[] watchBuffer;
-    byte* watchBufferPtr;
-    int watchBufferHeadAddress;
-    int sliceCount;
+    private readonly WatchVersionMap versionMap;
+    private readonly int initialWatchBufferSize = 1 << 16;
+    private readonly int initialSliceBufferSize;
+    private int sliceBufferSize;
+    private int watchBufferSize;
+    private byte[] watchBuffer;
+    private byte* watchBufferPtr;
+    private int watchBufferHeadAddress;
+    private int sliceCount;
 
     public WatchedKeysContainer(int size, WatchVersionMap versionMap)
     {

@@ -58,7 +58,7 @@ public abstract class TsavoriteKVProviderBase<Key, Value, Input, Output, Functio
     /// <summary>
     /// Get MaxSizeSettings
     /// </summary>
-    public MaxSizeSettings GetMaxSizeSettings => this.maxSizeSettings;
+    public MaxSizeSettings GetMaxSizeSettings => maxSizeSettings;
 
     /// <summary>
     /// GetFunctions() for custom functions provided by the client

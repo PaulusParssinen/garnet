@@ -8,21 +8,20 @@ namespace Garnet.Cluster;
 
 internal sealed partial class FailoverSession : IDisposable
 {
-    readonly ClusterProvider clusterProvider;
-    readonly TimeSpan clusterTimeout;
-    readonly TimeSpan failoverTimeout;
-    readonly CancellationTokenSource cts;
-    readonly FailoverOption option;
-    readonly ILogger logger;
-
-    readonly GarnetClient[] clients = null;
-    readonly DateTime failoverDeadline;
+    private readonly ClusterProvider clusterProvider;
+    private readonly TimeSpan clusterTimeout;
+    private readonly TimeSpan failoverTimeout;
+    private readonly CancellationTokenSource cts;
+    private readonly FailoverOption option;
+    private readonly ILogger logger;
+    private readonly GarnetClient[] clients = null;
+    private readonly DateTime failoverDeadline;
 
     public FailoverStatus status { get; private set; }
 
     public bool FailoverTimeout => failoverDeadline < DateTime.UtcNow;
 
-    readonly ClusterConfig currentConfig;
+    private readonly ClusterConfig currentConfig;
 
     /// <summary>
     /// FailoverSession constructor

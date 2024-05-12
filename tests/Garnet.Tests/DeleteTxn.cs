@@ -14,7 +14,7 @@ namespace Garnet;
 /// 
 /// Description: Delete key
 /// </summary>
-sealed class DeleteTxn : CustomTransactionProcedure
+internal sealed class DeleteTxn : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

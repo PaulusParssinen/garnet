@@ -13,8 +13,8 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     {
         internal struct MainStoreMigrateSlots : IScanIteratorFunctions<SpanByte, SpanByte>
         {
-            readonly MigrateSession session;
-            readonly HashSet<int> slots;
+            private readonly MigrateSession session;
+            private readonly HashSet<int> slots;
 
             internal MainStoreMigrateSlots(MigrateSession session, HashSet<int> slots)
             {
@@ -40,8 +40,8 @@ internal sealed unsafe partial class MigrateSession : IDisposable
 
         internal struct ObjectStoreMigrateSlots : IScanIteratorFunctions<byte[], IGarnetObject>
         {
-            readonly MigrateSession session;
-            readonly HashSet<int> slots;
+            private readonly MigrateSession session;
+            private readonly HashSet<int> slots;
 
             internal ObjectStoreMigrateSlots(MigrateSession session, HashSet<int> slots)
             {
@@ -71,8 +71,8 @@ internal sealed unsafe partial class MigrateSession : IDisposable
 
         internal readonly struct MainStoreDeleteKeysInSlot : IScanIteratorFunctions<SpanByte, SpanByte>
         {
-            readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
-            readonly HashSet<int> slots;
+            private readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
+            private readonly HashSet<int> slots;
 
             internal MainStoreDeleteKeysInSlot(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, HashSet<int> slots)
             {

@@ -3,7 +3,7 @@
 
 namespace Garnet.Server;
 
-class CustomObjectCommand
+internal class CustomObjectCommand
 {
     public readonly string nameStr;
     public readonly int NumKeys;

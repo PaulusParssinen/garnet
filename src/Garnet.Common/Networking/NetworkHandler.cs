@@ -53,43 +53,42 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// <summary>
     /// Buffer that application reads data from
     /// </summary>
-    PoolEntry transportReceiveBufferEntry;
+    private PoolEntry transportReceiveBufferEntry;
     /// <summary>
     /// Transport receive buffer
     /// </summary>
     protected byte[] transportReceiveBuffer;
-    unsafe byte* transportReceiveBufferPtr;
+    private unsafe byte* transportReceiveBufferPtr;
 
     /// <summary>
     /// Bytes read by application from transport buffer
     /// </summary>
-    int transportBytesRead, transportReadHead;
+    private int transportBytesRead, transportReadHead;
 
     /* Buffer that application writes data to */
-    readonly PoolEntry transportSendBufferEntry;
-    readonly byte[] transportSendBuffer;
-    readonly unsafe byte* transportSendBufferPtr;
+    private readonly PoolEntry transportSendBufferEntry;
+    private readonly byte[] transportSendBuffer;
+    private readonly unsafe byte* transportSendBufferPtr;
 
     /* Wrapper for buffer used to write directly to the network */
-    readonly TNetworkSender networkSender;
-
-    IMessageConsumer session;
+    private readonly TNetworkSender networkSender;
+    private IMessageConsumer session;
 
     /// <inheritdoc />
     public IMessageConsumer Session => session;
 
-    readonly ILogger logger;
+    private readonly ILogger logger;
 
     /* TLS related fields */
-    readonly SslStream sslStream;
-    readonly SemaphoreSlim receivedData;
-    readonly CancellationTokenSource cancellationTokenSource;
+    private readonly SslStream sslStream;
+    private readonly SemaphoreSlim receivedData;
+    private readonly CancellationTokenSource cancellationTokenSource;
 
     // Stream reader status: Rest = 0, Active = 1, Waiting = 2
-    volatile TlsReaderStatus readerStatus;
+    private volatile TlsReaderStatus readerStatus;
 
     // Number of times Dispose has been called
-    int disposeCount;
+    private int disposeCount;
 
     /// <summary>
     /// Constructor
@@ -100,8 +99,8 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         this.logger = logger;
         this.serverHook = serverHook;
         this.networkSender = networkSender;
-        this.session = messageConsumer;
-        this.readerStatus = TlsReaderStatus.Rest;
+        session = messageConsumer;
+        readerStatus = TlsReaderStatus.Rest;
         this.networkPool = networkPool;
 
         if (!useTLS)
@@ -164,7 +163,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// <summary>
     /// Async (background) authentication of TLS as server
     /// </summary>
-    async Task AuthenticateAsServerAsync(SslServerAuthenticationOptions tlsOptions, string remoteEndpointName, CancellationToken token = default)
+    private async Task AuthenticateAsServerAsync(SslServerAuthenticationOptions tlsOptions, string remoteEndpointName, CancellationToken token = default)
     {
         Debug.Assert(readerStatus == TlsReaderStatus.Active);
         try
@@ -225,7 +224,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// <summary>
     /// Authenticate TLS as client, update authState when done
     /// </summary>
-    async Task AuthenticateAsClientAsync(SslClientAuthenticationOptions sslClientOptions, string remoteEndpointName, CancellationToken token)
+    private async Task AuthenticateAsClientAsync(SslClientAuthenticationOptions sslClientOptions, string remoteEndpointName, CancellationToken token)
     {
         Debug.Assert(readerStatus == TlsReaderStatus.Active);
         try
@@ -309,7 +308,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
             ShiftNetworkReceiveBuffer();
     }
 
-    unsafe void Process()
+    private unsafe void Process()
     {
         if (transportBytesRead > 0)
         {
@@ -323,7 +322,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// </summary>
     public INetworkSender GetNetworkSender() => sslStream == null ? networkSender : this;
 
-    unsafe void BeginTransformNetworkToTransport()
+    private unsafe void BeginTransformNetworkToTransport()
     {
         if (sslStream == null)
         {
@@ -338,7 +337,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    void Read()
+    private void Read()
     {
         bool retry = false;
         while (networkBytesRead > networkReadHead || retry)
@@ -370,7 +369,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         readerStatus = TlsReaderStatus.Rest;
     }
 
-    async Task SslReaderAsync(Task<int> readTask, CancellationToken token = default)
+    private async Task SslReaderAsync(Task<int> readTask, CancellationToken token = default)
     {
         try
         {
@@ -409,7 +408,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    async Task SslReaderAsync(CancellationToken token = default)
+    private async Task SslReaderAsync(CancellationToken token = default)
     {
         Debug.Assert(readerStatus == TlsReaderStatus.Active);
 
@@ -453,7 +452,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    unsafe void EndTransformNetworkToTransport()
+    private unsafe void EndTransformNetworkToTransport()
     {
         // With non-TLS logic, network buffer is set back to the transport buffer after processing
         if (sslStream == null)
@@ -462,7 +461,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    unsafe bool TryProcessRequest()
+    private unsafe bool TryProcessRequest()
     {
         transportReadHead += session.TryConsumeMessages(transportReceiveBufferPtr + transportReadHead, transportBytesRead - transportReadHead);
 
@@ -475,7 +474,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         return true;
     }
 
-    unsafe void DoubleNetworkReceiveBuffer()
+    private unsafe void DoubleNetworkReceiveBuffer()
     {
         PoolEntry tmp = networkPool.Get(networkReceiveBuffer.Length * 2);
         Array.Copy(networkReceiveBuffer, tmp.entry, networkReceiveBuffer.Length);
@@ -485,7 +484,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         networkReceiveBufferPtr = tmp.entryPtr;
     }
 
-    unsafe void ShiftNetworkReceiveBuffer()
+    private unsafe void ShiftNetworkReceiveBuffer()
     {
         int bytesLeft = networkBytesRead - networkReadHead;
         if (bytesLeft != networkBytesRead)
@@ -497,7 +496,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    unsafe void DoubleTransportReceiveBuffer()
+    private unsafe void DoubleTransportReceiveBuffer()
     {
         if (sslStream != null)
         {
@@ -510,7 +509,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         }
     }
 
-    unsafe void ShiftTransportReceiveBuffer()
+    private unsafe void ShiftTransportReceiveBuffer()
     {
         // The bytes left in the current buffer not consumed by previous operations
         int bytesLeft = transportBytesRead - transportReadHead;
@@ -601,7 +600,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// <inheritdoc />
     public override void Throttle() { }
 
-    static void LogSecurityInfo(SslStream stream, string remoteEndpointName, ILogger logger = null)
+    private static void LogSecurityInfo(SslStream stream, string remoteEndpointName, ILogger logger = null)
     {
         logger?.LogTrace("[{remoteEndpointName}] Cipher: {CipherAlgorithm} strength {CipherStrength}", remoteEndpointName, stream.CipherAlgorithm, stream.CipherStrength);
         logger?.LogTrace("[{remoteEndpointName}] Hash: {HashAlgorithm} strength {HashStrength}", remoteEndpointName, stream.HashAlgorithm, stream.HashStrength);

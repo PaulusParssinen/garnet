@@ -35,7 +35,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             if (!RespReadUtils.ReadStringWithLengthHeader(out string cursor, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
-            if (!Int32.TryParse(cursor, out int cursorValue) || cursorValue < 0)
+            if (!int.TryParse(cursor, out int cursorValue) || cursorValue < 0)
             {
                 while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_CURSORVALUE, ref dcurr, dend))
                     SendAndReset();
@@ -111,7 +111,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     // Process output
                     ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     // Validation for partial input reading or error
-                    if (objOutputHeader.countDone == Int32.MinValue)
+                    if (objOutputHeader.countDone == int.MinValue)
                         return false;
                     ptr += objOutputHeader.bytesDone;
                     break;

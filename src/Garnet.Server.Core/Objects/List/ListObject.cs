@@ -54,7 +54,7 @@ public enum OperationDirection
 /// </summary>
 public partial class ListObject : GarnetObjectBase
 {
-    readonly LinkedList<byte[]> list;
+    private readonly LinkedList<byte[]> list;
 
     /// <summary>
     /// Constructor
@@ -79,7 +79,7 @@ public partial class ListObject : GarnetObjectBase
             byte[] item = reader.ReadBytes(reader.ReadInt32());
             list.AddLast(item);
 
-            this.UpdateSize(item);
+            UpdateSize(item);
         }
     }
 
@@ -137,7 +137,7 @@ public partial class ListObject : GarnetObjectBase
                 return true;
             }
 
-            long previouseSize = this.Size;
+            long previouseSize = Size;
             switch (header->ListOp)
             {
                 case ListOperation.LPUSH:
@@ -180,7 +180,7 @@ public partial class ListObject : GarnetObjectBase
                     throw new GarnetException($"Unsupported operation {(ListOperation)_input[0]} in ListObject.Operate");
             }
 
-            sizeChange = this.Size - previouseSize;
+            sizeChange = Size - previouseSize;
         }
         return true;
     }
@@ -188,8 +188,8 @@ public partial class ListObject : GarnetObjectBase
     internal void UpdateSize(byte[] item, bool add = true)
     {
         int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.ListEntryOverhead;
-        this.Size += add ? size : -size;
-        Debug.Assert(this.Size >= MemoryUtils.ListOverhead);
+        Size += add ? size : -size;
+        Debug.Assert(Size >= MemoryUtils.ListOverhead);
     }
 
     /// <inheritdoc />

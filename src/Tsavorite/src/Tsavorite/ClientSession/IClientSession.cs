@@ -3,7 +3,7 @@
 
 namespace Tsavorite;
 
-class SessionInfo
+internal class SessionInfo
 {
     public string sessionName;
     public bool isActive;

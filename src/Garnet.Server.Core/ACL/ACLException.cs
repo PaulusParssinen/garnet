@@ -6,7 +6,7 @@ namespace Garnet.Server.ACL;
 /// <summary>
 /// ACL exception base
 /// </summary>
-class ACLException : Exception
+internal class ACLException : Exception
 {
     public ACLException(string message)
     : base(message) { }
@@ -15,7 +15,7 @@ class ACLException : Exception
 /// <summary>
 /// Exception when parsing ACL rules
 /// </summary>
-class ACLParsingException : ACLException
+internal class ACLParsingException : ACLException
 {
     /// <summary>
     /// Creates a new ACL Parsing Exception
@@ -44,7 +44,7 @@ class ACLParsingException : ACLException
 /// <summary>
 /// Exception when interacting with ACL passwords
 /// </summary>
-class ACLPasswordException : ACLException
+internal class ACLPasswordException : ACLException
 {
     public ACLPasswordException(string message)
     : base(message) { }
@@ -53,7 +53,7 @@ class ACLPasswordException : ACLException
 /// <summary>
 /// Exception indicating an undefined ACL operation
 /// </summary>
-class ACLUnknownOperationException : ACLException
+internal class ACLUnknownOperationException : ACLException
 {
     public ACLUnknownOperationException(string operation)
     : base($"Unknown operation '{operation}'") { }
@@ -62,7 +62,7 @@ class ACLUnknownOperationException : ACLException
 /// <summary>
 /// Exception indicating the given category does not exist
 /// </summary>
-class ACLCategoryDoesNotExistException : ACLException
+internal class ACLCategoryDoesNotExistException : ACLException
 {
     public ACLCategoryDoesNotExistException(string category)
     : base($"ACL Category '{category}' does not exist") { }
@@ -71,7 +71,7 @@ class ACLCategoryDoesNotExistException : ACLException
 /// <summary>
 /// Exception indicating the given user does not exist
 /// </summary>
-class ACLUserDoesNotExistException : ACLException
+internal class ACLUserDoesNotExistException : ACLException
 {
     public ACLUserDoesNotExistException(string user)
     : base($"A user with name '{user}' does not exist") { }
@@ -80,7 +80,7 @@ class ACLUserDoesNotExistException : ACLException
 /// <summary>
 /// Exception indicating a user with the given name already exists
 /// </summary>
-class ACLUserAlreadyExistsException : ACLException
+internal class ACLUserAlreadyExistsException : ACLException
 {
     public ACLUserAlreadyExistsException(string user)
     : base($"A user with name '{user}' already exists.") { }

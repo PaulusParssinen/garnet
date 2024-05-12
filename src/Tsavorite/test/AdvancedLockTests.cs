@@ -12,9 +12,9 @@ namespace Tsavorite.Tests.LockTests;
 [TestFixture]
 internal class AdvancedLockTests
 {
-    const int numKeys = 500;
-    const int valueAdd = 1000000;
-    const int mod = 100;
+    private const int numKeys = 500;
+    private const int valueAdd = 1000000;
+    private const int mod = 100;
 
     public struct Input
     {
@@ -115,7 +115,7 @@ internal class AdvancedLockTests
 
     internal class ChainComparer : ITsavoriteEqualityComparer<int>
     {
-        readonly int mod;
+        private readonly int mod;
 
         internal ChainComparer(int mod) => this.mod = mod;
 
@@ -163,7 +163,7 @@ internal class AdvancedLockTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate(bool evict = false)
+    private void Populate(bool evict = false)
     {
         using ClientSession<int, int, Input, int, Empty, Functions> session = store.NewSession<Input, int, Empty, Functions>(new Functions());
 
@@ -292,11 +292,10 @@ internal class AdvancedLockTests
     }
 
     [TestFixture]
-    class LockRecoveryTests
+    private class LockRecoveryTests
     {
-        const int numKeys = 5000;
-
-        string checkpointDir;
+        private const int numKeys = 5000;
+        private string checkpointDir;
 
         private TsavoriteKV<int, int> store1;
         private TsavoriteKV<int, int> store2;

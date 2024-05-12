@@ -81,7 +81,7 @@ internal class GenericStringTests
         }
     }
 
-    class MyFuncs : SimpleFunctions<string, string>
+    private class MyFuncs : SimpleFunctions<string, string>
     {
         public override void ReadCompletionCallback(ref string key, ref string input, ref string output, Empty ctx, Status status, RecordMetadata recordMetadata)
         {

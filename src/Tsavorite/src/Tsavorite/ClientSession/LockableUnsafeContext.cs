@@ -12,7 +12,7 @@ namespace Tsavorite;
 public readonly struct LockableUnsafeContext<Key, Value, Input, Output, Context, Functions> : ITsavoriteContext<Key, Value, Input, Output, Context>, ILockableContext<Key>, IUnsafeContext
     where Functions : IFunctions<Key, Value, Input, Output, Context>
 {
-    readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
+    private readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
     internal readonly LockableContext<Key, Value, Input, Output, Context, Functions>.InternalTsavoriteSession TsavoriteSession;
 
     /// <summary>Indicates whether this struct has been initialized</summary>

@@ -15,7 +15,7 @@ namespace Garnet;
 /// Description: Exercise the SETBIT and GETBIT commands using garnet api
 /// </summary>
 
-sealed class TestProcedureBitmap : CustomTransactionProcedure
+internal sealed class TestProcedureBitmap : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
@@ -71,7 +71,7 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
         }
 
         //bitop command
-        long src = Int64.MaxValue;
+        long src = long.MaxValue;
         byte[] data = BitConverter.GetBytes(src);
         api.SET(bitmapA, data);
 
@@ -92,7 +92,7 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
             goto returnTo;
         }
 
-        long srcB = Int64.MaxValue - 1234;
+        long srcB = long.MaxValue - 1234;
         data = BitConverter.GetBytes(srcB);
         api.SET(bitmapB, data);
 

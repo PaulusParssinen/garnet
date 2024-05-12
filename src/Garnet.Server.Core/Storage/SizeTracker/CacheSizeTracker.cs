@@ -59,13 +59,13 @@ public class CacheSizeTracker
 
         (long mainLogTargetSizeBytes, long readCacheTargetSizeBytes) = CalculateLogTargetSizeBytes(targetSize);
 
-        this.mainLogTracker = new LogSizeTracker<byte[], IGarnetObject, LogSizeCalculator>(store.Log, logSizeCalculator,
+        mainLogTracker = new LogSizeTracker<byte[], IGarnetObject, LogSizeCalculator>(store.Log, logSizeCalculator,
             mainLogTargetSizeBytes, mainLogTargetSizeBytes / deltaFraction, loggerFactory?.CreateLogger("ObjSizeTracker"));
         store.Log.SubscribeEvictions(mainLogTracker);
 
         if (store.ReadCache != null)
         {
-            this.readCacheTracker = new LogSizeTracker<byte[], IGarnetObject, LogSizeCalculator>(store.ReadCache, logSizeCalculator,
+            readCacheTracker = new LogSizeTracker<byte[], IGarnetObject, LogSizeCalculator>(store.ReadCache, logSizeCalculator,
                 readCacheTargetSizeBytes, readCacheTargetSizeBytes / deltaFraction, loggerFactory?.CreateLogger("ObjReadCacheSizeTracker"));
             store.ReadCache.SubscribeEvictions(readCacheTracker);
         }
@@ -84,8 +84,8 @@ public class CacheSizeTracker
         if (residual <= 0)
             throw new TsavoriteException($"Target size {newTargetSize} must be larger than index size {IndexSizeBytes}");
 
-        long mainLogSizeBytes = this.store.ReadCache == null ? residual : residual / 2;
-        long readCacheSizeBytes = this.store.ReadCache == null ? 0 : residual / 2;
+        long mainLogSizeBytes = store.ReadCache == null ? residual : residual / 2;
+        long readCacheSizeBytes = store.ReadCache == null ? 0 : residual / 2;
 
         return (mainLogSizeBytes, readCacheSizeBytes);
     }
@@ -96,7 +96,7 @@ public class CacheSizeTracker
     {
         if (size == 0) return;
 
-        this.mainLogTracker.IncrementSize(size);
+        mainLogTracker.IncrementSize(size);
     }
 
     /// <summary>Add to the tracked size of read cache.</summary>
@@ -105,6 +105,6 @@ public class CacheSizeTracker
     {
         if (size == 0) return;
 
-        this.readCacheTracker.IncrementSize(size);
+        readCacheTracker.IncrementSize(size);
     }
 }

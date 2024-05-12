@@ -13,7 +13,7 @@ namespace Garnet.Server;
 /// </summary>
 public sealed class GarnetProvider : TsavoriteKVProviderBase<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, SpanByteFunctionsForServer<long>, SpanByteServerSerializer>
 {
-    readonly StoreWrapper storeWrapper;
+    private readonly StoreWrapper storeWrapper;
 
     /// <summary>
     /// StoreWrapper

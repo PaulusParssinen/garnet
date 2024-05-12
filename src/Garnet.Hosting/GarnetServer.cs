@@ -37,13 +37,12 @@ public class GarnetServer : IDisposable
     /// Store and associated information used by this Garnet server
     /// </summary>
     protected StoreWrapper storeWrapper;
-
-    readonly string version = "1.3.3.7";
+    private readonly string version = "1.3.3.7";
 
     /// <summary>
     /// Resp protocol version
     /// </summary>
-    readonly string redisProtocolVersion = "6.2.11";
+    private readonly string redisProtocolVersion = "6.2.11";
 
     /// <summary>
     /// Metrics API
@@ -72,13 +71,13 @@ public class GarnetServer : IDisposable
         // Set up an initial memory logger to log messages from configuration parser into memory.
         using (var memLogProvider = new MemoryLoggerProvider())
         {
-            this.initLogger = (MemoryLogger)memLogProvider.CreateLogger("ArgParser");
+            initLogger = (MemoryLogger)memLogProvider.CreateLogger("ArgParser");
         }
 
-        if (!ServerSettingsManager.TryParseCommandLineArguments(commandLineArgs, out Options serverSettings, out _, this.initLogger))
+        if (!ServerSettingsManager.TryParseCommandLineArguments(commandLineArgs, out Options serverSettings, out _, initLogger))
         {
             // Flush logs from memory logger
-            FlushMemoryLogger(this.initLogger, "ArgParser", loggerFactory);
+            FlushMemoryLogger(initLogger, "ArgParser", loggerFactory);
             throw new GarnetException("Encountered an error when initializing Garnet server. Please see log messages above for more details.");
         }
 
@@ -89,7 +88,7 @@ public class GarnetServer : IDisposable
         }
         else
         {
-            this.initLogger.LogWarning(
+            initLogger.LogWarning(
                 $"Received an external ILoggerFactory object. The following configuration options are ignored: {nameof(serverSettings.FileLogger)}, {nameof(serverSettings.LogLevel)}, {nameof(serverSettings.DisableConsoleLogger)}.");
         }
 
@@ -113,9 +112,9 @@ public class GarnetServer : IDisposable
         });
 
         // Assign values to GarnetServerOptions
-        this.opts = serverSettings.GetServerOptions(this.loggerFactory.CreateLogger("Options"));
+        opts = serverSettings.GetServerOptions(this.loggerFactory.CreateLogger("Options"));
         this.cleanupDir = cleanupDir;
-        this.InitializeServer();
+        InitializeServer();
     }
 
     /// <summary>
@@ -131,7 +130,7 @@ public class GarnetServer : IDisposable
         this.opts = opts;
         this.loggerFactory = loggerFactory;
         this.cleanupDir = cleanupDir;
-        this.InitializeServer();
+        InitializeServer();
     }
 
     private void InitializeServer()
@@ -155,11 +154,11 @@ public class GarnetServer : IDisposable
         IClusterFactory clusterFactory = null;
         if (opts.EnableCluster) clusterFactory = new ClusterFactory();
 
-        this.logger = this.loggerFactory?.CreateLogger("GarnetServer");
+        logger = loggerFactory?.CreateLogger("GarnetServer");
         logger?.LogInformation("Garnet {version} {bits} bit; {clusterMode} mode; Port: {port}", version, IntPtr.Size == 8 ? "64" : "32", opts.EnableCluster ? "cluster" : "standalone", opts.Port);
 
         // Flush initialization logs from memory logger
-        FlushMemoryLogger(this.initLogger, "ArgParser", this.loggerFactory);
+        FlushMemoryLogger(initLogger, "ArgParser", loggerFactory);
 
         var customCommandManager = new CustomCommandManager();
 
@@ -201,7 +200,7 @@ public class GarnetServer : IDisposable
         }
 
 
-        store = new TsavoriteKV<SpanByte, SpanByte>(indexSize, logSettings, checkpointSettings, revivificationSettings: revivSettings, logger: this.loggerFactory?.CreateLogger("TsavoriteKV [main]"));
+        store = new TsavoriteKV<SpanByte, SpanByte>(indexSize, logSettings, checkpointSettings, revivificationSettings: revivSettings, logger: loggerFactory?.CreateLogger("TsavoriteKV [main]"));
 
         CacheSizeTracker objectStoreSizeTracker = null;
         if (!opts.DisableObjects)
@@ -227,9 +226,9 @@ public class GarnetServer : IDisposable
 
             objectStore = new TsavoriteKV<byte[], IGarnetObject>(objIndexSize, objLogSettings, objCheckpointSettings,
                     new SerializerSettings<byte[], IGarnetObject> { keySerializer = () => new ByteArrayBinaryObjectSerializer(), valueSerializer = () => new GarnetObjectSerializer(customCommandManager) },
-                    revivificationSettings: objRevivSettings, logger: this.loggerFactory?.CreateLogger("TsavoriteKV  [obj]"));
+                    revivificationSettings: objRevivSettings, logger: loggerFactory?.CreateLogger("TsavoriteKV  [obj]"));
             if (objTotalMemorySize > 0)
-                objectStoreSizeTracker = new CacheSizeTracker(objectStore, objLogSettings, objTotalMemorySize, this.loggerFactory);
+                objectStoreSizeTracker = new CacheSizeTracker(objectStore, objLogSettings, objTotalMemorySize, loggerFactory);
         }
 
         if (!opts.DisablePubSub)
@@ -247,7 +246,7 @@ public class GarnetServer : IDisposable
 
             opts.GetAofSettings(out TsavoriteLogSettings aofSettings);
             aofDevice = aofSettings.LogDevice;
-            appendOnlyFile = new TsavoriteLog(aofSettings, logger: this.loggerFactory?.CreateLogger("TsavoriteLog [aof]"));
+            appendOnlyFile = new TsavoriteLog(aofSettings, logger: loggerFactory?.CreateLogger("TsavoriteLog [aof]"));
 
             if (opts.CommitFrequencyMs < 0 && opts.WaitForCommit)
             {
@@ -267,7 +266,7 @@ public class GarnetServer : IDisposable
 
 
         // Create Garnet TCP server if none was provided.
-        if (this.server == null)
+        if (server == null)
         {
             server = new GarnetServerTcp(opts.Address, opts.Port, 0, opts.TlsOptions, opts.NetworkSendThrottleMax, logger);
         }

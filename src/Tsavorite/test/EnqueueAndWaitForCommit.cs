@@ -7,13 +7,13 @@ namespace Tsavorite.Tests;
 [TestFixture]
 internal class EnqWaitCommitTest
 {
-    const int entryLength = 500;
-    const int numEntries = 100;
+    private const int entryLength = 500;
+    private const int numEntries = 100;
 
     public TsavoriteLog log;
     public IDevice device;
-    static byte[] entry;
-    static ReadOnlySpanBatch spanBatch;
+    private static byte[] entry;
+    private static ReadOnlySpanBatch spanBatch;
 
     public enum EnqueueIteratorType
     {

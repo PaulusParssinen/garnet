@@ -13,7 +13,7 @@ namespace Garnet;
 /// 
 /// Description: Perform a non-transactional multi-set with expiry for the given set of key-value pairs
 /// </summary>
-sealed class MSetPxTxn : CustomTransactionProcedure
+internal sealed class MSetPxTxn : CustomTransactionProcedure
 {
     /// <summary>
     /// No transactional phase, skip Prepare

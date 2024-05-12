@@ -10,12 +10,11 @@ namespace Garnet.Cluster;
 
 internal sealed unsafe class ReceiveCheckpointHandler
 {
-    readonly ClusterProvider clusterProvider;
-    IDevice writeIntoCkptDevice = null;
+    private readonly ClusterProvider clusterProvider;
+    private IDevice writeIntoCkptDevice = null;
     private SemaphoreSlim writeCheckpointSemaphore = null;
     private SectorAlignedBufferPool writeCheckpointBufferPool = null;
-
-    readonly ILogger logger;
+    private readonly ILogger logger;
 
     public ReceiveCheckpointHandler(ClusterProvider clusterProvider, ILogger logger = null)
     {

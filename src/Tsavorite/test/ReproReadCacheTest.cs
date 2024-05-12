@@ -17,7 +17,7 @@ internal class RandomReadCacheTests
         public Status Status { get; set; }
     }
 
-    class Functions : SpanByteFunctions<Context>
+    private class Functions : SpanByteFunctions<Context>
     {
         public override bool ConcurrentReader(ref SpanByte key, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory dst, ref ReadInfo readInfo, ref RecordInfo recordInfo)
             => SingleReader(ref key, ref input, ref value, ref dst, ref readInfo);
@@ -49,8 +49,8 @@ internal class RandomReadCacheTests
         }
     }
 
-    IDevice log = default;
-    TsavoriteKV<SpanByte, SpanByte> store = default;
+    private IDevice log = default;
+    private TsavoriteKV<SpanByte, SpanByte> store = default;
 
     [SetUp]
     public void Setup()

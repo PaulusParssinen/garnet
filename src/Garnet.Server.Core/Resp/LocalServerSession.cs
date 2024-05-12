@@ -13,12 +13,12 @@ using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, Span
 /// </summary>
 public class LocalServerSession : IDisposable
 {
-    readonly GarnetSessionMetrics sessionMetrics;
-    readonly GarnetLatencyMetricsSession LatencyMetrics;
-    readonly ILogger logger = null;
-    readonly StoreWrapper storeWrapper;
-    readonly StorageSession storageSession;
-    readonly ScratchBufferManager scratchBufferManager;
+    private readonly GarnetSessionMetrics sessionMetrics;
+    private readonly GarnetLatencyMetricsSession LatencyMetrics;
+    private readonly ILogger logger = null;
+    private readonly StoreWrapper storeWrapper;
+    private readonly StorageSession storageSession;
+    private readonly ScratchBufferManager scratchBufferManager;
 
     /// <summary>
     /// Basic Garnet API
@@ -32,19 +32,19 @@ public class LocalServerSession : IDisposable
     {
         this.storeWrapper = storeWrapper;
 
-        this.sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
-        this.LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
+        sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
+        LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
         logger = storeWrapper.sessionLogger != null ? new SessionLogger(storeWrapper.sessionLogger, $"[local] [local] [{GetHashCode():X8}] ") : null;
 
         logger?.LogDebug("Starting LocalServerSession");
 
         // Initialize session-local scratch buffer of size 64 bytes, used for constructing arguments in GarnetApi
-        this.scratchBufferManager = new ScratchBufferManager();
+        scratchBufferManager = new ScratchBufferManager();
 
         // Create storage session and API
-        this.storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
+        storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
 
-        this.BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
+        BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
     }
 
     /// <inheritdoc />

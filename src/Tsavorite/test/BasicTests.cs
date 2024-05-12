@@ -17,7 +17,7 @@ internal class BasicTests
     private TsavoriteKV<KeyStruct, ValueStruct> store;
     private ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session;
     private IDevice log;
-    DeviceType deviceType;
+    private DeviceType deviceType;
 
     [SetUp]
     public void Setup()
@@ -574,7 +574,7 @@ internal class BasicTests
         Assert.AreEqual(key1.kfield2, 14);
     }
 
-    class SkipReadCacheFunctions : Functions
+    private class SkipReadCacheFunctions : Functions
     {
         internal long expectedReadAddress;
 
@@ -590,7 +590,7 @@ internal class BasicTests
             return true;
         }
 
-        void Assign(ref ValueStruct value, ref OutputStruct dst, ref ReadInfo readInfo)
+        private void Assign(ref ValueStruct value, ref OutputStruct dst, ref ReadInfo readInfo)
         {
             dst.value = value;
             Assert.AreEqual(expectedReadAddress, readInfo.Address);

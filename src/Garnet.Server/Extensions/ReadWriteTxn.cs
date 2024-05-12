@@ -16,7 +16,7 @@ namespace Garnet;
 /// existing value's prefix. If it does not match (or there is no existing value), 
 /// then do nothing.
 /// </summary>
-sealed class ReadWriteTxn : CustomTransactionProcedure
+internal sealed class ReadWriteTxn : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

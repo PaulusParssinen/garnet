@@ -8,7 +8,7 @@ namespace Garnet.Cluster.Tests;
 [TestFixture, NonParallelizable]
 public unsafe class ClusterTLSRT
 {
-    ClusterReplicationTests tests;
+    private ClusterReplicationTests tests;
 
     [SetUp]
     public void Setup()

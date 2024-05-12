@@ -34,7 +34,7 @@ public unsafe partial class SetObject : IGarnetObject
             if (set.Add(member))
             {
                 _output->countDone++;
-                this.UpdateSize(member);
+                UpdateSize(member);
             }
             _output->opsDone++;
         }
@@ -157,7 +157,7 @@ public unsafe partial class SetObject : IGarnetObject
             if (set.Remove(field))
             {
                 countDone++;
-                this.UpdateSize(field, false);
+                UpdateSize(field, false);
             }
 
             count--;
@@ -215,7 +215,7 @@ public unsafe partial class SetObject : IGarnetObject
                     int index = RandomNumberGenerator.GetInt32(0, set.Count);
                     byte[] item = set.ElementAt(index);
                     set.Remove(item);
-                    this.UpdateSize(item, false);
+                    UpdateSize(item, false);
                     while (!RespWriteUtils.WriteBulkString(item, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                     countDone++;
@@ -231,7 +231,7 @@ public unsafe partial class SetObject : IGarnetObject
                     int index = RandomNumberGenerator.GetInt32(0, set.Count);
                     byte[] item = set.ElementAt(index);
                     set.Remove(item);
-                    this.UpdateSize(item, false);
+                    UpdateSize(item, false);
                     while (!RespWriteUtils.WriteBulkString(item, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                 }

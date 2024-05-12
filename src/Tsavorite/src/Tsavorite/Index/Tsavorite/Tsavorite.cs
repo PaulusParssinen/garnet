@@ -60,9 +60,9 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// </summary>
     public LogAccessor<Key, Value> ReadCache { get; }
 
-    ConcurrentDictionary<int, (string, CommitPoint)> _recoveredSessions;
-    ConcurrentDictionary<string, int> _recoveredSessionNameMap;
-    int maxSessionID;
+    private ConcurrentDictionary<int, (string, CommitPoint)> _recoveredSessions;
+    private ConcurrentDictionary<string, int> _recoveredSessionNameMap;
+    private int maxSessionID;
 
     internal readonly bool DoTransientLocking;  // uses LockTable
     internal readonly bool DoRecordIsolation;  // uses RecordInfo

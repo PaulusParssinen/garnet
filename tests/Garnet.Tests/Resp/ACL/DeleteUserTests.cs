@@ -9,7 +9,7 @@ namespace Garnet.Tests.Resp.ACL;
 /// Tests for ACL DELUSER operations.
 /// </summary>
 [TestFixture]
-class DeleteUserTests : AclTest
+internal class DeleteUserTests : AclTest
 {
     /// <summary>
     /// Creates and starts the Garnet test server

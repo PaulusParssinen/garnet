@@ -456,12 +456,12 @@ internal sealed class Options
         string logDir = LogDir;
         string checkpointDir = CheckpointDir;
 
-        string address = !string.IsNullOrEmpty(this.Address) && this.Address.Equals("localhost", StringComparison.CurrentCultureIgnoreCase)
+        string address = !string.IsNullOrEmpty(Address) && Address.Equals("localhost", StringComparison.CurrentCultureIgnoreCase)
             ? IPAddress.Loopback.ToString()
-            : this.Address;
+            : Address;
 
-        int[] revivBinRecordSizes = this.RevivBinRecordSizes?.ToArray();
-        int[] revivBinRecordCounts = this.RevivBinRecordCounts?.ToArray();
+        int[] revivBinRecordSizes = RevivBinRecordSizes?.ToArray();
+        int[] revivBinRecordCounts = RevivBinRecordCounts?.ToArray();
         bool hasRecordSizes = revivBinRecordSizes?.Length > 0, hasRecordCounts = revivBinRecordCounts?.Length > 0;
         bool useRevivBinsPowerOf2 = enableRevivification; // may be overridden
 

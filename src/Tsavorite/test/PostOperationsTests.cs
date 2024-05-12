@@ -8,7 +8,7 @@ namespace Tsavorite.Tests;
 [TestFixture]
 internal class PostOperationsTests
 {
-    class PostFunctions : SimpleFunctions<int, int>
+    private class PostFunctions : SimpleFunctions<int, int>
     {
         internal long pswAddress;
         internal long piuAddress;
@@ -45,10 +45,9 @@ internal class PostOperationsTests
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, PostFunctions> session;
     private IDevice log;
-
-    const int numRecords = 100;
-    const int targetKey = 42;
-    long expectedAddress;
+    private const int numRecords = 100;
+    private const int targetKey = 42;
+    private long expectedAddress;
 
     [SetUp]
     public void Setup()
@@ -75,7 +74,7 @@ internal class PostOperationsTests
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; ++key)
         {

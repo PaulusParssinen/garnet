@@ -13,14 +13,14 @@ namespace Tsavorite;
 [StructLayout(LayoutKind.Explicit, Size = 8)]
 public unsafe struct AddressInfo
 {
-    private const int kMultiplierBits = 1;
-    private static readonly int kTotalBits = sizeof(IntPtr) * 8;
-    private static readonly int kAddressBits = 42 * kTotalBits / 64;
-    private static readonly int kSizeBits = kTotalBits - kAddressBits - kMultiplierBits;
+    private const int MultiplierBits = 1;
+    private static readonly int TotalBits = sizeof(IntPtr) * 8;
+    private static readonly int kAddressBits = 42 * TotalBits / 64;
+    private static readonly int kSizeBits = TotalBits - kAddressBits - MultiplierBits;
     private static readonly long kSizeMaskInWord = ((1L << kSizeBits) - 1) << kAddressBits;
     private static readonly long kSizeMaskInInteger = (1L << kSizeBits) - 1;
-    private static readonly long kMultiplierMaskInWord = ((1L << kMultiplierBits) - 1) << (kAddressBits + kSizeBits);
-    private const long kMultiplierMaskInInteger = (1L << kMultiplierBits) - 1;
+    private static readonly long kMultiplierMaskInWord = ((1L << MultiplierBits) - 1) << (kAddressBits + kSizeBits);
+    private const long kMultiplierMaskInInteger = (1L << MultiplierBits) - 1;
     private static readonly long kAddressMask = (1L << kAddressBits) - 1;
 
 

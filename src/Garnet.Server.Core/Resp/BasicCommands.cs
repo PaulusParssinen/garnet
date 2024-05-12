@@ -17,7 +17,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// GET
     /// </summary>
-    bool NetworkGET<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
+    private bool NetworkGET<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
         if (storeWrapper.serverOptions.EnableScatterGatherGet)
@@ -62,7 +62,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// GET - scatter gather version
     /// </summary>
-    bool NetworkGET_SG<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
+    private bool NetworkGET_SG<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetAdvancedApi
     {
         byte* keyPtr = null;
@@ -179,7 +179,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    bool ParseGETAndKey(ref byte* keyPtr, ref int ksize, ref byte* ptr)
+    private bool ParseGETAndKey(ref byte* keyPtr, ref int ksize, ref byte* ptr)
     {
         if (bytesRead - readHead >= 19)
         {
@@ -196,7 +196,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    static void SetResult(int c, ref int firstPending, ref (GarnetStatus, SpanByteAndMemory)[] outputArr,
+    private static void SetResult(int c, ref int firstPending, ref (GarnetStatus, SpanByteAndMemory)[] outputArr,
         GarnetStatus status, SpanByteAndMemory output)
     {
         const int initialBatchSize = 8; // number of items in initial batch
@@ -221,8 +221,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         outputArr[c - firstPending] = (status, output);
     }
 
-
-    static long NextPowerOf2(long v)
+    private static long NextPowerOf2(long v)
     {
         v--;
         v |= v >> 1;
@@ -409,7 +408,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    enum ExpirationOption : byte
+    private enum ExpirationOption : byte
     {
         None,
         EX,
@@ -419,7 +418,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         KEEPTTL
     }
 
-    enum ExistOptions : byte
+    private enum ExistOptions : byte
     {
         None,
         NX,

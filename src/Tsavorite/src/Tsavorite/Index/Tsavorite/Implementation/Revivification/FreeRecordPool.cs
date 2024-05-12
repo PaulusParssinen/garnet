@@ -12,10 +12,9 @@ namespace Tsavorite;
 internal struct FreeRecord
 {
     internal const int kSizeBits = 64 - RecordInfo.kPreviousAddressBits;
-    const int kSizeShiftInWord = RecordInfo.kPreviousAddressBits;
-
-    const long kSizeMask = RevivificationBin.MaxInlineRecordSize - 1;
-    const long kSizeMaskInWord = kSizeMask << kSizeShiftInWord;
+    private const int kSizeShiftInWord = RecordInfo.kPreviousAddressBits;
+    private const long kSizeMask = RevivificationBin.MaxInlineRecordSize - 1;
+    private const long kSizeMaskInWord = kSizeMask << kSizeShiftInWord;
 
     // This is the empty word we replace the current word with on Reads.
     private const long emptyWord = 0;
@@ -52,7 +51,7 @@ internal struct FreeRecord
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SetEmptyAtomic(long oldWord)
+    private void SetEmptyAtomic(long oldWord)
     {
         // Ignore the result; this is just to clear an obsolete value, so if another thread already updated it, that's by design.
         Interlocked.CompareExchange(ref word, emptyWord, oldWord);

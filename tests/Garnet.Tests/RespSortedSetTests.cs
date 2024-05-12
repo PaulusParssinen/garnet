@@ -13,8 +13,7 @@ namespace Garnet.Tests;
 public class RespSortedSetTests
 {
     protected GarnetServer server;
-
-    static readonly SortedSetEntry[] entries =
+    private static readonly SortedSetEntry[] entries =
           [
             new SortedSetEntry("a", 1),
               new SortedSetEntry("b", 2),
@@ -27,8 +26,7 @@ public class RespSortedSetTests
               new SortedSetEntry("i", 9),
               new SortedSetEntry("j", 10)
           ];
-
-    static readonly SortedSetEntry[] leaderBoard =
+    private static readonly SortedSetEntry[] leaderBoard =
          [
             new SortedSetEntry("Dave", 340),
              new SortedSetEntry("Kendra", 400),
@@ -41,8 +39,7 @@ public class RespSortedSetTests
              new SortedSetEntry("Alice", 850),
              new SortedSetEntry("Mary", 980)
          ];
-
-    static readonly SortedSetEntry[] powOfTwo =
+    private static readonly SortedSetEntry[] powOfTwo =
         [
             new SortedSetEntry("a", 1),
             new SortedSetEntry("b", 2),
@@ -91,7 +88,7 @@ public class RespSortedSetTests
         Assert.AreEqual(entries.Length, card);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -104,7 +101,7 @@ public class RespSortedSetTests
         Assert.AreEqual(1, added);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1952;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -113,7 +110,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, added);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1952;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -124,7 +121,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, added);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1952;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -142,7 +139,7 @@ public class RespSortedSetTests
         Assert.AreEqual(leaderBoard.Length, added);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -187,7 +184,7 @@ public class RespSortedSetTests
         Assert.AreEqual(entries.Length, card);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1800;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -200,7 +197,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, card);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 200;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -212,7 +209,7 @@ public class RespSortedSetTests
         Assert.AreEqual(1, card);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 360;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -228,7 +225,7 @@ public class RespSortedSetTests
         Assert.IsEmpty(response_keys);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 200;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -240,7 +237,7 @@ public class RespSortedSetTests
         Assert.AreEqual(entries.Length, card);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1800;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -253,7 +250,7 @@ public class RespSortedSetTests
         Assert.AreEqual(entries.Length - 1, card);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1640;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -262,7 +259,7 @@ public class RespSortedSetTests
         Assert.AreEqual(entries.Length - 1, removed);
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 200;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -278,7 +275,7 @@ public class RespSortedSetTests
         long added = db.SortedSetAdd(key, entries);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -288,7 +285,7 @@ public class RespSortedSetTests
         Assert.AreEqual(9, db.SortedSetLength(key));
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1632;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -299,7 +296,7 @@ public class RespSortedSetTests
         Assert.AreEqual(7, db.SortedSetLength(key));
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 1312;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -310,7 +307,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, db.SortedSetLength(key));
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 192;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -333,7 +330,7 @@ public class RespSortedSetTests
         Assert.False(score.HasValue);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1800;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -358,7 +355,7 @@ public class RespSortedSetTests
             "ERR wrong number of arguments for ZMSCORE command.");
 
         RedisResult memResponse = db.Execute("MEMORY", "USAGE", key);
-        int memActualValue = ResultType.Integer == memResponse.Type ? Int32.Parse(memResponse.ToString()) : -1;
+        int memActualValue = ResultType.Integer == memResponse.Type ? int.Parse(memResponse.ToString()) : -1;
         int memExpectedResponse = 1808;
         Assert.AreEqual(memExpectedResponse, memActualValue);
     }
@@ -401,7 +398,7 @@ public class RespSortedSetTests
         Assert.IsTrue(incr == 650);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -423,7 +420,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, doneZCount);
 
         //ZLEXCOUNT
-        long doneZLEXCount = db.SortedSetLengthByValue(new RedisKey("nokey"), Double.NegativeInfinity, Double.PositiveInfinity);
+        long doneZLEXCount = db.SortedSetLengthByValue(new RedisKey("nokey"), double.NegativeInfinity, double.PositiveInfinity);
         Assert.AreEqual(0, doneZLEXCount);
 
         //ZCARD
@@ -451,7 +448,7 @@ public class RespSortedSetTests
         Assert.AreEqual(0, doneRemRangeByScore);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", "nokey");
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -460,7 +457,7 @@ public class RespSortedSetTests
         Assert.AreEqual(1, doneZIncr);
 
         response = db.Execute("MEMORY", "USAGE", "nokey");
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -526,7 +523,7 @@ public class RespSortedSetTests
         }
 
         long ssLen = db.SortedSetAdd("myss", entries);
-        IEnumerable<SortedSetEntry> members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("key:*"), (Int32)ssLen);
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("key:*"), (int)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == ssLen);
 
@@ -538,7 +535,7 @@ public class RespSortedSetTests
         }
 
         ssLen = db.SortedSetAdd("myssDoubles", entries);
-        members = db.SortedSetScan(new RedisKey("myssDoubles"), new RedisValue("key:*"), (Int32)ssLen);
+        members = db.SortedSetScan(new RedisKey("myssDoubles"), new RedisValue("key:*"), (int)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == ssLen);
     }
@@ -573,7 +570,7 @@ public class RespSortedSetTests
         long ssLen = db.SortedSetAdd(key, entries);
         Assert.IsTrue(numbers.Length == ssLen);
 
-        IEnumerable<SortedSetEntry> members = db.SortedSetScan(key, new RedisValue("*Scores:*"), (Int32)ssLen);
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(key, new RedisValue("*Scores:*"), (int)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == ssLen);
 
@@ -584,7 +581,7 @@ public class RespSortedSetTests
         }
 
         // Test for no matching members
-        members = db.SortedSetScan(key, new RedisValue("key*"), (Int32)ssLen);
+        members = db.SortedSetScan(key, new RedisValue("key*"), (int)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsEmpty(members);
     }

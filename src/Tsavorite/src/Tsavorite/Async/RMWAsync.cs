@@ -11,8 +11,8 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 {
     internal struct RmwAsyncOperation<Input, Output, Context> : IAsyncOperation<Input, Output, Context, RmwAsyncResult<Input, Output, Context>>
     {
-        AsyncIOContext<Key, Value> diskRequest;
-        RMWOptions rmwOptions;
+        private AsyncIOContext<Key, Value> diskRequest;
+        private RMWOptions rmwOptions;
 
         internal RmwAsyncOperation(AsyncIOContext<Key, Value> diskRequest, ref RMWOptions rmwOptions)
         {

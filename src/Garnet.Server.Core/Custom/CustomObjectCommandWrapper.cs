@@ -6,7 +6,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Custom object command wrapper
 /// </summary>
-class CustomObjectCommandWrapper
+internal class CustomObjectCommandWrapper
 {
     public readonly byte id;
     public readonly CustomObjectFactory factory;
@@ -16,7 +16,7 @@ class CustomObjectCommandWrapper
     public CustomObjectCommandWrapper(byte id, CustomObjectFactory functions)
     {
         this.id = id;
-        this.factory = functions;
-        this.commandMap = new CustomObjectCommand[byte.MaxValue];
+        factory = functions;
+        commandMap = new CustomObjectCommand[byte.MaxValue];
     }
 }

@@ -301,7 +301,7 @@ public interface IGarnetApi : IGarnetReadApi, IGarnetAdvancedApi
     /// Returns the new score of member.
     /// If member does not exist in the sorted set, it is added with increment as its score (as if its previous score was 0.0).
     /// </summary>
-    GarnetStatus SortedSetIncrement(ArgSlice key, Double increment, ArgSlice member, out double newScore);
+    GarnetStatus SortedSetIncrement(ArgSlice key, double increment, ArgSlice member, out double newScore);
 
     /// <summary>
     /// ZREMRANGEBYRANK: Removes all elements in the sorted set stored at key with rank between start and stop.

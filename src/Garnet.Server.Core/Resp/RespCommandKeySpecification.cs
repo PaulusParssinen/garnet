@@ -35,11 +35,11 @@ public class RespCommandKeySpecification : IRespSerializable
     /// </summary>
     public KeySpecificationFlags Flags
     {
-        get => this.flags;
+        get => flags;
         init
         {
-            this.flags = value;
-            this.respFormatFlags = EnumUtils.GetEnumDescriptions(this.flags);
+            flags = value;
+            respFormatFlags = EnumUtils.GetEnumDescriptions(flags);
         }
     }
 
@@ -63,32 +63,32 @@ public class RespCommandKeySpecification : IRespSerializable
         var sb = new StringBuilder();
         int elemCount = 0;
 
-        if (this.Notes != null)
+        if (Notes != null)
         {
             elemCount += 2;
             sb.Append("$5\r\nnotes\r\n");
-            sb.Append($"${this.Notes.Length}\r\n{this.Notes}\r\n");
+            sb.Append($"${Notes.Length}\r\n{Notes}\r\n");
         }
 
-        if (this.Flags != KeySpecificationFlags.None)
+        if (Flags != KeySpecificationFlags.None)
         {
             elemCount += 2;
             sb.Append("$5\r\nflags\r\n");
-            sb.Append($"*{this.respFormatFlags.Length}\r\n");
-            foreach (string flag in this.respFormatFlags)
+            sb.Append($"*{respFormatFlags.Length}\r\n");
+            foreach (string flag in respFormatFlags)
                 sb.Append($"+{flag}\r\n");
         }
 
-        if (this.BeginSearch != null)
+        if (BeginSearch != null)
         {
             elemCount += 2;
-            sb.Append(this.BeginSearch.RespFormat);
+            sb.Append(BeginSearch.RespFormat);
         }
 
-        if (this.FindKeys != null)
+        if (FindKeys != null)
         {
             elemCount += 2;
-            sb.Append(this.FindKeys.RespFormat);
+            sb.Append(FindKeys.RespFormat);
         }
 
         return $"*{elemCount}\r\n{sb}";
@@ -167,12 +167,12 @@ public abstract class KeySpecMethodBase : IRespSerializable
     public string ToRespFormat()
     {
         var sb = new StringBuilder();
-        sb.Append($"${this.MethodName.Length}\r\n{this.MethodName}\r\n");
+        sb.Append($"${MethodName.Length}\r\n{MethodName}\r\n");
         sb.Append("*4\r\n");
         sb.Append("$4\r\ntype\r\n");
-        sb.Append($"{this.RespFormatType}\r\n");
+        sb.Append($"{RespFormatType}\r\n");
         sb.Append("$4\r\nspec\r\n");
-        sb.Append($"{this.RespFormatSpec}\r\n");
+        sb.Append($"{RespFormatSpec}\r\n");
         return sb.ToString();
     }
 }
@@ -207,7 +207,7 @@ public class BeginSearchIndex : BeginSearchKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*2\r\n$5\r\nindex\r\n:{this.Index}"; }
+        get { return respFormatSpec ??= $"*2\r\n$5\r\nindex\r\n:{Index}"; }
     }
 
     private string respFormatSpec;
@@ -220,7 +220,7 @@ public class BeginSearchIndex : BeginSearchKeySpecMethodBase
     /// <inheritdoc />
     public BeginSearchIndex(int index) : this()
     {
-        this.Index = index;
+        Index = index;
     }
 }
 
@@ -248,7 +248,7 @@ public class BeginSearchKeyword : BeginSearchKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*4\r\n$7\r\nkeyword\r\n${this.Keyword?.Length ?? 0}\r\n{this.Keyword}\r\n$9\r\nstartfrom\r\n:{this.StartFrom}"; }
+        get { return respFormatSpec ??= $"*4\r\n$7\r\nkeyword\r\n${Keyword?.Length ?? 0}\r\n{Keyword}\r\n$9\r\nstartfrom\r\n:{StartFrom}"; }
     }
 
     private string respFormatSpec;
@@ -259,8 +259,8 @@ public class BeginSearchKeyword : BeginSearchKeySpecMethodBase
     /// <inheritdoc />
     public BeginSearchKeyword(string keyword, int startFrom) : this()
     {
-        this.Keyword = keyword;
-        this.StartFrom = startFrom;
+        Keyword = keyword;
+        StartFrom = startFrom;
     }
 }
 
@@ -277,7 +277,7 @@ public class BeginSearchUnknown : BeginSearchKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*0"; }
+        get { return respFormatSpec ??= $"*0"; }
     }
 
     private string respFormatSpec;
@@ -323,7 +323,7 @@ public class FindKeysRange : FindKeysKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*6\r\n$7\r\nlastkey\r\n:{this.LastKey}\r\n$7\r\nkeystep\r\n:{this.KeyStep}\r\n$5\r\nlimit\r\n:{this.Limit}"; }
+        get { return respFormatSpec ??= $"*6\r\n$7\r\nlastkey\r\n:{LastKey}\r\n$7\r\nkeystep\r\n:{KeyStep}\r\n$5\r\nlimit\r\n:{Limit}"; }
     }
 
     private string respFormatSpec;
@@ -334,9 +334,9 @@ public class FindKeysRange : FindKeysKeySpecMethodBase
     /// <inheritdoc />
     public FindKeysRange(int lastKey, int keyStep, int limit) : this()
     {
-        this.LastKey = lastKey;
-        this.KeyStep = keyStep;
-        this.Limit = limit;
+        LastKey = lastKey;
+        KeyStep = keyStep;
+        Limit = limit;
     }
 }
 
@@ -369,7 +369,7 @@ public class FindKeysKeyNum : FindKeysKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*6\r\n$9\r\nkeynumidx\r\n:{this.KeyNumIdx}\r\n$8\r\nfirstkey\r\n:{this.FirstKey}\r\n$7\r\nkeystep\r\n:{this.KeyStep}"; }
+        get { return respFormatSpec ??= $"*6\r\n$9\r\nkeynumidx\r\n:{KeyNumIdx}\r\n$8\r\nfirstkey\r\n:{FirstKey}\r\n$7\r\nkeystep\r\n:{KeyStep}"; }
     }
 
     private string respFormatSpec;
@@ -380,9 +380,9 @@ public class FindKeysKeyNum : FindKeysKeySpecMethodBase
     /// <inheritdoc />
     public FindKeysKeyNum(int keyNumIdx, int firstKey, int keyStep) : this()
     {
-        this.KeyNumIdx = keyNumIdx;
-        this.FirstKey = firstKey;
-        this.KeyStep = keyStep;
+        KeyNumIdx = keyNumIdx;
+        FirstKey = firstKey;
+        KeyStep = keyStep;
     }
 }
 
@@ -399,7 +399,7 @@ public class FindKeysUnknown : FindKeysKeySpecMethodBase
     [JsonIgnore]
     public sealed override string RespFormatSpec
     {
-        get { return this.respFormatSpec ??= $"*0"; }
+        get { return respFormatSpec ??= $"*0"; }
     }
 
     private string respFormatSpec;

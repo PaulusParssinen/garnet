@@ -9,7 +9,7 @@ namespace Garnet.Server.Auth;
 /// Authenticator that uses a single fixed password.
 /// XXX: Deprecated. Should be replaced by ACL authenticator.
 /// </summary>
-class GarnetPasswordAuthenticator : IGarnetAuthenticator
+internal class GarnetPasswordAuthenticator : IGarnetAuthenticator
 {
     public bool IsAuthenticated => _authenticated;
 

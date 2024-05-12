@@ -212,15 +212,15 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
 
             // NOTE: This is temporary as long as ACL operations are only supported when using the ACL authenticator
-            Debug.Assert(this.storeWrapper.serverOptions.AuthSettings != null);
-            Debug.Assert(this.storeWrapper.serverOptions.AuthSettings.GetType() == typeof(AclAuthenticationSettings));
-            AclAuthenticationSettings aclAuthenticationSettings = (AclAuthenticationSettings)this.storeWrapper.serverOptions.AuthSettings;
+            Debug.Assert(storeWrapper.serverOptions.AuthSettings != null);
+            Debug.Assert(storeWrapper.serverOptions.AuthSettings.GetType() == typeof(AclAuthenticationSettings));
+            AclAuthenticationSettings aclAuthenticationSettings = (AclAuthenticationSettings)storeWrapper.serverOptions.AuthSettings;
 
             // Try to reload the configured ACL configuration file
             try
             {
                 logger?.LogInformation("Reading updated ACL configuration file '{filepath}'", aclAuthenticationSettings.AclConfigurationFile);
-                this.storeWrapper.accessControlList.Load(aclAuthenticationSettings.DefaultPassword, aclAuthenticationSettings.AclConfigurationFile);
+                storeWrapper.accessControlList.Load(aclAuthenticationSettings.DefaultPassword, aclAuthenticationSettings.AclConfigurationFile);
 
                 while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
                     SendAndReset();

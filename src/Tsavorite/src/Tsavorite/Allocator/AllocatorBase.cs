@@ -172,7 +172,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Address until which we are currently closing. Used to coordinate linear closing of pages.
     /// Only one thread will be closing pages at a time.
     /// </summary>
-    long OngoingCloseUntilAddress;
+    private long OngoingCloseUntilAddress;
 
     /// <inheritdoc/>
     public override string ToString()
@@ -1113,7 +1113,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         return sectorSize;
     }
 
-    void AllocatePagesWithException(int pageIndex, PageOffset localTailPageOffset)
+    private void AllocatePagesWithException(int pageIndex, PageOffset localTailPageOffset)
     {
         try
         {

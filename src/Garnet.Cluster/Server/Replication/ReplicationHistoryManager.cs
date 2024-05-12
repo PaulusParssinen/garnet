@@ -18,7 +18,7 @@ internal sealed class ReplicationHistory
     public ReplicationHistory()
     {
         primary_replid = Generator.CreateHexId();
-        primary_replid2 = String.Empty;
+        primary_replid2 = string.Empty;
         replicationOffset = 0;
         replicationOffset2 = int.MaxValue;
     }
@@ -73,14 +73,14 @@ internal sealed class ReplicationHistory
 
     public ReplicationHistory UpdateReplicationId(string primary_replid)
     {
-        ReplicationHistory newConfig = this.Copy();
+        ReplicationHistory newConfig = Copy();
         newConfig.primary_replid = primary_replid;
         return newConfig;
     }
 
     public ReplicationHistory FailoverUpdate(long replicationOffset2)
     {
-        ReplicationHistory newConfig = this.Copy();
+        ReplicationHistory newConfig = Copy();
         newConfig.primary_replid2 = primary_replid;
         newConfig.primary_replid = Generator.CreateHexId();
         newConfig.replicationOffset2 = replicationOffset2;
@@ -90,9 +90,9 @@ internal sealed class ReplicationHistory
 
 internal sealed partial class ReplicationManager : IDisposable
 {
-    ReplicationHistory currentReplicationConfig;
-    readonly IDevice replicationConfigDevice;
-    readonly SectorAlignedBufferPool pool;
+    private ReplicationHistory currentReplicationConfig;
+    private readonly IDevice replicationConfigDevice;
+    private readonly SectorAlignedBufferPool pool;
 
     public void InitializeReplicationHistory()
     {

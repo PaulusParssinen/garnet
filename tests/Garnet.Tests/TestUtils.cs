@@ -33,7 +33,7 @@ internal static class TestUtils
     /// <summary>
     /// Whether to use a test progress logger
     /// </summary>
-    static readonly bool useTestLogger = false;
+    private static readonly bool useTestLogger = false;
 
     private static int procId = Process.GetCurrentProcess().Id;
     private static string CustomRespCommandInfoJsonPath = "CustomRespCommandsInfo.json";

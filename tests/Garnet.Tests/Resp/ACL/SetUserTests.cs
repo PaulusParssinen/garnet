@@ -10,7 +10,7 @@ namespace Garnet.Tests.Resp.ACL;
 /// Tests for ACL SETUSER operations.
 /// </summary>
 [TestFixture]
-class SetUserTests : AclTest
+internal class SetUserTests : AclTest
 {
     /// <summary>
     /// Tests that new connections start with default user when no users are defined

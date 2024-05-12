@@ -9,8 +9,8 @@ namespace Garnet.Tests;
 
 public unsafe class HyperLogLogTests
 {
-    GarnetServer server;
-    Random r;
+    private GarnetServer server;
+    private Random r;
 
     [SetUp]
     public void Setup()
@@ -365,7 +365,7 @@ public unsafe class HyperLogLogTests
         }
     }
 
-    readonly byte[] ascii_chars = System.Text.Encoding.ASCII.GetBytes("abcdefghijklmnopqrstvuwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    private readonly byte[] ascii_chars = System.Text.Encoding.ASCII.GetBytes("abcdefghijklmnopqrstvuwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
     private void RandomString(ref byte[] valuebuffer)
     {
         for (int i = 0; i < valuebuffer.Length; i++)
@@ -484,7 +484,7 @@ public unsafe class HyperLogLogTests
         Assert.AreEqual(countA + countB + countC, totalCount);
     }
 
-    public long LongRandom() => ((long)this.r.Next() << 32) | (long)this.r.Next();
+    public long LongRandom() => ((long)r.Next() << 32) | (long)r.Next();
 
     public List<long> RandomSubSeq(List<long> list, int count)
     {

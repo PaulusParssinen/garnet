@@ -8,7 +8,7 @@ namespace Tsavorite;
 /// </summary>
 public class NullNamedDeviceFactory : INamedDeviceFactory
 {
-    static readonly NullDevice nullDevice = new();
+    private static readonly NullDevice nullDevice = new();
 
     /// <summary>
     /// Create instance of factory

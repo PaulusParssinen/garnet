@@ -58,7 +58,7 @@ public class User
         {
             oldCategories = _categories;
         }
-        while (oldCategories != Interlocked.CompareExchange(ref this._categories, oldCategories | (uint)category, oldCategories));
+        while (oldCategories != Interlocked.CompareExchange(ref _categories, oldCategories | (uint)category, oldCategories));
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class User
         {
             oldCategories = _categories;
         }
-        while (oldCategories != Interlocked.CompareExchange(ref this._categories, oldCategories & ~((uint)category), oldCategories));
+        while (oldCategories != Interlocked.CompareExchange(ref _categories, oldCategories & ~((uint)category), oldCategories));
     }
 
     /// <summary>
@@ -116,13 +116,13 @@ public class User
     public void Reset()
     {
         // Reset passwords
-        this.ClearPasswords();
+        ClearPasswords();
 
         // Reset categories
         _categories = (uint)CommandCategory.Flag.None;
 
         // Disable user
-        this.IsEnabled = false;
+        IsEnabled = false;
     }
 
     /// <summary>
@@ -164,10 +164,10 @@ public class User
     {
         StringBuilder stringBuilder = new();
 
-        stringBuilder.Append($"user {this.Name}");
+        stringBuilder.Append($"user {Name}");
 
         // Flags
-        if (this.IsEnabled)
+        if (IsEnabled)
         {
             stringBuilder.Append(" on");
         }
@@ -176,7 +176,7 @@ public class User
             stringBuilder.Append(" off");
         }
 
-        if (this.IsPasswordless)
+        if (IsPasswordless)
         {
             stringBuilder.Append(" nopass");
         }
@@ -193,7 +193,7 @@ public class User
         for (int i = 0; i <= highestFlag; i++)
         {
             CommandCategory.Flag flag = (CommandCategory.Flag)(1 << i);
-            if (this.CanAccessCategory(flag))
+            if (CanAccessCategory(flag))
             {
                 stringBuilder.Append($" +@{CommandCategory.GetNameByFlag(flag)}");
             }
@@ -205,12 +205,12 @@ public class User
     /// <summary>
     /// Categories enabled for the user
     /// </summary>
-    uint _categories;
+    private uint _categories;
 
     /// <summary>
     /// A set of all allowed _passwordHashes for the user.
     /// 
     /// NOTE: HashSet is not thread-safe, so accesses need to be synchronized
     /// </summary>
-    readonly HashSet<ACLPassword> _passwordHashes = [];
+    private readonly HashSet<ACLPassword> _passwordHashes = [];
 }

@@ -8,11 +8,11 @@ namespace Tsavorite.Tests;
 [TestFixture]
 internal class WaitForCommitTests
 {
-    static TsavoriteLog log;
+    private static TsavoriteLog log;
     public IDevice device;
-    static readonly byte[] entry = new byte[10];
-    static readonly AutoResetEvent ev = new(false);
-    static readonly AutoResetEvent done = new(false);
+    private static readonly byte[] entry = new byte[10];
+    private static readonly AutoResetEvent ev = new(false);
+    private static readonly AutoResetEvent done = new(false);
 
     [SetUp]
     public void Setup()
@@ -90,7 +90,7 @@ internal class WaitForCommitTests
         done.WaitOne();
     }
 
-    static void LogWriter()
+    private static void LogWriter()
     {
         // Enter in some entries then wait on this separate thread
         log.Enqueue(entry);
@@ -101,7 +101,7 @@ internal class WaitForCommitTests
         done.Set();
     }
 
-    static void LogWriterAsync()
+    private static void LogWriterAsync()
     {
         // Using "await" here will kick out of the calling thread once the first await is finished
         // Enter in some entries then wait on this separate thread

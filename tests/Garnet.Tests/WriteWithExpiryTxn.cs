@@ -14,7 +14,7 @@ namespace Garnet;
 /// 
 /// Description: Update key to given value with expiry
 /// </summary>
-sealed class WriteWithExpiryTxn : CustomTransactionProcedure
+internal sealed class WriteWithExpiryTxn : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

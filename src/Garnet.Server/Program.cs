@@ -9,11 +9,11 @@ namespace Garnet;
 /// <summary>
 /// Garnet server entry point
 /// </summary>
-class Program
+internal class Program
 {
     private static string CustomRespCommandInfoJsonPath = "CustomRespCommandsInfo.json";
 
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         try
         {
@@ -38,7 +38,7 @@ class Program
     /// commands such as db.Execute in StackExchange.Redis. Example:
     ///   db.Execute("SETIFPM", key, value, prefix);
     /// </summary>
-    static void RegisterExtensions(GarnetServer server)
+    private static void RegisterExtensions(GarnetServer server)
     {
         IReadOnlyDictionary<string, RespCommandsInfo> customCommandsInfo = GetRespCommandsInfo(CustomRespCommandInfoJsonPath);
 

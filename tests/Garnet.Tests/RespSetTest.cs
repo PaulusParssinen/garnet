@@ -12,7 +12,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespSetTests
 {
-    GarnetServer server;
+    private GarnetServer server;
 
     [SetUp]
     public void Setup()
@@ -60,7 +60,7 @@ public class RespSetTests
         Assert.AreEqual(2, members.Length);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", "user1:set");
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -152,7 +152,7 @@ public class RespSetTests
         Assert.IsTrue(existingMemberExists, "Existing member 'ItemOne' does not exist in the set.");
 
         RedisResult memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
-        int actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        int actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         int expectedResponse = 424;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -160,7 +160,7 @@ public class RespSetTests
         Assert.AreEqual(true, response);
 
         memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
-        actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -168,7 +168,7 @@ public class RespSetTests
         Assert.AreEqual(false, response);
 
         memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
-        actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -176,7 +176,7 @@ public class RespSetTests
         Assert.AreEqual(2, longResponse);
 
         memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
-        actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         expectedResponse = 200;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -252,7 +252,7 @@ public class RespSetTests
         }
 
         long setLen = db.SetAdd(key, entries);
-        IEnumerable<RedisValue> members = db.SetScan(key, new RedisValue("member:*"), (Int32)setLen);
+        IEnumerable<RedisValue> members = db.SetScan(key, new RedisValue("member:*"), (int)setLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == setLen);
     }
@@ -640,7 +640,7 @@ public class RespSetTests
         {
             var response = lightClientRequest.SendCommand("SRANDMEMBER myset", 1);
             string strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
-            string item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
+            string item = Encoding.ASCII.GetString(response).Substring(4, int.Parse(strLen));
             Assert.IsTrue(myset.Contains(item));
 
             // Get three random members
@@ -695,7 +695,7 @@ public class RespSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SPOP myset");
         string strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
-        string item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
+        string item = Encoding.ASCII.GetString(response).Substring(4, int.Parse(strLen));
         Assert.IsTrue(myset.Contains(item));
 
         response = lightClientRequest.SendCommand("SCARD myset");

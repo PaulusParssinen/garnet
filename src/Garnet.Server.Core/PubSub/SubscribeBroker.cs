@@ -19,12 +19,12 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     private ConcurrentDictionary<byte[], ConcurrentDictionary<int, ServerSessionBase>> subscriptions;
     private ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)> prefixSubscriptions;
     private AsyncQueue<(byte[], byte[])> publishQueue;
-    readonly IKeySerializer<Key> keySerializer;
-    readonly TsavoriteLog log;
-    readonly IDevice device;
-    readonly CancellationTokenSource cts = new();
-    readonly ManualResetEvent done = new(true);
-    bool disposed = false;
+    private readonly IKeySerializer<Key> keySerializer;
+    private readonly TsavoriteLog log;
+    private readonly IDevice device;
+    private readonly CancellationTokenSource cts = new();
+    private readonly ManualResetEvent done = new(true);
+    private bool disposed = false;
 
     /// <summary>
     /// Constructor
@@ -55,7 +55,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             foreach (byte[] subscribedkey in subscriptions.Keys)
             {
                 fixed (byte* keyPtr = &subscribedkey[0])
-                    this.Unsubscribe(keyPtr, (ServerSessionBase)session);
+                    Unsubscribe(keyPtr, (ServerSessionBase)session);
             }
         }
 
@@ -64,7 +64,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             foreach (byte[] subscribedkey in prefixSubscriptions.Keys)
             {
                 fixed (byte* keyPtr = &subscribedkey[0])
-                    this.PUnsubscribe(keyPtr, (ServerSessionBase)session);
+                    PUnsubscribe(keyPtr, (ServerSessionBase)session);
             }
         }
     }

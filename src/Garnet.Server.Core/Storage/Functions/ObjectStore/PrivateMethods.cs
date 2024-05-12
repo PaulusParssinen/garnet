@@ -17,7 +17,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// a. ConcurrentWriter
     /// b. PostSingleWriter
     /// </summary>
-    void WriteLogUpsert(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
+    private void WriteLogUpsert(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
         var header = (RespInputHeader*)input.ToPointer();
@@ -40,7 +40,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// b. InPlaceUpdater
     /// c. PostCopyUpdater
     /// </summary>
-    void WriteLogRMW(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
+    private void WriteLogRMW(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
         var header = (RespInputHeader*)input.ToPointer();
@@ -58,7 +58,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     ///  a. ConcurrentDeleter
     ///  b. PostSingleDeleter
     /// </summary>
-    void WriteLogDelete(ref byte[] key, long version, int sessionID)
+    private void WriteLogDelete(ref byte[] key, long version, int sessionID)
     {
         if (functionsState.StoredProcMode) return;
         fixed (byte* ptr = key)
@@ -71,7 +71,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
 
     internal static bool CheckExpiry(IGarnetObject src) => src.Expiration < DateTimeOffset.UtcNow.Ticks;
 
-    static void CopyRespNumber(long number, ref SpanByteAndMemory dst)
+    private static void CopyRespNumber(long number, ref SpanByteAndMemory dst)
     {
         byte* curr = dst.SpanByte.ToPointer();
         byte* end = curr + dst.SpanByte.Length;
@@ -96,7 +96,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         }
     }
 
-    static void CopyDefaultResp(ReadOnlySpan<byte> resp, ref SpanByteAndMemory dst)
+    private static void CopyDefaultResp(ReadOnlySpan<byte> resp, ref SpanByteAndMemory dst)
     {
         if (resp.Length < dst.SpanByte.Length)
         {
@@ -111,7 +111,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         resp.CopyTo(dst.Memory.Memory.Span);
     }
 
-    static bool EvaluateObjectExpireInPlace(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output)
+    private static bool EvaluateObjectExpireInPlace(ExpireOption optionType, bool expiryExists, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output)
     {
         ObjectOutputHeader* o = (ObjectOutputHeader*)output.spanByteAndMemory.SpanByte.ToPointer();
         if (expiryExists)

@@ -75,7 +75,7 @@ internal static class ClusterUtils
     }
 }
 
-static class LoggerExtensions
+internal static class LoggerExtensions
 {
     public static void IOCallback(this ILogger logger, uint errorCode, uint numBytes, object context)
     {

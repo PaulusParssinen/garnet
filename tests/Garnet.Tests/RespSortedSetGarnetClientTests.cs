@@ -14,10 +14,9 @@ namespace Garnet.Tests;
 public class RespSortedSetGarnetClientTests
 {
     protected GarnetServer server;
-    ManualResetEventSlim waiter;
-    const int maxIterations = 3;
-
-    static readonly SortedSetEntry[] leaderBoard =
+    private ManualResetEventSlim waiter;
+    private const int maxIterations = 3;
+    private static readonly SortedSetEntry[] leaderBoard =
          [
             new SortedSetEntry("Dave", 340),
              new SortedSetEntry("Kendra", 400),
@@ -164,7 +163,7 @@ public class RespSortedSetGarnetClientTests
                 for (int ii = 0; ii < numIterations; ++ii)
                 {
                     string name = GetUniqueName(ss, ii);
-                    if (name == String.Empty)
+                    if (name == string.Empty)
                     {
                         Assert.Fail("Concurrency issue, review test: CanDoZaddGarnetMultithread");
                     }

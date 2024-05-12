@@ -14,7 +14,7 @@ internal sealed partial class ReplicationManager : IDisposable
 {
     public ReceiveCheckpointHandler recvCheckpointHandler = null;
     public SingleWriterMultiReaderLock replicateLock;
-    CheckpointEntry cEntry;
+    private CheckpointEntry cEntry;
 
     /// <summary>
     /// Try to initiate replication

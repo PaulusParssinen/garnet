@@ -119,5 +119,5 @@ public class ACLPassword : IEquatable<ACLPassword>
     /// <summary>
     /// The number of bytes per hash
     /// </summary>
-    const int NumHashBytes = 32;
+    private const int NumHashBytes = 32;
 }

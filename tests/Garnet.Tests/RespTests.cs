@@ -11,8 +11,8 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespTests
 {
-    GarnetServer server;
-    Random r;
+    private GarnetServer server;
+    private Random r;
 
     [SetUp]
     public void Setup()
@@ -938,10 +938,10 @@ public class RespTests
 
         object[] redisKey = keys.Select(x => (object)x).ToArray();
         string keysDeleted = (string)db.Execute("unlink", redisKey);
-        Assert.AreEqual(Int32.Parse(keysDeleted), 10);
+        Assert.AreEqual(int.Parse(keysDeleted), 10);
 
         keysDeleted = (string)db.Execute("unlink", redisKey);
-        Assert.AreEqual(Int32.Parse(keysDeleted), 0);
+        Assert.AreEqual(int.Parse(keysDeleted), 0);
     }
 
     [Test]

@@ -11,7 +11,7 @@ using Microsoft.IdentityModel.Validators;
 
 namespace Garnet.Server.Auth;
 
-class GarnetAadAuthenticator : IGarnetAuthenticator
+internal class GarnetAadAuthenticator : IGarnetAuthenticator
 {
     private static JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
 

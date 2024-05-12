@@ -24,8 +24,8 @@ using LockableGarnetApi = GarnetApi<LockableContext<SpanByte, SpanByte, SpanByte
 /// </summary>
 internal sealed unsafe partial class RespServerSession : ServerSessionBase
 {
-    readonly GarnetSessionMetrics sessionMetrics;
-    readonly GarnetLatencyMetricsSession LatencyMetrics;
+    private readonly GarnetSessionMetrics sessionMetrics;
+    private readonly GarnetLatencyMetricsSession LatencyMetrics;
 
     public GarnetLatencyMetricsSession latencyMetrics => LatencyMetrics;
 
@@ -49,29 +49,25 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// </summary>
     public void ResetAllLatencyMetrics() => latencyMetrics?.ResetAll();
 
-    readonly StoreWrapper storeWrapper;
+    private readonly StoreWrapper storeWrapper;
     internal readonly TransactionManager txnManager;
-    readonly ScratchBufferManager scratchBufferManager;
-
-    GCHandle recvHandle;
-    byte* recvBufferPtr;
-    int readHead;
-    byte* dcurr, dend;
-    bool toDispose;
-
-    int opCount;
+    private readonly ScratchBufferManager scratchBufferManager;
+    private GCHandle recvHandle;
+    private byte* recvBufferPtr;
+    private int readHead;
+    private byte* dcurr, dend;
+    private bool toDispose;
+    private int opCount;
     public readonly StorageSession storageSession;
     internal BasicGarnetApi basicGarnetApi;
     internal LockableGarnetApi lockableGarnetApi;
-
-    readonly IGarnetAuthenticator _authenticator;
+    private readonly IGarnetAuthenticator _authenticator;
 
     /// <summary>
     /// The user currently authenticated in this session
     /// </summary>
-    User _user = null;
-
-    readonly ILogger logger = null;
+    private User _user = null;
+    private readonly ILogger logger = null;
 
     /// <summary>
     /// Clients must enable asking to make node respond to requests on slots that are being imported.
@@ -79,9 +75,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     public byte SessionAsking { get; set; }
 
     // Track whether the incoming network batch had some admin command
-    bool hasAdminCommand;
-
-    readonly CustomCommandManagerSession customCommandManagerSession;
+    private bool hasAdminCommand;
+    private readonly CustomCommandManagerSession customCommandManagerSession;
 
     /// <summary>
     /// Cluster session
@@ -91,17 +86,17 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Current custom transaction to be executed in the session.
     /// </summary>
-    CustomTransaction currentCustomTransaction = null;
+    private CustomTransaction currentCustomTransaction = null;
 
     /// <summary>
     /// Current custom command to be executed in the session.
     /// </summary>
-    CustomCommand currentCustomCommand = null;
+    private CustomCommand currentCustomCommand = null;
 
     /// <summary>
     /// Current custom object command to be executed in the session.
     /// </summary>
-    CustomObjectCommand currentCustomObjectCommand = null;
+    private CustomObjectCommand currentCustomObjectCommand = null;
 
     public RespServerSession(
         INetworkSender networkSender,
@@ -109,33 +104,33 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker)
         : base(networkSender)
     {
-        this.customCommandManagerSession = new CustomCommandManagerSession(storeWrapper.customCommandManager);
-        this.sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
-        this.LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
+        customCommandManagerSession = new CustomCommandManagerSession(storeWrapper.customCommandManager);
+        sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
+        LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
         logger = storeWrapper.sessionLogger != null ? new SessionLogger(storeWrapper.sessionLogger, $"[{storeWrapper.localEndpoint}] [{networkSender?.RemoteEndpointName}] [{GetHashCode():X8}] ") : null;
 
         logger?.LogDebug("Starting RespServerSession");
 
         // Initialize session-local scratch buffer of size 64 bytes, used for constructing arguments in GarnetApi
-        this.scratchBufferManager = new ScratchBufferManager();
+        scratchBufferManager = new ScratchBufferManager();
 
         // Create storage session and API
-        this.storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
+        storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
 
-        this.basicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
-        this.lockableGarnetApi = new LockableGarnetApi(storageSession, storageSession.lockableContext, storageSession.objectStoreLockableContext);
+        basicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
+        lockableGarnetApi = new LockableGarnetApi(storageSession, storageSession.lockableContext, storageSession.objectStoreLockableContext);
 
         this.storeWrapper = storeWrapper;
         this.subscribeBroker = subscribeBroker;
-        this._authenticator = storeWrapper.serverOptions.AuthSettings?.CreateAuthenticator(this.storeWrapper) ?? new GarnetNoAuthAuthenticator();
+        _authenticator = storeWrapper.serverOptions.AuthSettings?.CreateAuthenticator(this.storeWrapper) ?? new GarnetNoAuthAuthenticator();
 
         // Associate new session with default user and automatically authenticate, if possible
-        this.AuthenticateUser(Encoding.ASCII.GetBytes(this.storeWrapper.accessControlList.GetDefaultUser().Name));
+        AuthenticateUser(Encoding.ASCII.GetBytes(this.storeWrapper.accessControlList.GetDefaultUser().Name));
 
         txnManager = new TransactionManager(this, storageSession, scratchBufferManager, storeWrapper.serverOptions.EnableCluster, logger);
         storageSession.txnManager = txnManager;
 
-        clusterSession = storeWrapper.clusterProvider?.CreateClusterSession(txnManager, this._authenticator, this._user, sessionMetrics, basicGarnetApi, networkSender, logger);
+        clusterSession = storeWrapper.clusterProvider?.CreateClusterSession(txnManager, _authenticator, _user, sessionMetrics, basicGarnetApi, networkSender, logger);
         readHead = 0;
         toDispose = false;
         SessionAsking = 0;
@@ -174,7 +169,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="username">Name of the user to authenticate.</param>
     /// <param name="password">Password to authenticate with.</param>
     /// <returns>True if the session has been authenticated successfully, false if the user could not be authenticated.</returns>
-    bool AuthenticateUser(ReadOnlySpan<byte> username, ReadOnlySpan<byte> password = default(ReadOnlySpan<byte>))
+    private bool AuthenticateUser(ReadOnlySpan<byte> username, ReadOnlySpan<byte> password = default(ReadOnlySpan<byte>))
     {
         // Authenticate user or change to default user if no authentication is supported
         bool success = _authenticator.CanAuthenticate ? _authenticator.Authenticate(password, username) : true;
@@ -185,15 +180,15 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // NOTE: Currently only GarnetACLAuthenticator supports multiple users
             if (_authenticator is GarnetACLAuthenticator aclAuthenticator)
             {
-                this._user = aclAuthenticator.GetUser();
+                _user = aclAuthenticator.GetUser();
             }
             else
             {
-                this._user = this.storeWrapper.accessControlList.GetDefaultUser();
+                _user = storeWrapper.accessControlList.GetDefaultUser();
             }
 
             // Propagate authentication to cluster session
-            clusterSession?.SetUser(this._user);
+            clusterSession?.SetUser(_user);
         }
 
         return _authenticator.CanAuthenticate ? success : false;
@@ -657,7 +652,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    ReadOnlySpan<byte> GetCommand(ReadOnlySpan<byte> bufSpan, out bool success)
+    private ReadOnlySpan<byte> GetCommand(ReadOnlySpan<byte> bufSpan, out bool success)
     {
         byte* ptr = recvBufferPtr + readHead;
         byte* end = recvBufferPtr + bytesRead;
@@ -901,7 +896,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="key">Key bytes</param>
     /// <param name="readOnly">Whether caller is going to perform a readonly or read/write operation.</param>
     /// <returns>True when ownernship is verified, false otherwise</returns>
-    bool NetworkSingleKeySlotVerify(byte[] key, bool readOnly)
+    private bool NetworkSingleKeySlotVerify(byte[] key, bool readOnly)
         => clusterSession != null && clusterSession.NetworkSingleKeySlotVerify(key, readOnly, SessionAsking, ref dcurr, ref dend);
 
     /// <summary>
@@ -911,7 +906,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="keyPtr">Pointer to key bytes</param>
     /// <param name="readOnly">Whether caller is going to perform a readonly or read/write operation</param>
     /// <returns>True when ownernship is verified, false otherwise</returns>
-    bool NetworkSingleKeySlotVerify(byte* keyPtr, int ksize, bool readOnly)
+    private bool NetworkSingleKeySlotVerify(byte* keyPtr, int ksize, bool readOnly)
         => clusterSession != null && clusterSession.NetworkSingleKeySlotVerify(new ArgSlice(keyPtr, ksize), readOnly, SessionAsking, ref dcurr, ref dend);
 
     /// <summary>
@@ -924,7 +919,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="readOnly">Whether caller is going to perform a readonly or read/write operation</param>
     /// <param name="retVal">Used to indicate if parsing succeeded or failed due to lack of expected data</param>
     /// <returns>True when ownernship is verified, false otherwise</returns>
-    bool NetworkArraySlotVerify(int keyCount, byte* ptr, bool interleavedKeys, bool readOnly, out bool retVal)
+    private bool NetworkArraySlotVerify(int keyCount, byte* ptr, bool interleavedKeys, bool readOnly, out bool retVal)
     {
         retVal = false;
         if (clusterSession != null && clusterSession.NetworkArraySlotVerify(keyCount, ref ptr, recvBufferPtr + bytesRead, interleavedKeys, readOnly, SessionAsking, ref dcurr, ref dend, out retVal))
@@ -942,6 +937,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="readOnly">Whether caller is going to perform a readonly or read/write operation</param>
     /// <param name="count">Key count if different than keys array length</param>
     /// <returns>True when ownernship is verified, false otherwise</returns>
-    bool NetworkKeyArraySlotVerify(ref ArgSlice[] keys, bool readOnly, int count = -1)
+    private bool NetworkKeyArraySlotVerify(ref ArgSlice[] keys, bool readOnly, int count = -1)
         => clusterSession != null && clusterSession.NetworkKeyArraySlotVerify(ref keys, readOnly, SessionAsking, ref dcurr, ref dend, count);
 }

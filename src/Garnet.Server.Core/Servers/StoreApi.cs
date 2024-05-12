@@ -8,7 +8,7 @@ namespace Garnet.Server;
 /// </summary>
 public class StoreApi
 {
-    readonly StoreWrapper storeWrapper;
+    private readonly StoreWrapper storeWrapper;
 
     /// <summary>
     /// Construct new Store API instance

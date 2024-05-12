@@ -16,9 +16,9 @@ public abstract class TcpNetworkHandlerBase<TServerHook, TNetworkSender> : Netwo
     where TServerHook : IServerHook
     where TNetworkSender : INetworkSender
 {
-    readonly ILogger logger;
-    readonly Socket socket;
-    readonly string remoteEndpoint;
+    private readonly ILogger logger;
+    private readonly Socket socket;
+    private readonly string remoteEndpoint;
 
     /// <summary>
     /// Constructor
@@ -67,7 +67,7 @@ public abstract class TcpNetworkHandlerBase<TServerHook, TNetworkSender> : Netwo
         await base.StartAsync(tlsOptions, remoteEndpointName, token).ConfigureAwait(false);
     }
 
-    void Start()
+    private void Start()
     {
         var receiveEventArgs = new SocketAsyncEventArgs { AcceptSocket = socket };
         receiveEventArgs.SetBuffer(networkReceiveBuffer, 0, networkReceiveBuffer.Length);
@@ -93,14 +93,14 @@ public abstract class TcpNetworkHandlerBase<TServerHook, TNetworkSender> : Netwo
         socket.Dispose();
     }
 
-    void Dispose(SocketAsyncEventArgs e)
+    private void Dispose(SocketAsyncEventArgs e)
     {
         e.AcceptSocket.Dispose();
         DisposeImpl();
         e.Dispose();
     }
 
-    void RecvEventArg_Completed(object sender, SocketAsyncEventArgs e)
+    private void RecvEventArg_Completed(object sender, SocketAsyncEventArgs e)
     {
         try
         {
@@ -126,7 +126,7 @@ public abstract class TcpNetworkHandlerBase<TServerHook, TNetworkSender> : Netwo
         }
     }
 
-    unsafe void AllocateNetworkReceiveBuffer()
+    private unsafe void AllocateNetworkReceiveBuffer()
     {
         networkReceiveBufferEntry = networkPool.Get(networkPool.MinAllocationSize);
         networkReceiveBuffer = networkReceiveBufferEntry.entry;

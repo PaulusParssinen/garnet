@@ -10,7 +10,7 @@ namespace Garnet.Tests.Resp.ACL;
 /// Tests for ACL Configuration file related operations.
 /// </summary>
 [TestFixture]
-class AclConfigurationFileTests : AclTest
+internal class AclConfigurationFileTests : AclTest
 {
     /// <summary>
     /// Ensures an empty input file will result in just the default user being present.

@@ -9,24 +9,21 @@ namespace Garnet.Server;
 public static class GeoHash
 {
     // Constraints from EPSG:900913 / EPSG:3785 / OSGEO:41001
-    static readonly long geoLongMax = 180;
-
-    static readonly long geoLongMin = -180;
-
-    static readonly long geoLatMax = 90;
-
-    static readonly long geoLatMin = -90;
-
-    static readonly int precision = 52;
+    private static readonly long geoLongMax = 180;
+    private static readonly long geoLongMin = -180;
+    private static readonly long geoLatMax = 90;
+    private static readonly long geoLatMin = -90;
+    private static readonly int precision = 52;
 
     //Measure based on WGS-84 system
-    static readonly double earthRadiusInMeters = 6372797.560856;
+    private static readonly double earthRadiusInMeters = 6372797.560856;
+
     //The PI/180 constant
-    static readonly double degreesToRadians = 0.017453292519943295769236907684886;
+    private static readonly double degreesToRadians = 0.017453292519943295769236907684886;
 
     //The "Geohash alphabet" (32ghs) uses all digits 0-9 and almost all lower case letters except "a", "i", "l" and "o".
     //This table is used for getting the "standard textual representation" of a pair of lat and long.
-    static readonly char[] base32chars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+    private static readonly char[] base32chars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
 
     /// <summary>

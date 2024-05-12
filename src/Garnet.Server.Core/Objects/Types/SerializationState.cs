@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Garnet.Server;
 
 [StructLayout(LayoutKind.Explicit, Size = 4)]
-struct SerializationState
+internal struct SerializationState
 {
     [FieldOffset(0)]
     public SerializationPhase phase;

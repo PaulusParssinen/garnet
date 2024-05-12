@@ -201,7 +201,7 @@ public sealed class LogAccessor<Key, Value> : IObservable<ITsavoriteScanIterator
     /// <summary>
     /// Wrapper to help dispose the subscription
     /// </summary>
-    class LogSubscribeDisposable : IDisposable
+    private class LogSubscribeDisposable : IDisposable
     {
         private readonly AllocatorBase<Key, Value> allocator;
         private readonly bool readOnly;

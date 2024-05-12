@@ -17,17 +17,17 @@ internal sealed unsafe class ScratchBufferManager
     /// <summary>
     /// Session-local scratch buffer to hold temporary arguments in transactions and GarnetApi
     /// </summary>
-    byte[] scratchBuffer;
+    private byte[] scratchBuffer;
 
     /// <summary>
     /// Pointer to head of scratch buffer
     /// </summary>
-    byte* scratchBufferHead;
+    private byte* scratchBufferHead;
 
     /// <summary>
     /// Current offset in scratch buffer
     /// </summary>
-    int scratchBufferOffset;
+    private int scratchBufferOffset;
 
     public ScratchBufferManager()
     {
@@ -188,16 +188,16 @@ internal sealed unsafe class ScratchBufferManager
     /// RESP format: $[size]\r\n[value]\r\n
     /// Total size: 1 + [number of digits in the size value] + 2 + [size of value] + 2
     /// </summary>
-    static int GetRespFormattedStringLength(ArgSlice slice)
+    private static int GetRespFormattedStringLength(ArgSlice slice)
         => 1 + NumUtils.NumDigits(slice.Length) + 2 + slice.Length + 2;
 
-    void ExpandScratchBufferIfNeeded(int newLength)
+    private void ExpandScratchBufferIfNeeded(int newLength)
     {
         if (scratchBuffer == null || newLength > scratchBuffer.Length - scratchBufferOffset)
             ExpandScratchBuffer(scratchBufferOffset + newLength);
     }
 
-    void ExpandScratchBuffer(int newLength)
+    private void ExpandScratchBuffer(int newLength)
     {
         if (newLength < 64) newLength = 64;
         else newLength = (int)BitOperations.RoundUpToPowerOf2((uint)newLength + 1);

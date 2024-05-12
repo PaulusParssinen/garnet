@@ -48,9 +48,9 @@ public abstract unsafe class ClientBase : IDisposable
     {
         this.address = address;
         this.port = port;
-        this.Buffersize = BufferSize;
-        this.connected_ = false;
-        this.numPendingRequests = 0;
+        Buffersize = BufferSize;
+        connected_ = false;
+        numPendingRequests = 0;
     }
 
     /// <summary>

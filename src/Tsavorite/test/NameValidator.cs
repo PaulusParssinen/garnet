@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace Tsavorite.Tests;
 
-static class NameValidator
+internal static class NameValidator
 {
-    const int ContainerShareQueueTableMinLength = 3;
-    const int ContainerShareQueueTableMaxLength = 63;
-    static readonly RegexOptions RegexOptions = RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant;
-    static readonly Regex ShareContainerQueueRegex = new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions);
+    private const int ContainerShareQueueTableMinLength = 3;
+    private const int ContainerShareQueueTableMaxLength = 63;
+    private static readonly RegexOptions RegexOptions = RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant;
+    private static readonly Regex ShareContainerQueueRegex = new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions);
 
     /// <summary>
     /// Checks if a container name is valid.
@@ -25,7 +25,7 @@ static class NameValidator
         }
     }
 
-    static void ValidateShareContainerQueueHelper(string resourceName, string resourceType)
+    private static void ValidateShareContainerQueueHelper(string resourceName, string resourceType)
     {
         if (string.IsNullOrWhiteSpace(resourceName))
         {

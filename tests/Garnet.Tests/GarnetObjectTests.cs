@@ -10,8 +10,8 @@ namespace Garnet.Tests;
 [TestFixture]
 public class GarnetObjectTests
 {
-    TsavoriteKV<byte[], IGarnetObject> store;
-    IDevice logDevice, objectLogDevice;
+    private TsavoriteKV<byte[], IGarnetObject> store;
+    private IDevice logDevice, objectLogDevice;
 
     [SetUp]
     public void Setup()
@@ -166,7 +166,7 @@ public class GarnetObjectTests
 /// <summary>
 /// Serializer for IGarnetObject
 /// </summary>
-sealed class MyGarnetObjectSerializer : BinaryObjectSerializer<IGarnetObject>
+internal sealed class MyGarnetObjectSerializer : BinaryObjectSerializer<IGarnetObject>
 {
     /// <inheritdoc />
     public override void Deserialize(out IGarnetObject obj)

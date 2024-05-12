@@ -10,7 +10,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
 
     /// <summary>
@@ -537,7 +537,7 @@ sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        if (String.IsNullOrEmpty(match))
+        if (string.IsNullOrEmpty(match))
             match = "*";
 
         // Prepare header in input buffer

@@ -11,7 +11,7 @@ namespace Garnet.Server;
 /// Entry for a key to lock and unlock in transactions
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = 10)]
-struct TxnKeyEntry : ILockableKey
+internal struct TxnKeyEntry : ILockableKey
 {
     [FieldOffset(0)]
     internal long keyHash;
@@ -35,7 +35,7 @@ struct TxnKeyEntry : ILockableKey
     {
         // The debugger often can't call the Globalization NegativeSign property so ToString() would just display the class name
         string keyHashSign = keyHash < 0 ? "-" : string.Empty;
-        long absKeyHash = this.keyHash >= 0 ? this.keyHash : -this.keyHash;
+        long absKeyHash = keyHash >= 0 ? keyHash : -keyHash;
         return $"{keyHashSign}{absKeyHash}:{(isObject ? "obj" : "raw")}:{(lockType == LockType.None ? "-" : (lockType == LockType.Shared ? "s" : "x"))}";
     }
 }
@@ -43,14 +43,12 @@ struct TxnKeyEntry : ILockableKey
 internal sealed class TxnKeyEntries
 {
     // Basic keys
-    int keyCount;
-    int mainKeyCount;
-    TxnKeyEntry[] keys;
-
-    bool mainStoreKeyLocked;
-    bool objectStoreKeyLocked;
-
-    readonly TxnKeyEntryComparer comparer;
+    private int keyCount;
+    private int mainKeyCount;
+    private TxnKeyEntry[] keys;
+    private bool mainStoreKeyLocked;
+    private bool objectStoreKeyLocked;
+    private readonly TxnKeyEntryComparer comparer;
 
     public int phase;
 
@@ -58,7 +56,7 @@ internal sealed class TxnKeyEntries
     {
         keys = new TxnKeyEntry[initialCount];
         // We sort a single array for speed, and the sessions use the same sorting logic,
-        this.comparer = new(lockableContext, objectStoreLockableContext);
+        comparer = new(lockableContext, objectStoreLockableContext);
     }
 
     public bool IsReadOnly

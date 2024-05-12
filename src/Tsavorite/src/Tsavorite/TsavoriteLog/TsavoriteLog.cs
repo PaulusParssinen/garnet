@@ -15,29 +15,26 @@ namespace Tsavorite;
 public sealed class TsavoriteLog : IDisposable
 {
     private Exception cannedException = null;
-
-    readonly BlittableAllocator<Empty, byte> allocator;
-    readonly LightEpoch epoch;
-    readonly ILogCommitManager logCommitManager;
-    readonly bool disposeLogCommitManager;
-    readonly GetMemory getMemory;
-    readonly int headerSize;
-    readonly LogChecksumType logChecksum;
-    readonly WorkQueueLIFO<CommitInfo> commitQueue;
+    private readonly BlittableAllocator<Empty, byte> allocator;
+    private readonly LightEpoch epoch;
+    private readonly ILogCommitManager logCommitManager;
+    private readonly bool disposeLogCommitManager;
+    private readonly GetMemory getMemory;
+    private readonly int headerSize;
+    private readonly LogChecksumType logChecksum;
+    private readonly WorkQueueLIFO<CommitInfo> commitQueue;
 
     internal readonly bool readOnlyMode;
     internal readonly bool fastCommitMode;
     internal readonly bool tolerateDeviceFailure;
-
-    TaskCompletionSource<LinkedCommitInfo> commitTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private TaskCompletionSource<LinkedCommitInfo> commitTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
     internal TaskCompletionSource<Empty> refreshUncommittedTcs;
 
     // Offsets for all currently unprocessed commit records
-    readonly Queue<(long, TsavoriteLogRecoveryInfo)> ongoingCommitRequests;
-    readonly List<TsavoriteLogRecoveryInfo> coveredCommits = new();
-    long commitNum, commitCoveredAddress;
-
-    readonly LogCommitPolicy commitPolicy;
+    private readonly Queue<(long, TsavoriteLogRecoveryInfo)> ongoingCommitRequests;
+    private readonly List<TsavoriteLogRecoveryInfo> coveredCommits = new();
+    private long commitNum, commitCoveredAddress;
+    private readonly LogCommitPolicy commitPolicy;
 
     /// <summary>
     /// Beginning address of log
@@ -51,7 +48,7 @@ public sealed class TsavoriteLog : IDisposable
 
     // Here's a soft begin address that is observed by all access at the TsavoriteLog level but not actually on the
     // allocator. This is to make sure that any potential physical deletes only happen after commit.
-    long beginAddress;
+    private long beginAddress;
 
     /// <summary>
     /// Tail address of log
@@ -120,13 +117,12 @@ public sealed class TsavoriteLog : IDisposable
     /// Used to determine disposability of log
     /// </summary>
     internal int logRefCount = 1;
-
-    readonly ILogger logger;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Whether we refresh safe tail as records are inserted
     /// </summary>
-    readonly bool AutoRefreshSafeTailAddress;
+    private readonly bool AutoRefreshSafeTailAddress;
 
     /// <summary>
     /// Callback when safe tail shifts
@@ -136,12 +132,12 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Whether we automatically commit as records are inserted
     /// </summary>
-    readonly bool AutoCommit;
+    private readonly bool AutoCommit;
 
     /// <summary>
     /// Whether there is an ongoing auto refresh safe tail
     /// </summary>
-    int _ongoingAutoRefreshSafeTailAddress = 0;
+    private int _ongoingAutoRefreshSafeTailAddress = 0;
 
     /// <summary>
     /// Create new log instance

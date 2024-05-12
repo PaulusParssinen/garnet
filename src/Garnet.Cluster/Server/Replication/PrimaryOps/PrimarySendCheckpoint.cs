@@ -8,7 +8,7 @@ namespace Garnet.Cluster;
 
 internal sealed partial class ReplicationManager : IDisposable
 {
-    readonly ReplicaSyncSessionTaskStore replicaSyncSessionTaskStore;
+    private readonly ReplicaSyncSessionTaskStore replicaSyncSessionTaskStore;
 
     /// <summary>
     /// Begin background replica sync session

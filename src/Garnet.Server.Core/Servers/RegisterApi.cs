@@ -8,7 +8,7 @@ namespace Garnet.Server;
 /// </summary>
 public class RegisterApi
 {
-    readonly GarnetProvider provider;
+    private readonly GarnetProvider provider;
 
     /// <summary>
     /// Construct new Register API instance

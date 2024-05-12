@@ -9,10 +9,10 @@ namespace Tsavorite.Tests.statemachine;
 [TestFixture]
 public class StateMachineTests
 {
-    IDevice log;
-    TsavoriteKV<AdId, NumClicks> store;
-    const int numOps = 5000;
-    AdId[] inputArray;
+    private IDevice log;
+    private TsavoriteKV<AdId, NumClicks> store;
+    private const int numOps = 5000;
+    private AdId[] inputArray;
 
     [SetUp]
     public void Setup()
@@ -595,8 +595,7 @@ public class StateMachineTests
         RecoverAndTest(log);
     }
 
-
-    void Prepare(out SimpleFunctions f,
+    private void Prepare(out SimpleFunctions f,
         out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1,
         out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1,
         out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2,
@@ -644,8 +643,7 @@ public class StateMachineTests
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
     }
 
-
-    void CreateSessions(out SimpleFunctions f,
+    private void CreateSessions(out SimpleFunctions f,
         out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1,
         out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> ts,
         out LUCThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> lts)
@@ -676,7 +674,7 @@ public class StateMachineTests
         store.CompleteCheckpointAsync().AsTask().GetAwaiter().GetResult();
     }
 
-    void RecoverAndTest(IDevice log)
+    private void RecoverAndTest(IDevice log)
     {
         NumClicks inputArg = default;
         NumClicks output = default;

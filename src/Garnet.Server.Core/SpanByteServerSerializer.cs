@@ -11,11 +11,11 @@ namespace Garnet.Server;
 /// </summary>
 public sealed unsafe class SpanByteServerSerializer : IServerSerializer<SpanByte, SpanByte, SpanByte, SpanByteAndMemory>
 {
-    readonly int keyLength;
-    readonly int valueLength;
+    private readonly int keyLength;
+    private readonly int valueLength;
 
     [ThreadStatic]
-    static SpanByteAndMemory output;
+    private static SpanByteAndMemory output;
 
     /// <summary>
     /// Constructor

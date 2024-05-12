@@ -10,9 +10,8 @@ namespace Garnet.Cluster.Tests;
 [TestFixture, NonParallelizable]
 internal class ClusterAuthCommsTests
 {
-    ClusterTestContext context;
-
-    readonly HashSet<string> monitorTests = [];
+    private ClusterTestContext context;
+    private readonly HashSet<string> monitorTests = [];
 
     [SetUp]
     public void Setup()

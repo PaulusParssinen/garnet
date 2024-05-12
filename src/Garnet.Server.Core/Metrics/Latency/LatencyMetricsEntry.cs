@@ -3,10 +3,10 @@
 
 namespace Garnet.Server;
 
-struct LatencyMetricsEntry
+internal struct LatencyMetricsEntry
 {
-    static readonly long HISTOGRAM_LOWER_BOUND = 1;
-    static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
+    private static readonly long HISTOGRAM_LOWER_BOUND = 1;
+    private static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
 
     public readonly LongHistogram latency;
 

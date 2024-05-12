@@ -44,7 +44,7 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
         Initialize();
     }
 
-    void ReturnPage(int index)
+    private void ReturnPage(int index)
     {
         Debug.Assert(index < BufferSize);
         if (values[index] != null)

@@ -17,9 +17,9 @@ public partial struct GarnetApi<TContext, TObjectContext> : IGarnetApi, IGarnetW
     where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
 {
-    readonly StorageSession storageSession;
-    TContext context;
-    TObjectContext objectContext;
+    private readonly StorageSession storageSession;
+    private TContext context;
+    private TObjectContext objectContext;
 
     internal GarnetApi(StorageSession storageSession, TContext context, TObjectContext objectContext)
     {

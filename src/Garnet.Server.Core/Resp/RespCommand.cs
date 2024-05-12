@@ -134,7 +134,7 @@ public enum RespCommand : byte
 /// <summary>
 /// RESP command options enum
 /// </summary>
-enum RespCommandOption : byte
+internal enum RespCommandOption : byte
 {
     EX, NX, XX, GET, PX, EXAT, PXAT, PERSIST, GT, LT
 }

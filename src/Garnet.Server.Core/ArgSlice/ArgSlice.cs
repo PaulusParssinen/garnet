@@ -37,8 +37,8 @@ public unsafe struct ArgSlice
     /// </summary>
     internal ArgSlice(ref SpanByte input)
     {
-        this.ptr = input.ToPointer();
-        this.length = input.LengthWithoutMetadata;
+        ptr = input.ToPointer();
+        length = input.LengthWithoutMetadata;
     }
 
     /// <summary>

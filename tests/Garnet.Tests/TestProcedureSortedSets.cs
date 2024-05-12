@@ -15,7 +15,7 @@ namespace Garnet;
 /// 
 /// Description: Execute different sorted set commands with GarnetApi
 /// </summary>
-sealed class TestProcedureSortedSets : CustomTransactionProcedure
+internal sealed class TestProcedureSortedSets : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

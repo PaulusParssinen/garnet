@@ -59,7 +59,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         return false;
     }
 
-    bool InPlaceUpdaterWorker(ref byte[] key, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output, ref RMWInfo rmwInfo, out long sizeChange)
+    private bool InPlaceUpdaterWorker(ref byte[] key, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output, ref RMWInfo rmwInfo, out long sizeChange)
     {
         var header = (RespInputHeader*)input.ToPointer();
         sizeChange = 0;

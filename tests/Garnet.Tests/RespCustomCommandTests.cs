@@ -16,7 +16,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespCustomCommandTests
 {
-    GarnetServer server;
+    private GarnetServer server;
     private IReadOnlyDictionary<string, RespCommandsInfo> respCustomCommandsInfo;
     private string _extTestDir1;
     private string _extTestDir2;
@@ -324,7 +324,7 @@ public class RespCustomCommandTests
         Assert.AreEqual(value1, (string)retValue);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", mainkey);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -336,7 +336,7 @@ public class RespCustomCommandTests
         Assert.AreEqual(value2, (string)retValue);
 
         result = db.Execute("MEMORY", "USAGE", mainkey);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 408;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -588,12 +588,12 @@ public class RespCustomCommandTests
             Path.Combine(binPath, "Garnet.Server.dll"),
         };
 
-        string dir1 = Path.Combine(this._extTestDir1, Path.GetFileName(TestUtils.MethodTestDir));
-        string dir2 = Path.Combine(this._extTestDir2, Path.GetFileName(TestUtils.MethodTestDir));
+        string dir1 = Path.Combine(_extTestDir1, Path.GetFileName(TestUtils.MethodTestDir));
+        string dir2 = Path.Combine(_extTestDir2, Path.GetFileName(TestUtils.MethodTestDir));
 
-        Directory.CreateDirectory(this._extTestDir1);
+        Directory.CreateDirectory(_extTestDir1);
         Directory.CreateDirectory(dir1);
-        Directory.CreateDirectory(this._extTestDir2);
+        Directory.CreateDirectory(_extTestDir2);
         Directory.CreateDirectory(dir2);
 
         string testFilePath = Path.Combine(TestUtils.MethodTestDir, "test.cs");
@@ -633,7 +633,7 @@ public class RespCustomCommandTests
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         IDatabase db = redis.GetDatabase(0);
 
-        string[] libraryPaths = this.CreateTestLibraries();
+        string[] libraryPaths = CreateTestLibraries();
 
         var args = new List<object>
         {
@@ -708,7 +708,7 @@ public class RespCustomCommandTests
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         IDatabase db = redis.GetDatabase(0);
 
-        string[] libraryPaths = this.CreateTestLibraries();
+        string[] libraryPaths = CreateTestLibraries();
 
         // Malformed request #1 - no arguments
         string resp = null;

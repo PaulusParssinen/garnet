@@ -5,7 +5,7 @@ using Garnet.Common;
 
 namespace Garnet.Server;
 
-class InfoHelp
+internal class InfoHelp
 {
     internal const string HELP = "HELP";
     internal const string ALL = "ALL";

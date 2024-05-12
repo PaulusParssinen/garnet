@@ -23,7 +23,7 @@ end
     redis.call('ZREM', @sortedSet2Key, @sortedSet2Entry)
 end
 */
-sealed class SampleDeleteTxn : CustomTransactionProcedure
+internal sealed class SampleDeleteTxn : CustomTransactionProcedure
 {
     public override bool FailFastOnKeyLockFailure => true;
 

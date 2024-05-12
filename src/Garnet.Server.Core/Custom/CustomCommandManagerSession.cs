@@ -8,7 +8,7 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed class CustomCommandManagerSession
 {
-    readonly CustomCommandManager customCommandManager;
+    private readonly CustomCommandManager customCommandManager;
     public readonly (CustomTransactionProcedure, int)[] sessionTransactionProcMap;
 
     public CustomCommandManagerSession(CustomCommandManager customCommandManager)

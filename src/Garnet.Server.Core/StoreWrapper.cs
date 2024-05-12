@@ -19,7 +19,7 @@ public sealed class StoreWrapper
 {
     internal readonly string version;
     internal readonly string redisProtocolVersion;
-    readonly IGarnetServer server;
+    private readonly IGarnetServer server;
     internal readonly long startupTime;
 
     /// <summary>
@@ -81,7 +81,7 @@ public sealed class StoreWrapper
     public readonly ILogger logger;
 
     internal readonly ILogger sessionLogger;
-    readonly CancellationTokenSource ctsCommit;
+    private readonly CancellationTokenSource ctsCommit;
 
     internal long SafeAofAddress = -1;
 
@@ -110,22 +110,22 @@ public sealed class StoreWrapper
         this.version = version;
         this.redisProtocolVersion = redisProtocolVersion;
         this.server = server;
-        this.startupTime = DateTimeOffset.UtcNow.Ticks;
+        startupTime = DateTimeOffset.UtcNow.Ticks;
         this.store = store;
         this.objectStore = objectStore;
         this.appendOnlyFile = appendOnlyFile;
         this.serverOptions = serverOptions;
         lastSaveTime = DateTimeOffset.FromUnixTimeSeconds(0);
         this.customCommandManager = customCommandManager;
-        this.monitor = serverOptions.MetricsSamplingFrequency > 0 ? new GarnetServerMonitor(this, serverOptions, server, loggerFactory?.CreateLogger("GarnetServerMonitor")) : null;
+        monitor = serverOptions.MetricsSamplingFrequency > 0 ? new GarnetServerMonitor(this, serverOptions, server, loggerFactory?.CreateLogger("GarnetServerMonitor")) : null;
         this.objectStoreSizeTracker = objectStoreSizeTracker;
         this.loggerFactory = loggerFactory;
-        this.logger = loggerFactory?.CreateLogger("StoreWrapper");
-        this.sessionLogger = loggerFactory?.CreateLogger("Session");
+        logger = loggerFactory?.CreateLogger("StoreWrapper");
+        sessionLogger = loggerFactory?.CreateLogger("Session");
         // TODO Change map size to a reasonable number
-        this.versionMap = new WatchVersionMap(1 << 16);
+        versionMap = new WatchVersionMap(1 << 16);
         this.accessControlList = accessControlList;
-        this.GarnetObjectSerializer = new GarnetObjectSerializer(this.customCommandManager);
+        GarnetObjectSerializer = new GarnetObjectSerializer(this.customCommandManager);
 
         if (accessControlList == null)
         {
@@ -281,7 +281,7 @@ public sealed class StoreWrapper
         return replicationOffset;
     }
 
-    async Task AutoCheckpointBasedOnAofSizeLimit(long AofSizeLimit, CancellationToken token = default, ILogger logger = null)
+    private async Task AutoCheckpointBasedOnAofSizeLimit(long AofSizeLimit, CancellationToken token = default, ILogger logger = null)
     {
         try
         {
@@ -304,7 +304,7 @@ public sealed class StoreWrapper
         }
     }
 
-    async Task CommitTask(int commitFrequencyMs, ILogger logger = null, CancellationToken token = default)
+    private async Task CommitTask(int commitFrequencyMs, ILogger logger = null, CancellationToken token = default)
     {
         try
         {
@@ -330,7 +330,7 @@ public sealed class StoreWrapper
         }
     }
 
-    async Task CompactionTask(int compactionFrequencySecs, CancellationToken token = default)
+    private async Task CompactionTask(int compactionFrequencySecs, CancellationToken token = default)
     {
         Debug.Assert(compactionFrequencySecs > 0);
         try
@@ -353,7 +353,7 @@ public sealed class StoreWrapper
         }
     }
 
-    void DoCompaction()
+    private void DoCompaction()
     {
         // Periodic compaction -> no need to compact before checkpointing
         if (serverOptions.CompactionFrequencySecs > 0) return;
@@ -382,7 +382,7 @@ public sealed class StoreWrapper
         appendOnlyFile?.Enqueue(header, out _);
     }
 
-    void DoCompaction(int mainStoreMaxSegments, int objectStoreMaxSegments, int numSegmentsToCompact, LogCompactionType compactionType)
+    private void DoCompaction(int mainStoreMaxSegments, int objectStoreMaxSegments, int numSegmentsToCompact, LogCompactionType compactionType)
     {
         if (compactionType == LogCompactionType.None) return;
 
@@ -554,13 +554,13 @@ public sealed class StoreWrapper
     /// <summary>
     /// Mark the beginning of a checkpoint by taking and a lock to avoid concurrent checkpoint tasks
     /// </summary>
-    bool StartCheckpoint()
+    private bool StartCheckpoint()
         => _checkpointTaskLock.TryWriteLock();
 
     /// <summary>
     /// Release checkpoint task lock
     /// </summary>
-    void CompleteCheckpoint()
+    private void CompleteCheckpoint()
         => _checkpointTaskLock.WriteUnlock();
 
     /// <summary>
@@ -573,7 +573,7 @@ public sealed class StoreWrapper
             await Task.Yield();
 
         // If an external task has taken a checkpoint beyond the provided entryTime return
-        if (this.lastSaveTime > entryTime)
+        if (lastSaveTime > entryTime)
         {
             CompleteCheckpoint();
             return;

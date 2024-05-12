@@ -11,13 +11,12 @@ namespace Tsavorite.Device;
 /// </summary>
 internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
 {
-    readonly int size;
-    readonly Func<T> creator;
-    readonly SemaphoreSlim handleAvailable;
-    readonly ConcurrentQueue<T> itemQueue;
-
-    bool disposed = false;
-    int totalAllocated = 0;
+    private readonly int size;
+    private readonly Func<T> creator;
+    private readonly SemaphoreSlim handleAvailable;
+    private readonly ConcurrentQueue<T> itemQueue;
+    private bool disposed = false;
+    private int totalAllocated = 0;
 
     /// <summary>
     /// Constructor

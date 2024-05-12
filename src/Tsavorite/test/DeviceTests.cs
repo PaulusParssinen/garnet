@@ -9,10 +9,10 @@ namespace Tsavorite.Tests;
 [TestFixture]
 public class DeviceTests
 {
-    const int entryLength = 1024;
-    SectorAlignedBufferPool bufferPool;
-    readonly byte[] entry = new byte[entryLength];
-    SemaphoreSlim semaphore;
+    private const int entryLength = 1024;
+    private SectorAlignedBufferPool bufferPool;
+    private readonly byte[] entry = new byte[entryLength];
+    private SemaphoreSlim semaphore;
 
     [SetUp]
     public void Setup()
@@ -80,12 +80,12 @@ public class DeviceTests
         }
     }
 
-    void Callback(uint errorCode, uint numBytes, object context)
+    private void Callback(uint errorCode, uint numBytes, object context)
     {
         semaphore.Release();
     }
 
-    unsafe void WriteInto(IDevice device, ulong address, byte[] buffer, int size)
+    private unsafe void WriteInto(IDevice device, ulong address, byte[] buffer, int size)
     {
         long numBytesToWrite = size;
         numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
@@ -102,7 +102,7 @@ public class DeviceTests
         pbuffer.Return();
     }
 
-    unsafe void ReadInto(IDevice device, ulong address, out byte[] buffer, int size)
+    private unsafe void ReadInto(IDevice device, ulong address, out byte[] buffer, int size)
     {
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
@@ -117,7 +117,7 @@ public class DeviceTests
         pbuffer.Return();
     }
 
-    void IOCallback(uint errorCode, uint numBytes, object context)
+    private void IOCallback(uint errorCode, uint numBytes, object context)
     {
         if (errorCode != 0)
             Assert.Fail("OverlappedStream GetQueuedCompletionStatus error: {0}", errorCode);

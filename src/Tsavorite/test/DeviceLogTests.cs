@@ -10,10 +10,10 @@ namespace Tsavorite.Tests;
 [TestFixture]
 internal class DeviceLogTests
 {
-    const int entryLength = 100;
-    const int numEntries = 1000;
+    private const int entryLength = 100;
+    private const int numEntries = 1000;
     private TsavoriteLog log;
-    static readonly byte[] entry = new byte[100];
+    private static readonly byte[] entry = new byte[100];
 
     [Test]
     [Category("TsavoriteLog")]

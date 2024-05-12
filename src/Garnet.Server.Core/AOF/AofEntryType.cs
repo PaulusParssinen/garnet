@@ -3,7 +3,7 @@
 
 namespace Garnet.Server;
 
-enum AofEntryType : byte
+internal enum AofEntryType : byte
 {
     StoreUpsert = 0x00,
     StoreRMW = 0x01,
@@ -19,7 +19,7 @@ enum AofEntryType : byte
     StoredProcedure = 0x50,
 }
 
-enum AofStoreType : byte
+internal enum AofStoreType : byte
 {
     MainStoreType = 0x0,
     ObjectStoreType = 0x1,

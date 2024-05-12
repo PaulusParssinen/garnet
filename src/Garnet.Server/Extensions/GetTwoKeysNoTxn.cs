@@ -14,7 +14,7 @@ namespace Garnet;
 /// 
 /// Description: Read two keys without any transactional guarantee, return the values as an array of bulk strings
 /// </summary>
-sealed class GetTwoKeysNoTxn : CustomTransactionProcedure
+internal sealed class GetTwoKeysNoTxn : CustomTransactionProcedure
 {
     /// <summary>
     /// No transactional phase, skip Prepare

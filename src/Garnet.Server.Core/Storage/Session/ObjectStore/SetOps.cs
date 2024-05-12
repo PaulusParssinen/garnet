@@ -11,7 +11,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - SET
 /// </summary>
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     /// <summary>
     ///  Adds the specified member to the set at key.
@@ -264,7 +264,7 @@ sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        if (String.IsNullOrEmpty(match))
+        if (string.IsNullOrEmpty(match))
             match = "*";
 
         // Prepare header in input buffer

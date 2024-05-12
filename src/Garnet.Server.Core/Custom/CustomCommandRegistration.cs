@@ -134,8 +134,8 @@ internal abstract class RegisterCustomCommandProviderBase<T, TArgs> : RegisterCu
 
     protected RegisterCustomCommandProviderBase(T instance, TArgs args)
     {
-        this.Instance = instance;
-        this.RegisterArgs = args;
+        Instance = instance;
+        RegisterArgs = args;
     }
 }
 
@@ -173,12 +173,12 @@ internal sealed class RegisterRawStringFunctionProvider : RegisterCustomCmdProvi
     public override void Register(CustomCommandManager customCommandManager)
     {
         customCommandManager.Register(
-            this.RegisterArgs.Name,
-            this.RegisterArgs.NumParams,
-            this.RegisterArgs.CommandType,
-            this.Instance,
-            this.RegisterArgs.CommandInfo,
-            this.RegisterArgs.ExpirationTicks);
+            RegisterArgs.Name,
+            RegisterArgs.NumParams,
+            RegisterArgs.CommandType,
+            Instance,
+            RegisterArgs.CommandInfo,
+            RegisterArgs.ExpirationTicks);
     }
 }
 
@@ -193,7 +193,7 @@ internal sealed class RegisterCustomObjectFactoryProvider : RegisterCustomCmdPro
 
     public override void Register(CustomCommandManager customCommandManager)
     {
-        customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, this.RegisterArgs.CommandType, this.Instance, this.RegisterArgs.CommandInfo);
+        customCommandManager.Register(RegisterArgs.Name, RegisterArgs.NumParams, RegisterArgs.CommandType, Instance, RegisterArgs.CommandInfo);
     }
 }
 
@@ -208,6 +208,6 @@ internal sealed class RegisterCustomTransactionProcedureProvider : RegisterCusto
 
     public override void Register(CustomCommandManager customCommandManager)
     {
-        customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, () => this.Instance);
+        customCommandManager.Register(RegisterArgs.Name, RegisterArgs.NumParams, () => Instance);
     }
 }

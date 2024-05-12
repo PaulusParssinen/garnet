@@ -5,7 +5,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     /// <summary>
     /// Adds new elements at the head(right) or tail(left)

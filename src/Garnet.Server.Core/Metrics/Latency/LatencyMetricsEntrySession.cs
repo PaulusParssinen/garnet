@@ -6,13 +6,13 @@ using System.Runtime.CompilerServices;
 
 namespace Garnet.Server;
 
-struct LatencyMetricsEntrySession
+internal struct LatencyMetricsEntrySession
 {
-    static readonly long HISTOGRAM_LOWER_BOUND = 1;
-    static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
+    private static readonly long HISTOGRAM_LOWER_BOUND = 1;
+    private static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static bool IsValidRange(long value)
+    private static bool IsValidRange(long value)
         => value < HISTOGRAM_UPPER_BOUND && value >= HISTOGRAM_LOWER_BOUND;
 
     public long startTimestamp;

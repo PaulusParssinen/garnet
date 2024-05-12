@@ -14,10 +14,10 @@ namespace Garnet.Cluster;
 /// </summary>
 internal sealed partial class ClusterManager : IDisposable
 {
-    ClusterConfig currentConfig;
-    readonly IDevice clusterConfigDevice;
-    readonly SectorAlignedBufferPool pool;
-    readonly ILogger logger;
+    private ClusterConfig currentConfig;
+    private readonly IDevice clusterConfigDevice;
+    private readonly SectorAlignedBufferPool pool;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Get current config
@@ -27,7 +27,7 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Tls Client options
     /// </summary>
-    readonly IGarnetTlsOptions tlsOptions;
+    private readonly IGarnetTlsOptions tlsOptions;
 
     /// <summary>
     /// ClusterProvider

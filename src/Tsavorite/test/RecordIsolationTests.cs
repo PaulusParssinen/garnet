@@ -19,16 +19,14 @@ internal class RecordIsolationTestFunctions : SimpleFunctions<long, long>
 }
 
 [TestFixture]
-class RecordIsolationTests
+internal class RecordIsolationTests
 {
-    const int numRecords = 1000;
-    const int useNewKey = 1010;
-    const int useExistingKey = 200;
-
-    const int valueMult = 1_000_000;
-
-    RecordIsolationTestFunctions functions;
-    LongTsavoriteEqualityComparer comparer;
+    private const int numRecords = 1000;
+    private const int useNewKey = 1010;
+    private const int useExistingKey = 200;
+    private const int valueMult = 1_000_000;
+    private RecordIsolationTestFunctions functions;
+    private LongTsavoriteEqualityComparer comparer;
 
     private TsavoriteKV<long, long> store;
     private ClientSession<long, long, long, long, Empty, RecordIsolationTestFunctions> session;
@@ -84,13 +82,13 @@ class RecordIsolationTests
             DeleteDirectory(MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; key++)
             Assert.IsFalse(session.Upsert(key, key * valueMult).IsPending);
     }
 
-    void AssertIsNotLocked(long key)
+    private void AssertIsNotLocked(long key)
     {
         // Check *both* hlog and readcache
         OperationStackContext<long, long> stackCtx = new(comparer.GetHashCode64(ref key));
@@ -112,7 +110,7 @@ class RecordIsolationTests
         }
     }
 
-    void PrepareRecordLocation(FlushMode recordLocation)
+    private void PrepareRecordLocation(FlushMode recordLocation)
     {
         if (recordLocation == FlushMode.ReadOnly)
             store.Log.ShiftReadOnlyAddress(store.Log.TailAddress, wait: true);
@@ -120,7 +118,7 @@ class RecordIsolationTests
             store.Log.FlushAndEvict(wait: true);
     }
 
-    struct EnsureNoLock_ScanIteratorFunctions : IScanIteratorFunctions<long, long>
+    private struct EnsureNoLock_ScanIteratorFunctions : IScanIteratorFunctions<long, long>
     {
         internal long count;
 
@@ -142,7 +140,7 @@ class RecordIsolationTests
         public void OnStop(bool completed, long numberOfRecords) { }
     }
 
-    void AssertNoLocks()
+    private void AssertNoLocks()
     {
         EnsureNoLock_ScanIteratorFunctions scanFunctions = new();
         Assert.IsTrue(store.Log.Scan(ref scanFunctions, store.Log.BeginAddress, store.Log.TailAddress), "Main log scan did not complete");
@@ -335,7 +333,7 @@ class RecordIsolationTests
         AssertNoLocks();
     }
 
-    void VerifyKeyIsSplicedInAndHasNoLocks(long expectedKey)
+    private void VerifyKeyIsSplicedInAndHasNoLocks(long expectedKey)
     {
         // Scan to the end of the readcache chain and verify we inserted the value.
         (long _, long pa) = ChainTests.SkipReadCacheChain(store, expectedKey);
@@ -377,7 +375,7 @@ class RecordIsolationTests
         AssertNoLocks();
     }
 
-    void PopulateAndEvict(bool immutable = false)
+    private void PopulateAndEvict(bool immutable = false)
     {
         Populate();
 

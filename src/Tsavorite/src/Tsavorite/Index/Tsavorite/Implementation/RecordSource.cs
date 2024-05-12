@@ -57,7 +57,7 @@ internal struct RecordSource<Key, Value>
     /// </summary>
     internal AllocatorBase<Key, Value> Log;
 
-    struct InternalStates
+    private struct InternalStates
     {
         internal const int None = 0;
         internal const int TransientSLock = 0x0001;    // LockTable
@@ -97,7 +97,7 @@ internal struct RecordSource<Key, Value>
         }
     }
 
-    int internalState;
+    private int internalState;
 
     /// <summary>
     /// Set (and cleared) by caller to indicate whether we have a LockTable-based Transient Shared lock (does not include Manual locks; this is per-operation only).

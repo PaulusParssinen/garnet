@@ -9,10 +9,10 @@ using StackExchange.Redis;
 namespace Garnet.Tests;
 
 [TestFixture]
-class RespListTests
+internal class RespListTests
 {
-    GarnetServer server;
-    Random r;
+    private GarnetServer server;
+    private Random r;
 
     [SetUp]
     public void Setup()
@@ -45,7 +45,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 184;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -53,7 +53,7 @@ class RespListTests
         Assert.AreEqual(val, popval);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 104;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -75,7 +75,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -86,7 +86,7 @@ class RespListTests
         Assert.AreEqual(nLen1, 5);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 504;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -96,7 +96,7 @@ class RespListTests
         Assert.AreEqual(nLen1, 5);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 504;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -238,7 +238,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -252,7 +252,7 @@ class RespListTests
         Assert.AreEqual(val, insert_val);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 432;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -263,7 +263,7 @@ class RespListTests
         Assert.AreEqual(val, insert_val);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 520;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -287,7 +287,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 584;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -296,7 +296,7 @@ class RespListTests
         Assert.AreEqual(ret, 2);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 424;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -305,7 +305,7 @@ class RespListTests
         Assert.AreEqual(nLen, 3);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -328,7 +328,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -350,7 +350,7 @@ class RespListTests
         Assert.AreEqual(null, popval);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 104;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -373,7 +373,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -383,7 +383,7 @@ class RespListTests
         Assert.AreEqual(nLen, 8);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 744;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -406,7 +406,7 @@ class RespListTests
         Assert.AreEqual(nVals, nAdded);
 
         RedisResult result = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -423,7 +423,7 @@ class RespListTests
         }
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 104;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -432,7 +432,7 @@ class RespListTests
         Assert.AreEqual(null, popval);
 
         result = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        actualValue = ResultType.Integer == result.Type ? int.Parse(result.ToString()) : -1;
         expectedResponse = 104;
         Assert.AreEqual(expectedResponse, actualValue);
     }
@@ -466,7 +466,7 @@ class RespListTests
         Assert.AreEqual("Value-three", result.ToString());
 
         RedisResult response = db.Execute("MEMORY", "USAGE", key);
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -483,7 +483,7 @@ class RespListTests
         Assert.AreEqual("Value-two", result.ToString());
 
         response = db.Execute("MEMORY", "USAGE", key);
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -1132,7 +1132,7 @@ class RespListTests
         Assert.IsTrue(result == 0);
 
         RedisResult response = db.Execute("MEMORY", "USAGE", "mylist");
-        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         int expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -1141,7 +1141,7 @@ class RespListTests
         Assert.IsTrue(result == 10);
 
         response = db.Execute("MEMORY", "USAGE", "mylist");
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -1150,7 +1150,7 @@ class RespListTests
         Assert.IsTrue(result == 0);
 
         response = db.Execute("MEMORY", "USAGE", "myaux-list");
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -1159,7 +1159,7 @@ class RespListTests
         Assert.IsTrue(result == 10);
 
         response = db.Execute("MEMORY", "USAGE", "myaux-list");
-        actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
         expectedResponse = 912;
         Assert.AreEqual(expectedResponse, actualValue);
     }

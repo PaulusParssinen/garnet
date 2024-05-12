@@ -8,7 +8,7 @@ namespace Garnet.Cluster;
 /// <summary>
 /// Checkpoint file type
 /// </summary>
-enum CheckpointFileType : byte
+internal enum CheckpointFileType : byte
 {
     /// <summary>
     /// None
@@ -56,7 +56,7 @@ enum CheckpointFileType : byte
     OBJ_STORE_SNAPSHOT_OBJ,
 }
 
-static class CheckpointFileTypeExtensions
+internal static class CheckpointFileTypeExtensions
 {
     public static StoreType ToStoreType(this CheckpointFileType type)
     {

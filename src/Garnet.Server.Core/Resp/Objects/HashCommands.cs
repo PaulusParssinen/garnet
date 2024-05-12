@@ -11,12 +11,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Session counter of number of Hash entries partially done
     /// </summary>
-    int hashItemsDoneCount;
+    private int hashItemsDoneCount;
 
     /// <summary>
     /// Session counter of number of Hash operations partially done
     /// </summary>
-    int hashOpsCount;
+    private int hashOpsCount;
 
     /// <summary>
     /// HashSet/HSET key field value [field value ...]: Sets the specified field(s) to their respective value(s) in the hash stored at key.
@@ -612,7 +612,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             // Process output
             ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
-            if (objOutputHeader.opsDone == Int32.MinValue)
+            if (objOutputHeader.opsDone == int.MinValue)
             {
                 // Command was partially done
                 return false;

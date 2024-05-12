@@ -15,7 +15,7 @@ internal class LogAndDeviceConfigTests
 {
     private TsavoriteLog log;
     private IDevice device;
-    static readonly byte[] entry = new byte[100];
+    private static readonly byte[] entry = new byte[100];
 
     [SetUp]
     public void Setup()

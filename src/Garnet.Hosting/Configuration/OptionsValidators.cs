@@ -95,7 +95,7 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
 
     internal DirectoryPathValidationAttribute(bool mustExist, bool isRequired) : base(isRequired)
     {
-        this._mustExist = mustExist;
+        _mustExist = mustExist;
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
 
         var options = (Options)validationContext.ObjectInstance;
 
-        if (this._mustExist && !directoryInfo.Exists)
+        if (_mustExist && !directoryInfo.Exists)
         {
             string errorMessage = $"{baseError} Specified directory does not exist. Directory path: {directoryPath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
@@ -147,7 +147,7 @@ internal sealed class DirectoryPathsValidationAttribute : OptionValidationAttrib
 
     internal DirectoryPathsValidationAttribute(bool mustExist, bool isRequired) : base(isRequired)
     {
-        this._mustExist = mustExist;
+        _mustExist = mustExist;
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ internal sealed class DirectoryPathsValidationAttribute : OptionValidationAttrib
 
         var errorSb = new StringBuilder();
         bool isValid = true;
-        var directoryValidator = new DirectoryPathValidationAttribute(this._mustExist, this.IsRequired);
+        var directoryValidator = new DirectoryPathValidationAttribute(_mustExist, IsRequired);
         foreach (string directoryPath in directoryPaths)
         {
             ValidationResult result = directoryValidator.GetValidationResult(directoryPath, validationContext);
@@ -205,9 +205,9 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
 
     internal FilePathValidationAttribute(bool fileMustExist, bool directoryMustExist, bool isRequired, string[] acceptedFileExtensions = null) : base(isRequired)
     {
-        this._fileMustExist = fileMustExist;
-        this._directoryMustExist = directoryMustExist;
-        this._acceptedFileExtensions = acceptedFileExtensions;
+        _fileMustExist = fileMustExist;
+        _directoryMustExist = directoryMustExist;
+        _acceptedFileExtensions = acceptedFileExtensions;
     }
 
     /// <summary>
@@ -236,22 +236,22 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
 
         var options = (Options)validationContext.ObjectInstance;
 
-        if (this._fileMustExist && !fileInfo.Exists)
+        if (_fileMustExist && !fileInfo.Exists)
         {
             string errorMessage = $"{baseError} Specified file does not exist. File path: {filePath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
-        if (this._directoryMustExist && (fileInfo.Directory == null || !fileInfo.Directory.Exists))
+        if (_directoryMustExist && (fileInfo.Directory == null || !fileInfo.Directory.Exists))
         {
             string errorMessage = $"{baseError} Directory containing specified file does not exist. File path: {filePath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
-        if (this._acceptedFileExtensions != null && !this._acceptedFileExtensions.Any(filePath.EndsWith))
+        if (_acceptedFileExtensions != null && !_acceptedFileExtensions.Any(filePath.EndsWith))
         {
             string errorMessage =
-                $"{baseError} Unexpected extension for specified file. Expected: {string.Join(" / ", this._acceptedFileExtensions)}.";
+                $"{baseError} Unexpected extension for specified file. Expected: {string.Join(" / ", _acceptedFileExtensions)}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
@@ -362,14 +362,14 @@ internal class RangeValidationAttribute : OptionValidationAttribute
         if (max.GetType() != rangeType)
             throw new ArgumentException($"max parameter is not of type specified by rangeType", nameof(includeMax));
 
-        this._rangeType = rangeType;
-        this._min = min;
-        this._includeMin = includeMin;
-        this._max = max;
-        this._includeMax = includeMax;
+        _rangeType = rangeType;
+        _min = min;
+        _includeMin = includeMin;
+        _max = max;
+        _includeMax = includeMax;
 
-        this._tryInitValidationMethod = this.GetType().GetMethod(nameof(TryInitialValidation), BindingFlags.Instance | BindingFlags.NonPublic)
-            ?.MakeGenericMethod(this._rangeType);
+        _tryInitValidationMethod = GetType().GetMethod(nameof(TryInitialValidation), BindingFlags.Instance | BindingFlags.NonPublic)
+            ?.MakeGenericMethod(_rangeType);
     }
 
     /// <summary>
@@ -380,22 +380,22 @@ internal class RangeValidationAttribute : OptionValidationAttribute
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         object[] initValParams = new[] { value, validationContext, null, null };
-        if ((bool)this._tryInitValidationMethod.Invoke(this, initValParams)!)
+        if ((bool)_tryInitValidationMethod.Invoke(this, initValParams)!)
         {
             return initValParams[2] as ValidationResult;
         }
 
         var icVal = value as IComparable;
-        int minComp = icVal.CompareTo(this._min);
-        int maxComp = icVal.CompareTo(this._max);
-        if ((minComp > 0 || (this._includeMin && minComp == 0)) &&
-            (maxComp < 0 || (this._includeMax && maxComp == 0)))
+        int minComp = icVal.CompareTo(_min);
+        int maxComp = icVal.CompareTo(_max);
+        if ((minComp > 0 || (_includeMin && minComp == 0)) &&
+            (maxComp < 0 || (_includeMax && maxComp == 0)))
         {
             return ValidationResult.Success;
         }
 
         string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-        string errorMessage = $"{baseError} Expected to be in range {(this._includeMin ? "[" : "(")}{this._min}, {this._max}{(this._includeMax ? "]" : ")")}. Actual value: {value}";
+        string errorMessage = $"{baseError} Expected to be in range {(_includeMin ? "[" : "(")}{_min}, {_max}{(_includeMax ? "]" : ")")}. Actual value: {value}";
         return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
     }
 }

@@ -102,10 +102,11 @@ internal sealed partial class ClusterManager : IDisposable
     public readonly GarnetClusterConnectionStore clusterConnectionStore;
 
     public GossipStats gossipStats;
-    readonly int GossipSamplePercent;
+    private readonly int GossipSamplePercent;
 
     public TimeSpan GetClusterTimeout() => clusterTimeout;
-    readonly ConcurrentDictionary<string, long> workerBanList = new ConcurrentDictionary<string, long>();
+
+    private readonly ConcurrentDictionary<string, long> workerBanList = new ConcurrentDictionary<string, long>();
     public readonly CancellationTokenSource ctsGossip = new();
 
     public List<string> GetBanList()

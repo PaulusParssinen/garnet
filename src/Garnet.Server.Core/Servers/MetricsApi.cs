@@ -10,7 +10,7 @@ namespace Garnet.Server;
 /// </summary>
 public class MetricsApi
 {
-    readonly GarnetProvider provider;
+    private readonly GarnetProvider provider;
 
     /// <summary>
     /// Construct new Metrics API instance
@@ -71,8 +71,8 @@ public class MetricsApi
     /// </summary>
     public MetricsItem[] GetLatencyMetrics(LatencyMetricsType latencyMetricsType)
     {
-        if (provider.StoreWrapper.monitor?.GlobalMetrics.globalLatencyMetrics == null) return Array.Empty<MetricsItem>();
-        return provider.StoreWrapper.monitor.GlobalMetrics.globalLatencyMetrics.GetLatencyMetrics(latencyMetricsType);
+        if (provider.StoreWrapper.monitor?.GlobalMetrics.GlobalLatencyMetrics == null) return Array.Empty<MetricsItem>();
+        return provider.StoreWrapper.monitor.GlobalMetrics.GlobalLatencyMetrics.GetLatencyMetrics(latencyMetricsType);
     }
 
     /// <summary>
@@ -81,9 +81,9 @@ public class MetricsApi
     /// <param name="latencyMetricsTypes">Latency types to get, null to get all</param>
     public IEnumerable<(LatencyMetricsType, MetricsItem[])> GetLatencyMetrics(LatencyMetricsType[] latencyMetricsTypes = null)
     {
-        if (provider.StoreWrapper.monitor?.GlobalMetrics.globalLatencyMetrics == null) return Array.Empty<(LatencyMetricsType, MetricsItem[])>();
+        if (provider.StoreWrapper.monitor?.GlobalMetrics.GlobalLatencyMetrics == null) return Array.Empty<(LatencyMetricsType, MetricsItem[])>();
         latencyMetricsTypes ??= GarnetLatencyMetrics.defaultLatencyTypes;
-        return provider.StoreWrapper.monitor?.GlobalMetrics.globalLatencyMetrics.GetLatencyMetrics(latencyMetricsTypes);
+        return provider.StoreWrapper.monitor?.GlobalMetrics.GlobalLatencyMetrics.GetLatencyMetrics(latencyMetricsTypes);
     }
 
     /// <summary>

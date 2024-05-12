@@ -7,9 +7,9 @@ using StackExchange.Redis;
 namespace Garnet.Tests;
 
 [TestFixture]
-class RespPubSubTests
+internal class RespPubSubTests
 {
-    GarnetServer server;
+    private GarnetServer server;
 
     [SetUp]
     public void Setup()

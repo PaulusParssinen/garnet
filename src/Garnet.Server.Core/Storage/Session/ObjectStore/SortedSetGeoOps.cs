@@ -5,7 +5,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     /// <summary>
     /// Adds the specified geospatial items (longitude, latitude, name) to the specified key.

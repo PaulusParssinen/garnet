@@ -11,32 +11,32 @@ using static Tsavorite.Tests.TestUtils;
 
 namespace Tsavorite.Tests.ReadCacheTests;
 
-class ChainTests
+internal class ChainTests
 {
     private TsavoriteKV<long, long> store;
     private IDevice log;
-    const long lowChainKey = 40;
-    const long midChainKey = lowChainKey + chainLen * (mod / 2);
-    const long highChainKey = lowChainKey + chainLen * (mod - 1);
-    const int mod = 10;
-    const int chainLen = 10;
-    const int valueAdd = 1_000_000;
+    private const long lowChainKey = 40;
+    private const long midChainKey = lowChainKey + chainLen * (mod / 2);
+    private const long highChainKey = lowChainKey + chainLen * (mod - 1);
+    private const int mod = 10;
+    private const int chainLen = 10;
+    private const int valueAdd = 1_000_000;
 
     // -1 so highChainKey is first in the chain.
-    const long numKeys = highChainKey + mod - 1;
+    private const long numKeys = highChainKey + mod - 1;
 
     // Insert into chain.
-    const long spliceInNewKey = highChainKey + mod * 2;
-    const long spliceInExistingKey = highChainKey - mod;
-    const long immutableSplitKey = numKeys / 2;
+    private const long spliceInNewKey = highChainKey + mod * 2;
+    private const long spliceInExistingKey = highChainKey - mod;
+    private const long immutableSplitKey = numKeys / 2;
 
     // This is the record after the first readcache record we insert; it lets us limit the range to ReadCacheEvict
     // so we get outsplicing rather than successively overwriting the hash table entry on ReadCacheEvict.
-    long readCacheBelowMidChainKeyEvictionAddress;
+    private long readCacheBelowMidChainKeyEvictionAddress;
 
     internal class ChainComparer : ITsavoriteEqualityComparer<long>
     {
-        readonly int mod;
+        private readonly int mod;
 
         internal ChainComparer(int mod) => this.mod = mod;
 
@@ -79,7 +79,7 @@ class ChainTests
 
     public enum RecordRegion { Immutable, OnDisk, Mutable };
 
-    void PopulateAndEvict(RecordRegion recordRegion = RecordRegion.OnDisk)
+    private void PopulateAndEvict(RecordRegion recordRegion = RecordRegion.OnDisk)
     {
         using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
@@ -105,7 +105,7 @@ class ChainTests
         store.Log.ShiftReadOnlyAddress(store.Log.TailAddress, wait: true);
     }
 
-    void CreateChain(RecordRegion recordRegion = RecordRegion.OnDisk)
+    private void CreateChain(RecordRegion recordRegion = RecordRegion.OnDisk)
     {
         using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long output = -1;
@@ -154,7 +154,7 @@ class ChainTests
         }
     }
 
-    unsafe bool GetRecordInInMemoryHashChain(long key, out bool isReadCache)
+    private unsafe bool GetRecordInInMemoryHashChain(long key, out bool isReadCache)
     {
         // returns whether the key was found before we'd go pending
         (long la, long pa) = GetHashChain(store, key, out long recordKey, out bool invalid, out isReadCache);
@@ -194,7 +194,7 @@ class ChainTests
         return (entry.Address, pa);
     }
 
-    (long logicalAddress, long physicalAddress) NextInChain(long physicalAddress, out long recordKey, out bool invalid, ref bool isReadCache)
+    private (long logicalAddress, long physicalAddress) NextInChain(long physicalAddress, out long recordKey, out bool invalid, ref bool isReadCache)
         => NextInChain(store, physicalAddress, out recordKey, out invalid, ref isReadCache);
 
     internal static (long logicalAddress, long physicalAddress) NextInChain(TsavoriteKV<long, long> store, long physicalAddress, out long recordKey, out bool invalid, ref bool isReadCache)
@@ -212,7 +212,7 @@ class ChainTests
         return (la, pa);
     }
 
-    (long logicalAddress, long physicalAddress) ScanReadCacheChain(long[] omitted = null, bool evicted = false, bool deleted = false)
+    private (long logicalAddress, long physicalAddress) ScanReadCacheChain(long[] omitted = null, bool evicted = false, bool deleted = false)
     {
         omitted ??= Array.Empty<long>();
 
@@ -242,7 +242,7 @@ class ChainTests
         return (la, pa);
     }
 
-    (long logicalAddress, long physicalAddress) SkipReadCacheChain(long key)
+    private (long logicalAddress, long physicalAddress) SkipReadCacheChain(long key)
         => SkipReadCacheChain(store, key);
 
     internal static (long logicalAddress, long physicalAddress) SkipReadCacheChain(TsavoriteKV<long, long> store, long key)
@@ -253,7 +253,7 @@ class ChainTests
         return (la, pa);
     }
 
-    void VerifySplicedInKey(long expectedKey)
+    private void VerifySplicedInKey(long expectedKey)
     {
         // Scan to the end of the readcache chain and verify we inserted the value.
         (long _, long pa) = SkipReadCacheChain(expectedKey);
@@ -261,14 +261,14 @@ class ChainTests
         Assert.AreEqual(expectedKey, storedKey);
     }
 
-    static void ClearCountsOnError(ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> luContext)
+    private static void ClearCountsOnError(ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> luContext)
     {
         // If we already have an exception, clear these counts so "Run" will not report them spuriously.
         luContext.sharedLockCount = 0;
         luContext.exclusiveLockCount = 0;
     }
 
-    void AssertTotalLockCounts(long expectedX, long expectedS) => OverflowBucketLockTableTests.AssertTotalLockCounts(store, expectedX, expectedS);
+    private void AssertTotalLockCounts(long expectedX, long expectedS) => OverflowBucketLockTableTests.AssertTotalLockCounts(store, expectedX, expectedS);
 
     [Test]
     [Category(TsavoriteKVTestCategory)]
@@ -380,7 +380,7 @@ class ChainTests
         DoUpdateTest(useRMW: true);
     }
 
-    void DoUpdateTest(bool useRMW)
+    private void DoUpdateTest(bool useRMW)
     {
         PopulateAndEvict();
         CreateChain();
@@ -617,17 +617,16 @@ class ChainTests
     }
 }
 
-class LongStressChainTests
+internal class LongStressChainTests
 {
     private TsavoriteKV<long, long> store;
     private IDevice log;
-    const long valueAdd = 1_000_000_000;
+    private const long valueAdd = 1_000_000_000;
+    private const long numKeys = 2_000;
 
-    const long numKeys = 2_000;
-
-    struct LongComparerModulo : ITsavoriteEqualityComparer<long>
+    private struct LongComparerModulo : ITsavoriteEqualityComparer<long>
     {
-        readonly HashModulo modRange;
+        private readonly HashModulo modRange;
 
         internal LongComparerModulo(HashModulo mod) => modRange = mod;
 
@@ -723,7 +722,7 @@ class LongStressChainTests
         }
     }
 
-    unsafe void PopulateAndEvict()
+    private unsafe void PopulateAndEvict()
     {
         using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long, Empty>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long, Empty>>(new SimpleFunctions<long, long, Empty>());
 
@@ -823,17 +822,16 @@ class LongStressChainTests
     }
 }
 
-class SpanByteStressChainTests
+internal class SpanByteStressChainTests
 {
     private TsavoriteKV<SpanByte, SpanByte> store;
     private IDevice log;
-    const long valueAdd = 1_000_000_000;
+    private const long valueAdd = 1_000_000_000;
+    private const long numKeys = 2_000;
 
-    const long numKeys = 2_000;
-
-    struct SpanByteComparerModulo : ITsavoriteEqualityComparer<SpanByte>
+    private struct SpanByteComparerModulo : ITsavoriteEqualityComparer<SpanByte>
     {
-        readonly HashModulo modRange;
+        private readonly HashModulo modRange;
 
         internal SpanByteComparerModulo(HashModulo mod) => modRange = mod;
 
@@ -934,7 +932,7 @@ class SpanByteStressChainTests
         }
     }
 
-    unsafe void PopulateAndEvict()
+    private unsafe void PopulateAndEvict()
     {
         using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
@@ -951,7 +949,7 @@ class SpanByteStressChainTests
         store.Log.FlushAndEvict(true);
     }
 
-    static void ClearCountsOnError(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, IFunctions<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty>> luContext)
+    private static void ClearCountsOnError(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, IFunctions<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty>> luContext)
     {
         // If we already have an exception, clear these counts so "Run" will not report them spuriously.
         luContext.sharedLockCount = 0;

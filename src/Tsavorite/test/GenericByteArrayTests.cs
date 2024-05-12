@@ -81,7 +81,7 @@ internal class GenericByteArrayTests
         }
     }
 
-    class MyByteArrayFuncs : SimpleFunctions<byte[], byte[]>
+    private class MyByteArrayFuncs : SimpleFunctions<byte[], byte[]>
     {
         public override void ReadCompletionCallback(ref byte[] key, ref byte[] input, ref byte[] output, Empty ctx, Status status, RecordMetadata recordMetadata)
         {
@@ -90,7 +90,7 @@ internal class GenericByteArrayTests
     }
 }
 
-class ByteArrayEC : ITsavoriteEqualityComparer<byte[]>
+internal class ByteArrayEC : ITsavoriteEqualityComparer<byte[]>
 {
     public bool Equals(ref byte[] k1, ref byte[] k2)
     {

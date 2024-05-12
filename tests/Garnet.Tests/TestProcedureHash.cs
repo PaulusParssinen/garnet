@@ -15,7 +15,7 @@ namespace Garnet;
 /// Description: Exercise HSET, HSETNX, HGET, HGETALL, HLEN, HEXISTS, HDEL
 /// </summary>
 
-sealed class TestProcedureHash : CustomTransactionProcedure
+internal sealed class TestProcedureHash : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

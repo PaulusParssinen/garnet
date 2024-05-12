@@ -14,7 +14,7 @@ public class BasicLockTests
         internal bool throwOnInitialUpdater;
         internal long initialUpdaterThrowAddress;
 
-        static bool Increment(ref int dst)
+        private static bool Increment(ref int dst)
         {
             ++dst;
             return true;
@@ -67,9 +67,8 @@ public class BasicLockTests
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, Functions> session;
     private IDevice log;
-
-    const int numRecords = 100;
-    const int valueMult = 1000000;
+    private const int numRecords = 100;
+    private const int valueMult = 1000000;
 
     [SetUp]
     public void Setup()
@@ -227,7 +226,7 @@ public class BasicLockTests
         }
     }
 
-    void UpdateFunc(bool useRMW, int numRecords, int numIters)
+    private void UpdateFunc(bool useRMW, int numRecords, int numIters)
     {
         for (int key = 0; key < numRecords; ++key)
         {

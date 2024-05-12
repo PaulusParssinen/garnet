@@ -16,10 +16,9 @@ namespace Garnet.Cluster;
 /// </summary>
 internal sealed unsafe partial class ClusterSession : IClusterSession
 {
-    ClusterConfig lastSentConfig;
-
-    int migrateSetCount = 0;
-    byte migrateState = 0;
+    private ClusterConfig lastSentConfig;
+    private int migrateSetCount = 0;
+    private byte migrateState = 0;
 
     private int CountKeysInSessionStore(int slot)
     {

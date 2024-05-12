@@ -6,7 +6,7 @@ namespace Garnet.networking;
 /// <summary>
 /// TLS reader status
 /// </summary>
-enum TlsReaderStatus
+internal enum TlsReaderStatus
 {
     /// <summary>
     /// Rest phase, no reader task or work running

@@ -6,7 +6,7 @@ namespace Garnet.Cluster;
 /// <summary>
 /// Command strings for RESP protocol
 /// </summary>
-static class CmdStrings
+internal static class CmdStrings
 {
     /// <summary>
     /// Request strings

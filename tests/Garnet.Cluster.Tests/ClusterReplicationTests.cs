@@ -71,12 +71,13 @@ public class ClusterReplicationTests(bool UseTLS = false)
         return x;
     }
 
-    ClusterTestContext context;
+    private ClusterTestContext context;
 
     public void SetLogTextWriter(TextWriter logTextWriter) => context.logTextWriter = logTextWriter;
-    readonly bool useTLS = UseTLS;
-    readonly int timeout = 60;
-    readonly int keyCount = 256;
+
+    private readonly bool useTLS = UseTLS;
+    private readonly int timeout = 60;
+    private readonly int keyCount = 256;
 
     public HashSet<string> monitorTests = [];
 
@@ -293,7 +294,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
     public void ClusterSRPrimaryCheckpointRetrieve([Values] bool performRMW, [Values] bool disableObjects, [Values] bool lowMemory, [Values] bool manySegments)
         => ClusterSRPrimaryCheckpointRetrieve(performRMW, disableObjects, lowMemory, manySegments, false, false);
 
-    void ClusterSRPrimaryCheckpointRetrieve(bool performRMW, bool disableObjects, bool lowMemory, bool manySegments, bool disableStorageTier, bool incrementalSnapshots)
+    private void ClusterSRPrimaryCheckpointRetrieve(bool performRMW, bool disableObjects, bool lowMemory, bool manySegments, bool disableStorageTier, bool incrementalSnapshots)
     {
         // Test many segments on or off with lowMemory
         manySegments = lowMemory && manySegments;
@@ -882,7 +883,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
             mainMemoryReplication: mainMemoryReplication,
             fastCommit: true);
 
-    void ClusterDivergentReplicasTest(bool performRMW, bool disableObjects, bool ckptBeforeDivergence, bool multiCheckpointAfterDivergence, bool mainMemoryReplication, bool fastCommit)
+    private void ClusterDivergentReplicasTest(bool performRMW, bool disableObjects, bool ckptBeforeDivergence, bool multiCheckpointAfterDivergence, bool mainMemoryReplication, bool fastCommit)
     {
         bool set = false;
         int replica_count = 2;// Per primary

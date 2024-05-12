@@ -15,13 +15,11 @@ internal class ModifiedBitTestComparer : ITsavoriteEqualityComparer<int>
 }
 
 [TestFixture]
-class ModifiedBitTests
+internal class ModifiedBitTests
 {
-    const int numRecords = 1000;
-    const int valueMult = 1_000_000;
-
-
-    ModifiedBitTestComparer comparer;
+    private const int numRecords = 1000;
+    private const int valueMult = 1_000_000;
+    private ModifiedBitTestComparer comparer;
 
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, SimpleFunctions<int, int>> session;
@@ -47,27 +45,27 @@ class ModifiedBitTests
         log = null;
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; key++)
             Assert.IsFalse(session.Upsert(key, key * valueMult).IsPending);
     }
 
-    void AssertLockandModified(LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
+    private void AssertLockandModified(LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
     {
         OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
         bool isM = luContext.IsModified(key);
         Assert.AreEqual(modified, isM, "modified mismatch");
     }
 
-    void AssertLockandModified(LockableContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
+    private void AssertLockandModified(LockableContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
     {
         OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
         bool isM = luContext.IsModified(key);
         Assert.AreEqual(modified, isM, "modified mismatch");
     }
 
-    void AssertLockandModified(ClientSession<int, int, int, int, Empty, SimpleFunctions<int, int>> session, int key, bool xlock, bool slock, bool modified = false)
+    private void AssertLockandModified(ClientSession<int, int, int, int, Empty, SimpleFunctions<int, int>> session, int key, bool xlock, bool slock, bool modified = false)
     {
         LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext = session.LockableUnsafeContext;
         luContext.BeginUnsafe();

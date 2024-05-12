@@ -9,7 +9,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class IndexGrowthTests
 {
-    GarnetServer server;
+    private GarnetServer server;
     private int indexResizeTaskDelaySeconds = 10;
     private int indexResizeWaitCycles = 2;
 

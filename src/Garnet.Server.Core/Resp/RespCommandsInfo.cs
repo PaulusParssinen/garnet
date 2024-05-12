@@ -48,11 +48,11 @@ public class RespCommandsInfo : IRespSerializable
     /// </summary>
     public RespCommandFlags Flags
     {
-        get => this.flags;
+        get => flags;
         init
         {
-            this.flags = value;
-            this.respFormatFlags = EnumUtils.GetEnumDescriptions(this.flags);
+            flags = value;
+            respFormatFlags = EnumUtils.GetEnumDescriptions(flags);
         }
     }
 
@@ -76,11 +76,11 @@ public class RespCommandsInfo : IRespSerializable
     /// </summary>
     public RespAclCategories AclCategories
     {
-        get => this.aclCategories;
+        get => aclCategories;
         init
         {
-            this.aclCategories = value;
-            this.respFormatAclCategories = EnumUtils.GetEnumDescriptions(this.aclCategories);
+            aclCategories = value;
+            respFormatAclCategories = EnumUtils.GetEnumDescriptions(aclCategories);
         }
     }
 
@@ -286,45 +286,45 @@ public class RespCommandsInfo : IRespSerializable
 
         sb.Append("*10\r\n");
         // 1) Name
-        sb.Append($"${this.Name.Length}\r\n{this.Name}\r\n");
+        sb.Append($"${Name.Length}\r\n{Name}\r\n");
         // 2) Arity
-        sb.Append($":{this.Arity}\r\n");
+        sb.Append($":{Arity}\r\n");
         // 3) Flags
-        sb.Append($"*{this.respFormatFlags.Length}\r\n");
-        foreach (string flag in this.respFormatFlags)
+        sb.Append($"*{respFormatFlags.Length}\r\n");
+        foreach (string flag in respFormatFlags)
             sb.Append($"+{flag}\r\n");
         // 4) First key
-        sb.Append($":{this.FirstKey}\r\n");
+        sb.Append($":{FirstKey}\r\n");
         // 5) Last key
-        sb.Append($":{this.LastKey}\r\n");
+        sb.Append($":{LastKey}\r\n");
         // 6) Step
-        sb.Append($":{this.Step}\r\n");
+        sb.Append($":{Step}\r\n");
         // 7) ACL categories
-        sb.Append($"*{this.respFormatAclCategories.Length}\r\n");
-        foreach (string aclCat in this.respFormatAclCategories)
+        sb.Append($"*{respFormatAclCategories.Length}\r\n");
+        foreach (string aclCat in respFormatAclCategories)
             sb.Append($"+@{aclCat}\r\n");
         // 8) Tips
-        int tipCount = this.Tips?.Length ?? 0;
+        int tipCount = Tips?.Length ?? 0;
         sb.Append($"*{tipCount}\r\n");
-        if (this.Tips != null && tipCount > 0)
+        if (Tips != null && tipCount > 0)
         {
-            foreach (string tip in this.Tips)
+            foreach (string tip in Tips)
                 sb.Append($"${tip.Length}\r\n{tip}\r\n");
         }
 
         // 9) Key specifications
-        int ksCount = this.KeySpecifications?.Length ?? 0;
+        int ksCount = KeySpecifications?.Length ?? 0;
         sb.Append($"*{ksCount}\r\n");
-        if (this.KeySpecifications != null && ksCount > 0)
+        if (KeySpecifications != null && ksCount > 0)
         {
-            foreach (RespCommandKeySpecification ks in this.KeySpecifications)
+            foreach (RespCommandKeySpecification ks in KeySpecifications)
                 sb.Append(ks.RespFormat);
         }
 
         // 10) SubCommands
-        int subCommandCount = this.SubCommands?.Length ?? 0;
+        int subCommandCount = SubCommands?.Length ?? 0;
         sb.Append($"*{subCommandCount}\r\n");
-        if (this.SubCommands != null && subCommandCount > 0)
+        if (SubCommands != null && subCommandCount > 0)
         {
             foreach (RespCommandsInfo subCommand in SubCommands)
                 sb.Append(subCommand.RespFormat);

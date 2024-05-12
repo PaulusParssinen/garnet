@@ -15,9 +15,8 @@ internal class BasicRecoverReadOnly
     private IDevice device;
     private TsavoriteLog logReadOnly;
     private IDevice deviceReadOnly;
-
-    const int commitPeriodMs = 2000;
-    const int restorePeriodMs = 1000;
+    private const int commitPeriodMs = 2000;
+    private const int restorePeriodMs = 1000;
 
     [SetUp]
     public void Setup()
@@ -76,7 +75,7 @@ internal class BasicRecoverReadOnly
 
 
     //**** Helper Functions - based off of TsavoriteLogPubSub sample ***
-    static async Task CommitterAsync(TsavoriteLog log, CancellationToken cancellationToken)
+    private static async Task CommitterAsync(TsavoriteLog log, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -85,7 +84,7 @@ internal class BasicRecoverReadOnly
         }
     }
 
-    static async Task ProducerAsync(TsavoriteLog log, CancellationToken cancellationToken)
+    private static async Task ProducerAsync(TsavoriteLog log, CancellationToken cancellationToken)
     {
         long i = 0L;
         while (!cancellationToken.IsCancellationRequested)
@@ -113,7 +112,7 @@ internal class BasicRecoverReadOnly
         }
     }
 
-    static async Task BeginRecoverReadOnlyLoop(TsavoriteLog log, CancellationToken cancellationToken)
+    private static async Task BeginRecoverReadOnlyLoop(TsavoriteLog log, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {

@@ -12,33 +12,31 @@ namespace Garnet.Cluster;
 /// </summary>
 internal sealed unsafe partial class MigrateSession : IDisposable
 {
-    static readonly Memory<byte> IMPORTING = "IMPORTING"u8.ToArray();
-    static readonly Memory<byte> NODE = "NODE"u8.ToArray();
-    static readonly Memory<byte> STABLE = "STABLE"u8.ToArray();
-
-    readonly ClusterProvider clusterProvider;
-    readonly LocalServerSession localServerSession;
+    private static readonly Memory<byte> IMPORTING = "IMPORTING"u8.ToArray();
+    private static readonly Memory<byte> NODE = "NODE"u8.ToArray();
+    private static readonly Memory<byte> STABLE = "STABLE"u8.ToArray();
+    private readonly ClusterProvider clusterProvider;
+    private readonly LocalServerSession localServerSession;
 
     /// <summary>
     /// Get/Set migration status
     /// </summary>
     internal MigrateState Status { get; set; }
 
-    readonly ILogger logger;
-    readonly string _targetAddress;
-    readonly int _targetPort;
-    readonly string _targetNodeId;
-    readonly string _username;
-    readonly string _passwd;
-    readonly string _sourceNodeId;
-    readonly bool _copyOption;
-    readonly bool _replaceOption;
-    readonly TimeSpan _timeout;
-    readonly List<(int, int)> _slotRanges;
-    readonly List<(long, long)> _keysWithSize;
-
-    readonly HashSet<int> _sslots;
-    readonly CancellationTokenSource _cts = new();
+    private readonly ILogger logger;
+    private readonly string _targetAddress;
+    private readonly int _targetPort;
+    private readonly string _targetNodeId;
+    private readonly string _username;
+    private readonly string _passwd;
+    private readonly string _sourceNodeId;
+    private readonly bool _copyOption;
+    private readonly bool _replaceOption;
+    private readonly TimeSpan _timeout;
+    private readonly List<(int, int)> _slotRanges;
+    private readonly List<(long, long)> _keysWithSize;
+    private readonly HashSet<int> _sslots;
+    private readonly CancellationTokenSource _cts = new();
 
     /// <summary>
     /// Source nodeId of migration task
@@ -55,7 +53,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// </summary>
     public HashSet<int> GetSlots => _sslots;
 
-    readonly GarnetClientSession _gcs;
+    private readonly GarnetClientSession _gcs;
 
     /// <summary>
     /// Check for overlapping slots between migrate sessions
@@ -63,7 +61,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     public bool Overlap(MigrateSession session)
         => session._sslots.Overlaps(_sslots);
 
-    readonly int _clientBufferSize;
+    private readonly int _clientBufferSize;
 
     /// <summary>
     /// MigrateSession Constructor
@@ -94,9 +92,9 @@ internal sealed unsafe partial class MigrateSession : IDisposable
         this._copyOption = _copyOption;
         this._replaceOption = _replaceOption;
         this._timeout = TimeSpan.FromMilliseconds(_timeout);
-        this._sslots = _slots;
-        this._slotRanges = GetRanges();
-        this._keysWithSize = keysWithSize;
+        _sslots = _slots;
+        _slotRanges = GetRanges();
+        _keysWithSize = keysWithSize;
 
         if (clusterProvider != null)
             localServerSession = new LocalServerSession(clusterProvider.storeWrapper);

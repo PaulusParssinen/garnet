@@ -9,7 +9,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespTransactionProcTests
 {
-    GarnetServer server;
+    private GarnetServer server;
 
     [SetUp]
     public void Setup()

@@ -12,14 +12,14 @@ namespace Garnet.Server;
 /// </summary>
 public sealed class GarnetObjectSerializer : BinaryObjectSerializer<IGarnetObject>
 {
-    readonly CustomObjectCommandWrapper[] customCommands;
+    private readonly CustomObjectCommandWrapper[] customCommands;
 
     /// <summary>
     /// Constructor
     /// </summary>
     public GarnetObjectSerializer(CustomCommandManager customCommandManager)
     {
-        this.customCommands = customCommandManager.objectCommandMap;
+        customCommands = customCommandManager.objectCommandMap;
     }
 
     /// <inheritdoc />

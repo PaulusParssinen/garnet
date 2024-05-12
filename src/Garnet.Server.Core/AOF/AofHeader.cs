@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Garnet.Server;
 
 [StructLayout(LayoutKind.Explicit, Size = 14)]
-struct AofHeader
+internal struct AofHeader
 {
     [FieldOffset(0)]
     public AofEntryType opType;

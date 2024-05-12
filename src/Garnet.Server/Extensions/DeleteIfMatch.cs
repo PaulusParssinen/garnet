@@ -17,7 +17,7 @@ namespace Garnet;
 /// existing value for that key. If it does not match (or there is no existing value), 
 /// then do nothing.
 /// </summary>
-sealed class DeleteIfMatchCustomCommand : CustomRawStringFunctions
+internal sealed class DeleteIfMatchCustomCommand : CustomRawStringFunctions
 {
     /// <inheritdoc />
     public override bool Reader(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> value, ref (IMemoryOwner<byte>, int) output, ref ReadInfo readInfo)

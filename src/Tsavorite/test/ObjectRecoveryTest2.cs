@@ -9,7 +9,7 @@ namespace Tsavorite.Tests.recovery.objects;
 [TestFixture]
 public class ObjectRecoveryTests2
 {
-    int iterations;
+    private int iterations;
 
     [SetUp]
     public void Setup()

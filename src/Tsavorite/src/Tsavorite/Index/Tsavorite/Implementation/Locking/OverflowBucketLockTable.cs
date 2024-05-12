@@ -214,10 +214,10 @@ internal struct OverflowBucketLockTable<TKey, TValue> : ILockTable<TKey>
     /// <summary>
     /// Need this struct because the Comparison{T} form of Array.Sort is not available with start and length arguments.
     /// </summary>
-    struct KeyComparer<TLockableKey> : IComparer<TLockableKey>
+    private struct KeyComparer<TLockableKey> : IComparer<TLockableKey>
         where TLockableKey : ILockableKey
     {
-        readonly long size_mask;
+        private readonly long size_mask;
 
         internal KeyComparer(long s) => size_mask = s;
 

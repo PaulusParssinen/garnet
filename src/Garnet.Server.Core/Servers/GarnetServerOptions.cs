@@ -660,7 +660,7 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get device for AOF
     /// </summary>
-    IDevice GetAofDevice()
+    private IDevice GetAofDevice()
     {
         if (!MainMemoryReplication && UseAofNullDevice)
             throw new Exception("Cannot use null device for AOF when not using main memory replication");

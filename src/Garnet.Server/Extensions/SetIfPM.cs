@@ -17,7 +17,7 @@ namespace Garnet;
 /// existing value's prefix. If it does not match (or there is no existing value), 
 /// then do nothing.
 /// </summary>
-sealed class SetIfPMCustomCommand : CustomRawStringFunctions
+internal sealed class SetIfPMCustomCommand : CustomRawStringFunctions
 {
     /// <inheritdoc />
     public override bool Reader(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> value, ref (IMemoryOwner<byte>, int) output, ref ReadInfo readInfo)

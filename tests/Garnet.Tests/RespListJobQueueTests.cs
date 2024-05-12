@@ -10,7 +10,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespListJobQueueTests
 {
-    GarnetServer server;
+    private GarnetServer server;
 
     [SetUp]
     public void Setup()

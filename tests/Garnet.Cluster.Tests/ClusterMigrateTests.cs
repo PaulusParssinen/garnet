@@ -61,12 +61,11 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         return context.clusterTestUtils.RandomBytes(data, startOffset, endOffset);
     }
 
-    ClusterTestContext context;
-    readonly string authPassword = null;
-    readonly int defaultShards = 3;
-    readonly HashSet<string> authenticationTests = ["ClusterSimpleMigrateWithAuth"];
-
-    readonly HashSet<string> monitorTests =
+    private ClusterTestContext context;
+    private readonly string authPassword = null;
+    private readonly int defaultShards = 3;
+    private readonly HashSet<string> authenticationTests = ["ClusterSimpleMigrateWithAuth"];
+    private readonly HashSet<string> monitorTests =
     [
         //"ClusterSimpleMigrateKeysTest"
         //"ClusterTLSInitialize"
@@ -1118,7 +1117,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.clusterTestUtils.MigrateSlots(sourceNodePort, targetNodePort, slots, logger: logger);
     }
 
-    List<(int, byte[], byte[])> operatedOnData;
+    private List<(int, byte[], byte[])> operatedOnData;
 
     private void OperateOnSlotsTask(Dictionary<int, Dictionary<byte[], byte[]>> data, int targetNodeIndex)
     {

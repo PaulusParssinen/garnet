@@ -137,7 +137,7 @@ public unsafe partial class HashObject : IGarnetObject
             if (hash.Remove(key, out byte[] _value))
             {
                 _output->opsDone++;
-                this.UpdateSize(key, _value, false);
+                UpdateSize(key, _value, false);
             }
 
             _output->bytesDone = (int)(ptr - startptr);
@@ -363,13 +363,13 @@ public unsafe partial class HashObject : IGarnetObject
             if (!hash.TryGetValue(key, out _value))
             {
                 hash.Add(key, value);
-                this.UpdateSize(key, value);
+                UpdateSize(key, value);
                 _output->opsDone++;
             }
             else if ((_input->header.HashOp == HashOperation.HSET || _input->header.HashOp == HashOperation.HMSET) && _value != default && !_value.SequenceEqual(value))
             {
                 hash[key] = value;
-                this.Size += Utility.RoundUp(value.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size); // Skip overhead as existing item is getting replaced.
+                Size += Utility.RoundUp(value.Length, IntPtr.Size) - Utility.RoundUp(_value.Length, IntPtr.Size); // Skip overhead as existing item is getting replaced.
             }
             _output->countDone++;
             _output->bytesDone = (int)(ptr - startptr);

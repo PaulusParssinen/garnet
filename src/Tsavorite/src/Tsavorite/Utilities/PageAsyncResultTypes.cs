@@ -55,17 +55,17 @@ internal sealed class FlushCompletionTracker
     /// <summary>
     /// Semaphore to set on flush completion
     /// </summary>
-    readonly SemaphoreSlim completedSemaphore;
+    private readonly SemaphoreSlim completedSemaphore;
 
     /// <summary>
     /// Semaphore to wait on for flush completion
     /// </summary>
-    readonly SemaphoreSlim flushSemaphore;
+    private readonly SemaphoreSlim flushSemaphore;
 
     /// <summary>
     /// Number of pages being flushed
     /// </summary>
-    int count;
+    private int count;
 
     /// <summary>
     /// Create a flush completion tracker

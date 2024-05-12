@@ -9,7 +9,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server API methods - HASH
 /// </summary>
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     /// <summary>
     /// HashSet: Sets the specified fields to their respective values in the hash stored at key.
@@ -341,7 +341,7 @@ sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        if (String.IsNullOrEmpty(match))
+        if (string.IsNullOrEmpty(match))
             match = "*";
 
         // Prepare header in input buffer

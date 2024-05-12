@@ -3,14 +3,14 @@
 
 namespace Garnet.Server;
 
-sealed unsafe partial class TransactionManager
+public sealed unsafe partial class TransactionManager
 {
     //Keys involved in the current transaction
-    ArgSlice[] keys;
-    int keyCount;
+    private ArgSlice[] keys;
+    private int keyCount;
 
     internal byte* saveKeyRecvBufferPtr;
-    readonly bool clusterEnabled;
+    private readonly bool clusterEnabled;
 
     /// <summary>
     /// Keep track of actual key accessed by command

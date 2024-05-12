@@ -6,11 +6,11 @@ using NUnit.Framework;
 namespace Tsavorite.Tests.InputOutputParameterTests;
 
 [TestFixture]
-class InputOutputParameterTests
+internal class InputOutputParameterTests
 {
-    const int AddValue = 10_000;
-    const int MultValue = 100;
-    const int NumRecs = 10;
+    private const int AddValue = 10_000;
+    private const int MultValue = 100;
+    private const int NumRecs = 10;
 
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, UpsertInputFunctions> session;

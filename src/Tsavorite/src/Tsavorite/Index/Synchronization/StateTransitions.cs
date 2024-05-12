@@ -66,18 +66,18 @@ public enum Phase : int
 [StructLayout(LayoutKind.Explicit, Size = 8)]
 public struct SystemState
 {
-    const int kTotalSizeInBytes = 8;
-    const int kTotalBits = kTotalSizeInBytes * 8;
+    private const int kTotalSizeInBytes = 8;
+    private const int kTotalBits = kTotalSizeInBytes * 8;
 
     // Phase
-    const int kPhaseBits = 8;
-    const int kPhaseShiftInWord = kTotalBits - kPhaseBits;
-    const long kPhaseMaskInWord = ((1L << kPhaseBits) - 1) << kPhaseShiftInWord;
-    const long kPhaseMaskInInteger = (1L << kPhaseBits) - 1;
+    private const int kPhaseBits = 8;
+    private const int kPhaseShiftInWord = kTotalBits - kPhaseBits;
+    private const long kPhaseMaskInWord = ((1L << kPhaseBits) - 1) << kPhaseShiftInWord;
+    private const long kPhaseMaskInInteger = (1L << kPhaseBits) - 1;
 
     // Version
-    const int kVersionBits = kPhaseShiftInWord;
-    const long kVersionMaskInWord = (1L << kVersionBits) - 1;
+    private const int kVersionBits = kPhaseShiftInWord;
+    private const long kVersionMaskInWord = (1L << kVersionBits) - 1;
 
     /// <summary>
     /// The word containing information in bitfields

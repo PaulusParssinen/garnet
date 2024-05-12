@@ -5,7 +5,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     // These are classes so instantiate once and re-initialize
     private ArrayKeyIterationFunctions.MainStoreGetDBSize mainStoreDbSizeFuncs;
@@ -18,10 +18,9 @@ sealed partial class StorageSession : IDisposable
     // Iterators for KEYS command
     private ArrayKeyIterationFunctions.MainStoreGetDBKeys mainStoreDbKeysFuncs;
     private ArrayKeyIterationFunctions.ObjectStoreGetDBKeys objStoreDbKeysFuncs;
-
-    long lastScanCursor;
-    List<byte[]> objStoreKeys;
-    List<byte[]> Keys;
+    private long lastScanCursor;
+    private List<byte[]> objStoreKeys;
+    private List<byte[]> Keys;
 
     /// <summary>
     ///  Gets keys matching the pattern with a limit of count in every iteration
@@ -182,15 +181,15 @@ sealed partial class StorageSession : IDisposable
     {
         internal sealed class MainStoreGetDBKeys : IScanIteratorFunctions<SpanByte, SpanByte>
         {
-            List<byte[]> keys;
-            byte* patternB;
-            int patternLength;
+            private List<byte[]> keys;
+            private byte* patternB;
+            private int patternLength;
 
             internal void Initialize(List<byte[]> keys, byte* patternB, int length)
             {
                 this.keys = keys;
                 this.patternB = patternB;
-                this.patternLength = length;
+                patternLength = length;
             }
 
             public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
@@ -218,16 +217,16 @@ sealed partial class StorageSession : IDisposable
 
         internal sealed class ObjectStoreGetDBKeys : IScanIteratorFunctions<byte[], IGarnetObject>
         {
-            List<byte[]> keys;
-            byte* patternB;
-            int patternLength;
+            private List<byte[]> keys;
+            private byte* patternB;
+            private int patternLength;
             private Type matchType;
 
             internal void Initialize(List<byte[]> keys, byte* patternB, int length, Type matchType = null)
             {
                 this.keys = keys;
                 this.patternB = patternB;
-                this.patternLength = length;
+                patternLength = length;
                 this.matchType = matchType;
             }
 

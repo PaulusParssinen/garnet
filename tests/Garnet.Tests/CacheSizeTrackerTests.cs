@@ -11,9 +11,9 @@ namespace Garnet.Tests;
 [TestFixture]
 public class CacheSizeTrackerTests
 {
-    GarnetServer server;
-    TsavoriteKV<byte[], IGarnetObject> objStore;
-    CacheSizeTracker cacheSizeTracker;
+    private GarnetServer server;
+    private TsavoriteKV<byte[], IGarnetObject> objStore;
+    private CacheSizeTracker cacheSizeTracker;
 
     [SetUp]
     public void Setup()

@@ -54,38 +54,37 @@ public sealed unsafe class LightEpoch
     /// <summary>
     /// Size of cache line in bytes
     /// </summary>
-    const int kCacheLineBytes = 64;
+    private const int kCacheLineBytes = 64;
 
     /// <summary>
     /// Default invalid index entry.
     /// </summary>
-    const int kInvalidIndex = 0;
+    private const int kInvalidIndex = 0;
 
     /// <summary>
     /// Default number of entries in the entries table
     /// </summary>
-    static readonly ushort kTableSize = Math.Max((ushort)128, (ushort)(Environment.ProcessorCount * 2));
+    private static readonly ushort kTableSize = Math.Max((ushort)128, (ushort)(Environment.ProcessorCount * 2));
 
     /// <summary>
     /// Default drainlist size
     /// </summary>
-    const int kDrainListSize = 16;
+    private const int kDrainListSize = 16;
 
     /// <summary>
     /// Thread protection status entries.
     /// </summary>
-    readonly Entry[] tableRaw;
-    readonly Entry* tableAligned;
-
-    static readonly Entry[] threadIndex;
-    static readonly Entry* threadIndexAligned;
+    private readonly Entry[] tableRaw;
+    private readonly Entry* tableAligned;
+    private static readonly Entry[] threadIndex;
+    private static readonly Entry* threadIndexAligned;
 
     /// <summary>
     /// List of action, epoch pairs containing actions to be performed when an epoch becomes safe to reclaim.
     /// Marked volatile to ensure latest value is seen by the last suspended thread.
     /// </summary>
-    volatile int drainCount = 0;
-    readonly EpochActionPair[] drainList = new EpochActionPair[kDrainListSize];
+    private volatile int drainCount = 0;
+    private readonly EpochActionPair[] drainList = new EpochActionPair[kDrainListSize];
 
     /// <summary>
     /// Global current epoch value
@@ -322,7 +321,7 @@ public sealed unsafe class LightEpoch
     /// </summary>
     /// <param name="currentEpoch">Current epoch</param>
     /// <returns>Safe epoch</returns>
-    long ComputeNewSafeToReclaimEpoch(long currentEpoch)
+    private long ComputeNewSafeToReclaimEpoch(long currentEpoch)
     {
         long oldestOngoingCall = currentEpoch;
 
@@ -347,7 +346,7 @@ public sealed unsafe class LightEpoch
     /// Take care of pending drains after epoch suspend
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SuspendDrain()
+    private void SuspendDrain()
     {
         while (drainCount > 0)
         {
@@ -372,7 +371,7 @@ public sealed unsafe class LightEpoch
     /// </summary>
     /// <param name="nextEpoch">Next epoch</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Drain(long nextEpoch)
+    private void Drain(long nextEpoch)
     {
         ComputeNewSafeToReclaimEpoch(nextEpoch);
 
@@ -402,7 +401,7 @@ public sealed unsafe class LightEpoch
     /// Thread acquires its epoch entry
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Acquire()
+    private void Acquire()
     {
         if (Metadata.threadEntryIndex == kInvalidIndex)
             Metadata.threadEntryIndex = ReserveEntryForThread();
@@ -418,7 +417,7 @@ public sealed unsafe class LightEpoch
     /// Thread releases its epoch entry
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Release()
+    private void Release()
     {
         int entry = Metadata.threadEntryIndex;
 
@@ -443,7 +442,7 @@ public sealed unsafe class LightEpoch
     /// thread will ever have ID 0.
     /// </summary>
     /// <returns>Reserved entry</returns>
-    static int ReserveEntry()
+    private static int ReserveEntry()
     {
         while (true)
         {
@@ -476,7 +475,7 @@ public sealed unsafe class LightEpoch
     /// once for a thread.
     /// </summary>
     /// <returns>Reserved entry</returns>
-    static int ReserveEntryForThread()
+    private static int ReserveEntryForThread()
     {
         if (Metadata.threadId == 0) // run once per thread for performance
         {
@@ -495,7 +494,7 @@ public sealed unsafe class LightEpoch
     /// Epoch table entry (cache line size).
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = kCacheLineBytes)]
-    struct Entry
+    private struct Entry
     {
         /// <summary>
         /// Thread-local value of epoch
@@ -517,7 +516,8 @@ public sealed unsafe class LightEpoch
 
         public override string ToString() => $"lce = {localCurrentEpoch}, tid = {threadId}, re-ent {reentrant}";
     }
-    struct EpochActionPair
+
+    private struct EpochActionPair
     {
         public long epoch;
         public Action action;

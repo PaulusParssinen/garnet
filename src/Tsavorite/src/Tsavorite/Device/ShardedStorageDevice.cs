@@ -10,7 +10,7 @@ namespace Tsavorite.Device;
 /// allows users to customize their sharding behaviors. Some default implementations are supplied for common
 /// partitioning schemes.
 /// </summary>
-interface IPartitionScheme
+internal interface IPartitionScheme
 {
     /// <summary>
     /// A list of <see cref="IDevice"/> that represents the shards. Indexes into this list will be
@@ -50,7 +50,7 @@ interface IPartitionScheme
 /// <summary>
 /// Uniformly shards data across given devices.
 /// </summary>
-class UniformPartitionScheme : IPartitionScheme
+internal class UniformPartitionScheme : IPartitionScheme
 {
     public IList<IDevice> Devices { get; }
     private readonly long chunkSize;
@@ -120,7 +120,7 @@ class UniformPartitionScheme : IPartitionScheme
 /// able to issue large reads and writes in parallel into multiple devices and improve throughput. Beware that this
 /// code does not contain error detection or correction mechanism to cope with increased failure from more devices.
 /// </summary>
-class ShardedStorageDevice : StorageDeviceBase
+internal class ShardedStorageDevice : StorageDeviceBase
 {
     private readonly IPartitionScheme partitions;
 

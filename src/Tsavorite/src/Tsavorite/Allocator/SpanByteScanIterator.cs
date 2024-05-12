@@ -261,7 +261,7 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    long GetPhysicalAddress(long currentAddress, long headAddress, long currentPage, long offset)
+    private long GetPhysicalAddress(long currentAddress, long headAddress, long currentPage, long offset)
     {
         long physicalAddress;
         if (currentAddress >= headAddress || forceInMemory)

@@ -9,8 +9,8 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespGetLowMemoryTests
 {
-    GarnetServer server;
-    Random r;
+    private GarnetServer server;
+    private Random r;
 
     [SetUp]
     public void Setup()

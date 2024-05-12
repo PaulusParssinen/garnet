@@ -16,7 +16,7 @@ public struct TsavoriteLogRecoveryInfo
     /// <summary>
     /// TsavoriteLog recovery version
     /// </summary>
-    const int TsavoriteLogRecoveryVersion = 1;
+    private const int TsavoriteLogRecoveryVersion = 1;
 
     /// <summary>
     /// Begin address

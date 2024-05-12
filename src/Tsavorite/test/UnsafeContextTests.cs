@@ -16,7 +16,7 @@ internal class BasicUnsafeContextTests
     private ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> fullSession;
     private UnsafeContext<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> uContext;
     private IDevice log;
-    DeviceType deviceType;
+    private DeviceType deviceType;
 
     [SetUp]
     public void Setup()

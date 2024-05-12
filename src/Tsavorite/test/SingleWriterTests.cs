@@ -24,13 +24,12 @@ internal class SingleWriterTestFunctions : SimpleFunctions<int, int>
     }
 }
 
-class SingleWriterTests
+internal class SingleWriterTests
 {
-    const int numRecords = 1000;
-    const int valueMult = 1_000_000;
-    const WriteReason NoReason = (WriteReason)(-1);
-
-    SingleWriterTestFunctions functions;
+    private const int numRecords = 1000;
+    private const int valueMult = 1_000_000;
+    private const WriteReason NoReason = (WriteReason)(-1);
+    private SingleWriterTestFunctions functions;
 
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, SingleWriterTestFunctions> session;
@@ -73,7 +72,7 @@ class SingleWriterTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         int input = (int)WriteReason.Upsert;
         int output = 0;
@@ -167,11 +166,10 @@ public class StructWithStringTests
     {
     }
 
-    const int numRecords = 1_000;
-    const string keyPrefix = "key_";
-    string valuePrefix = "value_";
-
-    StructWithStringTestFunctions functions;
+    private const int numRecords = 1_000;
+    private const string keyPrefix = "key_";
+    private string valuePrefix = "value_";
+    private StructWithStringTestFunctions functions;
 
     private TsavoriteKV<StructWithString, StructWithString> store;
     private ClientSession<StructWithString, StructWithString, StructWithString, StructWithString, Empty, StructWithStringTestFunctions> session;
@@ -214,7 +212,7 @@ public class StructWithStringTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int ii = 0; ii < numRecords; ii++)
         {

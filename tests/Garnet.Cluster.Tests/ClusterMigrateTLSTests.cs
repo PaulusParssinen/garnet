@@ -8,7 +8,7 @@ namespace Garnet.Cluster.Tests;
 [TestFixture, NonParallelizable]
 public unsafe class ClusterTLSMT
 {
-    ClusterMigrateTests tests;
+    private ClusterMigrateTests tests;
 
     [SetUp]
     public void Setup()

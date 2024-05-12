@@ -6,14 +6,14 @@ using System.Runtime.InteropServices;
 namespace Tsavorite;
 
 [StructLayout(LayoutKind.Explicit)]
-struct AtomicOwner
+internal struct AtomicOwner
 {
     [FieldOffset(0)]
-    int owner;
+    private int owner;
     [FieldOffset(4)]
-    int count;
+    private int count;
     [FieldOffset(0)]
-    long atomic;
+    private long atomic;
 
     /// <summary>
     /// Enqueue token

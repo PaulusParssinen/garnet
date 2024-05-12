@@ -8,9 +8,9 @@ namespace Tsavorite.Tests.async;
 [TestFixture]
 public class LowMemAsyncTests
 {
-    IDevice log;
-    TsavoriteKV<long, long> store1;
-    const int numOps = 2000;
+    private IDevice log;
+    private TsavoriteKV<long, long> store1;
+    private const int numOps = 2000;
 
     [SetUp]
     public void Setup()

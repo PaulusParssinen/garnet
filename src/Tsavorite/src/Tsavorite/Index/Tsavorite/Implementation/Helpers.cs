@@ -18,7 +18,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static ref RecordInfo WriteNewRecordInfo(ref Key key, AllocatorBase<Key, Value> log, long newPhysicalAddress, bool inNewVersion, bool tombstone, long previousAddress)
+    private static ref RecordInfo WriteNewRecordInfo(ref Key key, AllocatorBase<Key, Value> log, long newPhysicalAddress, bool inNewVersion, bool tombstone, long previousAddress)
     {
         ref RecordInfo recordInfo = ref log.GetInfo(newPhysicalAddress);
         recordInfo.WriteInfo(inNewVersion, tombstone, previousAddress);

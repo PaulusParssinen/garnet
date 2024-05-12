@@ -16,17 +16,17 @@ namespace Garnet.Common;
 /// </summary>
 public sealed class LimitedFixedBufferPool : IDisposable
 {
-    readonly PoolLevel[] pool;
-    readonly int numLevels, minAllocationSize, maxEntriesPerLevel;
-    readonly bool useHandlesForPin;
-    readonly ILogger logger;
+    private readonly PoolLevel[] pool;
+    private readonly int numLevels, minAllocationSize, maxEntriesPerLevel;
+    private readonly bool useHandlesForPin;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Min allocation size
     /// </summary>
     public int MinAllocationSize => minAllocationSize;
 
-    int totalAllocations;
+    private int totalAllocations;
 
     /// <summary>
     /// Constructor
@@ -145,7 +145,7 @@ public sealed class LimitedFixedBufferPool : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int Position(int v)
+    private int Position(int v)
     {
         if (v < minAllocationSize || !BitOperations.IsPow2(v))
             return -1;

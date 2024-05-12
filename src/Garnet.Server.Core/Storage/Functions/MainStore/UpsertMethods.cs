@@ -36,6 +36,6 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         return false;
     }
 
-    static bool ConcurrentWriterWorker(ref SpanByte src, ref SpanByte dst, ref UpsertInfo upsertInfo, ref RecordInfo recordInfo)
+    private static bool ConcurrentWriterWorker(ref SpanByte src, ref SpanByte dst, ref UpsertInfo upsertInfo, ref RecordInfo recordInfo)
         => SpanByteFunctions<long>.DoSafeCopy(ref src, ref dst, ref upsertInfo, ref recordInfo);
 }

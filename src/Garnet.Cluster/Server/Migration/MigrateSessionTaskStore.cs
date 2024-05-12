@@ -8,10 +8,10 @@ namespace Garnet.Cluster;
 
 internal sealed class MigrateSessionTaskStore
 {
-    MigrateSession[] sessions;
-    int numSessions;
-    SingleWriterMultiReaderLock _lock;
-    readonly ILogger logger;
+    private MigrateSession[] sessions;
+    private int numSessions;
+    private SingleWriterMultiReaderLock _lock;
+    private readonly ILogger logger;
 
     private bool _disposed;
 

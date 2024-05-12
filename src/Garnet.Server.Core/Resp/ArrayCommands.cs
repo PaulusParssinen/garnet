@@ -16,8 +16,8 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed unsafe partial class RespServerSession : ServerSessionBase
 {
-    int opsDone = 0;
-    int keysDeleted = 0;
+    private int opsDone = 0;
+    private int keysDeleted = 0;
 
     /// <summary>
     /// MGET

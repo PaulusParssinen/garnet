@@ -12,7 +12,7 @@ namespace Garnet.Server;
 /// </summary>
 public abstract class GarnetObjectBase : IGarnetObject
 {
-    int serializationState;
+    private int serializationState;
     public byte[] serialized;
 
     /// <inheritdoc />
@@ -27,8 +27,8 @@ public abstract class GarnetObjectBase : IGarnetObject
     protected GarnetObjectBase(long expiration, long size)
     {
         Debug.Assert(size >= 0);
-        this.Expiration = expiration;
-        this.Size = size;
+        Expiration = expiration;
+        Size = size;
     }
 
     protected GarnetObjectBase(BinaryReader reader, long size)

@@ -128,9 +128,9 @@ internal sealed class RedisOptionAttribute : Attribute
     /// <param name="garnetCustomTransformer">Optional custom transformer type, to transform RedisOption property value to Options property value</param>
     internal RedisOptionAttribute(string key, string garnetOptionName, string usageWarning = null, Type garnetCustomTransformer = null)
     {
-        this.Key = key;
-        this.GarnetOptionName = garnetOptionName;
-        this.UsageWarning = usageWarning;
-        this.GarnetCustomTransformer = garnetCustomTransformer;
+        Key = key;
+        GarnetOptionName = garnetOptionName;
+        UsageWarning = usageWarning;
+        GarnetCustomTransformer = garnetCustomTransformer;
     }
 }

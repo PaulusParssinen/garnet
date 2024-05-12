@@ -17,11 +17,11 @@ namespace Garnet.Server;
 /// </summary>
 public class GarnetSocketServer : IGarnetServer, IServerHook
 {
-    readonly SocketAsyncEventArgs acceptEventArg;
-    readonly Socket servSocket;
-    readonly IGarnetTlsOptions tlsOptions;
-    readonly int networkSendThrottleMax;
-    readonly LimitedFixedBufferPool networkPool;
+    private readonly SocketAsyncEventArgs acceptEventArg;
+    private readonly Socket servSocket;
+    private readonly IGarnetTlsOptions tlsOptions;
+    private readonly int networkSendThrottleMax;
+    private readonly LimitedFixedBufferPool networkPool;
 
     /// <summary>
     /// Active network handlers
@@ -36,7 +36,7 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
     /// <summary>
     /// Session providers
     /// </summary>
-    readonly ConcurrentDictionary<WireFormat, ISessionProvider> sessionProviders;
+    private readonly ConcurrentDictionary<WireFormat, ISessionProvider> sessionProviders;
 
     /// <summary>
     /// Server Address

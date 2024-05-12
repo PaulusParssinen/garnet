@@ -11,13 +11,13 @@ namespace Tsavorite;
 /// </summary>
 public class LocalStorageNamedDeviceFactory : INamedDeviceFactory
 {
-    string baseName;
-    readonly bool deleteOnClose;
-    readonly int? throttleLimit;
-    readonly bool preallocateFile;
-    readonly bool disableFileBuffering;
-    readonly bool useNativeDeviceLinux;
-    readonly ILogger logger;
+    private string baseName;
+    private readonly bool deleteOnClose;
+    private readonly int? throttleLimit;
+    private readonly bool preallocateFile;
+    private readonly bool disableFileBuffering;
+    private readonly bool useNativeDeviceLinux;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Create instance of factory

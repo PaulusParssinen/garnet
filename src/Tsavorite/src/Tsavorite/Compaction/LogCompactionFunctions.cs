@@ -6,7 +6,7 @@ namespace Tsavorite;
 internal sealed class LogCompactionFunctions<Key, Value, Input, Output, Context, Functions> : IFunctions<Key, Value, Input, Output, Context>
     where Functions : IFunctions<Key, Value, Input, Output, Context>
 {
-    readonly Functions _functions;
+    private readonly Functions _functions;
 
     public LogCompactionFunctions(Functions functions)
     {

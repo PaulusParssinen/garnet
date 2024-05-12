@@ -3,7 +3,7 @@
 
 namespace Tsavorite;
 
-struct NullTsavoriteSession : ITsavoriteSession
+internal struct NullTsavoriteSession : ITsavoriteSession
 {
     public static readonly NullTsavoriteSession Instance = new();
 

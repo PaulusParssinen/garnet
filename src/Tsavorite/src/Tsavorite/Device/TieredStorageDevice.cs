@@ -12,7 +12,7 @@ namespace Tsavorite.Device;
 /// on the device, it is considered persistent. Reads are served from the closest device with available data. Writes are issued in parallel to
 /// all devices 
 /// </summary>
-sealed class TieredStorageDevice : StorageDeviceBase
+internal sealed class TieredStorageDevice : StorageDeviceBase
 {
     private readonly IList<IDevice> devices;
     private readonly int commitPoint;

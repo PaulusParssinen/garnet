@@ -23,7 +23,7 @@ end
     redis.call('ZADD', @sortedSet2Key, @sortedSet2EntryScore, @sortedSet2Entry)
 end
 */
-sealed class SampleUpdateTxn : CustomTransactionProcedure
+internal sealed class SampleUpdateTxn : CustomTransactionProcedure
 {
     public override bool FailFastOnKeyLockFailure => true;
 

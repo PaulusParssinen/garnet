@@ -14,7 +14,7 @@ internal sealed partial class FailoverSession : IDisposable
     /// Note connection might abruptly close due to timeout.
     /// Increase gossip-delay to avoid shutting down connections prematurely during a failover.
     /// </summary>
-    bool useGossipConnections = false;
+    private bool useGossipConnections = false;
 
     /// <summary>
     /// Helper method to re-use gossip connection to perform the failover

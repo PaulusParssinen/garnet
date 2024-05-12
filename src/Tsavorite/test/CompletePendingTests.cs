@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Tsavorite.Tests;
 
 [TestFixture]
-class CompletePendingTests
+internal class CompletePendingTests
 {
     private TsavoriteKV<KeyStruct, ValueStruct> store;
     private IDevice log;
@@ -31,15 +31,15 @@ class CompletePendingTests
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
     }
 
-    const int numRecords = 1000;
+    private const int numRecords = 1000;
 
-    static KeyStruct NewKeyStruct(int key) => new() { kfield1 = key, kfield2 = key + numRecords * 10 };
-    static ValueStruct NewValueStruct(int key) => new() { vfield1 = key, vfield2 = key + numRecords * 10 };
+    private static KeyStruct NewKeyStruct(int key) => new() { kfield1 = key, kfield2 = key + numRecords * 10 };
+    private static ValueStruct NewValueStruct(int key) => new() { vfield1 = key, vfield2 = key + numRecords * 10 };
 
-    static InputStruct NewInputStruct(int key) => new() { ifield1 = key + numRecords * 30, ifield2 = key + numRecords * 40 };
-    static ContextStruct NewContextStruct(int key) => new() { cfield1 = key + numRecords * 50, cfield2 = key + numRecords * 60 };
+    private static InputStruct NewInputStruct(int key) => new() { ifield1 = key + numRecords * 30, ifield2 = key + numRecords * 40 };
+    private static ContextStruct NewContextStruct(int key) => new() { cfield1 = key + numRecords * 50, cfield2 = key + numRecords * 60 };
 
-    static void VerifyStructs(int key, ref KeyStruct keyStruct, ref InputStruct inputStruct, ref OutputStruct outputStruct, ref ContextStruct contextStruct, bool useRMW)
+    private static void VerifyStructs(int key, ref KeyStruct keyStruct, ref InputStruct inputStruct, ref OutputStruct outputStruct, ref ContextStruct contextStruct, bool useRMW)
     {
         Assert.AreEqual(key, keyStruct.kfield1);
         Assert.AreEqual(key + numRecords * 10, keyStruct.kfield2);
@@ -53,7 +53,7 @@ class CompletePendingTests
         Assert.AreEqual(key + numRecords * 60, contextStruct.cfield2);
     }
 
-    class ProcessPending
+    private class ProcessPending
     {
         // Get the first chunk of outputs as a group, testing realloc.
         private int deferredPendingMax = CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct>.kInitialAlloc + 1;

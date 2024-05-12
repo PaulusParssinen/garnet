@@ -44,7 +44,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
         Initialize();
     }
 
-    void ReturnPage(int index)
+    private void ReturnPage(int index)
     {
         Debug.Assert(index < BufferSize);
         if (values[index] != null)
@@ -96,7 +96,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
     public override int GetValueLength(ref SpanByte value) => value.TotalSize;
 
-    const int FieldInitialLength = sizeof(int);     // The .Length field of a SpanByte is the initial length
+    private const int FieldInitialLength = sizeof(int);     // The .Length field of a SpanByte is the initial length
 
     public override (int actualSize, int allocatedSize) GetRecordSize(long physicalAddress)
     {

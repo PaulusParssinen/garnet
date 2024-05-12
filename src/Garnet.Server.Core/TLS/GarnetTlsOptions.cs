@@ -26,20 +26,15 @@ public class GarnetTlsOptions : IGarnetTlsOptions
     /// </summary>
     public SslClientAuthenticationOptions TlsClientOptions { get; private set; }
 
-    string CertFileName, CertPassword;
-
-    readonly string CertSubjectName;
-    readonly int CertificateRefreshFrequency;
-
-    readonly bool ClientCertificateRequired;
-    readonly X509RevocationMode CertificateRevocationCheckMode;
-
-    string ClusterTlsClientTargetHost;
-    string IssuerCertificatePath = string.Empty;
-
-    ServerCertificateSelector serverCertificateSelector;
-
-    ILogger logger = null;
+    private string CertFileName, CertPassword;
+    private readonly string CertSubjectName;
+    private readonly int CertificateRefreshFrequency;
+    private readonly bool ClientCertificateRequired;
+    private readonly X509RevocationMode CertificateRevocationCheckMode;
+    private string ClusterTlsClientTargetHost;
+    private string IssuerCertificatePath = string.Empty;
+    private ServerCertificateSelector serverCertificateSelector;
+    private ILogger logger = null;
 
     /// <summary>
     /// Constructor
@@ -54,22 +49,22 @@ public class GarnetTlsOptions : IGarnetTlsOptions
         SslClientAuthenticationOptions clusterTlsClientOptionsOverride = null,
         ILogger logger = null)
     {
-        this.CertFileName = certFileName;
-        this.CertPassword = certPassword;
-        this.ClientCertificateRequired = clientCertificateRequired;
-        this.CertificateRevocationCheckMode = certificateRevocationCheckMode;
-        this.CertSubjectName = certSubjectName;
-        this.CertificateRefreshFrequency = certificateRefreshFrequency;
+        CertFileName = certFileName;
+        CertPassword = certPassword;
+        ClientCertificateRequired = clientCertificateRequired;
+        CertificateRevocationCheckMode = certificateRevocationCheckMode;
+        CertSubjectName = certSubjectName;
+        CertificateRefreshFrequency = certificateRefreshFrequency;
 
-        this.ClusterTlsClientTargetHost = clusterTlsClientTargetHost;
-        this.IssuerCertificatePath = issuerCertificatePath;
+        ClusterTlsClientTargetHost = clusterTlsClientTargetHost;
+        IssuerCertificatePath = issuerCertificatePath;
 
         this.logger = logger;
 
-        this.TlsServerOptions = tlsServerOptionsOverride;
+        TlsServerOptions = tlsServerOptionsOverride;
         if (TlsServerOptions == null) TlsServerOptions = GetSslServerAuthenticationOptions();
 
-        this.TlsClientOptions = clusterTlsClientOptionsOverride;
+        TlsClientOptions = clusterTlsClientOptionsOverride;
         if (TlsClientOptions == null && enableCluster) TlsClientOptions = GetSslClientAuthenticationOptions();
     }
 
@@ -96,7 +91,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
         return true;
     }
 
-    SslServerAuthenticationOptions GetSslServerAuthenticationOptions()
+    private SslServerAuthenticationOptions GetSslServerAuthenticationOptions()
     {
         if (CertFileName == null && CertSubjectName == null)
         {
@@ -144,7 +139,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
         };
     }
 
-    SslClientAuthenticationOptions GetSslClientAuthenticationOptions()
+    private SslClientAuthenticationOptions GetSslClientAuthenticationOptions()
     {
         return new SslClientAuthenticationOptions
         {
@@ -162,7 +157,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
     /// <summary>
     /// Callback to verify the TLS certificate
     /// </summary>
-    RemoteCertificateValidationCallback ValidateCertificateCallback(string issuerCertificatePath)
+    private RemoteCertificateValidationCallback ValidateCertificateCallback(string issuerCertificatePath)
     {
         if (!ClientCertificateRequired)
         {
@@ -197,7 +192,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
     /// https://stackoverflow.com/questions/6497040/how-do-i-validate-that-a-certificate-was-created-by-a-particular-certification-a
     /// Make sure to validate for your requirements before using in production.
     /// </summary>
-    bool ValidateCertificateIssuer(X509Certificate2 certificateToValidate, X509Certificate2 authority)
+    private bool ValidateCertificateIssuer(X509Certificate2 certificateToValidate, X509Certificate2 authority)
     {
         using X509Chain chain = new();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
@@ -214,11 +209,11 @@ public class GarnetTlsOptions : IGarnetTlsOptions
             if (!chainBuilt)
             {
                 string[] errors = chain.ChainStatus
-                    .Select(x => String.Format("{0} ({1})", x.StatusInformation.Trim(), x.Status))
+                    .Select(x => string.Format("{0} ({1})", x.StatusInformation.Trim(), x.Status))
                     .ToArray();
                 string certificateErrorsString = "Unknown errors.";
                 if (errors != null && errors.Length > 0)
-                    certificateErrorsString = String.Join(", ", errors);
+                    certificateErrorsString = string.Join(", ", errors);
                 throw new Exception("Trust chain did not complete to the known authority anchor. Errors: " + certificateErrorsString);
             }
 

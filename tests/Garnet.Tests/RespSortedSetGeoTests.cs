@@ -12,9 +12,8 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespSortedSetGeoTests
 {
-    GarnetServer server;
-
-    readonly string[,] cities = new string[,] { {"-74.0059413", "40.7127837", "New York"},
+    private GarnetServer server;
+    private readonly string[,] cities = new string[,] { {"-74.0059413", "40.7127837", "New York"},
             {"-118.2436849", "34.0522342", "Los Angeles"},
             {"-87.6297982", "41.8781136","Chicago"},
             {"-95.3698028", "29.7604267", "Houston"},
@@ -38,9 +37,7 @@ public class RespSortedSetGeoTests
             {"-104.990251 ", "39.7392358", "Denver" },
             {"-77.0368707 ", "38.9071923", "Washington"}
             };
-
-
-    readonly string[,] worldcities = new string[,] {
+    private readonly string[,] worldcities = new string[,] {
             {"5.30310439999999" ,"51.6889350991489" ,"Hertogenbosch"},
             {"31.3647679" ,"29.832041799755" ,"15th of May City"},
             {"30.9409205" ,"29.9723457997422" ,"6th of October"},
@@ -199,7 +196,7 @@ public class RespSortedSetGeoTests
         Assert.AreEqual(default(GeoPosition), response[1]);
 
         RedisResult memresponse = db.Execute("MEMORY", "USAGE", "Sicily");
-        int actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        int actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         int expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -209,7 +206,7 @@ public class RespSortedSetGeoTests
         Assert.IsNotNull(response[0]);
 
         memresponse = db.Execute("MEMORY", "USAGE", "SecondKey");
-        actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -218,7 +215,7 @@ public class RespSortedSetGeoTests
         Assert.AreEqual("sqc8b49rnyt", responseHash[0]);
 
         memresponse = db.Execute("MEMORY", "USAGE", "SecondKey");
-        actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
     }

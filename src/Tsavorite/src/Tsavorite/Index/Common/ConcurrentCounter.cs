@@ -22,7 +22,7 @@ internal unsafe struct ConcurrentCounter
 
     private Counter[] partitions;
     private Counter* partitionsPtr;
-    const int partitionCount = 1; // Using a single partition for now
+    private const int partitionCount = 1; // Using a single partition for now
 
     /// <summary>Initializes a new instance of the <see cref="ConcurrentCounter"/> struct.</summary>
     public ConcurrentCounter()

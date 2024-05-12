@@ -319,7 +319,7 @@ public struct CommitPoint
 /// </summary>
 public struct HybridLogRecoveryInfo
 {
-    const int CheckpointVersion = 5;
+    private const int CheckpointVersion = 5;
 
     /// <summary>
     /// Guid
@@ -740,7 +740,7 @@ internal struct HybridLogCheckpointInfo : IDisposable
 
 internal struct IndexRecoveryInfo
 {
-    const int CheckpointVersion = 1;
+    private const int CheckpointVersion = 1;
     public Guid token;
     public long table_size;
     public ulong num_ht_bytes;

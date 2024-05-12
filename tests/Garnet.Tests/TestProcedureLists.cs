@@ -15,7 +15,7 @@ namespace Garnet;
 /// Description: Exercise LPUSH LPOP RPUSH RPOP
 /// </summary>
 
-sealed class TestProcedureLists : CustomTransactionProcedure
+internal sealed class TestProcedureLists : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

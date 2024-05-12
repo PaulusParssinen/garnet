@@ -728,7 +728,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     if (!RespReadUtils.ReadStringWithLengthHeader(out string valueArg, ref ptr, recvBufferPtr + bytesRead))
                         return false;
 
-                    value = Int64.Parse(valueArg);
+                    value = long.Parse(valueArg);
                     currCount += 4;// Skip 4 args including subcommand
                 }
 

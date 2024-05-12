@@ -3,7 +3,7 @@
 
 namespace Garnet.Server.ACL;
 
-class ACLParser
+internal class ACLParser
 {
     private static readonly char[] WhitespaceChars = [' ', '\t', '\r', '\n'];
 

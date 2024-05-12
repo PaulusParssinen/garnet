@@ -6,12 +6,12 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession
+internal sealed partial class StorageSession
 {
     /// <summary>
     /// Handles the complete pending for Object Store session
     /// </summary>
-    static void CompletePendingForObjectStoreSession<TContext>(ref Status status, ref GarnetObjectStoreOutput output, ref TContext objectContext)
+    private static void CompletePendingForObjectStoreSession<TContext>(ref Status status, ref GarnetObjectStoreOutput output, ref TContext objectContext)
         where TContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         objectContext.CompletePendingWithOutputs(out CompletedOutputIterator<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long> completedOutputs, wait: true);

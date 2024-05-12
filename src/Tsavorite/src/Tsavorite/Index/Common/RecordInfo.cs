@@ -16,49 +16,48 @@ namespace Tsavorite;
 [StructLayout(LayoutKind.Explicit, Size = 8)]
 public struct RecordInfo
 {
-    const int kTotalSizeInBytes = 8;
-    const int kTotalBits = kTotalSizeInBytes * 8;
+    private const int kTotalSizeInBytes = 8;
+    private const int kTotalBits = kTotalSizeInBytes * 8;
 
     // Previous address
     internal const int kPreviousAddressBits = 48;
     internal const long kPreviousAddressMaskInWord = (1L << kPreviousAddressBits) - 1;
 
     // Shift position of lock in word
-    const int kLockBitsOffset = kPreviousAddressBits;
+    private const int kLockBitsOffset = kPreviousAddressBits;
 
     // We use 7 lock bits: 6 shared lock bits + 1 exclusive lock bit
     internal const int kSharedLockBits = 6;
     internal const int kExclusiveLockBits = 1;
 
     // Shared lock constants
-    const long kSharedLockBitMask = ((1L << kSharedLockBits) - 1) << kLockBitsOffset;
-    const long kSharedLockIncrement = 1L << kLockBitsOffset;
+    private const long kSharedLockBitMask = ((1L << kSharedLockBits) - 1) << kLockBitsOffset;
+    private const long kSharedLockIncrement = 1L << kLockBitsOffset;
 
     // Exclusive lock constants
-    const int kExclusiveLockBitOffset = kLockBitsOffset + kSharedLockBits;
-    const long kExclusiveLockBitMask = 1L << kExclusiveLockBitOffset;
-    const long kLockBitMask = kSharedLockBitMask | kExclusiveLockBitMask;
+    private const int kExclusiveLockBitOffset = kLockBitsOffset + kSharedLockBits;
+    private const long kExclusiveLockBitMask = 1L << kExclusiveLockBitOffset;
+    private const long kLockBitMask = kSharedLockBitMask | kExclusiveLockBitMask;
 
     // Other marker bits. Unused* means bits not yet assigned; use the highest number when assigning
-    const int kTombstoneBitOffset = kExclusiveLockBitOffset + 1;
-    const int kValidBitOffset = kTombstoneBitOffset + 1;
-    const int kSealedBitOffset = kValidBitOffset + 1;
-    const int kUnused2BitOffset = kSealedBitOffset + 1;
-    const int kDirtyBitOffset = kUnused2BitOffset + 1;
-    const int kFillerBitOffset = kDirtyBitOffset + 1;
-    const int kInNewVersionBitOffset = kFillerBitOffset + 1;
-    const int kModifiedBitOffset = kInNewVersionBitOffset + 1;
+    private const int kTombstoneBitOffset = kExclusiveLockBitOffset + 1;
+    private const int kValidBitOffset = kTombstoneBitOffset + 1;
+    private const int kSealedBitOffset = kValidBitOffset + 1;
+    private const int kUnused2BitOffset = kSealedBitOffset + 1;
+    private const int kDirtyBitOffset = kUnused2BitOffset + 1;
+    private const int kFillerBitOffset = kDirtyBitOffset + 1;
+    private const int kInNewVersionBitOffset = kFillerBitOffset + 1;
+    private const int kModifiedBitOffset = kInNewVersionBitOffset + 1;
     internal const int kUnused1BitOffset = kModifiedBitOffset + 1;
-
-    const long kTombstoneBitMask = 1L << kTombstoneBitOffset;
-    const long kValidBitMask = 1L << kValidBitOffset;
-    const long kSealedBitMask = 1L << kSealedBitOffset;
-    const long kUnused2BitMask = 1L << kUnused2BitOffset;
-    const long kDirtyBitMask = 1L << kDirtyBitOffset;
-    const long kFillerBitMask = 1L << kFillerBitOffset;
-    const long kInNewVersionBitMask = 1L << kInNewVersionBitOffset;
-    const long kModifiedBitMask = 1L << kModifiedBitOffset;
-    const long kUnused1BitMask = 1L << kUnused1BitOffset;
+    private const long kTombstoneBitMask = 1L << kTombstoneBitOffset;
+    private const long kValidBitMask = 1L << kValidBitOffset;
+    private const long kSealedBitMask = 1L << kSealedBitOffset;
+    private const long kUnused2BitMask = 1L << kUnused2BitOffset;
+    private const long kDirtyBitMask = 1L << kDirtyBitOffset;
+    private const long kFillerBitMask = 1L << kFillerBitOffset;
+    private const long kInNewVersionBitMask = 1L << kInNewVersionBitOffset;
+    private const long kModifiedBitMask = 1L << kModifiedBitOffset;
+    private const long kUnused1BitMask = 1L << kUnused1BitOffset;
 
     [FieldOffset(0)]
     private long word;

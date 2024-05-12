@@ -15,7 +15,7 @@ public class RespParsingException : GarnetException
     /// Construct a new RESP parsing exception with the given message.
     /// </summary>
     /// <param name="message">Message that described the exception that has occurred.</param>
-    RespParsingException(string message) : base(message)
+    private RespParsingException(string message) : base(message)
     {
         // Nothing...
     }

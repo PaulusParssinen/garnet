@@ -7,22 +7,22 @@ using Microsoft.Extensions.Logging;
 
 namespace Garnet.Server.Auth;
 
-class GarnetACLAuthenticator : IGarnetAuthenticator
+internal class GarnetACLAuthenticator : IGarnetAuthenticator
 {
     /// <summary>
     /// The Access Control List to authenticate users against
     /// </summary>
-    readonly AccessControlList _acl;
+    private readonly AccessControlList _acl;
 
     /// <summary>
     /// Logger to use to output log messages to
     /// </summary>
-    readonly ILogger _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// If authenticated, contains a reference to the authenticated user. Otherwise null.
     /// </summary>
-    User _user = null;
+    private User _user = null;
 
     /// <summary>
     /// Initializes a new ACLAuthenticator instance.

@@ -30,7 +30,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     public long BumpCurrentEpoch() => epoch.BumpCurrentEpoch();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SpinWaitUntilClosed(long address)
+    private void SpinWaitUntilClosed(long address)
     {
         // Unlike HeadAddress, ClosedUntilAddress is a high-water mark; a record that is == to ClosedUntilAddress has *not* been closed yet.
         while (address >= hlog.ClosedUntilAddress)
@@ -42,7 +42,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SpinWaitUntilRecordIsClosed(long logicalAddress, AllocatorBase<Key, Value> log)
+    private void SpinWaitUntilRecordIsClosed(long logicalAddress, AllocatorBase<Key, Value> log)
     {
         Debug.Assert(logicalAddress < log.HeadAddress, "SpinWaitUntilRecordIsClosed should not be called for addresses above HeadAddress");
 

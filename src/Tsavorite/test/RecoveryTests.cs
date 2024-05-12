@@ -232,9 +232,9 @@ internal class DeviceTypeRecoveryTests
 [TestFixture]
 public class AllocatorTypeRecoveryTests
 {
-    const int StackAllocMax = 12;
-    const int RandSeed = 101;
-    const long expectedValueBase = DeviceTypeRecoveryTests.numUniqueKeys * (DeviceTypeRecoveryTests.numOps / DeviceTypeRecoveryTests.numUniqueKeys - 1);
+    private const int StackAllocMax = 12;
+    private const int RandSeed = 101;
+    private const long expectedValueBase = DeviceTypeRecoveryTests.numUniqueKeys * (DeviceTypeRecoveryTests.numOps / DeviceTypeRecoveryTests.numUniqueKeys - 1);
     private static long ExpectedValue(int key) => expectedValueBase + key;
 
     private IDisposable storeDisp;
@@ -368,7 +368,7 @@ public class AllocatorTypeRecoveryTests
         session.CompletePending(true);
     }
 
-    static int GetRandomLength(Random r) => r.Next(StackAllocMax) + 1;  // +1 to remain in range 1..StackAllocMax
+    private static int GetRandomLength(Random r) => r.Next(StackAllocMax) + 1;  // +1 to remain in range 1..StackAllocMax
 
     private unsafe void Populate(TsavoriteKV<SpanByte, SpanByte> store)
     {

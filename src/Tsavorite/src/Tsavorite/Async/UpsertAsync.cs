@@ -11,7 +11,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 {
     internal struct UpsertAsyncOperation<Input, Output, Context> : IAsyncOperation<Input, Output, Context, UpsertAsyncResult<Input, Output, Context>>
     {
-        UpsertOptions upsertOptions;
+        private UpsertOptions upsertOptions;
 
         internal UpsertAsyncOperation(ref UpsertOptions upsertOptions)
         {

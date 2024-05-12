@@ -6,7 +6,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Info on what latency commands are supported
 /// </summary>
-static class RespLatencyHelp
+internal static class RespLatencyHelp
 {
     /// <summary>
     /// Get supported latency commands and a short description

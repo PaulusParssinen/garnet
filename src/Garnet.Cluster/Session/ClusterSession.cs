@@ -19,30 +19,29 @@ using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, Span
 
 internal sealed unsafe partial class ClusterSession : IClusterSession
 {
-    readonly ClusterProvider clusterProvider;
-    readonly TransactionManager txnManager;
-    readonly GarnetSessionMetrics sessionMetrics;
-    BasicGarnetApi basicGarnetApi;
-    readonly INetworkSender networkSender;
-    readonly ILogger logger;
+    private readonly ClusterProvider clusterProvider;
+    private readonly TransactionManager txnManager;
+    private readonly GarnetSessionMetrics sessionMetrics;
+    private BasicGarnetApi basicGarnetApi;
+    private readonly INetworkSender networkSender;
+    private readonly ILogger logger;
 
     // Authenticator used to validate permissions for cluster commands
-    readonly IGarnetAuthenticator authenticator;
+    private readonly IGarnetAuthenticator authenticator;
 
     // User currently authenticated in this session
-    User user;
-
-    byte* dcurr, dend;
-    byte* recvBufferPtr;
-    int readHead, bytesRead;
-    long _localCurrentEpoch = 0;
+    private User user;
+    private byte* dcurr, dend;
+    private byte* recvBufferPtr;
+    private int readHead, bytesRead;
+    private long _localCurrentEpoch = 0;
 
     public long LocalCurrentEpoch => _localCurrentEpoch;
 
     /// <summary>
     /// Indicates if this is a session that allows for reads and writes
     /// </summary>
-    bool readWriteSession = false;
+    private bool readWriteSession = false;
 
     public void SetReadOnlySession() => readWriteSession = false;
     public void SetReadWriteSession() => readWriteSession = true;
@@ -113,7 +112,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    void SendAndReset()
+    private void SendAndReset()
     {
         byte* d = networkSender.GetResponseObjectHead();
         if ((int)(dcurr - d) > 0)
@@ -125,7 +124,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    void SendAndReset(ref byte* dcurr, ref byte* dend)
+    private void SendAndReset(ref byte* dcurr, ref byte* dend)
     {
         byte* d = networkSender.GetResponseObjectHead();
         if ((int)(dcurr - d) > 0)
@@ -138,7 +137,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Send(byte* d)
+    private void Send(byte* d)
     {
         // #if DEBUG
         // logger?.LogTrace("SEND: [{send}]", Encoding.UTF8.GetString(new Span<byte>(d, (int)(dcurr - d))).Replace("\n", "|").Replace("\r", ""));
@@ -158,7 +157,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    bool DrainCommands(ReadOnlySpan<byte> bufSpan, int count)
+    private bool DrainCommands(ReadOnlySpan<byte> bufSpan, int count)
     {
         for (int i = 0; i < count; i++)
         {
@@ -185,7 +184,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     /// <param name="count">Number of parameters left in the command specification.</param>
     /// <param name="processingCompleted">Indicates whether the command was completely processed, regardless of whether execution was successful or not.</param>
     /// <returns>True if the command execution is allowed to continue, otherwise false.</returns>
-    bool CheckACLAdminPermissions(ReadOnlySpan<byte> bufSpan, int count, out bool processingCompleted)
+    private bool CheckACLAdminPermissions(ReadOnlySpan<byte> bufSpan, int count, out bool processingCompleted)
     {
         Debug.Assert(!authenticator.IsAuthenticated || (user != null));
 
@@ -215,7 +214,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     /// Does not write to response buffer. Caller responsible for handling error.
     /// </summary>
     /// <returns>True if the command execution is allowed to continue, otherwise false.</returns>
-    bool CheckACLAdminPermissions()
+    private bool CheckACLAdminPermissions()
     {
         Debug.Assert(!authenticator.IsAuthenticated || (user != null));
 
@@ -224,7 +223,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         return true;
     }
 
-    ReadOnlySpan<byte> GetCommand(ReadOnlySpan<byte> bufSpan, out bool success)
+    private ReadOnlySpan<byte> GetCommand(ReadOnlySpan<byte> bufSpan, out bool success)
     {
         success = false;
 

@@ -102,43 +102,43 @@ public static unsafe class Native32
     [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     internal static extern SafeFileHandle CreateFileW(
         [In] string lpFileName,
-        [In] UInt32 dwDesiredAccess,
-        [In] UInt32 dwShareMode,
+        [In] uint dwDesiredAccess,
+        [In] uint dwShareMode,
         [In] IntPtr lpSecurityAttributes,
-        [In] UInt32 dwCreationDisposition,
-        [In] UInt32 dwFlagsAndAttributes,
+        [In] uint dwCreationDisposition,
+        [In] uint dwFlagsAndAttributes,
         [In] IntPtr hTemplateFile);
 
     [DllImport("Kernel32.dll", SetLastError = true)]
     internal static extern bool ReadFile(
         [In] SafeFileHandle hFile,
         [Out] IntPtr lpBuffer,
-        [In] UInt32 nNumberOfBytesToRead,
-        [Out] out UInt32 lpNumberOfBytesRead,
+        [In] uint nNumberOfBytesToRead,
+        [Out] out uint lpNumberOfBytesRead,
         [In] NativeOverlapped* lpOverlapped);
 
     [DllImport("Kernel32.dll", SetLastError = true)]
     internal static extern bool WriteFile(
         [In] SafeFileHandle hFile,
         [In] IntPtr lpBuffer,
-        [In] UInt32 nNumberOfBytesToWrite,
-        [Out] out UInt32 lpNumberOfBytesWritten,
+        [In] uint nNumberOfBytesToWrite,
+        [Out] out uint lpNumberOfBytesWritten,
         [In] NativeOverlapped* lpOverlapped);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern IntPtr CreateIoCompletionPort(
         [In] SafeFileHandle hFile,
-        IntPtr ExistingCompletionPort,
-        UIntPtr CompletionKey,
-        uint NumberOfConcurrentThreads);
+        IntPtr existingCompletionPort,
+        UIntPtr completionKey,
+        uint numberOfConcurrentThreads);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern bool GetQueuedCompletionStatus(
         [In] IntPtr hCompletionPort,
-        [Out] out UInt32 lpNumberOfBytesWritten,
+        [Out] out uint lpNumberOfBytesWritten,
         [Out] out IntPtr lpCompletionKey,
         [Out] out NativeOverlapped* lpOverlapped,
-        [In] UInt32 dwMilliseconds);
+        [In] uint dwMilliseconds);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern bool GetFileSizeEx(
@@ -277,27 +277,27 @@ public static unsafe class Native32
     private static extern IntPtr GetCurrentProcess();
 
     [DllImport("advapi32", SetLastError = true)]
-    private static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+    private static extern bool OpenProcessToken(IntPtr processHandle, uint desiredAccess, out IntPtr tokenHandle);
 
     [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool AdjustTokenPrivileges(IntPtr tokenhandle, int disableprivs, ref TOKEN_PRIVILEGES Newstate, int BufferLengthInBytes, int PreviousState, int ReturnLengthInBytes);
+    private static extern bool AdjustTokenPrivileges(IntPtr tokenhandle, int disableprivs, ref TOKEN_PRIVILEGES newstate, int bufferLengthInBytes, int previousState, int returnLengthInBytes);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool CloseHandle(IntPtr hObject);
 
     [DllImport("Kernel32.dll", SetLastError = true)]
-    private static extern bool DeviceIoControl(SafeFileHandle hDevice, uint IoControlCode, void* InBuffer, int nInBufferSize, IntPtr OutBuffer, int nOutBufferSize, ref uint pBytesReturned, IntPtr Overlapped);
+    private static extern bool DeviceIoControl(SafeFileHandle hDevice, uint ioControlCode, void* inBuffer, int nInBufferSize, IntPtr outBuffer, int nOutBufferSize, ref uint pBytesReturned, IntPtr overlapped);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetFilePointerEx(SafeFileHandle hFile, long liDistanceToMove, out long lpNewFilePointer, uint dwMoveMethod);
 
     [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool SetFileValidData(SafeFileHandle hFile, long ValidDataLength);
+    private static extern bool SetFileValidData(SafeFileHandle hFile, long validDataLength);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern SafeFileHandle CreateFile(string filename, uint access, uint share, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
 
-    private static bool? processPrivilegeEnabled = null;
+    private static bool? _processPrivilegeEnabled = null;
 
     /// <summary>
     /// Enable privilege for process
@@ -307,7 +307,7 @@ public static unsafe class Native32
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return false;
 
-        if (processPrivilegeEnabled.HasValue) return processPrivilegeEnabled.Value;
+        if (_processPrivilegeEnabled.HasValue) return _processPrivilegeEnabled.Value;
 
         TOKEN_PRIVILEGES token_privileges = default(TOKEN_PRIVILEGES);
         token_privileges.PrivilegeCount = 1;
@@ -316,35 +316,35 @@ public static unsafe class Native32
         if (!LookupPrivilegeValue(null, "SeManageVolumePrivilege",
             ref token_privileges.Privileges.Luid))
         {
-            processPrivilegeEnabled = false;
+            _processPrivilegeEnabled = false;
             return false;
         }
 
         if (!OpenProcessToken(GetCurrentProcess(), 0x20, out IntPtr token))
         {
-            processPrivilegeEnabled = false;
+            _processPrivilegeEnabled = false;
             return false;
         }
         if (!AdjustTokenPrivileges(token, 0, ref token_privileges, 0, 0, 0))
         {
             CloseHandle(token);
-            processPrivilegeEnabled = false;
+            _processPrivilegeEnabled = false;
             return false;
         }
         if (Marshal.GetLastWin32Error() != 0)
         {
             CloseHandle(token);
-            processPrivilegeEnabled = false;
+            _processPrivilegeEnabled = false;
             return false;
         }
         CloseHandle(token);
-        processPrivilegeEnabled = true;
+        _processPrivilegeEnabled = true;
         return true;
     }
 
-    private static uint CTL_CODE(uint DeviceType, uint Function, uint Method, uint Access)
+    private static uint CTL_CODE(uint deviceType, uint function, uint method, uint access)
     {
-        return (((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method));
+        return (((deviceType) << 16) | ((access) << 14) | ((function) << 2) | (method));
     }
 
     internal static bool EnableVolumePrivileges(string filename, SafeFileHandle handle)
@@ -352,7 +352,7 @@ public static unsafe class Native32
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return false;
 
-        if (processPrivilegeEnabled == false)
+        if (_processPrivilegeEnabled == false)
             return false;
 
         string volume_string = "\\\\.\\" + filename.Substring(0, 2);

@@ -42,7 +42,7 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
         }
     }
 
-    static void ThrowDisposed()
+    private static void ThrowDisposed()
         => throw new ObjectDisposedException("SimpleObjectPool");
 
     /// <summary>

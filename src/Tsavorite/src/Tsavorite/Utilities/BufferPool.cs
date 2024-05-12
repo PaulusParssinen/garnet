@@ -20,7 +20,7 @@ namespace Tsavorite;
 public sealed unsafe class SectorAlignedMemory
 {
     // Byte #31 is used to denote free (1) or in-use (0) page
-    const int kFreeBitMask = 1 << 31;
+    private const int kFreeBitMask = 1 << 31;
 
     /// <summary>
     /// Actual buffer
@@ -76,13 +76,13 @@ public sealed unsafe class SectorAlignedMemory
             {
                 if (Free)
                     throw new TsavoriteException("Attempting to return an already-free block");
-                this.level |= kFreeBitMask;
+                level |= kFreeBitMask;
             }
             else
             {
                 if (!Free)
                     throw new TsavoriteException("Attempting to allocate an already-allocated block");
-                this.level &= ~kFreeBitMask;
+                level &= ~kFreeBitMask;
             }
         }
     }
@@ -119,7 +119,7 @@ public sealed unsafe class SectorAlignedMemory
     {
         buffer = null;
 #if CHECK_FREE
-        this.Free = true;
+        Free = true;
 #endif
     }
 
@@ -148,7 +148,7 @@ public sealed unsafe class SectorAlignedMemory
     {
         return string.Format($"{(long)aligned_pointer} {offset} {valid_offset} {required_bytes} {available_bytes}"
 #if CHECK_FREE
-            + $" {this.Free}"
+            + $" {Free}"
 #endif
             );
     }

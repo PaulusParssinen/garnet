@@ -12,11 +12,10 @@ internal class LogScanTests
     private IDevice device;
     private TsavoriteLog logUncommitted;
     private IDevice deviceUnCommitted;
-
-    static byte[] entry;
-    const int entryLength = 100;
-    const int numEntries = 1000;
-    static readonly int entryFlag = 9999;
+    private static byte[] entry;
+    private const int entryLength = 100;
+    private const int numEntries = 1000;
+    private static readonly int entryFlag = 9999;
 
     // Create and populate the log file so can do various scans
     [SetUp]

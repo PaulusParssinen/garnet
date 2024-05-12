@@ -11,9 +11,9 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 {
     internal struct ReadAsyncOperation<Input, Output, Context> : IAsyncOperation<Input, Output, Context, ReadAsyncResult<Input, Output, Context>>
     {
-        AsyncIOContext<Key, Value> diskRequest;
-        long readAtAddress;
-        ReadOptions readOptions;
+        private AsyncIOContext<Key, Value> diskRequest;
+        private long readAtAddress;
+        private ReadOptions readOptions;
 
         internal ReadAsyncOperation(AsyncIOContext<Key, Value> diskRequest, long readAtAddress, ref ReadOptions readOptions)
         {

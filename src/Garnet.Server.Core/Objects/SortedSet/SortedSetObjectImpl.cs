@@ -61,7 +61,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     sortedSetDict.Add(member, score);
                     sortedSet.Add((score, member));
 
-                    this.UpdateSize(member);
+                    UpdateSize(member);
                 }
                 else if (_scoreStored != score)
                 {
@@ -104,7 +104,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 sortedSetDict.Remove(value);
                 sortedSet.Remove((_key, value));
 
-                this.UpdateSize(value, false);
+                UpdateSize(value, false);
             }
 
             _output->bytesDone = (int)(ptr - startptr);
@@ -228,7 +228,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         int count = 0;
 
         _output->opsDone = 0;
-        _output->countDone = Int32.MinValue;
+        _output->countDone = int.MinValue;
 
         // read min
         if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] minParamByteArray, ref input_currptr, end))
@@ -310,7 +310,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     sortedSetDict.Add(memberByteArray, incrValue);
                     sortedSet.Add((incrValue, memberByteArray));
 
-                    this.UpdateSize(memberByteArray);
+                    UpdateSize(memberByteArray);
                 }
 
                 // write the new score
@@ -638,7 +638,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 sortedSetDict.Remove(item.Item2);
                 sortedSet.Remove((_key, item.Item2));
 
-                this.UpdateSize(item.Item2, false);
+                UpdateSize(item.Item2, false);
             }
         }
     }
@@ -873,7 +873,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                         sortedSetDict.Remove(item.Item2);
                         sortedSet.Remove((_key, item.Item2));
 
-                        this.UpdateSize(item.Item2, false);
+                        UpdateSize(item.Item2, false);
                     }
                 }
                 elementsInLex.Add(item);
@@ -935,7 +935,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     sortedSetDict.Remove(item.Item2);
                     sortedSet.Remove((_key, item.Item2));
 
-                    this.UpdateSize(item.Item2, false);
+                    UpdateSize(item.Item2, false);
                 }
             }
         }
@@ -987,7 +987,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 bool success = sortedSet.Remove(max);
                 success = sortedSetDict.Remove(max.Item2);
 
-                this.UpdateSize(max.Item2, false);
+                UpdateSize(max.Item2, false);
 
                 while (!RespWriteUtils.WriteBulkString(max.Item2, ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);

@@ -3,7 +3,7 @@
 
 namespace Tsavorite;
 
-struct PageUnit
+internal struct PageUnit
 {
     public byte[] value;
     public long pointer;

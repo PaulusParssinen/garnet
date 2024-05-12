@@ -3,7 +3,7 @@
 
 namespace Garnet.Server;
 
-enum SerializationPhase : int
+internal enum SerializationPhase : int
 {
     REST,
     SERIALIZING,

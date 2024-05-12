@@ -6,7 +6,7 @@ using Garnet.Common;
 
 namespace Garnet.Cluster;
 
-sealed class CheckpointEntry
+internal sealed class CheckpointEntry
 {
     public long storeVersion;
     public Guid storeHlogToken;

@@ -15,10 +15,10 @@ namespace Garnet.Server;
 /// </summary>
 public sealed unsafe partial class AofProcessor
 {
-    readonly StoreWrapper storeWrapper;
-    readonly CustomCommand[] customCommands;
-    readonly CustomObjectCommandWrapper[] customObjectCommands;
-    readonly RespServerSession respServerSession;
+    private readonly StoreWrapper storeWrapper;
+    private readonly CustomCommand[] customCommands;
+    private readonly CustomObjectCommandWrapper[] customObjectCommands;
+    private readonly RespServerSession respServerSession;
 
     /// <summary>
     /// Replication offset
@@ -28,20 +28,18 @@ public sealed unsafe partial class AofProcessor
     /// <summary>
     /// Session for main store
     /// </summary>
-    readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session = null;
+    private readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session = null;
 
     /// <summary>
     /// Session for object store
     /// </summary>
-    readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession = null;
-
-    readonly Dictionary<int, List<byte[]>> inflightTxns;
-    readonly byte[] buffer;
-    readonly GCHandle handle;
-    readonly byte* bufferPtr;
-
-    readonly ILogger logger;
-    readonly bool recordToAof;
+    private readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession = null;
+    private readonly Dictionary<int, List<byte[]>> inflightTxns;
+    private readonly byte[] buffer;
+    private readonly GCHandle handle;
+    private readonly byte* bufferPtr;
+    private readonly ILogger logger;
+    private readonly bool recordToAof;
 
     /// <summary>
     /// Create new AOF processor
@@ -52,8 +50,8 @@ public sealed unsafe partial class AofProcessor
         ILogger logger = null)
     {
         this.storeWrapper = storeWrapper;
-        this.customCommands = storeWrapper.customCommandManager.commandMap;
-        this.customObjectCommands = storeWrapper.customCommandManager.objectCommandMap;
+        customCommands = storeWrapper.customCommandManager.commandMap;
+        customObjectCommands = storeWrapper.customCommandManager.objectCommandMap;
         this.recordToAof = recordToAof;
 
         ReplicationOffset = 0;
@@ -71,7 +69,7 @@ public sealed unsafe partial class AofProcessor
             accessControlList: storeWrapper.accessControlList,
             loggerFactory: storeWrapper.loggerFactory);
 
-        this.respServerSession = new RespServerSession(null, replayAofStoreWrapper, null);
+        respServerSession = new RespServerSession(null, replayAofStoreWrapper, null);
 
         session = respServerSession.storageSession.session;
         objectStoreSession = respServerSession.storageSession.objectStoreSession;
@@ -102,7 +100,7 @@ public sealed unsafe partial class AofProcessor
         RecoverReplay(untilAddress);
     }
 
-    MemoryResult<byte> output = default;
+    private MemoryResult<byte> output = default;
     private unsafe void RecoverReplay(long untilAddress)
     {
         logger?.LogInformation("Begin AOF replay");
@@ -256,7 +254,7 @@ public sealed unsafe partial class AofProcessor
         return true;
     }
 
-    static unsafe void StoreUpsert(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
+    private static unsafe void StoreUpsert(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         ref SpanByte input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
@@ -268,7 +266,7 @@ public sealed unsafe partial class AofProcessor
             output.Memory.Dispose();
     }
 
-    static unsafe void StoreRMW(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
+    private static unsafe void StoreRMW(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
         byte* pbOutput = stackalloc byte[32];
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
@@ -280,13 +278,13 @@ public sealed unsafe partial class AofProcessor
             output.Memory.Dispose();
     }
 
-    static unsafe void StoreDelete(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
+    private static unsafe void StoreDelete(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         session.Delete(ref key);
     }
 
-    static unsafe void ObjectStoreUpsert(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, GarnetObjectSerializer garnetObjectSerializer, byte* ptr, byte* outputPtr, int outputLength)
+    private static unsafe void ObjectStoreUpsert(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, GarnetObjectSerializer garnetObjectSerializer, byte* ptr, byte* outputPtr, int outputLength)
     {
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         byte[] keyB = key.ToByteArray();
@@ -301,7 +299,7 @@ public sealed unsafe partial class AofProcessor
             output.spanByteAndMemory.Memory.Dispose();
     }
 
-    static unsafe void ObjectStoreRMW(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr, byte* outputPtr, int outputLength)
+    private static unsafe void ObjectStoreRMW(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr, byte* outputPtr, int outputLength)
     {
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         byte[] keyB = key.ToByteArray();
@@ -314,7 +312,7 @@ public sealed unsafe partial class AofProcessor
             output.spanByteAndMemory.Memory.Dispose();
     }
 
-    static unsafe void ObjectStoreDelete(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr)
+    private static unsafe void ObjectStoreDelete(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr)
     {
         ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         byte[] keyB = key.ToByteArray();
@@ -324,7 +322,7 @@ public sealed unsafe partial class AofProcessor
     /// <summary>
     /// On recovery apply records with header.version greater than CurrentVersion.
     /// </summary>
-    bool SkipRecord(AofHeader header)
+    private bool SkipRecord(AofHeader header)
     {
         AofStoreType storeType = ToAofStoreType(header.opType);
 
@@ -339,7 +337,7 @@ public sealed unsafe partial class AofProcessor
         };
     }
 
-    static AofStoreType ToAofStoreType(AofEntryType type)
+    private static AofStoreType ToAofStoreType(AofEntryType type)
     {
         return type switch
         {

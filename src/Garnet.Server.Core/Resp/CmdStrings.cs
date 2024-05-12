@@ -6,7 +6,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Command strings for RESP protocol
 /// </summary>
-static partial class CmdStrings
+internal static partial class CmdStrings
 {
     public static ReadOnlySpan<byte> GetConfig(ReadOnlySpan<byte> key)
     {

@@ -11,7 +11,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 {
     internal struct DeleteAsyncOperation<Input, Output, Context> : IAsyncOperation<Input, Output, Context, DeleteAsyncResult<Input, Output, Context>>
     {
-        DeleteOptions deleteOptions;
+        private DeleteOptions deleteOptions;
 
         internal DeleteAsyncOperation(ref DeleteOptions deleteOptions)
         {

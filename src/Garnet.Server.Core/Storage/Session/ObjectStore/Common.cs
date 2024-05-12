@@ -8,11 +8,11 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-sealed partial class StorageSession : IDisposable
+internal sealed partial class StorageSession : IDisposable
 {
     #region Common ObjectStore Methods
 
-    unsafe GarnetStatus RMWObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
+    private unsafe GarnetStatus RMWObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         SpanByte _input = input.SpanByte;
@@ -39,7 +39,7 @@ sealed partial class StorageSession : IDisposable
     /// Perform RMW operation in object store 
     /// use this method in commands that return an array
     /// </summary>
-    GarnetStatus RMWObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
+    private GarnetStatus RMWObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         SpanByte _input = input.SpanByte;
@@ -60,7 +60,7 @@ sealed partial class StorageSession : IDisposable
     /// Perform Read operation in object store 
     /// use this method in commands that return an array
     /// </summary>
-    GarnetStatus ReadObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
+    private GarnetStatus ReadObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         SpanByte _input = input.SpanByte;
@@ -83,7 +83,7 @@ sealed partial class StorageSession : IDisposable
     /// <param name="outputFooter">The RESP format output object</param>
     /// <param name="error">A description of the error, if there is any</param>
     /// <param name="isScanOutput">True when the output comes from HSCAN, ZSCAN OR SSCAN command</param>
-    unsafe ArgSlice[] ProcessRespArrayOutput(GarnetObjectStoreOutput outputFooter, out string error, bool isScanOutput = false)
+    private unsafe ArgSlice[] ProcessRespArrayOutput(GarnetObjectStoreOutput outputFooter, out string error, bool isScanOutput = false)
     {
         ArgSlice[] elements = default;
         error = default;
@@ -164,7 +164,7 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Gets the value of the key store in the Object Store
     /// </summary>
-    unsafe GarnetStatus ReadObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
+    private unsafe GarnetStatus ReadObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
     where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         SpanByte _input = input.SpanByte;

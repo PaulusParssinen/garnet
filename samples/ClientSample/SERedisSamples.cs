@@ -10,8 +10,8 @@ namespace GarnetClientSample;
 /// </summary>
 public class SERedisSamples
 {
-    readonly string address;
-    readonly int port;
+    private readonly string address;
+    private readonly int port;
 
     public SERedisSamples(string address, int port)
     {
@@ -34,7 +34,7 @@ public class SERedisSamples
         SingleDelete();
     }
 
-    async Task RespPingAsync()
+    private async Task RespPingAsync()
     {
         using ConnectionMultiplexer redis = await ConnectionMultiplexer.ConnectAsync($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -42,7 +42,7 @@ public class SERedisSamples
         Console.WriteLine("RespPing: Success");
     }
 
-    void RespPing()
+    private void RespPing()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -51,7 +51,7 @@ public class SERedisSamples
         Console.WriteLine("RespPing: Success");
     }
 
-    void SingleSetRename()
+    private void SingleSetRename()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -68,7 +68,7 @@ public class SERedisSamples
             Console.WriteLine("SingleSetRename: Success");
     }
 
-    void SingleSetGet()
+    private void SingleSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -84,7 +84,7 @@ public class SERedisSamples
             Console.WriteLine("SingleSetGet: Success");
     }
 
-    void SingleIncr()
+    private void SingleIncr()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -104,7 +104,7 @@ public class SERedisSamples
             Console.WriteLine("SingleIncr: Success");
     }
 
-    void SingleIncrBy(long nIncr)
+    private void SingleIncrBy(long nIncr)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -126,7 +126,7 @@ public class SERedisSamples
             Console.WriteLine("SingleIncrBy: Success");
     }
 
-    void SingleDecrBy(long nDecr)
+    private void SingleDecrBy(long nDecr)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -146,7 +146,7 @@ public class SERedisSamples
             Console.WriteLine("SingleDecrBy: Success");
     }
 
-    void SingleDecr(string strKey, int nVal)
+    private void SingleDecr(string strKey, int nVal)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -161,7 +161,7 @@ public class SERedisSamples
             Console.WriteLine("SingleDecr: Success");
     }
 
-    void SingleIncrNoKey()
+    private void SingleIncrNoKey()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -182,7 +182,7 @@ public class SERedisSamples
             Console.WriteLine("SingleIncrNoKey: Success");
     }
 
-    void SingleExists()
+    private void SingleExists()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);
@@ -199,7 +199,7 @@ public class SERedisSamples
             Console.WriteLine("SingleExists: Error");
     }
 
-    void SingleDelete()
+    private void SingleDelete()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
         IDatabase db = redis.GetDatabase(0);

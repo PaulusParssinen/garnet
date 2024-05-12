@@ -12,9 +12,9 @@ namespace Garnet.Cluster;
 
 internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvider clusterProvider, string remoteNodeId, string remote_primary_replid, CheckpointEntry remoteEntry, long replicaAofBeginAddress, long replicaAofTailAddress, ILogger logger = null) : IDisposable
 {
-    readonly StoreWrapper storeWrapper = storeWrapper;
-    readonly ClusterProvider clusterProvider = clusterProvider;
-    readonly CancellationTokenSource ctsCheckpointRetrievalSession = new();
+    private readonly StoreWrapper storeWrapper = storeWrapper;
+    private readonly ClusterProvider clusterProvider = clusterProvider;
+    private readonly CancellationTokenSource ctsCheckpointRetrievalSession = new();
     private SectorAlignedBufferPool bufferPool = null;
     private readonly SemaphoreSlim semaphore = new(0);
 

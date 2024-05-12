@@ -65,7 +65,7 @@ internal class BasicStorageTests
         }
     }
 
-    void TestDeviceWriteRead(IDevice log)
+    private void TestDeviceWriteRead(IDevice log)
     {
         store = new TsavoriteKV<KeyStruct, ValueStruct>
                    (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 10 });

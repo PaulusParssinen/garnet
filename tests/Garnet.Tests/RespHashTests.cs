@@ -11,9 +11,8 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespHashTests
 {
-    GarnetServer server;
-
-    static readonly HashEntry[] entries = new HashEntry[100];
+    private GarnetServer server;
+    private static readonly HashEntry[] entries = new HashEntry[100];
 
     [SetUp]
     public void Setup()

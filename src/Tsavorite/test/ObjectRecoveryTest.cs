@@ -15,11 +15,11 @@ internal struct StructTuple<T1, T2>
 [TestFixture]
 internal class ObjectRecoveryTests
 {
-    const long numUniqueKeys = (1 << 14);
-    const long keySpace = (1L << 14);
-    const long numOps = (1L << 19);
-    const long completePendingInterval = (1L << 10);
-    const long checkpointInterval = (1L << 16);
+    private const long numUniqueKeys = (1 << 14);
+    private const long keySpace = (1L << 14);
+    private const long numOps = (1L << 19);
+    private const long completePendingInterval = (1L << 10);
+    private const long checkpointInterval = (1L << 16);
     private TsavoriteKV<AdId, NumClicks> store;
     private Guid token;
     private IDevice log, objlog;

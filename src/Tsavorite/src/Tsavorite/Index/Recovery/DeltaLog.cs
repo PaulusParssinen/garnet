@@ -25,7 +25,7 @@ public enum DeltaLogEntryType : int
 }
 
 [StructLayout(LayoutKind.Explicit, Size = DeltaLog.HeaderSize)]
-struct DeltalogHeader
+internal struct DeltalogHeader
 {
     [FieldOffset(0)]
     public ulong Checksum;
@@ -44,24 +44,22 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     /// Header size
     /// </summary>
     public const int HeaderSize = 16;
-
-    readonly IDevice deltaLogDevice;
-    readonly int LogPageSizeBits;
-    readonly int PageSize;
-    readonly int PageSizeMask;
-    readonly int AlignedPageSizeBytes;
-    readonly int sectorSize;
-    BlittableFrame frame;
-    bool disposed = false;
+    private readonly IDevice deltaLogDevice;
+    private readonly int LogPageSizeBits;
+    private readonly int PageSize;
+    private readonly int PageSizeMask;
+    private readonly int AlignedPageSizeBytes;
+    private readonly int sectorSize;
+    private BlittableFrame frame;
+    private bool disposed = false;
 
     // Fields to support writes
-    SectorAlignedBufferPool memory;
-    long tailAddress;
-    long flushedUntilAddress;
-
-    SemaphoreSlim completedSemaphore;
-    int issuedFlush;
-    SectorAlignedMemory buffer;
+    private SectorAlignedBufferPool memory;
+    private long tailAddress;
+    private long flushedUntilAddress;
+    private SemaphoreSlim completedSemaphore;
+    private int issuedFlush;
+    private SectorAlignedMemory buffer;
 
     /// <summary>
     /// Tail address

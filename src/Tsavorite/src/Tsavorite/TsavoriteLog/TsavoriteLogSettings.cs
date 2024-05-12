@@ -29,9 +29,9 @@ public enum LogChecksumType
 /// </summary>
 public class TsavoriteLogSettings : IDisposable
 {
-    readonly bool disposeDevices = false;
-    readonly bool deleteDirOnDispose = false;
-    readonly string baseDir;
+    private readonly bool disposeDevices = false;
+    private readonly bool deleteDirOnDispose = false;
+    private readonly string baseDir;
 
     /// <summary>
     /// Device used for log

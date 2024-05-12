@@ -9,12 +9,12 @@ namespace Tsavorite.Tests.recovery.sumstore.simple;
 [TestFixture]
 public class RecoveryTests
 {
-    const int numOps = 5000;
-    AdId[] inputArray;
+    private const int numOps = 5000;
+    private AdId[] inputArray;
 
     private byte[] commitCookie;
-    string checkpointDir;
-    ICheckpointManager checkpointManager;
+    private string checkpointDir;
+    private ICheckpointManager checkpointManager;
 
     private TsavoriteKV<AdId, NumClicks> store1;
     private TsavoriteKV<AdId, NumClicks> store2;
@@ -325,7 +325,7 @@ public class RecoveryTests
 
 public class AdSimpleFunctions : FunctionsBase<AdId, NumClicks, AdInput, Output, Empty>
 {
-    long expectedVersion;
+    private long expectedVersion;
 
     internal AdSimpleFunctions(long ver = -1) => expectedVersion = ver;
 

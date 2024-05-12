@@ -13,10 +13,10 @@ public static class HashUtils
 {
     /// <inheritdoc cref="BitOperations.RotateLeft(ulong, int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static unsafe ulong Rotl64(ulong v, int r) => BitOperations.RotateLeft(v, r);
+    private static unsafe ulong Rotl64(ulong v, int r) => BitOperations.RotateLeft(v, r);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static unsafe ulong fmix64(ulong k)
+    private static unsafe ulong fmix64(ulong k)
     {
         k ^= k >> 33;
         k *= (ulong)0xff51afd7ed558ccd;

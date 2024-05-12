@@ -8,44 +8,44 @@ internal struct GarnetServerMetrics
     /// <summary>
     /// Server metrics
     /// </summary>
-    public long total_connections_received;
-    public long total_connections_disposed;
+    public long TotalConnectionsReceived;
+    public long TotalConnectionsDisposed;
 
     /// <summary>
     /// Instantaneous metrics
     /// </summary>
-    public static readonly int byteUnit = 1 << 10;
-    public double instantaneous_cmd_per_sec;
-    public double instantaneous_net_input_tpt;
-    public double instantaneous_net_output_tpt;
+    public static readonly int ByteUnit = 1 << 10;
+    public double Instantaneous_cmd_per_sec;
+    public double Instantaneous_net_input_tpt;
+    public double Instantaneous_net_output_tpt;
 
     /// <summary>
     /// Global session metrics
     /// </summary>
-    public GarnetSessionMetrics globalSessionMetrics;
+    public GarnetSessionMetrics GlobalSessionMetrics;
 
     /// <summary>
     /// History of session metrics.
     /// </summary>
-    public GarnetSessionMetrics historySessionMetrics;
+    public GarnetSessionMetrics HistorySessionMetrics;
 
     /// <summary>
     /// Global latency metrics per command.
     /// </summary>
-    public readonly GarnetLatencyMetrics globalLatencyMetrics;
+    public readonly GarnetLatencyMetrics GlobalLatencyMetrics;
 
     public GarnetServerMetrics(bool trackStats, bool trackLatency, GarnetServerMonitor monitor)
     {
-        total_connections_received = 0;
-        total_connections_disposed = 0;
+        TotalConnectionsReceived = 0;
+        TotalConnectionsDisposed = 0;
 
-        instantaneous_cmd_per_sec = 0;
-        instantaneous_net_input_tpt = 0;
-        instantaneous_net_output_tpt = 0;
+        Instantaneous_cmd_per_sec = 0;
+        Instantaneous_net_input_tpt = 0;
+        Instantaneous_net_output_tpt = 0;
 
-        globalSessionMetrics = trackStats ? new GarnetSessionMetrics() : null;
-        historySessionMetrics = trackStats ? new GarnetSessionMetrics() : null;
+        GlobalSessionMetrics = trackStats ? new GarnetSessionMetrics() : null;
+        HistorySessionMetrics = trackStats ? new GarnetSessionMetrics() : null;
 
-        globalLatencyMetrics = trackLatency ? new() : null;
+        GlobalLatencyMetrics = trackLatency ? new() : null;
     }
 }

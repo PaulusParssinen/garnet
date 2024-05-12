@@ -90,7 +90,7 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
             {
                 continue;
             }
-            segids.Add(Int32.Parse(item.Name.Replace(bareName, "").Replace(".", "")));
+            segids.Add(int.Parse(item.Name.Replace(bareName, "").Replace(".", "")));
         }
         segids.Sort();
 

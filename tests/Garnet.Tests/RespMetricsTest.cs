@@ -11,9 +11,9 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespMetricsTest
 {
-    GarnetServer server;
-    ILoggerFactory loggerFactory;
-    Random r;
+    private GarnetServer server;
+    private ILoggerFactory loggerFactory;
+    private Random r;
 
     private void StartServer(int metricsSamplingFreq = -1, bool latencyMonitor = false)
     {
@@ -96,7 +96,7 @@ public class RespMetricsTest
                 {
                     if (prop.Name.Equals("total_commands_processed"))
                     {
-                        int total_commands_processed = Int32.Parse(prop.Value);
+                        int total_commands_processed = int.Parse(prop.Value);
                         if (first && total_commands_processed < opCount)
                         {
                             first = false;

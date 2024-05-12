@@ -20,7 +20,7 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// <summary>
     /// Type of object
     /// </summary>
-    readonly byte type;
+    private readonly byte type;
 
     /// <summary>
     /// Base constructor

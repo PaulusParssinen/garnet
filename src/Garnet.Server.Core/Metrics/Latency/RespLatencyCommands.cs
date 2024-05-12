@@ -58,7 +58,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 }
                 else
                 {
-                    GarnetLatencyMetrics garnetLatencyMetrics = storeWrapper.monitor?.GlobalMetrics.globalLatencyMetrics;
+                    GarnetLatencyMetrics garnetLatencyMetrics = storeWrapper.monitor?.GlobalMetrics.GlobalLatencyMetrics;
                     string response = garnetLatencyMetrics != null ? garnetLatencyMetrics.GetRespHistograms(events) : "*0\r\n";
                     while (!RespWriteUtils.WriteAsciiDirect(response, ref dcurr, dend))
                         SendAndReset();

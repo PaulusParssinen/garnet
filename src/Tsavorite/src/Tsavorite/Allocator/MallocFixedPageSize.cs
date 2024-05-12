@@ -15,7 +15,7 @@ internal sealed class CountdownWrapper
     // Separate event for sync code and tcs for async code: Do not block on async code.
     private readonly CountdownEvent syncEvent;
     private readonly TaskCompletionSource<int> asyncTcs;
-    int remaining;
+    private int remaining;
 
     internal CountdownWrapper(int count, bool isAsync)
     {
@@ -78,15 +78,14 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     private SemaphoreSlim checkpointSemaphore;
 
     private readonly ConcurrentQueue<long> freeList;
-
-    readonly ILogger logger;
+    private readonly ILogger logger;
 
 #if DEBUG
     private enum AllocationMode { None, Single, Bulk };
     private AllocationMode allocationMode;
 #endif
 
-    const int SectorSize = 512;
+    private const int SectorSize = 512;
 
     private int initialAllocation = 0;
 

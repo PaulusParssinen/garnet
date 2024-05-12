@@ -31,7 +31,7 @@ internal class LockableUnsafeFunctions : SimpleFunctions<long, long>
 internal class LockableUnsafeComparer : ITsavoriteEqualityComparer<long>
 {
     internal int maxSleepMs;
-    readonly Random rng = new(101);
+    private readonly Random rng = new(101);
 
     public bool Equals(ref long k1, ref long k2) => k1 == k2;
 
@@ -127,16 +127,14 @@ internal struct BucketLockTracker
 }
 
 [TestFixture]
-class LockableUnsafeContextTests
+internal class LockableUnsafeContextTests
 {
-    const int numRecords = 1000;
-    const int useNewKey = 1010;
-    const int useExistingKey = 200;
-
-    const int valueMult = 1_000_000;
-
-    LockableUnsafeFunctions functions;
-    LockableUnsafeComparer comparer;
+    private const int numRecords = 1000;
+    private const int useNewKey = 1010;
+    private const int useExistingKey = 200;
+    private const int valueMult = 1_000_000;
+    private LockableUnsafeFunctions functions;
+    private LockableUnsafeComparer comparer;
 
     private TsavoriteKV<long, long> store;
     private ClientSession<long, long, long, long, Empty, LockableUnsafeFunctions> session;
@@ -197,20 +195,20 @@ class LockableUnsafeContextTests
         }
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; key++)
             Assert.IsFalse(session.Upsert(key, key * valueMult).IsPending);
     }
 
-    void AssertIsLocked(FixedLengthLockableKeyStruct<long> key, bool xlock, bool slock)
+    private void AssertIsLocked(FixedLengthLockableKeyStruct<long> key, bool xlock, bool slock)
         => OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
-    void AssertIsLocked(ref FixedLengthLockableKeyStruct<long> key, bool xlock, bool slock)
+    private void AssertIsLocked(ref FixedLengthLockableKeyStruct<long> key, bool xlock, bool slock)
         => OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
 
-    void PrepareRecordLocation(FlushMode recordLocation) => PrepareRecordLocation(store, recordLocation);
+    private void PrepareRecordLocation(FlushMode recordLocation) => PrepareRecordLocation(store, recordLocation);
 
-    static void PrepareRecordLocation(TsavoriteKV<long, long> store, FlushMode recordLocation)
+    private static void PrepareRecordLocation(TsavoriteKV<long, long> store, FlushMode recordLocation)
     {
         if (recordLocation == FlushMode.ReadOnly)
             store.Log.ShiftReadOnlyAddress(store.Log.TailAddress, wait: true);
@@ -218,14 +216,14 @@ class LockableUnsafeContextTests
             store.Log.FlushAndEvict(wait: true);
     }
 
-    static void ClearCountsOnError(ClientSession<long, long, long, long, Empty, LockableUnsafeFunctions> luContext)
+    private static void ClearCountsOnError(ClientSession<long, long, long, long, Empty, LockableUnsafeFunctions> luContext)
     {
         // If we already have an exception, clear these counts so "Run" will not report them spuriously.
         luContext.sharedLockCount = 0;
         luContext.exclusiveLockCount = 0;
     }
 
-    static void ClearCountsOnError<TFunctions>(ClientSession<long, long, long, long, Empty, TFunctions> luContext)
+    private static void ClearCountsOnError<TFunctions>(ClientSession<long, long, long, long, Empty, TFunctions> luContext)
         where TFunctions : IFunctions<long, long, long, long, Empty>
     {
         // If we already have an exception, clear these counts so "Run" will not report them spuriously.
@@ -233,11 +231,11 @@ class LockableUnsafeContextTests
         luContext.exclusiveLockCount = 0;
     }
 
-    void PopulateHei(ref HashEntryInfo hei) => OverflowBucketLockTableTests.PopulateHei(store, ref hei);
+    private void PopulateHei(ref HashEntryInfo hei) => OverflowBucketLockTableTests.PopulateHei(store, ref hei);
 
-    void AssertTotalLockCounts(long expectedX, long expectedS) => OverflowBucketLockTableTests.AssertTotalLockCounts(store, expectedX, expectedS);
+    private void AssertTotalLockCounts(long expectedX, long expectedS) => OverflowBucketLockTableTests.AssertTotalLockCounts(store, expectedX, expectedS);
 
-    unsafe void AssertTotalLockCounts(ref BucketLockTracker blt)
+    private unsafe void AssertTotalLockCounts(ref BucketLockTracker blt)
     {
         (int expectedX, int expectedS) = blt.GetLockCounts();
         AssertTotalLockCounts(expectedX, expectedS);
@@ -250,7 +248,7 @@ class LockableUnsafeContextTests
         }
     }
 
-    void AssertNoLocks(ref BucketLockTracker blt)
+    private void AssertNoLocks(ref BucketLockTracker blt)
     {
         blt.AssertNoLocks();
         AssertTotalLockCounts(0, 0);
@@ -881,7 +879,7 @@ class LockableUnsafeContextTests
         AssertTotalLockCounts(0, 0);
     }
 
-    FixedLengthLockableKeyStruct<long> AddLockTableEntry<TFunctions>(LockableUnsafeContext<long, long, long, long, Empty, TFunctions> luContext, long key)
+    private FixedLengthLockableKeyStruct<long> AddLockTableEntry<TFunctions>(LockableUnsafeContext<long, long, long, long, Empty, TFunctions> luContext, long key)
         where TFunctions : IFunctions<long, long, long, long, Empty>
     {
         FixedLengthLockableKeyStruct<long>[] keyVec = new[] { new FixedLengthLockableKeyStruct<long>(key, LockType.Exclusive, luContext) };
@@ -897,7 +895,7 @@ class LockableUnsafeContextTests
         return keyVec[0];
     }
 
-    void VerifyAndUnlockSplicedInKey<TFunctions>(LockableUnsafeContext<long, long, long, long, Empty, TFunctions> luContext, long expectedKey)
+    private void VerifyAndUnlockSplicedInKey<TFunctions>(LockableUnsafeContext<long, long, long, long, Empty, TFunctions> luContext, long expectedKey)
         where TFunctions : IFunctions<long, long, long, long, Empty>
     {
         // Scan to the end of the readcache chain and verify we inserted the value.
@@ -993,7 +991,7 @@ class LockableUnsafeContextTests
         }
     }
 
-    void PopulateAndEvict(bool immutable = false)
+    private void PopulateAndEvict(bool immutable = false)
     {
         Populate();
 

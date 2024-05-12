@@ -99,7 +99,7 @@ public partial class SortedSetObject : GarnetObjectBase
             sortedSet.Add((score, item));
             sortedSetDict.Add(item, score);
 
-            this.UpdateSize(item);
+            UpdateSize(item);
         }
     }
 
@@ -148,7 +148,7 @@ public partial class SortedSetObject : GarnetObjectBase
         sortedSetDict.Add(item, score);
         sortedSet.Add((score, item));
 
-        this.UpdateSize(item);
+        UpdateSize(item);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public partial class SortedSetObject : GarnetObjectBase
         {
             var header = (RespInputHeader*)_input;
             Debug.Assert(header->type == GarnetObjectType.SortedSet);
-            long previouseSize = this.Size;
+            long previouseSize = Size;
             switch (header->SortedSetOp)
             {
                 case SortedSetOperation.ZADD:
@@ -264,7 +264,7 @@ public partial class SortedSetObject : GarnetObjectBase
                 default:
                     throw new GarnetException($"Unsupported operation {(SortedSetOperation)_input[0]} in SortedSetObject.Operate");
             }
-            sizeChange = this.Size - previouseSize;
+            sizeChange = Size - previouseSize;
         }
         return true;
     }
@@ -383,7 +383,7 @@ public partial class SortedSetObject : GarnetObjectBase
         // item's length + overhead to store item + value of type double added to sorted set and dictionary + overhead for those datastructures
         int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + (2 * sizeof(double))
             + MemoryUtils.SortedSetEntryOverhead + MemoryUtils.DictionaryEntryOverhead;
-        this.Size += add ? size : -size;
-        Debug.Assert(this.Size >= MemoryUtils.SortedSetOverhead + MemoryUtils.DictionaryOverhead);
+        Size += add ? size : -size;
+        Debug.Assert(Size >= MemoryUtils.SortedSetOverhead + MemoryUtils.DictionaryOverhead);
     }
 }

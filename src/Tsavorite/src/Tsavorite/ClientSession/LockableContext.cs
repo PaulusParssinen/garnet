@@ -12,13 +12,13 @@ namespace Tsavorite;
 public readonly struct LockableContext<Key, Value, Input, Output, Context, Functions> : ITsavoriteContext<Key, Value, Input, Output, Context>, ILockableContext<Key>
     where Functions : IFunctions<Key, Value, Input, Output, Context>
 {
-    readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
-    readonly InternalTsavoriteSession TsavoriteSession;
+    private readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
+    private readonly InternalTsavoriteSession TsavoriteSession;
 
     /// <summary>Indicates whether this struct has been initialized</summary>
     public bool IsNull => clientSession is null;
 
-    const int KeyLockMaxRetryAttempts = 1000;
+    private const int KeyLockMaxRetryAttempts = 1000;
 
     internal LockableContext(ClientSession<Key, Value, Input, Output, Context, Functions> clientSession)
     {

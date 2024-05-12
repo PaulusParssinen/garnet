@@ -14,13 +14,13 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     public bool CheckSingleKeySlotVerify(ArgSlice keySlice, bool readOnly, byte SessionAsking)
         => SingleKeySlotVerify(keySlice, readOnly, SessionAsking).state == SlotVerifiedState.OK;
 
-    ClusterSlotVerificationResult SingleKeySlotVerify(ArgSlice keySlice, bool readOnly, byte SessionAsking)
+    private ClusterSlotVerificationResult SingleKeySlotVerify(ArgSlice keySlice, bool readOnly, byte SessionAsking)
     {
         ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
         return readOnly ? SingleKeyReadSlotVerify(config, keySlice, SessionAsking) : SingleKeyReadWriteSlotVerify(config, keySlice, SessionAsking);
     }
 
-    ClusterSlotVerificationResult SingleKeyReadSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
+    private ClusterSlotVerificationResult SingleKeyReadSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
     {
         ushort _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
         bool IsLocal = config.IsLocal(_slot);
@@ -71,7 +71,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    ClusterSlotVerificationResult SingleKeyReadWriteSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
+    private ClusterSlotVerificationResult SingleKeyReadWriteSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
     {
         ushort _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
         bool IsLocal = config.IsLocal(_slot, readCommand: readWriteSession);
@@ -115,7 +115,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    static ClusterSlotVerificationResult ArrayCrosslotVerify(int keyCount, ref byte* ptr, byte* endPtr, bool interleavedKeys, out bool retVal, out byte* keyPtr, out int ksize)
+    private static ClusterSlotVerificationResult ArrayCrosslotVerify(int keyCount, ref byte* ptr, byte* endPtr, bool interleavedKeys, out bool retVal, out byte* keyPtr, out int ksize)
     {
         retVal = false;
         bool crossSlot = false;
@@ -156,7 +156,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         return crossSlot ? new(SlotVerifiedState.CROSSLOT, slot) : new(SlotVerifiedState.OK, slot);
     }
 
-    ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, int keyCount, ref byte* ptr, byte* endPtr, bool readOnly, bool interleavedKeys, byte SessionAsking, out bool retVal)
+    private ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, int keyCount, ref byte* ptr, byte* endPtr, bool readOnly, bool interleavedKeys, byte SessionAsking, out bool retVal)
     {
         ClusterSlotVerificationResult vres = ArrayCrosslotVerify(keyCount, ref ptr, endPtr, interleavedKeys, out retVal, out byte* keyPtr, out int ksize);
         if (!retVal) return new(SlotVerifiedState.OK, 0);
@@ -171,7 +171,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
     }
 
-    static ClusterSlotVerificationResult ArrayCrossSlotVerify(ref ArgSlice[] keys, int count)
+    private static ClusterSlotVerificationResult ArrayCrossSlotVerify(ref ArgSlice[] keys, int count)
     {
         int _offset = 0;
         int _end = count < 0 ? keys.Length : count;
@@ -194,7 +194,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             : new(SlotVerifiedState.OK, slot);
     }
 
-    ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, ref ArgSlice[] keys, bool readOnly, byte SessionAsking, int count)
+    private ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, ref ArgSlice[] keys, bool readOnly, byte SessionAsking, int count)
     {
         ClusterSlotVerificationResult vres = ArrayCrossSlotVerify(ref keys, count);
         if (vres.state == SlotVerifiedState.CROSSLOT)

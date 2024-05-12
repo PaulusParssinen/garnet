@@ -11,21 +11,19 @@ namespace Garnet.Cluster;
 
 internal sealed partial class ReplicationManager : IDisposable
 {
-    readonly ClusterProvider clusterProvider;
-    readonly StoreWrapper storeWrapper;
-    readonly AofProcessor aofProcessor;
-    readonly CheckpointStore checkpointStore;
-
-    readonly CancellationTokenSource ctsRepManager = new();
-
-    readonly ILogger logger;
-    bool _disposed;
+    private readonly ClusterProvider clusterProvider;
+    private readonly StoreWrapper storeWrapper;
+    private readonly AofProcessor aofProcessor;
+    private readonly CheckpointStore checkpointStore;
+    private readonly CancellationTokenSource ctsRepManager = new();
+    private readonly ILogger logger;
+    private bool _disposed;
 
     private long primary_sync_last_time;
 
     internal long LastPrimarySyncSeconds => recovering ? (DateTime.UtcNow.Ticks - primary_sync_last_time) / TimeSpan.TicksPerSecond : 0;
 
-    internal void UpdateLastPrimarySyncTime() => this.primary_sync_last_time = DateTime.UtcNow.Ticks;
+    internal void UpdateLastPrimarySyncTime() => primary_sync_last_time = DateTime.UtcNow.Ticks;
 
     public bool recovering;
     private long replicationOffset;
@@ -84,7 +82,7 @@ internal sealed partial class ReplicationManager : IDisposable
     {
         GarnetServerOptions opts = clusterProvider.serverOptions;
         this.clusterProvider = clusterProvider;
-        this.storeWrapper = clusterProvider.storeWrapper;
+        storeWrapper = clusterProvider.storeWrapper;
         aofProcessor = new AofProcessor(storeWrapper, recordToAof: false, logger: logger);
         replicaSyncSessionTaskStore = new ReplicaSyncSessionTaskStore(storeWrapper, clusterProvider, logger);
 
@@ -124,7 +122,7 @@ internal sealed partial class ReplicationManager : IDisposable
         SetPrimaryReplicationId();
     }
 
-    void CheckpointVersionShift(bool isMainStore, long oldVersion, long newVersion)
+    private void CheckpointVersionShift(bool isMainStore, long oldVersion, long newVersion)
     {
         if (clusterProvider.clusterManager.CurrentConfig.LocalNodeRole == NodeRole.REPLICA)
             return;

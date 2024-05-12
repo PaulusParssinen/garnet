@@ -10,16 +10,16 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class OverflowPool<T> : IDisposable
 {
-    readonly int size;
-    readonly ConcurrentQueue<T> itemQueue;
-    readonly Action<T> disposer;
+    private readonly int size;
+    private readonly ConcurrentQueue<T> itemQueue;
+    private readonly Action<T> disposer;
 
     /// <summary>
     /// Number of pages in pool
     /// </summary>
     public int Count => itemQueue.Count;
 
-    bool disposed = false;
+    private bool disposed = false;
 
     /// <summary>
     /// Constructor

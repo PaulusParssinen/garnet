@@ -11,13 +11,13 @@ namespace Tsavorite.Tests.recovery.sumstore;
 [TestFixture]
 internal class SharedDirectoryTests
 {
-    const long numUniqueKeys = (1 << 5);
-    const long keySpace = (1L << 5);
-    const long numOps = (1L << 10);
-    const long completePendingInterval = (1L << 10);
+    private const long numUniqueKeys = (1 << 5);
+    private const long keySpace = (1L << 5);
+    private const long numOps = (1L << 10);
+    private const long completePendingInterval = (1L << 10);
     private string sharedLogDirectory;
-    TsavoriteTestInstance original;
-    TsavoriteTestInstance clone;
+    private TsavoriteTestInstance original;
+    private TsavoriteTestInstance clone;
 
     [SetUp]
     public void Setup()

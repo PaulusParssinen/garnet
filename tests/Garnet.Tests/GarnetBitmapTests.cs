@@ -8,8 +8,8 @@ namespace Garnet.Tests;
 
 public class GarnetBitmapTests
 {
-    GarnetServer server;
-    Random r;
+    private GarnetServer server;
+    private Random r;
 
     [SetUp]
     public void Setup()
@@ -27,12 +27,12 @@ public class GarnetBitmapTests
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
     }
 
-    private long LongRandom() => ((long)this.r.Next() << 32) | (long)this.r.Next();
+    private long LongRandom() => ((long)r.Next() << 32) | (long)r.Next();
 
     private ulong ULongRandom()
     {
-        ulong lsb = (ulong)(this.r.Next());
-        ulong msb = (ulong)(this.r.Next()) << 32;
+        ulong lsb = (ulong)(r.Next());
+        ulong msb = (ulong)(r.Next()) << 32;
         return (msb | lsb);
     }
 

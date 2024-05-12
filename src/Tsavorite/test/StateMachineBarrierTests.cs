@@ -9,10 +9,10 @@ namespace Tsavorite.Tests.statemachine;
 [TestFixture]
 public class StateMachineBarrierTests
 {
-    IDevice log;
-    TsavoriteKV<AdId, NumClicks> store;
-    const int numOps = 5000;
-    AdId[] inputArray;
+    private IDevice log;
+    private TsavoriteKV<AdId, NumClicks> store;
+    private const int numOps = 5000;
+    private AdId[] inputArray;
 
     [SetUp]
     public void Setup()
@@ -92,7 +92,7 @@ public class StateMachineBarrierTests
         RecoverAndTest(log);
     }
 
-    void Prepare(out SimpleFunctions f,
+    private void Prepare(out SimpleFunctions f,
         out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1,
         out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1,
         out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2,
@@ -140,7 +140,7 @@ public class StateMachineBarrierTests
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
     }
 
-    void RecoverAndTest(IDevice log)
+    private void RecoverAndTest(IDevice log)
     {
         NumClicks inputArg = default;
         NumClicks output = default;

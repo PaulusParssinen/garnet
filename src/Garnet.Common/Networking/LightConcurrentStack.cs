@@ -8,10 +8,10 @@ namespace Garnet.Common;
 internal class LightConcurrentStack<T> : IDisposable
     where T : class, IDisposable
 {
-    readonly T[] stack;
-    int tail;
-    SpinLock latch;
-    bool disposed;
+    private readonly T[] stack;
+    private int tail;
+    private SpinLock latch;
+    private bool disposed;
 
     public LightConcurrentStack(int maxCapacity = 128)
     {

@@ -27,7 +27,7 @@ public class ClusterProvider : IClusterProvider
     internal readonly StoreWrapper storeWrapper;
     internal readonly GarnetServerOptions serverOptions;
     internal long GarnetCurrentEpoch = 1;
-    ClusterAuthContainer authContainer;
+    private ClusterAuthContainer authContainer;
 
     /// <summary>
     /// Get cluster username
@@ -45,8 +45,8 @@ public class ClusterProvider : IClusterProvider
     public ClusterProvider(StoreWrapper storeWrapper)
     {
         this.storeWrapper = storeWrapper;
-        this.serverOptions = storeWrapper.serverOptions;
-        this.loggerFactory = storeWrapper.loggerFactory;
+        serverOptions = storeWrapper.serverOptions;
+        loggerFactory = storeWrapper.loggerFactory;
 
         authContainer = new ClusterAuthContainer
         {
@@ -59,11 +59,11 @@ public class ClusterProvider : IClusterProvider
             throw new Exception("Gossip sample fraction should be in range [0,100]");
         }
 
-        this.clusterManager = new ClusterManager(this, logger: loggerFactory?.CreateLogger("ClusterManager"));
-        this.replicationManager = new ReplicationManager(this, logger: loggerFactory?.CreateLogger("ReplicationManager"));
+        clusterManager = new ClusterManager(this, logger: loggerFactory?.CreateLogger("ClusterManager"));
+        replicationManager = new ReplicationManager(this, logger: loggerFactory?.CreateLogger("ReplicationManager"));
 
-        this.failoverManager = new FailoverManager(this, logger: loggerFactory?.CreateLogger("FailoverManager"));
-        this.migrationManager = new MigrationManager(this, logger: loggerFactory?.CreateLogger("MigrationManager"));
+        failoverManager = new FailoverManager(this, logger: loggerFactory?.CreateLogger("FailoverManager"));
+        migrationManager = new MigrationManager(this, logger: loggerFactory?.CreateLogger("MigrationManager"));
     }
 
     /// <inheritdoc />

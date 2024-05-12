@@ -46,7 +46,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool TryAllocateRecord<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, ref PendingContext<Input, Output, Context> pendingContext,
+    private bool TryAllocateRecord<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, ref PendingContext<Input, Output, Context> pendingContext,
                                                    ref OperationStackContext<Key, Value> stackCtx, int actualSize, ref int allocatedSize, int newKeySize, AllocateOptions options,
                                                    out long newLogicalAddress, out long newPhysicalAddress, out OperationStatus status)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
@@ -112,7 +112,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool TryAllocateRecordReadCache<Input, Output, Context>(ref PendingContext<Input, Output, Context> pendingContext, ref OperationStackContext<Key, Value> stackCtx,
+    private bool TryAllocateRecordReadCache<Input, Output, Context>(ref PendingContext<Input, Output, Context> pendingContext, ref OperationStackContext<Key, Value> stackCtx,
                                                    int allocatedSize, out long newLogicalAddress, out long newPhysicalAddress, out OperationStatus status)
     {
         // Spin to make sure the start of the tag chain is not readcache, or that newLogicalAddress is > the first address in the tag chain.
@@ -143,7 +143,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SaveAllocationForRetry<Input, Output, Context>(ref PendingContext<Input, Output, Context> pendingContext, long logicalAddress, long physicalAddress, int allocatedSize)
+    private void SaveAllocationForRetry<Input, Output, Context>(ref PendingContext<Input, Output, Context> pendingContext, long logicalAddress, long physicalAddress, int allocatedSize)
     {
         ref RecordInfo recordInfo = ref hlog.GetInfo(physicalAddress);
 
@@ -158,7 +158,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     }
 
     // Do not inline, to keep TryAllocateRecord lean
-    bool GetAllocationForRetry<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, ref PendingContext<Input, Output, Context> pendingContext, long minAddress,
+    private bool GetAllocationForRetry<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, ref PendingContext<Input, Output, Context> pendingContext, long minAddress,
             ref int allocatedSize, int newKeySize, out long newLogicalAddress, out long newPhysicalAddress)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {

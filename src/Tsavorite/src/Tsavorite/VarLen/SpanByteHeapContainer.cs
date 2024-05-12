@@ -10,7 +10,7 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class SpanByteHeapContainer : IHeapContainer<SpanByte>
 {
-    readonly SectorAlignedMemory mem;
+    private readonly SectorAlignedMemory mem;
 
     public unsafe SpanByteHeapContainer(ref SpanByte obj, SectorAlignedBufferPool pool)
     {

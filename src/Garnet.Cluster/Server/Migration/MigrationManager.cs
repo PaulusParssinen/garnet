@@ -7,8 +7,8 @@ namespace Garnet.Cluster;
 
 internal sealed class MigrationManager
 {
-    readonly ClusterProvider clusterProvider;
-    readonly MigrateSessionTaskStore migrationTaskStore;
+    private readonly ClusterProvider clusterProvider;
+    private readonly MigrateSessionTaskStore migrationTaskStore;
 
     public MigrationManager(ClusterProvider clusterProvider, ILogger logger = null)
     {

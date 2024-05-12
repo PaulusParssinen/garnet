@@ -11,7 +11,7 @@ namespace Tsavorite;
 public readonly struct BasicContext<Key, Value, Input, Output, Context, Functions> : ITsavoriteContext<Key, Value, Input, Output, Context>
     where Functions : IFunctions<Key, Value, Input, Output, Context>
 {
-    readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
+    private readonly ClientSession<Key, Value, Input, Output, Context, Functions> clientSession;
 
     /// <summary>Indicates whether this struct has been initialized</summary>
     public bool IsNull => clientSession is null;

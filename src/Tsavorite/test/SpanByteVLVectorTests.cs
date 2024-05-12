@@ -9,9 +9,9 @@ namespace Tsavorite.Tests;
 [TestFixture]
 internal class SpanByteVLVectorTests
 {
-    const int StackAllocMax = 12;
+    private const int StackAllocMax = 12;
 
-    static int GetRandomLength(Random r) => r.Next(StackAllocMax) + 1;    // +1 for 0 to StackAllocMax inclusive
+    private static int GetRandomLength(Random r) => r.Next(StackAllocMax) + 1;    // +1 for 0 to StackAllocMax inclusive
 
     [Test]
     [Category(TsavoriteKVTestCategory)]

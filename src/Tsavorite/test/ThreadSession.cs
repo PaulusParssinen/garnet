@@ -17,12 +17,12 @@ internal static class Extension
 internal class ThreadSession<K, V, I, O, C, F>
     where K : new() where V : new() where F : IFunctions<K, V, I, O, C>
 {
-    readonly TsavoriteKV<K, V> store;
-    ClientSession<K, V, I, O, C, F> s2;
-    UnsafeContext<K, V, I, O, C, F> uc2;
-    readonly F f;
-    readonly AutoResetEvent ev = new(false);
-    readonly AsyncQueue<string> q = new();
+    private readonly TsavoriteKV<K, V> store;
+    private ClientSession<K, V, I, O, C, F> s2;
+    private UnsafeContext<K, V, I, O, C, F> uc2;
+    private readonly F f;
+    private readonly AutoResetEvent ev = new(false);
+    private readonly AsyncQueue<string> q = new();
 
     public ThreadSession(TsavoriteKV<K, V> store, F f)
     {
@@ -86,12 +86,12 @@ internal class ThreadSession<K, V, I, O, C, F>
 internal class LUCThreadSession<K, V, I, O, C, F>
     where K : new() where V : new() where F : IFunctions<K, V, I, O, C>
 {
-    readonly TsavoriteKV<K, V> store;
-    ClientSession<K, V, I, O, C, F> session;
-    LockableUnsafeContext<K, V, I, O, C, F> luc;
-    readonly F f;
-    readonly AutoResetEvent ev = new(false);
-    readonly AsyncQueue<string> q = new();
+    private readonly TsavoriteKV<K, V> store;
+    private ClientSession<K, V, I, O, C, F> session;
+    private LockableUnsafeContext<K, V, I, O, C, F> luc;
+    private readonly F f;
+    private readonly AutoResetEvent ev = new(false);
+    private readonly AsyncQueue<string> q = new();
     public bool isProtected = false;
 
     public LUCThreadSession(TsavoriteKV<K, V> store, F f)

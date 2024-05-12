@@ -24,7 +24,7 @@ public abstract class NetworkSenderBase : INetworkSender
     public NetworkSenderBase(MaxSizeSettings maxSizeSettings)
     {
         this.maxSizeSettings = maxSizeSettings;
-        this.serverBufferSize = BufferSizeUtils.ServerBufferSize(maxSizeSettings);
+        serverBufferSize = BufferSizeUtils.ServerBufferSize(maxSizeSettings);
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public abstract class NetworkSenderBase : INetworkSender
     /// <summary>
     /// 
     /// </summary>
-    public MaxSizeSettings GetMaxSizeSettings => this.maxSizeSettings;
+    public MaxSizeSettings GetMaxSizeSettings => maxSizeSettings;
 
     /// <inheritdoc />
     public abstract string RemoteEndpointName { get; }

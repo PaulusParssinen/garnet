@@ -9,7 +9,7 @@ namespace Garnet.Server;
 /// Flags used by append-only file (AOF/WAL)
 /// </summary>
 [Flags]
-enum RespInputFlags : byte
+internal enum RespInputFlags : byte
 {
     /// <summary>
     /// Flag indicating a SET operation that returns the previous value
@@ -129,7 +129,7 @@ public struct RespInputHeader
 /// Object input header, building on the basic RESP input header
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = Size)]
-struct ObjectInputHeader
+internal struct ObjectInputHeader
 {
     public const int Size = RespInputHeader.Size + sizeof(int) + sizeof(int);
 

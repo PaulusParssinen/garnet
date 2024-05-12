@@ -11,7 +11,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespScanCommandsTests
 {
-    GarnetServer server;
+    private GarnetServer server;
     private IReadOnlyDictionary<string, RespCommandsInfo> respCustomCommandsInfo;
 
     [SetUp]
@@ -252,12 +252,12 @@ public class RespScanCommandsTests
 
         RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(String.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he\\*\\*"]);
         Assert.AreEqual(2, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(String.Equals(@"he\*\*", (((RedisResult[])actualResponse)[0]).ToString()));
-        Assert.IsTrue(String.Equals(@"he\*\*foo", (((RedisResult[])actualResponse)[1]).ToString()));
+        Assert.IsTrue(string.Equals(@"he\*\*", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"he\*\*foo", (((RedisResult[])actualResponse)[1]).ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he**"]);
         Assert.AreEqual(4, ((RedisResult[])actualResponse).Length);
@@ -273,7 +273,7 @@ public class RespScanCommandsTests
 
         RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(String.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he\\*\\*"]);
         Assert.AreEqual(0, ((RedisResult[])actualResponse).Length);
@@ -287,7 +287,7 @@ public class RespScanCommandsTests
 
         actualResponse = db.Execute("KEYS", [@"\\\\bar"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(String.Equals(@"\\bar", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"\\bar", (((RedisResult[])actualResponse)[0]).ToString()));
     }
 
 

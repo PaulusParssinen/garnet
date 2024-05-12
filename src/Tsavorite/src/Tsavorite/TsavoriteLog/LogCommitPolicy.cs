@@ -89,11 +89,12 @@ internal sealed class DefaultLogCommitPolicy : LogCommitPolicy
 
 internal sealed class MaxParallelLogCommitPolicy : LogCommitPolicy
 {
-    readonly int maxCommitInProgress;
-    TsavoriteLog log;
-    int commitInProgress;
+    private readonly int maxCommitInProgress;
+    private TsavoriteLog log;
+    private int commitInProgress;
+
     // If we filtered out some commit, make sure to remember to retry later 
-    bool shouldRetry;
+    private bool shouldRetry;
 
     internal MaxParallelLogCommitPolicy(int maxCommitInProgress)
     {
@@ -136,13 +137,13 @@ internal sealed class MaxParallelLogCommitPolicy : LogCommitPolicy
 
 internal sealed class RateLimitLogCommitPolicy : LogCommitPolicy
 {
-    readonly Stopwatch stopwatch;
-    readonly long thresholdMilli;
-    readonly long thresholdRange;
-    TsavoriteLog log;
-    long lastAdmittedMilli;
-    long lastAdmittedAddress;
-    int shouldRetry = 0;
+    private readonly Stopwatch stopwatch;
+    private readonly long thresholdMilli;
+    private readonly long thresholdRange;
+    private TsavoriteLog log;
+    private long lastAdmittedMilli;
+    private long lastAdmittedAddress;
+    private int shouldRetry = 0;
 
     internal RateLimitLogCommitPolicy(long thresholdMilli, long thresholdRange)
     {

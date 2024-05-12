@@ -522,22 +522,20 @@ public partial class ClusterTestUtils
 
 public unsafe partial class ClusterTestUtils
 {
-    static readonly TimeSpan backoff = TimeSpan.FromSeconds(0.1);
-    static readonly byte[] bresp_OK = Encoding.ASCII.GetBytes("+OK\r\n");
-    static readonly byte[] ascii_chars = Encoding.ASCII.GetBytes("abcdefghijklmnopqrstvuwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    private static readonly TimeSpan backoff = TimeSpan.FromSeconds(0.1);
+    private static readonly byte[] bresp_OK = Encoding.ASCII.GetBytes("+OK\r\n");
+    private static readonly byte[] ascii_chars = Encoding.ASCII.GetBytes("abcdefghijklmnopqrstvuwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
     public Random r;
-    ConnectionMultiplexer redis = null;
-    readonly EndPointCollection endpoints;
-    string[] nodeIds;
-
-    TextWriter textWriter;
-
-    readonly bool allowAdmin;
-    readonly bool disablePubSub;
-    readonly bool useTLS;
-    readonly string authUsername;
-    readonly string authPassword;
-    readonly X509CertificateCollection certificates;
+    private ConnectionMultiplexer redis = null;
+    private readonly EndPointCollection endpoints;
+    private string[] nodeIds;
+    private TextWriter textWriter;
+    private readonly bool allowAdmin;
+    private readonly bool disablePubSub;
+    private readonly bool useTLS;
+    private readonly string authUsername;
+    private readonly string authPassword;
+    private readonly X509CertificateCollection certificates;
 
     public ClusterTestUtils(
         EndPointCollection endpoints,
@@ -548,9 +546,9 @@ public unsafe partial class ClusterTestUtils
         X509CertificateCollection certificates = null)
     {
         r = new Random(674386);
-        this.useTLS = UseTLS;
-        this.allowAdmin = true;
-        this.disablePubSub = true;
+        useTLS = UseTLS;
+        allowAdmin = true;
+        disablePubSub = true;
         this.authUsername = authUsername;
         this.authPassword = authPassword;
         this.textWriter = textWriter;
@@ -563,7 +561,7 @@ public unsafe partial class ClusterTestUtils
     public void Connect(ILogger logger = null)
     {
         InitMultiplexer(GetRedisConfig(endpoints), textWriter, logger: logger);
-        this.nodeIds = GetNodeIds(logger: logger);
+        nodeIds = GetNodeIds(logger: logger);
     }
 
     private void InitMultiplexer(ConfigurationOptions redisConfig, TextWriter textWriter, bool failAssert = true, ILogger logger = null)

@@ -115,7 +115,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         Initialize();
     }
 
-    void ReturnPage(int index)
+    private void ReturnPage(int index)
     {
         Debug.Assert(index < BufferSize);
         if (values[index] != default)

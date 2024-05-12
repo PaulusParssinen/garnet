@@ -12,17 +12,17 @@ namespace Garnet.Cluster;
 /// </summary>
 internal sealed class AofTaskStore : IDisposable
 {
-    readonly ClusterProvider clusterProvider;
-    readonly ILogger logger;
-    readonly int logPageSizeBits, logPageSizeMask;
-    readonly long TruncateLagAddress;
-
-    AofSyncTaskInfo[] tasks;
-    int numTasks;
-    SingleWriterMultiReaderLock _lock;
-    bool _disposed;
+    private readonly ClusterProvider clusterProvider;
+    private readonly ILogger logger;
+    private readonly int logPageSizeBits, logPageSizeMask;
+    private readonly long TruncateLagAddress;
+    private AofSyncTaskInfo[] tasks;
+    private int numTasks;
+    private SingleWriterMultiReaderLock _lock;
+    private bool _disposed;
     public int Count => numTasks;
-    long TruncatedUntil;
+
+    private long TruncatedUntil;
 
     public AofTaskStore(ClusterProvider clusterProvider, int initialSize = 1, ILogger logger = null)
     {

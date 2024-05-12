@@ -9,11 +9,11 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class MemoryPageScanIterator<Key, Value> : ITsavoriteScanIterator<Key, Value>
 {
-    readonly Record<Key, Value>[] page;
-    readonly long pageStartAddress;
-    readonly int recordSize;
-    readonly int start, end;
-    int offset;
+    private readonly Record<Key, Value>[] page;
+    private readonly long pageStartAddress;
+    private readonly int recordSize;
+    private readonly int start, end;
+    private int offset;
 
     public MemoryPageScanIterator(Record<Key, Value>[] page, int start, int end, long pageStartAddress, int recordSize)
     {

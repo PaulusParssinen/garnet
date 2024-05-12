@@ -12,7 +12,7 @@ namespace Garnet.Cluster.Tests;
 [TestFixture, NonParallelizable]
 public unsafe class ClusterRedirectTests
 {
-    ClusterTestContext context;
+    private ClusterTestContext context;
 
     public enum TestFlags : byte
     {
@@ -143,7 +143,7 @@ ClusterRedirectTests.TestFlags testFlags)
         }
     }
 
-    static readonly List<CommandInfo> singleKeyCommands = new List<CommandInfo>()
+    private static readonly List<CommandInfo> singleKeyCommands = new List<CommandInfo>()
     {
         #region basicCommands
         //1. GET
@@ -429,8 +429,7 @@ ClusterRedirectTests.TestFlags testFlags)
         new ("GEODIST", ["GEOADD <key#0> 13.361389 38.115556 P 15.087269 37.502669 C"],"GEODIST <key#0> P C km", ["DEL <key#0>"], "166.27412635918458", null, (TestFlags.READONLY | TestFlags.SINGLEKEY | TestFlags.KEY_EXISTS | TestFlags.ASKING)),
         #endregion
     };
-
-    static readonly List<CommandInfo> multiKeyCommands = new()
+    private static readonly List<CommandInfo> multiKeyCommands = new()
     {
         #region basicCommands
         //1. MSET

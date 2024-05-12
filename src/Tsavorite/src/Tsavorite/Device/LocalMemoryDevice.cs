@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Tsavorite.Device;
 
-unsafe struct IORequestLocalMemory
+internal unsafe struct IORequestLocalMemory
 {
     public void* srcAddress;
     public void* dstAddress;
@@ -22,8 +22,8 @@ unsafe struct IORequestLocalMemory
 /// </summary>
 public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
 {
-    readonly byte[][] orig_ram_segments;
-    readonly byte*[] ram_segment_ptrs;
+    private readonly byte[][] orig_ram_segments;
+    private readonly byte*[] ram_segment_ptrs;
     private readonly int num_segments;
     private readonly ConcurrentQueue<IORequestLocalMemory>[] ioQueue;
     private readonly Thread[] ioProcessors;

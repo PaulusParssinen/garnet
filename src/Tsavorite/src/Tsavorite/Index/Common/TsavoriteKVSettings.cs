@@ -10,9 +10,9 @@ namespace Tsavorite;
 /// </summary>
 public sealed class TsavoriteKVSettings<Key, Value> : IDisposable
 {
-    readonly bool disposeDevices = false;
-    readonly bool deleteDirOnDispose = false;
-    readonly string baseDir;
+    private readonly bool disposeDevices = false;
+    private readonly bool deleteDirOnDispose = false;
+    private readonly string baseDir;
 
     /// <summary>
     /// Size of main hash index, in bytes. Rounds down to power of 2.

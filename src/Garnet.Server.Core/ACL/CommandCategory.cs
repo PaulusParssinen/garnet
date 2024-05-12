@@ -28,7 +28,7 @@ public class CommandCategory
     /// <summary>
     /// Map of category names to bit flag
     /// </summary>
-    static readonly Dictionary<string, Flag> _categoryNames = new()
+    private static readonly Dictionary<string, Flag> _categoryNames = new()
     {
         { "admin",  Flag.Admin}
     };
@@ -36,7 +36,7 @@ public class CommandCategory
     /// <summary>
     /// Reverse category name mapping to speed up name lookups
     /// </summary>
-    static readonly Dictionary<Flag, string> _categoryNamesReversed = _categoryNames.ToDictionary(x => x.Value, x => x.Key);
+    private static readonly Dictionary<Flag, string> _categoryNamesReversed = _categoryNames.ToDictionary(x => x.Value, x => x.Key);
 
     /// <summary>
     /// Returns the bit flag for the given category name.
@@ -62,7 +62,7 @@ public class CommandCategory
     /// Returns a collection of all valid category names.
     /// </summary>
     /// <returns>Collection of valid category names.</returns>
-    public static IReadOnlyCollection<String> ListCategories()
+    public static IReadOnlyCollection<string> ListCategories()
     {
         return _categoryNames.Keys;
     }

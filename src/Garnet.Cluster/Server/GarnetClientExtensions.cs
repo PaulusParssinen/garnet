@@ -8,8 +8,8 @@ namespace Garnet.Cluster;
 
 internal static partial class GarnetClientExtensions
 {
-    static readonly Memory<byte> GOSSIP = "GOSSIP"u8.ToArray();
-    static readonly Memory<byte> WITHMEET = "WITHMEET"u8.ToArray();
+    private static readonly Memory<byte> GOSSIP = "GOSSIP"u8.ToArray();
+    private static readonly Memory<byte> WITHMEET = "WITHMEET"u8.ToArray();
 
     /// <summary>
     /// Send config

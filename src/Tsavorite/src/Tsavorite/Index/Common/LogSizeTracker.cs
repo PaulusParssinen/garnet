@@ -100,7 +100,7 @@ public class LogSizeTracker<Key, Value, TLogSizeCalculator> : IObserver<ITsavori
     /// Performs resizing by waiting for an event that is signaled whenever memory utilization changes.
     /// This is invoked on the threadpool to avoid blocking calling threads during the resize operation.
     /// </summary>
-    async Task ResizerTask()
+    private async Task ResizerTask()
     {
         while (true)
         {

@@ -9,11 +9,11 @@ namespace Tsavorite.Tests.readaddress;
 [TestFixture]
 internal class ReadAddressTests
 {
-    const int numKeys = 1000;
-    const int keyMod = 100;
-    const int maxLap = numKeys / keyMod;
-    const int deleteLap = maxLap / 2;
-    const int defaultKeyToScan = 42;
+    private const int numKeys = 1000;
+    private const int keyMod = 100;
+    private const int maxLap = numKeys / keyMod;
+    private const int deleteLap = maxLap / 2;
+    private const int defaultKeyToScan = 42;
 
     private static int LapOffset(int lap) => lap * numKeys * 100;
 
@@ -57,9 +57,9 @@ internal class ReadAddressTests
     internal class Functions : FunctionsBase<Key, Value, Value, Output, Empty>
     {
         internal long lastWriteAddress = Constants.kInvalidAddress;
-        readonly bool useReadCache;
+        private readonly bool useReadCache;
         internal ReadCopyOptions readCopyOptions = ReadCopyOptions.None;
-        bool preserveCopyUpdaterSource;
+        private bool preserveCopyUpdaterSource;
 
         internal Functions(bool preserveCopyUpdaterSource = false)
         {
@@ -304,9 +304,9 @@ internal class ReadAddressTests
         }
     }
 
-    struct IterateKeyTestScanIteratorFunctions : IScanIteratorFunctions<Key, Value>
+    private struct IterateKeyTestScanIteratorFunctions : IScanIteratorFunctions<Key, Value>
     {
-        readonly TestStore testStore;
+        private readonly TestStore testStore;
         internal int numRecords;
         internal int stopAt;
 

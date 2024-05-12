@@ -10,9 +10,9 @@ namespace Tsavorite;
 /// </summary>
 internal sealed class AsyncCountDown
 {
-    int counter;
-    TaskCompletionSource<int> tcs;
-    TaskCompletionSource<int> nextTcs;
+    private int counter;
+    private TaskCompletionSource<int> tcs;
+    private TaskCompletionSource<int> nextTcs;
 
     public AsyncCountDown()
     {

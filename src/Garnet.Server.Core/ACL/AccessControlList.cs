@@ -14,17 +14,17 @@ public class AccessControlList
     /// <summary>
     /// Username to use for the default user
     /// </summary>
-    const string DefaultUserName = "default";
+    private const string DefaultUserName = "default";
 
     /// <summary>
     /// Dictionary containing all users defined in the ACL
     /// </summary>
-    ConcurrentDictionary<string, User> _users = new();
+    private ConcurrentDictionary<string, User> _users = new();
 
     /// <summary>
     /// The currently configured default user (for fast default lookups)
     /// </summary>
-    User _defaultUser;
+    private User _defaultUser;
 
     /// <summary>
     /// Creates a new Access Control List from an optional ACL configuration file
@@ -121,7 +121,7 @@ public class AccessControlList
     /// </summary>
     /// <param name="defaultPassword">Password to use if new user is created.</param>
     /// <returns>The newly created or already existing default user.</returns>
-    User CreateDefaultUser(string defaultPassword = "")
+    private User CreateDefaultUser(string defaultPassword = "")
     {
         User defaultUser;
 
@@ -215,7 +215,7 @@ public class AccessControlList
     /// <param name="input">Input text reader to a list of ACL user definition rules.</param>
     /// <param name="configurationFile">Configuration file identifier for clean debug messages.</param>
     /// <exception cref="ACLParsingException">Thrown if ACL rules cannot be parsed.</exception>
-    void Import(StreamReader input, string configurationFile = "<undefined>")
+    private void Import(StreamReader input, string configurationFile = "<undefined>")
     {
         // Read and parse input line-by-line
         string line;

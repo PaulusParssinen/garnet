@@ -7,7 +7,7 @@ using static Tsavorite.Tests.TestUtils;
 namespace Tsavorite.Tests.Cancellation;
 
 [TestFixture]
-class CancellationTests
+internal class CancellationTests
 {
     internal enum CancelLocation
     {
@@ -114,12 +114,11 @@ class CancellationTests
         }
     }
 
-    IDevice log;
-    CancellationFunctions functions;
-    TsavoriteKV<int, int> store;
-    ClientSession<int, int, int, int, Empty, CancellationFunctions> session;
-
-    const int NumRecs = 100;
+    private IDevice log;
+    private CancellationFunctions functions;
+    private TsavoriteKV<int, int> store;
+    private ClientSession<int, int, int, int, Empty, CancellationFunctions> session;
+    private const int NumRecs = 100;
 
     [SetUp]
     public void Setup()

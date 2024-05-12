@@ -59,7 +59,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 else
                 {
                     // XXX: There should be high-level AuthenticatorException
-                    if (this.AuthenticateUser(username, password))
+                    if (AuthenticateUser(username, password))
                     {
                         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
                             SendAndReset();
@@ -487,7 +487,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    bool DrainCommands(ReadOnlySpan<byte> bufSpan, int count)
+    private bool DrainCommands(ReadOnlySpan<byte> bufSpan, int count)
     {
         for (int i = 0; i < count; i++)
         {
@@ -505,7 +505,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <param name="count">Number of parameters left in the command specification.</param>
     /// <param name="processingCompleted">Indicates whether the command was completely processed, regardless of whether execution was successful or not.</param>
     /// <returns>True if the command execution is allowed to continue, otherwise false.</returns>
-    bool CheckACLAdminPermissions(ReadOnlySpan<byte> bufSpan, int count, out bool processingCompleted)
+    private bool CheckACLAdminPermissions(ReadOnlySpan<byte> bufSpan, int count, out bool processingCompleted)
     {
         Debug.Assert(!_authenticator.IsAuthenticated || (_user != null));
 
@@ -529,12 +529,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         return true;
     }
 
-    void CommitAof()
+    private void CommitAof()
     {
         storeWrapper.appendOnlyFile?.CommitAsync().ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
-    void FlushDB(bool unsafeTruncateLog)
+    private void FlushDB(bool unsafeTruncateLog)
     {
         storeWrapper.store.Log.ShiftBeginAddress(storeWrapper.store.Log.TailAddress, truncateLog: unsafeTruncateLog);
         storeWrapper.objectStore?.Log.ShiftBeginAddress(storeWrapper.objectStore.Log.TailAddress, truncateLog: unsafeTruncateLog);

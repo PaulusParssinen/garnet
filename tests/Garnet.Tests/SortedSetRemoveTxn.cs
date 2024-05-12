@@ -14,7 +14,7 @@ namespace Garnet;
 /// 
 /// Description: Remove member from key member
 /// </summary>
-sealed class SortedSetRemoveTxn : CustomTransactionProcedure
+internal sealed class SortedSetRemoveTxn : CustomTransactionProcedure
 {
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {

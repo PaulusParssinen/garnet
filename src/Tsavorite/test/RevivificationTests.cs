@@ -19,7 +19,7 @@ public enum RevivifiableFraction { Half }
 
 public enum RecordElision { Elide, NoElide }
 
-struct RevivificationTestUtils
+internal struct RevivificationTestUtils
 {
     internal const double HalfOfMutableFraction = 0.5;   // Half of the mutable region
 
@@ -162,16 +162,15 @@ internal readonly struct RevivificationSpanByteComparer : ITsavoriteEqualityComp
 }
 
 [TestFixture]
-class RevivificationFixedLenTests
+internal class RevivificationFixedLenTests
 {
     internal class RevivificationFixedLenFunctions : SimpleFunctions<int, int>
     {
     }
 
-    const int numRecords = 1000;
+    private const int numRecords = 1000;
     internal const int valueMult = 1_000_000;
-
-    RevivificationFixedLenFunctions functions;
+    private RevivificationFixedLenFunctions functions;
 
     private TsavoriteKV<int, int> store;
     private ClientSession<int, int, int, int, Empty, RevivificationFixedLenFunctions> session;
@@ -229,7 +228,7 @@ class RevivificationFixedLenTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; key++)
         {
@@ -380,14 +379,14 @@ class RevivificationFixedLenTests
 }
 
 [TestFixture]
-class RevivificationSpanByteTests
+internal class RevivificationSpanByteTests
 {
-    const int KeyLength = 10;
-    const int InitialLength = 50;
-    const int GrowLength = InitialLength + 75;      // Must be large enough to go to next bin
-    const int ShrinkLength = InitialLength - 25;    // Must be small enough to go to previous bin
+    private const int KeyLength = 10;
+    private const int InitialLength = 50;
+    private const int GrowLength = InitialLength + 75;      // Must be large enough to go to next bin
+    private const int ShrinkLength = InitialLength - 25;    // Must be small enough to go to previous bin
 
-    const int OversizeLength = RevivificationBin.MaxInlineRecordSize + 42;
+    private const int OversizeLength = RevivificationBin.MaxInlineRecordSize + 42;
 
     internal class RevivificationSpanByteFunctions : SpanByteFunctions<Empty>
     {
@@ -585,20 +584,19 @@ class RevivificationSpanByteTests
         }
     }
 
-    static int RoundUpSpanByteFullValueLength(SpanByte input) => RoundupTotalSizeFullValue(input.TotalSize);
+    private static int RoundUpSpanByteFullValueLength(SpanByte input) => RoundupTotalSizeFullValue(input.TotalSize);
 
-    static int RoundUpSpanByteFullValueLength(int dataLength) => RoundupTotalSizeFullValue(sizeof(int) + dataLength);
+    private static int RoundUpSpanByteFullValueLength(int dataLength) => RoundupTotalSizeFullValue(sizeof(int) + dataLength);
 
     internal static int RoundupTotalSizeFullValue(int length) => (length + SpanByteAllocator.kRecordAlignment - 1) & (~(SpanByteAllocator.kRecordAlignment - 1));
 
-    static int RoundUpSpanByteUsedLength(int dataLength) => RoundUp(SpanByteTotalSize(dataLength), sizeof(int));
+    private static int RoundUpSpanByteUsedLength(int dataLength) => RoundUp(SpanByteTotalSize(dataLength), sizeof(int));
 
-    static int SpanByteTotalSize(int dataLength) => sizeof(int) + dataLength;
+    private static int SpanByteTotalSize(int dataLength) => sizeof(int) + dataLength;
 
-    const int numRecords = 200;
-
-    RevivificationSpanByteFunctions functions;
-    RevivificationSpanByteComparer comparer;
+    private const int numRecords = 200;
+    private RevivificationSpanByteFunctions functions;
+    private RevivificationSpanByteComparer comparer;
 
     private TsavoriteKV<SpanByte, SpanByte> store;
     private ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationSpanByteFunctions> session;
@@ -660,9 +658,9 @@ class RevivificationSpanByteTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate() => Populate(0, numRecords);
+    private void Populate() => Populate(0, numRecords);
 
-    void Populate(int from, int to)
+    private void Populate(int from, int to)
     {
         Span<byte> keyVec = stackalloc byte[KeyLength];
         var key = SpanByte.FromPinnedSpan(keyVec);
@@ -920,9 +918,9 @@ class RevivificationSpanByteTests
 
     public enum UpdateKey { Unfound, DeletedAboveRO, DeletedBelowRO, CopiedBelowRO };
 
-    const byte unfound = numRecords + 2;
-    const byte delBelowRO = numRecords / 2 - 4;
-    const byte copiedBelowRO = numRecords / 2 - 5;
+    private const byte unfound = numRecords + 2;
+    private const byte delBelowRO = numRecords / 2 - 4;
+    private const byte copiedBelowRO = numRecords / 2 - 5;
 
     private long PrepareDeletes(bool stayInChain, byte delAboveRO, FlushMode flushMode, CollisionRange collisionRange)
     {
@@ -1638,9 +1636,9 @@ class RevivificationSpanByteTests
 }
 
 [TestFixture]
-class RevivificationObjectTests
+internal class RevivificationObjectTests
 {
-    const int numRecords = 1000;
+    private const int numRecords = 1000;
     internal const int valueMult = 1_000_000;
 
     private MyFunctions functions;
@@ -1691,7 +1689,7 @@ class RevivificationObjectTests
         DeleteDirectory(MethodTestDir);
     }
 
-    void Populate()
+    private void Populate()
     {
         for (int key = 0; key < numRecords; key++)
         {
@@ -1736,10 +1734,10 @@ class RevivificationObjectTests
 }
 
 [TestFixture]
-class RevivificationSpanByteStressTests
+internal class RevivificationSpanByteStressTests
 {
-    const int KeyLength = 10;
-    const int InitialLength = 50;
+    private const int KeyLength = 10;
+    private const int InitialLength = 50;
 
     internal class RevivificationStressFunctions : SpanByteFunctions<Empty>
     {
@@ -1812,11 +1810,10 @@ class RevivificationSpanByteStressTests
             => base.ConcurrentDeleter(ref key, ref value, ref deleteInfo, ref recordInfo);
     }
 
-    const int numRecords = 200;
-    const int DefaultMaxRecsPerBin = 1024;
-
-    RevivificationStressFunctions functions;
-    RevivificationSpanByteComparer comparer;
+    private const int numRecords = 200;
+    private const int DefaultMaxRecsPerBin = 1024;
+    private RevivificationStressFunctions functions;
+    private RevivificationSpanByteComparer comparer;
 
     private TsavoriteKV<SpanByte, SpanByte> store;
     private ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> session;
@@ -1865,7 +1862,7 @@ class RevivificationSpanByteStressTests
         DeleteDirectory(MethodTestDir);
     }
 
-    unsafe void Populate()
+    private unsafe void Populate()
     {
         Span<byte> keyVec = stackalloc byte[KeyLength];
         var key = SpanByte.FromPinnedSpan(keyVec);
@@ -1885,7 +1882,7 @@ class RevivificationSpanByteStressTests
         }
     }
 
-    const int AddressIncrement = 1_000_000; // must be > ReadOnlyAddress
+    private const int AddressIncrement = 1_000_000; // must be > ReadOnlyAddress
 
     [Test]
     [Category(RevivificationCategory)]
@@ -2050,7 +2047,8 @@ class RevivificationSpanByteStressTests
     }
 
     public enum WrapMode { Wrap, NoWrap };
-    const int TakeSize = 40;
+
+    private const int TakeSize = 40;
 
     private FreeRecordPool<SpanByte, SpanByte> CreateBestFitTestPool(int scanLimit, WrapMode wrapMode, ref RevivificationStats revivStats)
     {

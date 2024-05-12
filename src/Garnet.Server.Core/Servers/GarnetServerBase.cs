@@ -27,11 +27,10 @@ public abstract class GarnetServerBase : IGarnetServer
     /// <summary>
     /// Session providers
     /// </summary>
-    readonly ConcurrentDictionary<WireFormat, ISessionProvider> sessionProviders;
-
-    readonly string address;
-    readonly int port;
-    readonly int networkBufferSize;
+    private readonly ConcurrentDictionary<WireFormat, ISessionProvider> sessionProviders;
+    private readonly string address;
+    private readonly int port;
+    private readonly int networkBufferSize;
 
     /// <summary>
     /// Server Address
@@ -57,10 +56,8 @@ public abstract class GarnetServerBase : IGarnetServer
     /// Logger
     /// </summary>
     protected readonly ILogger logger;
-
-
-    long total_connections_received = 0;
-    long total_connections_disposed = 0;
+    private long total_connections_received = 0;
+    private long total_connections_disposed = 0;
 
     /// <summary>
     /// Add to total_connections_received
@@ -79,7 +76,7 @@ public abstract class GarnetServerBase : IGarnetServer
     /// </summary>
     public virtual IEnumerable<IMessageConsumer> ActiveConsumers()
     {
-        return this.activeHandlers.Keys.Select(k => k.Session);
+        return activeHandlers.Keys.Select(k => k.Session);
     }
 
     /// <summary>

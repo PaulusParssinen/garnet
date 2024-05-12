@@ -9,12 +9,12 @@ namespace Garnet.Cluster;
 
 internal sealed class ReplicaSyncSessionTaskStore
 {
-    readonly StoreWrapper storeWrapper;
-    readonly ClusterProvider clusterProvider;
-    ReplicaSyncSession[] sessions;
-    int numSessions;
-    SingleWriterMultiReaderLock _lock;
-    readonly ILogger logger;
+    private readonly StoreWrapper storeWrapper;
+    private readonly ClusterProvider clusterProvider;
+    private ReplicaSyncSession[] sessions;
+    private int numSessions;
+    private SingleWriterMultiReaderLock _lock;
+    private readonly ILogger logger;
 
     private bool _disposed;
 

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Garnet.Server;
 
 [StructLayout(LayoutKind.Explicit, Size = 29)]
-struct WatchedKeySlice
+internal struct WatchedKeySlice
 {
     [FieldOffset(0)]
     public long version;

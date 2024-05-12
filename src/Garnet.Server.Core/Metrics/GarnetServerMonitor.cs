@@ -20,29 +20,25 @@ internal sealed class GarnetServerMonitor
 
     public readonly Dictionary<LatencyMetricsType, bool>
         resetLatencyMetrics = GarnetLatencyMetrics.defaultLatencyTypes.ToDictionary(x => x, y => false);
-
-    readonly StoreWrapper storeWrapper;
-    readonly GarnetServerOptions opts;
-    readonly IGarnetServer server;
-    readonly int monitorTaskDelay;
+    private readonly StoreWrapper storeWrapper;
+    private readonly GarnetServerOptions opts;
+    private readonly IGarnetServer server;
+    private readonly int monitorTaskDelay;
     public long monitor_iterations;
-
-    GarnetServerMetrics globalMetrics;
-    readonly GarnetSessionMetrics accSessionMetrics;
+    private GarnetServerMetrics globalMetrics;
+    private readonly GarnetSessionMetrics accSessionMetrics;
     private int instant_metrics_period;
     private ulong instant_input_net_bytes;
     private ulong instant_output_net_bytes;
     private ulong instant_commands_processed;
     private long startTimestamp;
-
-    readonly CancellationTokenSource cts = new();
-    readonly ManualResetEvent done = new(false);
-
-    readonly ILogger logger;
+    private readonly CancellationTokenSource cts = new();
+    private readonly ManualResetEvent done = new(false);
+    private readonly ILogger logger;
 
     public GarnetServerMetrics GlobalMetrics => globalMetrics;
 
-    SingleWriterMultiReaderLock rwLock = new();
+    private SingleWriterMultiReaderLock rwLock = new();
 
     public GarnetServerMonitor(StoreWrapper storeWrapper, GarnetServerOptions opts, IGarnetServer server, ILogger logger = null)
     {
@@ -81,8 +77,8 @@ internal sealed class GarnetServerMonitor
         rwLock.WriteLock();
         try
         {
-            if (currSessionMetrics != null) globalMetrics.historySessionMetrics.Add(currSessionMetrics);
-            if (currLatencyMetrics != null) globalMetrics.globalLatencyMetrics.Merge(currLatencyMetrics);
+            if (currSessionMetrics != null) globalMetrics.HistorySessionMetrics.Add(currSessionMetrics);
+            if (currLatencyMetrics != null) globalMetrics.GlobalLatencyMetrics.Merge(currLatencyMetrics);
         }
         finally { rwLock.WriteUnlock(); }
     }
@@ -107,18 +103,18 @@ internal sealed class GarnetServerMonitor
         {
             long currTimestamp = Stopwatch.GetTimestamp();
             double elapsedSec = TimeSpan.FromTicks(currTimestamp - startTimestamp).TotalSeconds;
-            globalMetrics.instantaneous_net_input_tpt = (globalMetrics.globalSessionMetrics.get_total_net_input_bytes() - instant_input_net_bytes) / (elapsedSec * GarnetServerMetrics.byteUnit);
-            globalMetrics.instantaneous_net_output_tpt = (globalMetrics.globalSessionMetrics.get_total_net_output_bytes() - instant_output_net_bytes) / (elapsedSec * GarnetServerMetrics.byteUnit);
-            globalMetrics.instantaneous_cmd_per_sec = (globalMetrics.globalSessionMetrics.get_total_commands_processed() - instant_commands_processed) / elapsedSec;
+            globalMetrics.Instantaneous_net_input_tpt = (globalMetrics.GlobalSessionMetrics.get_total_net_input_bytes() - instant_input_net_bytes) / (elapsedSec * GarnetServerMetrics.ByteUnit);
+            globalMetrics.Instantaneous_net_output_tpt = (globalMetrics.GlobalSessionMetrics.get_total_net_output_bytes() - instant_output_net_bytes) / (elapsedSec * GarnetServerMetrics.ByteUnit);
+            globalMetrics.Instantaneous_cmd_per_sec = (globalMetrics.GlobalSessionMetrics.get_total_commands_processed() - instant_commands_processed) / elapsedSec;
 
-            globalMetrics.instantaneous_net_input_tpt = Math.Round(globalMetrics.instantaneous_net_input_tpt, 2);
-            globalMetrics.instantaneous_net_output_tpt = Math.Round(globalMetrics.instantaneous_net_output_tpt, 2);
-            globalMetrics.instantaneous_cmd_per_sec = Math.Round(globalMetrics.instantaneous_cmd_per_sec);
+            globalMetrics.Instantaneous_net_input_tpt = Math.Round(globalMetrics.Instantaneous_net_input_tpt, 2);
+            globalMetrics.Instantaneous_net_output_tpt = Math.Round(globalMetrics.Instantaneous_net_output_tpt, 2);
+            globalMetrics.Instantaneous_cmd_per_sec = Math.Round(globalMetrics.Instantaneous_cmd_per_sec);
 
             startTimestamp = currTimestamp;
-            instant_input_net_bytes = globalMetrics.globalSessionMetrics.get_total_net_input_bytes();
-            instant_output_net_bytes = globalMetrics.globalSessionMetrics.get_total_net_output_bytes();
-            instant_commands_processed = globalMetrics.globalSessionMetrics.get_total_commands_processed();
+            instant_input_net_bytes = globalMetrics.GlobalSessionMetrics.get_total_net_input_bytes();
+            instant_output_net_bytes = globalMetrics.GlobalSessionMetrics.get_total_net_output_bytes();
+            instant_commands_processed = globalMetrics.GlobalSessionMetrics.get_total_commands_processed();
         }
     }
 
@@ -127,7 +123,7 @@ internal sealed class GarnetServerMonitor
         //Reset session metrics accumulator
         accSessionMetrics.Reset();
         //Add session metrics history in accumulator
-        accSessionMetrics.Add(globalMetrics.historySessionMetrics);
+        accSessionMetrics.Add(globalMetrics.HistorySessionMetrics);
     }
 
     private void UpdateAllMetrics(IGarnetServer server)
@@ -148,7 +144,7 @@ internal sealed class GarnetServerMonitor
                 try
                 {
                     // Add accumulated latency metrics for this iteration
-                    globalMetrics.globalLatencyMetrics.Merge(session.GetLatencyMetrics());
+                    globalMetrics.GlobalLatencyMetrics.Merge(session.GetLatencyMetrics());
                 }
                 finally
                 {
@@ -158,9 +154,9 @@ internal sealed class GarnetServerMonitor
         }
 
         // Reset global session metrics
-        globalMetrics.globalSessionMetrics.Reset();
+        globalMetrics.GlobalSessionMetrics.Reset();
         // Add accumulated session metrics for this iteration
-        globalMetrics.globalSessionMetrics.Add(accSessionMetrics);
+        globalMetrics.GlobalSessionMetrics.Add(accSessionMetrics);
 
     }
 
@@ -169,14 +165,14 @@ internal sealed class GarnetServerMonitor
         if (resetEventFlags[InfoMetricsType.STATS])
         {
             logger?.LogInformation("Resetting latency metrics for commands");
-            globalMetrics.instantaneous_net_input_tpt = 0;
-            globalMetrics.instantaneous_net_output_tpt = 0;
-            globalMetrics.instantaneous_cmd_per_sec = 0;
+            globalMetrics.Instantaneous_net_input_tpt = 0;
+            globalMetrics.Instantaneous_net_output_tpt = 0;
+            globalMetrics.Instantaneous_cmd_per_sec = 0;
 
-            globalMetrics.total_connections_received = 0;
-            globalMetrics.total_connections_disposed = 0;
-            globalMetrics.globalSessionMetrics.Reset();
-            globalMetrics.historySessionMetrics.Reset();
+            globalMetrics.TotalConnectionsReceived = 0;
+            globalMetrics.TotalConnectionsDisposed = 0;
+            globalMetrics.GlobalSessionMetrics.Reset();
+            globalMetrics.HistorySessionMetrics.Reset();
 
             var garnetServer = ((GarnetServerBase)server);
             IEnumerable<networking.IMessageConsumer> sessions = garnetServer.ActiveConsumers();
@@ -215,7 +211,7 @@ internal sealed class GarnetServerMonitor
                     rwLock.WriteLock();
                     try
                     {
-                        globalMetrics.globalLatencyMetrics.Reset(eventType);
+                        globalMetrics.GlobalLatencyMetrics.Reset(eventType);
                     }
                     finally
                     {
@@ -254,8 +250,8 @@ internal sealed class GarnetServerMonitor
                 monitor_iterations++;
 
                 var garnetServer = ((GarnetServerBase)server);
-                globalMetrics.total_connections_received = garnetServer.get_conn_recv();
-                globalMetrics.total_connections_disposed = garnetServer.get_conn_disp();
+                globalMetrics.TotalConnectionsReceived = garnetServer.get_conn_recv();
+                globalMetrics.TotalConnectionsDisposed = garnetServer.get_conn_disp();
 
                 UpdateInstantaneousMetrics();
                 UpdateAllMetricsHistory();

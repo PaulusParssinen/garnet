@@ -8,10 +8,10 @@ namespace Garnet.Cluster;
 
 internal sealed class FailoverManager(ClusterProvider clusterProvider, ILogger logger = null) : IDisposable
 {
-    FailoverSession currentFailoverSession = null;
-    readonly ClusterProvider clusterProvider = clusterProvider;
-    readonly TimeSpan clusterTimeout = clusterProvider.serverOptions.ClusterTimeout <= 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(clusterProvider.serverOptions.ClusterTimeout);
-    readonly ILogger logger = logger;
+    private FailoverSession currentFailoverSession = null;
+    private readonly ClusterProvider clusterProvider = clusterProvider;
+    private readonly TimeSpan clusterTimeout = clusterProvider.serverOptions.ClusterTimeout <= 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(clusterProvider.serverOptions.ClusterTimeout);
+    private readonly ILogger logger = logger;
     private SingleWriterMultiReaderLock failoverTaskLock;
 
     public void Dispose()

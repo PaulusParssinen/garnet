@@ -22,7 +22,7 @@ namespace Garnet.Server;
 /// <summary>
 /// HLL Data structure types
 /// </summary>
-enum HLL_DTYPE : byte
+internal enum HLL_DTYPE : byte
 {
     HLL_SPARSE,
     HLL_DENSE
@@ -113,12 +113,12 @@ public unsafe class HyperLogLog
     public HyperLogLog(byte pbit)
     {
         this.pbit = pbit;
-        this.qbit = (byte)(hbit - pbit);
-        this.mcnt = 1 << pbit;
-        this.DenseBytes = hll_header_bytes + ((reg_bits * RegCnt) >> 3);
-        this.SparseZeroRanges = this.mcnt >> 7;
-        this.SparseHeaderSize = hll_header_bytes + 2;
-        this.SparseBytes = SparseHeaderSize + SparseZeroRanges + SparseMemorySectorSize;
+        qbit = (byte)(hbit - pbit);
+        mcnt = 1 << pbit;
+        DenseBytes = hll_header_bytes + ((reg_bits * RegCnt) >> 3);
+        SparseZeroRanges = mcnt >> 7;
+        SparseHeaderSize = hll_header_bytes + 2;
+        SparseBytes = SparseHeaderSize + SparseZeroRanges + SparseMemorySectorSize;
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public unsafe class HyperLogLog
     /// Extract register index
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort RegIdx(long hv) => (ushort)(hv & (this.mcnt - 1));
+    public ushort RegIdx(long hv) => (ushort)(hv & (mcnt - 1));
 
     /// <summary>
     /// Count leading zeros
@@ -170,7 +170,7 @@ public unsafe class HyperLogLog
         byte _lsb = (byte)(m & 0x7); // find bits in byte zero
         byte _msb = (byte)(8 - _lsb);
 
-        Debug.Assert(_b0 < ((this.mcnt * reg_bits) / 8));
+        Debug.Assert(_b0 < ((mcnt * reg_bits) / 8));
 
         reg[_b0] &= (byte)~(reg_bits_msk << _lsb);//clear bits for lsb
         reg[_b0] |= (byte)(val << _lsb);//set new value for lsb
@@ -200,7 +200,7 @@ public unsafe class HyperLogLog
     private bool IsValidHLLLength(byte* ptr, int length)
     {
         return (IsSparse(ptr) && SparseInitialLength(1) <= length || length <= SparseSizeMaxCap) ||
-            (IsDense(ptr) && length == this.DenseBytes);
+            (IsDense(ptr) && length == DenseBytes);
     }
 
     /// <summary>
@@ -257,7 +257,7 @@ public unsafe class HyperLogLog
     public void Init(byte* input, byte* value, int vlen)
     {
         int count = *(int*)(input);
-        if (vlen != this.DenseBytes)//Sparse representation
+        if (vlen != DenseBytes)//Sparse representation
         {
             InitSparse(value);
             IterateUpdateSparse(input, count, value);
@@ -312,7 +312,7 @@ public unsafe class HyperLogLog
         int requiredBytes = SparseRequiredBytes(count);// get bytes for elements
         //if total bytes required greater than max cap switch to dense
         //else calculate additional spase neede apart from default.
-        return (SparseHeaderSize + requiredBytes) > SparseSizeMaxCap ? this.DenseBytes :
+        return (SparseHeaderSize + requiredBytes) > SparseSizeMaxCap ? DenseBytes :
             ((requiredBytes < SparseZeroRanges + SparseMemorySectorSize) ?
                 SparseBytes :
                 SparseHeaderSize + requiredBytes);
@@ -348,11 +348,11 @@ public unsafe class HyperLogLog
         {
             //calculate additional sparse needed and check if we are allowed to grow to that size based of the max-cap-size
             int sparseBlobBytes = SparseCurrentSizeInBytes(value) + SparseRequiredBytes(count);
-            return sparseBlobBytes < SparseSizeMaxCap ? sparseBlobBytes : this.DenseBytes;
+            return sparseBlobBytes < SparseSizeMaxCap ? sparseBlobBytes : DenseBytes;
         }
 
         if (IsDense(value))
-            return this.DenseBytes;
+            return DenseBytes;
 
         throw new GarnetException("HyperLogLog UpdateGrowV2 invalid data structure type");
     }
@@ -369,10 +369,10 @@ public unsafe class HyperLogLog
             int srcNonZeroBytes = SparseCountNonZero(srcHLL) * SparseMaxBytesPerInsert;
             int pageCount = (((srcNonZeroBytes - 1) / SparseMemorySectorSize) + 1);//Get an extra allocation for future growth
             int sparseBlobBytes = SparseCurrentSizeInBytes(dstHLL) + pageCount * SparseMemorySectorSize;
-            return sparseBlobBytes < SparseSizeMaxCap ? sparseBlobBytes : this.DenseBytes;
+            return sparseBlobBytes < SparseSizeMaxCap ? sparseBlobBytes : DenseBytes;
         }
         else
-            return this.DenseBytes;
+            return DenseBytes;
     }
 
     /// <summary>
@@ -384,7 +384,7 @@ public unsafe class HyperLogLog
             Buffer.MemoryCopy(oldDstHLLPtr, newDstHLLPtr, oldValueLen, oldValueLen);
         else
         {
-            if (newValueLen == this.DenseBytes)
+            if (newValueLen == DenseBytes)
                 InitDense(newDstHLLPtr);
             else
                 InitSparse(newDstHLLPtr);
@@ -404,7 +404,7 @@ public unsafe class HyperLogLog
         //Only reach this point if old-blob is of sparse type
         if (IsSparse(oldValue))
         {
-            if (newValueLen == this.DenseBytes)//We are upgrading to dense representation here
+            if (newValueLen == DenseBytes)//We are upgrading to dense representation here
             {
                 InitDense(newValue);
                 fUpdated |= SparseToDense(oldValue, newValue);
@@ -453,7 +453,7 @@ public unsafe class HyperLogLog
         bool fUpdated = false;
         byte* srcRegs = srcDenseBlob + hll_header_bytes;
         byte* dstRegs = dstDenseBlob + hll_header_bytes;
-        for (ushort idx = 0; idx < this.mcnt; idx++)
+        for (ushort idx = 0; idx < mcnt; idx++)
         {
             byte srcLZ = _get_register(srcRegs, idx);
             byte dstLZ = _get_register(dstRegs, idx);
@@ -784,7 +784,7 @@ public unsafe class HyperLogLog
             byte r00, r01, r02, r03, r04, r05, r06, r07;
             byte r08, r09, r10, r11, r12, r13, r14, r15;
 
-            int end = this.mcnt >> 4; // this.mcnt / 16
+            int end = mcnt >> 4; // this.mcnt / 16
             //unpack 6-bit registers
             for (int j = 0; j < end; j++)
             {
@@ -961,7 +961,7 @@ public unsafe class HyperLogLog
         int cnt = 0;
         byte* regs = ptr + hll_header_bytes;
 
-        for (int idx = 0; idx < this.mcnt; idx++)
+        for (int idx = 0; idx < mcnt; idx++)
         {
             byte lz = _get_register(regs, (ushort)idx);
             cnt += lz == 0 ? 1 : 0;
@@ -1056,7 +1056,7 @@ public unsafe class HyperLogLog
         Dictionary<int, int> denseRegs = new();
         byte* regs = denseHLL + hll_header_bytes;
 
-        for (uint i = 0; i < this.mcnt; i++)
+        for (uint i = 0; i < mcnt; i++)
         {
             ushort idx = (ushort)i;
             byte lz = _get_register(regs, idx);
@@ -1118,7 +1118,7 @@ public unsafe class HyperLogLog
     {
         Console.WriteLine("-------[Dumping Dense Reg Content]-------");
         byte* regs = denseHLL + hll_header_bytes;
-        for (uint i = 0; i < this.mcnt; i++)
+        for (uint i = 0; i < mcnt; i++)
         {
             ushort idx = (ushort)i;
             byte lz = _get_register(regs, idx);

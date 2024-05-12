@@ -11,22 +11,22 @@ namespace Tsavorite;
 internal unsafe struct HashBucket
 {
     // We use the first overflow bucket for latching, reusing all bits after the address.
-    const int kSharedLatchBits = 63 - Constants.kAddressBits;
-    const int kExclusiveLatchBits = 1;
+    private const int kSharedLatchBits = 63 - Constants.kAddressBits;
+    private const int kExclusiveLatchBits = 1;
 
     // Shift positions of latches in word
-    const int kSharedLatchBitOffset = Constants.kAddressBits;
-    const int kExclusiveLatchBitOffset = kSharedLatchBitOffset + kSharedLatchBits;
+    private const int kSharedLatchBitOffset = Constants.kAddressBits;
+    private const int kExclusiveLatchBitOffset = kSharedLatchBitOffset + kSharedLatchBits;
 
     // Shared latch constants
-    const long kSharedLatchBitMask = ((1L << kSharedLatchBits) - 1) << kSharedLatchBitOffset;
-    const long kSharedLatchIncrement = 1L << kSharedLatchBitOffset;
+    private const long kSharedLatchBitMask = ((1L << kSharedLatchBits) - 1) << kSharedLatchBitOffset;
+    private const long kSharedLatchIncrement = 1L << kSharedLatchBitOffset;
 
     // Exclusive latch constants
-    const long kExclusiveLatchBitMask = 1L << kExclusiveLatchBitOffset;
+    private const long kExclusiveLatchBitMask = 1L << kExclusiveLatchBitOffset;
 
     // Comnbined mask
-    const long kLatchBitMask = kSharedLatchBitMask | kExclusiveLatchBitMask;
+    private const long kLatchBitMask = kSharedLatchBitMask | kExclusiveLatchBitMask;
 
     [FieldOffset(0)]
     public fixed long bucket_entries[Constants.kEntriesPerBucket];

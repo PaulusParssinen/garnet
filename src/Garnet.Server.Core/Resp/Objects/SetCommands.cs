@@ -16,12 +16,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Session counter of number of Set entries partially done
     /// </summary>
-    int setItemsDoneCount;
+    private int setItemsDoneCount;
 
     /// <summary>
     /// Session counter of number of Set operations partially done
     /// </summary>
-    int setOpsCount;
+    private int setOpsCount;
 
     /// <summary>
     ///  Add the specified members to the set at key.
@@ -688,7 +688,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         inputPtr->header.type = GarnetObjectType.Set;
         inputPtr->header.flags = 0;
         inputPtr->header.SetOp = SetOperation.SRANDMEMBER;
-        inputPtr->count = Int32.MinValue;
+        inputPtr->count = int.MinValue;
 
         int countParameter = 0;
         if (count == 2)
@@ -698,7 +698,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return false;
 
             // Prepare response
-            bool canParse = Int32.TryParse(Encoding.ASCII.GetString(countParameterByteArray), out countParameter);
+            bool canParse = int.TryParse(Encoding.ASCII.GetString(countParameterByteArray), out countParameter);
             if (!canParse)
             {
                 ReadOnlySpan<byte> errorMessage = "-ERR value is not an integer or out of range\r\n"u8;

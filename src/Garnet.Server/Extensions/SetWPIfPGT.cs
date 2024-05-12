@@ -15,7 +15,7 @@ namespace Garnet;
 /// Description: Update key to given "prefix + value" only if the given prefix (interpreted as 8 byte long) is greater than the 
 /// existing value's 8-byte prefix, or there is no existing value. Otherwise, do nothing.
 /// </summary>
-sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
+internal sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
 {
     public const string PrefixError = "Invalid prefix length, should be 8 bytes";
 

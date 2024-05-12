@@ -51,19 +51,19 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     internal sealed class AsyncOperationInternal<Input, Output, Context, TAsyncOperation, TAsyncResult>
         where TAsyncOperation : IAsyncOperation<Input, Output, Context, TAsyncResult>
     {
-        const int Completed = 1;
-        const int Pending = 0;
-        ExceptionDispatchInfo _exception;
-        readonly TsavoriteKV<Key, Value> _tsavoriteKV;
-        readonly ITsavoriteSession<Key, Value, Input, Output, Context> _tsavoriteSession;
+        private const int Completed = 1;
+        private const int Pending = 0;
+        private ExceptionDispatchInfo _exception;
+        private readonly TsavoriteKV<Key, Value> _tsavoriteKV;
+        private readonly ITsavoriteSession<Key, Value, Input, Output, Context> _tsavoriteSession;
 
 #pragma warning disable IDE0044 // Add readonly modifier
         // This cannot be readonly or it defensively copies and we will modify the internal state of the *temporary*
-        TAsyncOperation _asyncOperation;
+        private TAsyncOperation _asyncOperation;
 #pragma warning restore IDE0044 // Add readonly modifier
 
-        PendingContext<Input, Output, Context> _pendingContext;
-        int CompletionComputeStatus;
+        private PendingContext<Input, Output, Context> _pendingContext;
+        private int CompletionComputeStatus;
 
         internal AsyncOperationInternal(TsavoriteKV<Key, Value> tsavoriteKV, ITsavoriteSession<Key, Value, Input, Output, Context> tsavoriteSession,
                                   PendingContext<Input, Output, Context> pendingContext, ExceptionDispatchInfo exceptionDispatchInfo, TAsyncOperation asyncOperation)
@@ -174,7 +174,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             return false;
         }
 
-        bool TryCompletePendingSyncIO(out TAsyncResult asyncResult, out bool isPending)
+        private bool TryCompletePendingSyncIO(out TAsyncResult asyncResult, out bool isPending)
         {
             asyncResult = default;
             isPending = false;

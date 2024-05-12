@@ -80,7 +80,7 @@ internal sealed class TsavoriteKVIterator<Key, Value, Input, Output, Context, Fu
     private readonly IPushScanIterator<Key> pushScanIterator;
     private ITsavoriteScanIterator<Key, Value> tempKvIter;
 
-    enum IterationPhase
+    private enum IterationPhase
     {
         MainKv,     // Iterating main store; if the record is the tailmost for the tag chain, then return it, else add it to tempKv.
         TempKv,     // Return records from tempKv.
@@ -244,7 +244,7 @@ internal sealed class TsavoriteKVIterator<Key, Value, Input, Output, Context, Fu
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool IsTailmostMainKvRecord(ref Key key, RecordInfo mainKvRecordInfo, ref OperationStackContext<Key, Value> stackCtx)
+    private bool IsTailmostMainKvRecord(ref Key key, RecordInfo mainKvRecordInfo, ref OperationStackContext<Key, Value> stackCtx)
     {
         stackCtx = new(store.comparer.GetHashCode64(ref key));
         if (store.FindTag(ref stackCtx.hei))

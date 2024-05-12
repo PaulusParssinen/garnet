@@ -14,7 +14,7 @@ namespace Garnet;
 /// 
 /// Description: Perform a non-transactional multi-get with value condition (prefix match) for the given set of keys
 /// </summary>
-sealed class MGetIfPM : CustomTransactionProcedure
+internal sealed class MGetIfPM : CustomTransactionProcedure
 {
     /// <summary>
     /// No transactional phase, skip Prepare

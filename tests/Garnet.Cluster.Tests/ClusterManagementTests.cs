@@ -10,10 +10,9 @@ namespace Garnet.Cluster.Tests;
 [TestFixture, NonParallelizable]
 public class ClusterManagementTests
 {
-    ClusterTestContext context;
-    readonly int defaultShards = 3;
-
-    readonly HashSet<string> monitorTests = [];
+    private ClusterTestContext context;
+    private readonly int defaultShards = 3;
+    private readonly HashSet<string> monitorTests = [];
 
     [SetUp]
     public void Setup()

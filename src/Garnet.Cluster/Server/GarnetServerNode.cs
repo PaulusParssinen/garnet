@@ -9,19 +9,17 @@ namespace Garnet.Cluster;
 
 internal sealed class GarnetServerNode
 {
-    readonly ClusterProvider clusterProvider;
-    readonly GarnetClient gc;
-    long gossip_send;
-    long gossip_recv;
+    private readonly ClusterProvider clusterProvider;
+    private readonly GarnetClient gc;
+    private long gossip_send;
+    private long gossip_recv;
     private CancellationTokenSource cts = new();
     private CancellationTokenSource internalCts = new();
     private volatile int initialized = 0;
     private readonly ILogger logger = null;
-    int disposeCount = 0;
-
-    ClusterConfig lastConfig = null;
-
-    SingleWriterMultiReaderLock meetLock;
+    private int disposeCount = 0;
+    private ClusterConfig lastConfig = null;
+    private SingleWriterMultiReaderLock meetLock;
 
     public bool IsConnected => gc.IsConnected;
 
@@ -54,14 +52,14 @@ internal sealed class GarnetServerNode
         this.clusterProvider = clusterProvider;
         this.address = address;
         this.port = port;
-        this.gc = new GarnetClient(
+        gc = new GarnetClient(
             address, port, tlsOptions,
             sendPageSize: 1 << 17,
             maxOutstandingTasks: 8,
             authUsername: clusterProvider.clusterManager.clusterProvider.ClusterUsername,
             authPassword: clusterProvider.clusterManager.clusterProvider.ClusterPassword,
             logger: logger);
-        this.initialized = 0;
+        initialized = 0;
         this.logger = logger;
         ResetCts();
     }
@@ -90,8 +88,8 @@ internal sealed class GarnetServerNode
         gc.ReconnectAsync().WaitAsync(clusterProvider.clusterManager.gossipDelay, cts.Token).GetAwaiter().GetResult();
     }
 
-    public void UpdateGossipSend() => this.gossip_send = DateTimeOffset.UtcNow.Ticks;
-    public void UpdateGossipRecv() => this.gossip_recv = DateTimeOffset.UtcNow.Ticks;
+    public void UpdateGossipSend() => gossip_send = DateTimeOffset.UtcNow.Ticks;
+    public void UpdateGossipRecv() => gossip_recv = DateTimeOffset.UtcNow.Ticks;
 
     public void ResetCts()
     {

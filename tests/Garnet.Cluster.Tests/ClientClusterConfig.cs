@@ -109,12 +109,11 @@ internal class ClientClusterConfig
     /// Maximum hash slot value.
     /// </summary>
     public static readonly int MAX_HASH_SLOT_VALUE = 16384;
-
-    readonly HashSlot[] slotMap;
-    readonly Worker[] workers;
-    int workerCount = 1;
-    List<(string, string)> orderedConfig = new();
-    readonly Dictionary<string, string> config = new();
+    private readonly HashSlot[] slotMap;
+    private readonly Worker[] workers;
+    private int workerCount = 1;
+    private List<(string, string)> orderedConfig = new();
+    private readonly Dictionary<string, string> config = new();
 
     public ClientClusterConfig(int node_count)
     {

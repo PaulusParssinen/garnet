@@ -14,7 +14,7 @@ namespace Garnet.Tests;
 [TestFixture]
 public class RespCommandTests
 {
-    GarnetServer server;
+    private GarnetServer server;
     private IReadOnlyDictionary<string, RespCommandsInfo> respCommandsInfo;
     private IReadOnlyDictionary<string, RespCommandsInfo> respCustomCommandsInfo;
 
