@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using StackExchange.Redis;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 
 namespace Garnet.Tests
 {

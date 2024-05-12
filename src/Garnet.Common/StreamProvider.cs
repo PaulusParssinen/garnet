@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 
 namespace Garnet.Common
 {

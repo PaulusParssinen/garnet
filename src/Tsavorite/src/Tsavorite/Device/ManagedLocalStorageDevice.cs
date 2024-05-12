@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// Managed device using .NET streams

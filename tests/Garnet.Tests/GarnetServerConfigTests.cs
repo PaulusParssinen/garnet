@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 
 namespace Garnet.Tests
 {

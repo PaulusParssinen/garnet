@@ -16,7 +16,7 @@ using Garnet.Server.Auth.Aad;
 using Garnet.Server.TLS;
 using Microsoft.Extensions.Logging;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 
 namespace Garnet
 {

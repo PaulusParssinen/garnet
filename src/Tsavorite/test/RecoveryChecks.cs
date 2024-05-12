@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 using Tsavorite.Tests.recovery.sumstore;
 
 namespace Tsavorite.Tests.recovery

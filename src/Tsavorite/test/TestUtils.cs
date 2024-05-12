@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Tsavorite;
-using Tsavorite.devices;
+using Tsavorite.Device;
 
 namespace Tsavorite.Tests
 {

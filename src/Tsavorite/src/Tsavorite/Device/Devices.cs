@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// Factory to create Tsavorite objects

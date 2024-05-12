@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// 

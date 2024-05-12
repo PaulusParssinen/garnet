@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// 

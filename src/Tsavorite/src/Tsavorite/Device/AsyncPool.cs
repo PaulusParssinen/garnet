@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// Asynchronous pool of fixed pre-filled capacity

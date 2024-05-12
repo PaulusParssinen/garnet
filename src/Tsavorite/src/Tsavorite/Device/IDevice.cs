@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// Delegate for callback on IO completion
@@ -187,21 +187,5 @@ namespace Tsavorite
         /// Reset the device (close and forget open handles)
         /// </summary>
         void Reset();
-    }
-
-    /// <summary>
-    /// Extension for backward compatibility
-    /// </summary>
-    public static class Device
-    {
-        /// <summary>
-        /// Close log - use IDevice.Dispose instead
-        /// </summary>
-        /// <param name="device"></param>
-        [Obsolete("Use IDevice.Dispose() instead.")]
-        public static void Close(this IDevice device)
-        {
-            device.Dispose();
-        }
     }
 }

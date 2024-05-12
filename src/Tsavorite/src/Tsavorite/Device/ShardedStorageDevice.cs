@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Tsavorite
+namespace Tsavorite.Device
 {
     /// <summary>
     /// Interface that encapsulates a sharding strategy that is used by <see cref="ShardedStorageDevice"/>. This
