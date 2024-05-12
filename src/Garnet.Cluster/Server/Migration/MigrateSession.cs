@@ -60,8 +60,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Check for overlapping slots between migrate sessions
     /// </summary>
-    /// <param name="session"></param>
-    /// <returns></returns>
     public bool Overlap(MigrateSession session)
         => session._sslots.Overlaps(_sslots);
 
@@ -70,19 +68,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// MigrateSession Constructor
     /// </summary>
-    /// <param name="clusterProvider"></param>
-    /// <param name="_targetAddress"></param>
-    /// <param name="_targetPort"></param>
-    /// <param name="_targetNodeId"></param>
-    /// <param name="_username"></param>
-    /// <param name="_passwd"></param>
-    /// <param name="_sourceNodeId"></param>
-    /// <param name="_copyOption"></param>
-    /// <param name="_replaceOption"></param>
-    /// <param name="_timeout"></param>
-    /// <param name="_slots"></param>
-    /// <param name="keysWithSize"></param>
-    /// <param name="logger"></param>
     internal MigrateSession(
         ClusterProvider clusterProvider,
         string _targetAddress,
@@ -175,7 +160,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Get slot ranges from slot list
     /// </summary>
-    /// <returns></returns>
     private List<(int, int)> GetRanges()
     {
         if (_sslots.Count == 1) return new List<(int, int)> { (_sslots.First(), _sslots.First()) };
@@ -202,9 +186,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Change remote slot state
     /// </summary>
-    /// <param name="nodeid"></param>
-    /// <param name="state"></param>
-    /// <returns></returns>
     public bool TrySetSlotRanges(string nodeid, MigrateState state)
     {
         bool status = false;
@@ -248,7 +229,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Prepare remote node for importing
     /// </summary>
-    /// <returns></returns>
     public bool TryPrepareLocalForMigration()
     {
         if (!clusterProvider.clusterManager.TryPrepareSlotsForMigration(_sslots, _targetNodeId, out ReadOnlySpan<byte> resp))
@@ -263,7 +243,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Clean migration state
     /// </summary>
-    /// <returns></returns>
     public bool RelinquishOwnership()
     {
         if (!clusterProvider.clusterManager.TryPrepareSlotsForOwnershipChange(_sslots, _targetNodeId, out ReadOnlySpan<byte> _))

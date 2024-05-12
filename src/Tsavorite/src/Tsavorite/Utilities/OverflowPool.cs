@@ -8,7 +8,6 @@ namespace Tsavorite;
 /// <summary>
 /// Fixed size pool of overflow objects
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class OverflowPool<T> : IDisposable
 {
     readonly int size;
@@ -25,8 +24,6 @@ internal sealed class OverflowPool<T> : IDisposable
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="size"></param>
-    /// <param name="disposer"></param>
     public OverflowPool(int size, Action<T> disposer = null)
     {
         this.size = size;
@@ -37,8 +34,6 @@ internal sealed class OverflowPool<T> : IDisposable
     /// <summary>
     /// Try get overflow item, if it exists
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
     public bool TryGet(out T item)
     {
         return itemQueue.TryDequeue(out item);
@@ -47,7 +42,6 @@ internal sealed class OverflowPool<T> : IDisposable
     /// <summary>
     /// Try to add overflow item to pool
     /// </summary>
-    /// <param name="item"></param>
     public bool TryAdd(T item)
     {
         if (itemQueue.Count < size && !disposed)

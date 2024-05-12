@@ -131,9 +131,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Init local worker info
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
-    /// <param name="recoverConfig"></param>
     private void InitLocal(string address, int port, bool recoverConfig)
     {
         if (recoverConfig)
@@ -208,9 +205,7 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Attempts to update config epoch of local worker
     /// </summary>
-    /// <param name="configEpoch"></param>
     /// <param name="errorMessage">The ASCII encoded error message if the method returned <see langword="false"/>; otherwise <see langword="default"/></param>
-    /// <returns></returns>
     public bool TrySetLocalConfigEpoch(long configEpoch, out ReadOnlySpan<byte> errorMessage)
     {
         errorMessage = default;
@@ -329,10 +324,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// This method is used to process failover requests from replicas of a given primary.
     /// This node will vote in favor of the request when returning true, or against when returning false.
     /// </summary>
-    /// <param name="requestingNodeId"></param>
-    /// <param name="requestedEpoch"></param>
-    /// <param name="claimedSlots"></param>
-    /// <returns></returns>
     public bool AuthorizeFailover(string requestingNodeId, long requestedEpoch, byte[] claimedSlots)
     {
         while (true)

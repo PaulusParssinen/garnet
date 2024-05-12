@@ -6,7 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Manual-enabled (both manual and transient) LockTable interface definition
 /// </summary>
-/// <typeparam name="TKey"></typeparam>
 internal interface ILockTable<TKey> : IDisposable
 {
     /// <summary>

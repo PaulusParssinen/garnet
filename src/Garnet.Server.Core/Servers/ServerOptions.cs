@@ -107,7 +107,6 @@ public class ServerOptions
     /// <summary>
     /// Get memory size
     /// </summary>
-    /// <returns></returns>
     public int MemorySizeBits()
     {
         long size = ParseSize(MemorySize);
@@ -120,7 +119,6 @@ public class ServerOptions
     /// <summary>
     /// Get page size
     /// </summary>
-    /// <returns></returns>
     public int PageSizeBits()
     {
         long size = ParseSize(PageSize);
@@ -133,7 +131,6 @@ public class ServerOptions
     /// <summary>
     /// Get pub/sub page size
     /// </summary>
-    /// <returns></returns>
     public long PubSubPageSizeBytes()
     {
         long size = ParseSize(PubSubPageSize);
@@ -146,7 +143,6 @@ public class ServerOptions
     /// <summary>
     /// Get segment size
     /// </summary>
-    /// <returns></returns>
     public int SegmentSizeBits()
     {
         long size = ParseSize(SegmentSize);
@@ -159,7 +155,6 @@ public class ServerOptions
     /// <summary>
     /// Get index size
     /// </summary>
-    /// <returns></returns>
     public int IndexSizeCachelines(string name, string indexSize)
     {
         long size = ParseSize(indexSize);
@@ -173,9 +168,6 @@ public class ServerOptions
     /// <summary>
     /// Get log settings
     /// </summary>
-    /// <param name="logSettings"></param>
-    /// <param name="checkpointSettings"></param>
-    /// <param name="indexSize"></param>
     public void GetSettings(out LogSettings logSettings, out CheckpointSettings checkpointSettings, out int indexSize)
     {
         logSettings = new LogSettings
@@ -224,8 +216,6 @@ public class ServerOptions
     /// <summary>
     /// Parse size from string specification
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
     protected static long ParseSize(string value)
     {
         char[] suffix = new char[] { 'k', 'm', 'g', 't', 'p' };
@@ -254,8 +244,6 @@ public class ServerOptions
     /// <summary>
     /// Pretty print value
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
     protected static string PrettySize(long value)
     {
         char[] suffix = new char[] { 'k', 'm', 'g', 't', 'p' };
@@ -288,8 +276,6 @@ public class ServerOptions
     /// <summary>
     /// Previous power of 2
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
     protected static long PreviousPowerOf2(long v)
     {
         v |= v >> 1;

@@ -15,7 +15,6 @@ sealed unsafe partial class TransactionManager
     /// <summary>
     /// Keep track of actual key accessed by command
     /// </summary>
-    /// <param name="argSlice"></param>
     public void SaveKeyArgSlice(ArgSlice argSlice)
     {
         //Execute method only if clusterEnabled
@@ -34,7 +33,6 @@ sealed unsafe partial class TransactionManager
     /// <summary>
     /// Update argslice ptr if input buffer has been resized
     /// </summary>
-    /// <param name="recvBufferPtr"></param>
     public unsafe void UpdateRecvBufferPtr(byte* recvBufferPtr)
     {
         //Execute method only if clusterEnabled

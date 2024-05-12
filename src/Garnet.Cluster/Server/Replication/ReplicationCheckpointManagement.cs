@@ -67,9 +67,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Add new checkpoint entry to the in-memory store
     /// </summary>
-    /// <param name="entry"></param>
-    /// <param name="storeType"></param>
-    /// <param name="fullCheckpoint"></param>
     public void AddCheckpointEntry(CheckpointEntry entry, StoreType storeType, bool fullCheckpoint)
         => checkpointStore.AddCheckpointEntry(entry, storeType, fullCheckpoint);
 
@@ -93,7 +90,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// Update current aof address for pending commit.
     /// This is necessary to recover safe aof address along with the commit information.
     /// </summary>
-    /// <param name="safeAofTailAddress"></param>
     public void UpdateCommitSafeAofAddress(long safeAofTailAddress)
     {
         clusterProvider.GetReplicationLogCheckpointManager(StoreType.Main).CurrentSafeAofAddress = safeAofTailAddress;

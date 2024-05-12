@@ -11,8 +11,5 @@ public interface IMessageConsumer : IDisposable
     /// <summary>
     /// Consume the message incoming on the wire
     /// </summary>
-    /// <param name="reqBuffer"></param>
-    /// <param name="bytesRead"></param>
-    /// <returns></returns>
     unsafe int TryConsumeMessages(byte* reqBuffer, int bytesRead);
 }

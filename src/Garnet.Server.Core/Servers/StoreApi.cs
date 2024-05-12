@@ -13,7 +13,6 @@ public class StoreApi
     /// <summary>
     /// Construct new Store API instance
     /// </summary>
-    /// <param name="storeWrapper"></param>
     public StoreApi(StoreWrapper storeWrapper)
     {
         this.storeWrapper = storeWrapper;
@@ -22,7 +21,6 @@ public class StoreApi
     /// <summary>
     /// Commit AOF
     /// </summary>
-    /// <param name="spinWait"></param>
     public void CommitAOF(bool spinWait = false) => storeWrapper.appendOnlyFile?.Commit(spinWait);
 
     /// <summary>

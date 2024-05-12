@@ -52,7 +52,6 @@ internal class RedisConfigSerializer
     /// <param name="reader">The stream reader to deserialize from</param>
     /// <param name="logger">Logger</param>
     /// <returns>The deserialized RedisOptions object</returns>
-    /// <exception cref="RedisSerializationException"></exception>
     public static RedisOptions Deserialize(StreamReader reader, ILogger logger)
     {
         var options = new RedisOptions();

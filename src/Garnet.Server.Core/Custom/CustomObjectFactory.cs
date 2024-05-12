@@ -16,7 +16,5 @@ public abstract class CustomObjectFactory
     /// <summary>
     /// Deserialize value object from given reader
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="reader"></param>
     public abstract CustomObjectBase Deserialize(byte type, BinaryReader reader);
 }

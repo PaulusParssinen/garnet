@@ -22,12 +22,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// LPUSH key element[element...]
     /// RPUSH key element [element ...]
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="lop"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListPush<TGarnetApi>(int count, byte* ptr, ListOperation lop, ref TGarnetApi storageApi)
                         where TGarnetApi : IGarnetApi
     {
@@ -110,11 +104,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// LPOP key [count]
     /// RPOP key [count]
     /// </summary>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="lop"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListPop<TGarnetApi>(int count, byte* ptr, ListOperation lop, ref TGarnetApi storageApi)
                         where TGarnetApi : IGarnetApi
     {
@@ -194,11 +183,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// LLEN key
     /// Gets the length of the list stored at key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListLength<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
                         where TGarnetApi : IGarnetApi
     {
@@ -264,11 +248,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// LTRIM key start stop
     /// Trim an existing list so it only contains the specified range of elements.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListTrim<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
                         where TGarnetApi : IGarnetApi
     {
@@ -333,11 +312,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Gets the specified elements of the list stored at key.
     /// LRANGE key start stop
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListRange<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -410,11 +384,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Returns the element at index.
     /// LINDEX key index
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListIndex<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -492,11 +461,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Inserts a new element in the list stored at key either before or after a value pivot
     /// LINSERT key BEFORE|AFTER pivot element
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListInsert<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -574,11 +538,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// LREM key count element
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListRemove<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
           where TGarnetApi : IGarnetApi
     {
@@ -654,11 +613,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// LMOVE source destination [LEFT | RIGHT] [LEFT | RIGHT]
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListMove<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -712,10 +666,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// RPOPLPUSH source destination
     /// </summary>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListRightPopLeftPush<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -759,13 +709,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// RPOPLPUSH source destination
     /// </summary>
     /// <param name="count">Number of tokens in input</param>
-    /// <param name="sourceKey"></param>
-    /// <param name="destinationKey"></param>
-    /// <param name="sourceDirection"></param>
-    /// <param name="destinationDirection"></param>
-    /// <param name="node"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool ListMove<TGarnetApi>(int count, ArgSlice sourceKey, ArgSlice destinationKey, OperationDirection sourceDirection, OperationDirection destinationDirection, out byte[] node, ref TGarnetApi storageApi)
             where TGarnetApi : IGarnetApi
     {
@@ -789,11 +732,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Sets the list element at index to element
     /// LSET key index element
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     public unsafe bool ListSet<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

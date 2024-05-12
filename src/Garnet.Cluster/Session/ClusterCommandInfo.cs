@@ -11,7 +11,6 @@ public static class ClusterCommandInfo
     /// <summary>
     /// 
     /// </summary>
-    /// <returns></returns>
     public static List<string> GetClusterCommands()
     {
         return new List<string>()

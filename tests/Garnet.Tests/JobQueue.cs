@@ -44,7 +44,6 @@ internal class JobQueue
     /// When a job is finished, remove it from the processingQueue and from the
     /// cache database.
     /// </summary>
-    /// <param name="key"></param>
     /// <param name="success">if false requeue for another attempt</param>
     public async Task Finish(string key, bool success = true)
     {
@@ -65,7 +64,6 @@ internal class JobQueue
     /// <summary>
     /// Consume messages from the queue
     /// </summary>
-    /// <returns></returns>
     public void AsConsumer()
     {
         HandleNewJobs().Wait();
@@ -75,7 +73,6 @@ internal class JobQueue
     /// Removes all the jobs from the
     /// processing queue
     /// </summary>
-    /// <returns></returns>
     public void AsManager()
     {
         var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
@@ -91,7 +88,6 @@ internal class JobQueue
     /// <summary>
     /// Move key from JobQueue to processingQueue, get key value from cache.
     /// </summary>
-    /// <returns></returns>
     private async Task<Dictionary<RedisValue, RedisValue>> GetJobAsync()
     {
         IDatabase db = connMultiplexer.GetDatabase(0);

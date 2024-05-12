@@ -33,9 +33,6 @@ public abstract class CustomTransactionProcedure : CustomFunctions
     /// <summary>
     /// Add specified key to the locking set
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="type"></param>
-    /// <param name="isObject"></param>
     protected void AddKey(ArgSlice key, LockType type, bool isObject)
     {
         txnManager.SaveKeyEntryToLock(key, isObject, type);

@@ -17,7 +17,6 @@ public class SpanByteFunctions<Context> : SpanByteFunctions<SpanByteAndMemory, C
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="memoryPool"></param>
     public SpanByteFunctions(MemoryPool<byte> memoryPool = default)
     {
         this.memoryPool = memoryPool ?? MemoryPool<byte>.Shared;

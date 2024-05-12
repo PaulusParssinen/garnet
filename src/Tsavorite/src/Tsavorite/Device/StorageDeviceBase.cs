@@ -96,9 +96,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// Initialize device
     /// </summary>
-    /// <param name="segmentSize"></param>
-    /// <param name="epoch"></param>
-    /// <param name="omitSegmentIdFromFilename"></param>
     public virtual void Initialize(long segmentSize, LightEpoch epoch = null, bool omitSegmentIdFromFilename = false)
     {
         if (segmentSize != -1)
@@ -139,17 +136,11 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// Whether device should be throttled
     /// </summary>
-    /// <returns></returns>
     public virtual bool Throttle() => false;
 
     /// <summary>
     /// Write operation
     /// </summary>
-    /// <param name="alignedSourceAddress"></param>
-    /// <param name="alignedDestinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public void WriteAsync(IntPtr alignedSourceAddress, ulong alignedDestinationAddress, uint numBytesToWrite, DeviceIOCompletionCallback callback, object context)
     {
         WriteAsync(
@@ -162,11 +153,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// Read operation
     /// </summary>
-    /// <param name="alignedSourceAddress"></param>
-    /// <param name="alignedDestinationAddress"></param>
-    /// <param name="aligned_read_length"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public void ReadAsync(ulong alignedSourceAddress, IntPtr alignedDestinationAddress, uint aligned_read_length, DeviceIOCompletionCallback callback, object context)
     {
         ulong segment = segmentSizeBits < 64 ? alignedSourceAddress >> segmentSizeBits : 0;
@@ -181,16 +167,12 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// <see cref="IDevice.RemoveSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="segment"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public abstract void RemoveSegmentAsync(int segment, AsyncCallback callback, IAsyncResult result);
 
     /// <summary>
     /// <see cref="IDevice.RemoveSegment(int)"/>
     /// By default the implementation calls into <see cref="RemoveSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="segment"></param>
     public virtual void RemoveSegment(int segment)
     {
         ManualResetEventSlim completionEvent = new(false);
@@ -213,9 +195,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// <see cref="IDevice.TruncateUntilSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="toSegment"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public void TruncateUntilSegmentAsync(int toSegment, AsyncCallback callback, IAsyncResult result)
     {
         // Reset begin range to at least toAddress
@@ -259,7 +238,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// <see cref="IDevice.TruncateUntilSegment(int)"/>
     /// </summary>
-    /// <param name="toSegment"></param>
     public void TruncateUntilSegment(int toSegment)
     {
         using (ManualResetEventSlim completionEvent = new(false))
@@ -283,9 +261,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// <see cref="IDevice.TruncateUntilAddressAsync(long, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="toAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public virtual void TruncateUntilAddressAsync(long toAddress, AsyncCallback callback, IAsyncResult result)
     {
         if ((int)(toAddress >> segmentSizeBits) <= startSegment)
@@ -300,7 +275,6 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// <see cref="IDevice.TruncateUntilAddress(long)"/>
     /// </summary>
-    /// <param name="toAddress"></param>
     public virtual void TruncateUntilAddress(long toAddress)
     {
         if ((int)(toAddress >> segmentSizeBits) <= startSegment)
@@ -327,23 +301,11 @@ public abstract class StorageDeviceBase : IDevice
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="sourceAddress"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public abstract void WriteAsync(IntPtr sourceAddress, int segmentId, ulong destinationAddress, uint numBytesToWrite, DeviceIOCompletionCallback callback, object context);
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="segmentId"></param>
-    /// <param name="sourceAddress"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="readLength"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public abstract void ReadAsync(int segmentId, ulong sourceAddress, IntPtr destinationAddress, uint readLength, DeviceIOCompletionCallback callback, object context);
 
     /// <summary>

@@ -30,45 +30,31 @@ public interface ICheckpointManager : IDisposable
     /// <summary>
     /// Initialize index checkpoint
     /// </summary>
-    /// <param name="indexToken"></param>
     void InitializeIndexCheckpoint(Guid indexToken);
 
     /// <summary>
     /// Initialize log checkpoint (snapshot and fold-over)
     /// </summary>
-    /// <param name="logToken"></param>
     void InitializeLogCheckpoint(Guid logToken);
 
     /// <summary>
     /// Commit index checkpoint
     /// </summary>
-    /// <param name="indexToken"></param>
-    /// <param name="commitMetadata"></param>
-    /// <returns></returns>
     void CommitIndexCheckpoint(Guid indexToken, byte[] commitMetadata);
 
     /// <summary>
     /// Commit log checkpoint (snapshot and fold-over)
     /// </summary>
-    /// <param name="logToken"></param>
-    /// <param name="commitMetadata"></param>
-    /// <returns></returns>
     void CommitLogCheckpoint(Guid logToken, byte[] commitMetadata);
 
     /// <summary>
     /// Callback to indicate version shift during checkpoint
     /// </summary>
-    /// <param name="oldVersion"></param>
-    /// <param name="newVersion"></param>
     void CheckpointVersionShift(long oldVersion, long newVersion);
 
     /// <summary>
     /// Commit log incremental checkpoint (incremental snapshot)
     /// </summary>
-    /// <param name="logToken"></param>
-    /// <param name="version"></param>
-    /// <param name="commitMetadata"></param>
-    /// <param name="deltaLog"></param>
     void CommitLogIncrementalCheckpoint(Guid logToken, long version, byte[] commitMetadata, DeltaLog deltaLog);
 
     /// <summary>
@@ -91,41 +77,31 @@ public interface ICheckpointManager : IDisposable
     /// <summary>
     /// Get list of index checkpoint tokens, in order of usage preference
     /// </summary>
-    /// <returns></returns>
     public IEnumerable<Guid> GetIndexCheckpointTokens();
 
     /// <summary>
     /// Get list of log checkpoint tokens, in order of usage preference
     /// </summary>
-    /// <returns></returns>
     public IEnumerable<Guid> GetLogCheckpointTokens();
 
     /// <summary>
     /// Provide device to store index checkpoint (including overflow buckets)
     /// </summary>
-    /// <param name="indexToken"></param>
-    /// <returns></returns>
     IDevice GetIndexDevice(Guid indexToken);
 
     /// <summary>
     /// Provide device to store snapshot of log (required only for snapshot checkpoints)
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     IDevice GetSnapshotLogDevice(Guid token);
 
     /// <summary>
     /// Provide device to store snapshot of object log (required only for snapshot checkpoints)
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     IDevice GetSnapshotObjectLogDevice(Guid token);
 
     /// <summary>
     /// Provide device to store incremental (delta) snapshot of log (required only for incremental snapshot checkpoints)
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     IDevice GetDeltaLogDevice(Guid token);
 
     /// <summary>
@@ -141,7 +117,5 @@ public interface ICheckpointManager : IDisposable
     /// <summary>
     /// Initiatize manager on recovery (e.g., deleting other checkpoints)
     /// </summary>
-    /// <param name="indexToken"></param>
-    /// <param name="logToken"></param>
     public void OnRecovery(Guid indexToken, Guid logToken);
 }

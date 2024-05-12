@@ -23,7 +23,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <param name="writeReason">The reason the CopyToTail is being done</param>
     /// <param name="wantIO">Whether to do IO if the search must go below HeadAddress. ReadFromImmutable, for example,
     ///     is just an optimization to avoid future IOs, so if we need an IO here we just defer them to the next Read().</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private OperationStatus ConditionalCopyToTail<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession,
             ref PendingContext<Input, Output, Context> pendingContext,

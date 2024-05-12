@@ -24,9 +24,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Check to see if offset contained by value size
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="vlen"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsLargeEnough(byte* input, int vlen)
     {
@@ -37,8 +34,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Get minimum length from offset in CmdInput
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Length(byte* input)
     {
@@ -49,9 +44,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Get bitmap allocation size
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="valueLen"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NewBlockAllocLength(byte* input, int valueLen)
     {
@@ -62,8 +54,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Update bitmap value from input
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="value"></param>        
     public static byte UpdateBitmap(byte* input, byte* value)
     {
         byte oldVal = 0;
@@ -84,9 +74,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Get bit value from value ptr at offset specified at input ptr.
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="value"></param>
-    /// <param name="valLen"></param>        
     public static byte GetBit(byte* input, byte* value, int valLen)
     {
         long offset = *(long*)(input);

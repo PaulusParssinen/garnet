@@ -654,8 +654,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// SELECT
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     private bool NetworkSELECT(byte* ptr)
     {
         // Read index

@@ -16,12 +16,10 @@ public static class LogFormatter
     /// <summary>
     /// Format date
     /// </summary>
-    /// <param name="dateTime"></param>
     public static string FormatDate(DateTime dateTime) => dateTime.ToString(DATE_FORMAT, CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Format time
     /// </summary>
-    /// <param name="dateTime"></param>
     public static string FormatTime(DateTime dateTime) => dateTime.ToString(TIME_FORMAT, CultureInfo.InvariantCulture);
 }

@@ -27,19 +27,13 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Safely truncate iterator
     /// </summary>
-    /// <param name="CheckpointCoveredAofAddress"></param>
-    /// <returns></returns>
     public long SafeTruncateAof(long CheckpointCoveredAofAddress)
         => aofTaskStore.SafeTruncateAof(CheckpointCoveredAofAddress);
 
     /// <summary>
     /// Try to initiate connection from primary to replica in order to stream aof.
     /// </summary>
-    /// <param name="nodeid"></param>
-    /// <param name="startAddress"></param>
-    /// <param name="aofSyncTaskInfo"></param>
     /// <param name="errorMessage">The ASCII encoded error message if the method returned <see langword="false"/>; otherwise <see langword="default"/></param>
-    /// <returns></returns>
     public bool TryConnectToReplica(string nodeid, long startAddress, AofSyncTaskInfo aofSyncTaskInfo, out ReadOnlySpan<byte> errorMessage)
     {
         errorMessage = default;

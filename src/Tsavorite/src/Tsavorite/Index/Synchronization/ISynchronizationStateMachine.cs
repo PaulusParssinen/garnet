@@ -26,20 +26,12 @@ internal interface ISynchronizationStateMachine
     /// <summary>
     /// This function is invoked immediately before the global state machine enters the given state.
     /// </summary>
-    /// <param name="next"></param>
-    /// <param name="tsavorite"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
     void GlobalBeforeEnteringState<Key, Value>(SystemState next,
         TsavoriteKV<Key, Value> tsavorite);
 
     /// <summary>
     /// This function is invoked immediately after the global state machine enters the given state.
     /// </summary>
-    /// <param name="next"></param>
-    /// <param name="tsavorite"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
     void GlobalAfterEnteringState<Key, Value>(SystemState next,
         TsavoriteKV<Key, Value> tsavorite);
 
@@ -48,20 +40,6 @@ internal interface ISynchronizationStateMachine
     ///
     /// Note that the function is not allowed to await when async is set to false.
     /// </summary>
-    /// <param name="current"></param>
-    /// <param name="prev"></param>
-    /// <param name="tsavorite"></param>
-    /// <param name="ctx"></param>
-    /// <param name="tsavoriteSession"></param>
-    /// <param name="valueTasks"></param>
-    /// <param name="token"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
-    /// <typeparam name="Input"></typeparam>
-    /// <typeparam name="Output"></typeparam>
-    /// <typeparam name="Context"></typeparam>
-    /// <typeparam name="TsavoriteSession"></typeparam>
-    /// <returns></returns>
     void OnThreadEnteringState<Key, Value, Input, Output, Context, TsavoriteSession>(SystemState current,
         SystemState prev,
         TsavoriteKV<Key, Value> tsavorite,
@@ -83,10 +61,6 @@ internal interface ISynchronizationTask
     /// <summary>
     /// This function is invoked immediately before the global state machine enters the given state.
     /// </summary>
-    /// <param name="next"></param>
-    /// <param name="tsavorite"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
     void GlobalBeforeEnteringState<Key, Value>(
         SystemState next,
         TsavoriteKV<Key, Value> tsavorite);
@@ -94,10 +68,6 @@ internal interface ISynchronizationTask
     /// <summary>
     /// This function is invoked immediately after the global state machine enters the given state.
     /// </summary>
-    /// <param name="next"></param>
-    /// <param name="tsavorite"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
     void GlobalAfterEnteringState<Key, Value>(
         SystemState next,
         TsavoriteKV<Key, Value> tsavorite);
@@ -107,20 +77,6 @@ internal interface ISynchronizationTask
     ///
     /// Note that the function is not allowed to await when async is set to false.
     /// </summary>
-    /// <param name="current"></param>
-    /// <param name="prev"></param>
-    /// <param name="tsavorite"></param>
-    /// <param name="ctx"></param>
-    /// <param name="tsavoriteSession"></param>
-    /// <param name="valueTasks"></param>
-    /// <param name="token"></param>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
-    /// <typeparam name="Input"></typeparam>
-    /// <typeparam name="Output"></typeparam>
-    /// <typeparam name="Context"></typeparam>
-    /// <typeparam name="TsavoriteSession"></typeparam>
-    /// <returns></returns>
     void OnThreadState<Key, Value, Input, Output, Context, TsavoriteSession>(
         SystemState current,
         SystemState prev,

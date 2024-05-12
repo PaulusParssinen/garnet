@@ -38,11 +38,6 @@ public abstract class TsavoriteKVProviderBase<Key, Value, Input, Output, Functio
     /// <summary>
     /// Create TsavoriteKV backend
     /// </summary>
-    /// <param name="store"></param>
-    /// <param name="serializer"></param>
-    /// <param name="broker"></param>
-    /// <param name="recoverStore"></param>
-    /// <param name="maxSizeSettings"></param>
     public TsavoriteKVProviderBase(TsavoriteKV<Key, Value> store, ParameterSerializer serializer, SubscribeBroker<Key, Value, IKeySerializer<Key>> broker = null, bool recoverStore = false, MaxSizeSettings maxSizeSettings = default)
     {
         this.store = store;
@@ -68,7 +63,6 @@ public abstract class TsavoriteKVProviderBase<Key, Value, Input, Output, Functio
     /// <summary>
     /// GetFunctions() for custom functions provided by the client
     /// </summary>
-    /// <returns></returns>
     public abstract Functions GetFunctions();
 
     /// <inheritdoc />

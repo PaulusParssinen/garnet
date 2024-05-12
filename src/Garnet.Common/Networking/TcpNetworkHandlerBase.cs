@@ -12,8 +12,6 @@ namespace Garnet.Common;
 /// <summary>
 /// TCP network handler
 /// </summary>
-/// <typeparam name="TServerHook"></typeparam>
-/// <typeparam name="TNetworkSender"></typeparam>
 public abstract class TcpNetworkHandlerBase<TServerHook, TNetworkSender> : NetworkHandler<TServerHook, TNetworkSender>
     where TServerHook : IServerHook
     where TNetworkSender : INetworkSender

@@ -41,17 +41,6 @@ internal static class TestUtils
     private static bool CustomCommandsInfoInitialized;
     private static IReadOnlyDictionary<string, RespCommandsInfo> RespCustomCommandsInfo;
 
-    internal static string AzureTestContainer
-    {
-        get
-        {
-            string container = "Garnet.Tests".Replace('.', '-').ToLowerInvariant();
-            return container;
-        }
-    }
-    internal static string AzureTestDirectory => TestContext.CurrentContext.Test.MethodName;
-    internal const string AzureEmulatedStorageString = "UseDevelopmentStorage=true;";
-
     public const string certFile = "testcert.pfx";
     public const string certPassword = "placeholder";
 
@@ -60,7 +49,6 @@ internal static class TestUtils
     /// </summary>
     /// <param name="customCommandsInfo">Mapping between command name and command info</param>
     /// <param name="logger">Logger</param>
-    /// <returns></returns>
     internal static bool TryGetCustomCommandsInfo(out IReadOnlyDictionary<string, RespCommandsInfo> customCommandsInfo, ILogger logger = null)
     {
         customCommandsInfo = default;
@@ -85,7 +73,7 @@ internal static class TestUtils
     {
         commandsInfo = default;
 
-        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource,  Assembly.GetExecutingAssembly());
         IRespCommandsInfoProvider commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
 
         bool importSucceeded = commandsInfoProvider.TryImportRespCommandsInfo(resourcePath,
@@ -95,29 +83,6 @@ internal static class TestUtils
 
         commandsInfo = tmpCommandsInfo;
         return true;
-    }
-
-    static bool IsAzuriteRunning()
-    {
-        // If Azurite is running, it will run on localhost and listen on port 10000 and/or 10001.
-        IPAddress expectedIp = new(new byte[] { 127, 0, 0, 1 });
-        int[] expectedPorts = new[] { 10000, 10001 };
-
-        IPEndPoint[] activeTcpListeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
-
-        var relevantListeners = activeTcpListeners.Where(t =>
-                expectedPorts.Contains(t.Port) &&
-                t.Address.Equals(expectedIp))
-            .ToList();
-
-        return relevantListeners.Any();
-    }
-
-    internal static void IgnoreIfNotRunningAzureTests()
-    {
-        // Need this environment variable set AND Azure Storage Emulator running
-        if (!IsRunningAzureTests)
-            Assert.Ignore("Environment variable RunAzureTests is not defined");
     }
 
     /// <summary>
@@ -137,7 +102,6 @@ internal static class TestUtils
         bool latencyMonitor = false,
         int commitFrequencyMs = 0,
         bool commitWait = false,
-        bool UseAzureStorage = false,
         string defaultPassword = null,
         bool useAcl = false, // NOTE: Temporary until ACL is enforced as default
         string aclFile = null,
@@ -152,19 +116,11 @@ internal static class TestUtils
         int indexResizeFrequencySecs = 60,
         ILogger logger = null)
     {
-        if (UseAzureStorage)
-            IgnoreIfNotRunningAzureTests();
         string _LogDir = logCheckpointDir;
-        if (UseAzureStorage)
-            _LogDir = $"{AzureTestContainer}/{AzureTestDirectory}";
-
-        if (logCheckpointDir != null && !UseAzureStorage) _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
+        if (logCheckpointDir != null) _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
 
         string _CheckpointDir = logCheckpointDir;
-        if (UseAzureStorage)
-            _CheckpointDir = $"{AzureTestContainer}/{AzureTestDirectory}";
-
-        if (logCheckpointDir != null && !UseAzureStorage) _CheckpointDir = new DirectoryInfo(string.IsNullOrEmpty(_CheckpointDir) ? "." : _CheckpointDir).FullName;
+        if (logCheckpointDir != null) _CheckpointDir = new DirectoryInfo(string.IsNullOrEmpty(_CheckpointDir) ? "." : _CheckpointDir).FullName;
 
         IAuthenticationSettings authenticationSettings = null;
         if (useAcl)
@@ -207,9 +163,7 @@ internal static class TestUtils
             QuietMode = true,
             MetricsSamplingFrequency = metricsSamplingFreq,
             LatencyMonitor = latencyMonitor,
-            DeviceFactoryCreator = UseAzureStorage ?
-                  () => new AzureStorageNamedDeviceFactory(AzureEmulatedStorageString, logger)
-                : () => new LocalStorageNamedDeviceFactory(logger: logger),
+            DeviceFactoryCreator = () => new LocalStorageNamedDeviceFactory(logger: logger),
             AuthSettings = authenticationSettings,
             ExtensionBinPaths = extensionBinPaths,
             ExtensionAllowUnsignedAssemblies = extensionAllowUnsignedAssemblies,
@@ -230,40 +184,7 @@ internal static class TestUtils
             opts.PageSize = opts.ObjectStorePageSize = PageSize == default ? "512" : PageSize;
         }
 
-        if (useTestLogger)
-        {
-            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddProvider(new NUnitLoggerProvider(TestContext.Progress, "GarnetServer", null, false, false, LogLevel.Trace));
-                builder.SetMinimumLevel(LogLevel.Trace);
-            });
-
-            return new GarnetServer(opts, loggerFactory);
-        }
-        else
-        {
-            return new GarnetServer(opts);
-        }
-    }
-
-    /// <summary>
-    /// Create logger factory for given TextWriter and loglevel
-    /// E.g. Use with TestContext.Progress to print logs while test is running.
-    /// </summary>
-    /// <param name="textWriter"></param>
-    /// <param name="logLevel"></param>
-    /// <param name="scope"></param>
-    /// <param name="skipCmd"></param>
-    /// <param name="recvOnly"></param>
-    /// <param name="matchLevel"></param>
-    /// <returns></returns>
-    public static ILoggerFactory CreateLoggerFactoryInstance(TextWriter textWriter, LogLevel logLevel, string scope = "", HashSet<string> skipCmd = null, bool recvOnly = false, bool matchLevel = false)
-    {
-        return LoggerFactory.Create(builder =>
-        {
-            builder.AddProvider(new NUnitLoggerProvider(textWriter, scope, skipCmd, recvOnly, matchLevel, logLevel));
-            builder.SetMinimumLevel(logLevel);
-        });
+        return new GarnetServer(opts);
     }
 
     public static GarnetServer[] CreateGarnetCluster(
@@ -275,7 +196,6 @@ internal static class TestUtils
         bool enableAOF = false,
         int timeout = -1,
         int gossipDelay = 1,
-        bool UseAzureStorage = false,
         bool UseTLS = false,
         bool cleanClusterConfig = false,
         bool lowMemory = false,
@@ -296,8 +216,6 @@ internal static class TestUtils
         X509CertificateCollection certificates = null,
         ILoggerFactory loggerFactory = null)
     {
-        if (UseAzureStorage)
-            IgnoreIfNotRunningAzureTests();
         GarnetServer[] nodes = new GarnetServer[endpoints.Count];
         for (int i = 0; i < nodes.Length; i++)
         {
@@ -313,7 +231,6 @@ internal static class TestUtils
                 enableAOF,
                 timeout,
                 gossipDelay,
-                UseAzureStorage,
                 UseTLS: UseTLS,
                 cleanClusterConfig: cleanClusterConfig,
                 lowMemory: lowMemory,
@@ -357,7 +274,6 @@ internal static class TestUtils
         bool enableAOF = false,
         int timeout = -1,
         int gossipDelay = 5,
-        bool UseAzureStorage = false,
         bool UseTLS = false,
         bool cleanClusterConfig = false,
         bool lowMemory = false,
@@ -378,17 +294,11 @@ internal static class TestUtils
         X509CertificateCollection certificates = null,
         ILogger logger = null)
     {
-        if (UseAzureStorage)
-            IgnoreIfNotRunningAzureTests();
         string _LogDir = logDir + $"/{Port}";
-        if (UseAzureStorage)
-            _LogDir = $"{AzureTestContainer}/{AzureTestDirectory}/{Port}";
-        if (logDir != null && !UseAzureStorage) _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
+        _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
 
         string _CheckpointDir = checkpointDir + $"/{Port}";
-        if (UseAzureStorage)
-            _CheckpointDir = $"{AzureTestContainer}/{AzureTestDirectory}/{Port}";
-        if (!UseAzureStorage) _CheckpointDir = new DirectoryInfo(string.IsNullOrEmpty(_CheckpointDir) ? "." : _CheckpointDir).FullName;
+        _CheckpointDir = new DirectoryInfo(string.IsNullOrEmpty(_CheckpointDir) ? "." : _CheckpointDir).FullName;
 
         IAuthenticationSettings authenticationSettings = null;
         if (useAcl)
@@ -405,7 +315,7 @@ internal static class TestUtils
             ThreadPoolMinThreads = 100,
             SegmentSize = SegmentSize,
             ObjectStoreSegmentSize = SegmentSize,
-            EnableStorageTier = UseAzureStorage ? true : DisableStorageTier ? false : logDir != null,
+            EnableStorageTier = DisableStorageTier ? false : logDir != null,
             LogDir = DisableStorageTier ? null : _LogDir,
             CheckpointDir = _CheckpointDir,
             Address = Address,
@@ -439,9 +349,7 @@ internal static class TestUtils
                 },
                 logger: logger)
             : null,
-            DeviceFactoryCreator = UseAzureStorage ?
-                () => new AzureStorageNamedDeviceFactory(AzureEmulatedStorageString, logger)
-                : () => new LocalStorageNamedDeviceFactory(logger: logger),
+            DeviceFactoryCreator = () => new LocalStorageNamedDeviceFactory(logger: logger),
             MainMemoryReplication = MainMemoryReplication,
             AofMemorySize = AofMemorySize,
             OnDemandCheckpoint = OnDemandCheckpoint,
@@ -544,54 +452,6 @@ internal static class TestUtils
         return configOptions;
     }
 
-    public static GarnetClient GetGarnetClient(bool useTLS = false, bool recordLatency = false)
-    {
-        SslClientAuthenticationOptions sslOptions = null;
-        if (useTLS)
-        {
-            sslOptions = new SslClientAuthenticationOptions
-            {
-                ClientCertificates = [new X509Certificate2(certFile, certPassword)],
-                TargetHost = "GarnetTest",
-                AllowRenegotiation = false,
-                RemoteCertificateValidationCallback = ValidateServerCertificate,
-            };
-        }
-        return new GarnetClient(Address, Port, sslOptions, recordLatency: recordLatency);
-    }
-
-    public static GarnetClientSession GetGarnetClientSession(bool useTLS = false, bool recordLatency = false)
-    {
-        SslClientAuthenticationOptions sslOptions = null;
-        if (useTLS)
-        {
-            sslOptions = new SslClientAuthenticationOptions
-            {
-                ClientCertificates = [new X509Certificate2(certFile, certPassword)],
-                TargetHost = "GarnetTest",
-                AllowRenegotiation = false,
-                RemoteCertificateValidationCallback = ValidateServerCertificate,
-            };
-        }
-        return new GarnetClientSession(Address, Port, sslOptions);
-    }
-
-    public static LightClientRequest CreateRequest(LightClient.OnResponseDelegateUnsafe onReceive = null, bool useTLS = false, bool countResponseLength = false)
-    {
-        SslClientAuthenticationOptions sslOptions = null;
-        if (useTLS)
-        {
-            sslOptions = new SslClientAuthenticationOptions
-            {
-                ClientCertificates = [new X509Certificate2(certFile, certPassword)],
-                TargetHost = "GarnetTest",
-                AllowRenegotiation = false,
-                RemoteCertificateValidationCallback = ValidateServerCertificate,
-            };
-        }
-        return new LightClientRequest(Address, Port, 0, onReceive, sslOptions, countResponseLength);
-    }
-
     public static EndPointCollection GetEndPoints(int shards, int port = default)
     {
         Port = port == default ? Port : port;
@@ -612,9 +472,6 @@ internal static class TestUtils
     /// <summary>
     /// Build path for unit test working directory using Guid
     /// </summary>
-    /// <param name="category"></param>
-    /// <param name="includeGuid"></param>
-    /// <returns></returns>
     internal static string UnitTestWorkingDir(string category = null, bool includeGuid = false)
     {
         // Include process id to avoid conflicts between parallel test runs
@@ -677,12 +534,6 @@ internal static class TestUtils
     /// Delegate to use in TLS certificate validation
     /// Test certificate should be issued by "CN=Garnet"
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="certificate"></param>
-    /// <param name="chain"></param>
-    /// <param name="sslPolicyErrors"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
     public static bool ValidateServerCertificate(
       object sender,
       X509Certificate certificate,

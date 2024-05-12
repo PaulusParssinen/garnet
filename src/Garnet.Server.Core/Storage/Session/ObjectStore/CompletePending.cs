@@ -11,9 +11,6 @@ sealed partial class StorageSession
     /// <summary>
     /// Handles the complete pending for Object Store session
     /// </summary>
-    /// <param name="status"></param>
-    /// <param name="output"></param>
-    /// <param name="objectContext"></param>
     static void CompletePendingForObjectStoreSession<TContext>(ref Status status, ref GarnetObjectStoreOutput output, ref TContext objectContext)
         where TContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {

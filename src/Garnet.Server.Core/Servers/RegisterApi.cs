@@ -59,7 +59,6 @@ public class RegisterApi
     /// Register object type with server
     /// </summary>
     /// <param name="factory">Factory for object type</param>
-    /// <returns></returns>
     public int NewType(CustomObjectFactory factory)
         => provider.StoreWrapper.customCommandManager.RegisterType(factory);
 

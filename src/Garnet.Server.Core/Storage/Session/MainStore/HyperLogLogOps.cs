@@ -62,12 +62,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Adds one element to the HyperLogLog data structure stored at the variable name specified.
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="input"></param>
-    /// <param name="output"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
     public GarnetStatus HyperLogLogAdd<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref TContext context)
       where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         => RMW_MainStore(ref key, ref input, ref output, ref context);
@@ -76,12 +70,6 @@ sealed partial class StorageSession : IDisposable
     /// Returns the approximated cardinality computed by the HyperLogLog data structure stored at the specified key,
     /// or 0 if the key does not exist.
     /// </summary>
-    /// <param name="keys"></param>
-    /// <param name="input"></param>
-    /// <param name="count"></param>
-    /// <param name="error"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
     public unsafe GarnetStatus HyperLogLogLength<TContext>(ArgSlice[] keys, ref SpanByte input, out long count, out bool error, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
@@ -134,9 +122,6 @@ sealed partial class StorageSession : IDisposable
     /// Merge multiple HyperLogLog values into a unique value that will approximate the cardinality 
     /// of the union of the observed Sets of the source HyperLogLog structures.
     /// </summary>
-    /// <param name="keys"></param>
-    /// <param name="error"></param>
-    /// <returns></returns>
     public unsafe GarnetStatus HyperLogLogMerge(ArgSlice[] keys, out bool error)
     {
         error = false;

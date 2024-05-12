@@ -24,8 +24,6 @@ public static class TestUtils
     internal const string ModifiedBitTestCategory = "ModifiedBitTest";
     internal const string RevivificationCategory = "Revivification";
 
-    public static ILoggerFactory TestLoggerFactory = CreateLoggerFactoryInstance(TestContext.Progress, LogLevel.Trace);
-
     /// <summary>
     /// Delete a directory recursively
     /// </summary>
@@ -67,7 +65,6 @@ public static class TestUtils
     /// <summary>
     /// Create a clean new directory, removing a previous one if needed.
     /// </summary>
-    /// <param name="path"></param>
     internal static void RecreateDirectory(string path)
     {
         if (Directory.Exists(path))
@@ -77,38 +74,11 @@ public static class TestUtils
         Directory.CreateDirectory(path);
     }
 
-    /// <summary>
-    /// Create logger factory for given TextWriter and loglevel
-    /// E.g. Use with TestContext.Progress to print logs while test is running.
-    /// </summary>
-    /// <param name="textWriter"></param>
-    /// <param name="logLevel"></param>
-    /// <param name="scope"></param>
-    /// <returns></returns>
-    public static ILoggerFactory CreateLoggerFactoryInstance(TextWriter textWriter, LogLevel logLevel, string scope = "")
-    {
-        return LoggerFactory.Create(builder =>
-        {
-            builder.AddProvider(new NUnitLoggerProvider(textWriter, scope));
-            builder.SetMinimumLevel(logLevel);
-        });
-    }
-
-    internal static bool IsRunningAzureTests => "yes".Equals(Environment.GetEnvironmentVariable("RunAzureTests")) || "yes".Equals(Environment.GetEnvironmentVariable("RUNAZURETESTS"));
-
-    internal static void IgnoreIfNotRunningAzureTests()
-    {
-        // Need this environment variable set AND Azure Storage Emulator running
-        if (!IsRunningAzureTests)
-            Assert.Ignore("Environment variable RunAzureTests is not defined");
-    }
-
     // Used to test the various devices by using the same test with VALUES parameter
     // Cannot use LocalStorageDevice from non-Windows OS platform
     public enum DeviceType
     {
         LSD,
-        EmulatedAzure,
         MLSD,
         LocalMemory
     }
@@ -132,10 +102,6 @@ public static class TestUtils
                 bool disableFileBuffering = true;
                 device = new LocalStorageDevice(filename, preallocateFile, deleteOnClose, disableFileBuffering, capacity, recoverDevice, useIoCompletionPort);
                 break;
-            case DeviceType.EmulatedAzure:
-                IgnoreIfNotRunningAzureTests();
-                device = new AzureStorageDevice(AzureEmulatedStorageString, AzureTestContainer, AzureTestDirectory, Path.GetFileName(filename), deleteOnClose: deleteOnClose, logger: TestLoggerFactory.CreateLogger("asd"));
-                break;
             case DeviceType.MLSD:
                 device = new ManagedLocalStorageDevice(filename, preallocateFile, deleteOnClose, true, capacity, recoverDevice);
                 break;
@@ -150,7 +116,7 @@ public static class TestUtils
         return device;
     }
 
-    private static string ConvertedClassName(bool forAzure = false)
+    private static string ConvertedClassName()
     {
         // Make this all under one root folder named {prefix}, which is the base namespace name. All UT namespaces using this must start with this prefix.
         const string prefix = "Tsavorite.Tests";
@@ -158,13 +124,11 @@ public static class TestUtils
 
         if (TestContext.CurrentContext.Test.ClassName.StartsWith($"{prefix}."))
         {
-            string suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix.Length + 1);
-            return forAzure ? suffix : $"{prefix}/{suffix}";
+            return TestContext.CurrentContext.Test.ClassName.Substring(prefix.Length + 1);
         }
         else if (TestContext.CurrentContext.Test.ClassName.StartsWith($"{prefix2}+"))
         {
-            string suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix2.Length + 1);
-            return forAzure ? suffix : $"{prefix2}/{suffix}";
+            return TestContext.CurrentContext.Test.ClassName.Substring(prefix2.Length + 1);
         }
         else
         {
@@ -176,20 +140,6 @@ public static class TestUtils
     // Tsavorite paths are too long; as a workaround (possibly temporary) remove the class name (many long test method names repeat much of the class name).
     //internal static string MethodTestDir => Path.Combine(TestContext.CurrentContext.TestDirectory, $"{ConvertedClassName()}_{TestContext.CurrentContext.Test.MethodName}");
     internal static string MethodTestDir => Path.Combine(TestContext.CurrentContext.TestDirectory, $"Tsavorite.Tests/{TestContext.CurrentContext.Test.MethodName}");
-
-    internal static string AzureTestContainer
-    {
-        get
-        {
-            string container = ConvertedClassName(forAzure: true).Replace('.', '-').ToLower();
-            NameValidator.ValidateContainerName(container);
-            return container;
-        }
-    }
-
-    internal static string AzureTestDirectory => TestContext.CurrentContext.Test.MethodName;
-
-    internal const string AzureEmulatedStorageString = "UseDevelopmentStorage=true;";
 
     public enum AllocatorType
     {

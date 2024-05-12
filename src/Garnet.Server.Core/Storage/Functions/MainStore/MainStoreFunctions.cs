@@ -15,7 +15,6 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="functionsState"></param>
     internal MainStoreFunctions(FunctionsState functionsState)
     {
         this.functionsState = functionsState;

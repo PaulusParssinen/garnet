@@ -23,7 +23,6 @@ internal static class FailoverUtils
     /// </summary>
     /// <param name="status">Failover status type.</param>
     /// <returns>String message for provided status, otherwise exception is thrown.</returns>
-    /// <exception cref="Exception"></exception>
     public static string GetFailoverStatus(FailoverStatus? status)
     {
         return status switch

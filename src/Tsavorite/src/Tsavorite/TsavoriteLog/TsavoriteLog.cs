@@ -233,9 +233,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Initialize new log instance with specific begin address and (optional) last commit number
     /// </summary>
-    /// <param name="beginAddress"></param>
-    /// <param name="committedUntilAddress"></param>
-    /// <param name="lastCommitNum"></param>
     public void Initialize(long beginAddress, long committedUntilAddress, long lastCommitNum = 0)
     {
         Debug.Assert(!readOnlyMode);
@@ -286,8 +283,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Create new log instance asynchronously
     /// </summary>
-    /// <param name="logSettings"></param>
-    /// <param name="cancellationToken"></param>
     public static async ValueTask<TsavoriteLog> CreateAsync(TsavoriteLogSettings logSettings, CancellationToken cancellationToken = default)
     {
         var log = new TsavoriteLog(logSettings, false);
@@ -399,7 +394,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Commit metadata only (no records added to main log)
     /// </summary>
-    /// <param name="info"></param>
     public void UnsafeCommitMetadataOnly(TsavoriteLogRecoveryInfo info)
     {
         lock (ongoingCommitRequests)
@@ -421,7 +415,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Get page size in bits
     /// </summary>
-    /// <returns></returns>
     public int UnsafeGetLogPageSizeBits()
         => allocator.LogPageSizeBits;
 
@@ -672,7 +665,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Append a user-defined blittable struct header atomically to the log.
     /// </summary>
-    /// <param name="userHeader"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     public unsafe void Enqueue<THeader>(THeader userHeader, out long logicalAddress)
         where THeader : unmanaged
@@ -697,8 +689,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Append a user-defined blittable struct header and one <see cref="SpanByte"/> entry atomically to the log.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     public unsafe void Enqueue<THeader>(THeader userHeader, ref SpanByte item, out long logicalAddress)
         where THeader : unmanaged
@@ -724,9 +714,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Append a user-defined blittable struct header and two <see cref="SpanByte"/> entries entries atomically to the log.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item1"></param>
-    /// <param name="item2"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     public unsafe void Enqueue<THeader>(THeader userHeader, ref SpanByte item1, ref SpanByte item2, out long logicalAddress)
         where THeader : unmanaged
@@ -753,10 +740,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Append a user-defined blittable struct header and three <see cref="SpanByte"/> entries entries atomically to the log.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item1"></param>
-    /// <param name="item2"></param>
-    /// <param name="item3"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     public unsafe void Enqueue<THeader>(THeader userHeader, ref SpanByte item1, ref SpanByte item2, ref SpanByte item3, out long logicalAddress)
         where THeader : unmanaged
@@ -784,8 +767,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Append a user-defined header byte and a <see cref="SpanByte"/> entry atomically to the log.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     public unsafe void Enqueue(byte userHeader, ref SpanByte item, out long logicalAddress)
     {
@@ -842,9 +823,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Try to append a user-defined blittable struct header and two <see cref="SpanByte"/> entries entries atomically to the log.
     /// If it returns true, we are done. If it returns false, we need to retry.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item1"></param>
-    /// <param name="item2"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     /// <returns>Whether the append succeeded</returns>
     public unsafe bool TryEnqueue<THeader>(THeader userHeader, ref SpanByte item1, ref SpanByte item2, out long logicalAddress)
@@ -880,10 +858,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Try to append a user-defined blittable struct header and three <see cref="SpanByte"/> entries entries atomically to the log.
     /// If it returns true, we are done. If it returns false, we need to retry.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item1"></param>
-    /// <param name="item2"></param>
-    /// <param name="item3"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     /// <returns>Whether the append succeeded</returns>
     public unsafe bool TryEnqueue<THeader>(THeader userHeader, ref SpanByte item1, ref SpanByte item2, ref SpanByte item3, out long logicalAddress)
@@ -920,8 +894,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Try to append a user-defined header byte and a <see cref="SpanByte"/> entry atomically to the log. If it returns true, we are
     /// done. If it returns false, we need to retry.
     /// </summary>
-    /// <param name="userHeader"></param>
-    /// <param name="item"></param>
     /// <param name="logicalAddress">Logical address of added entry</param>
     /// <returns>Whether the append succeeded</returns>
     public unsafe bool TryEnqueue(byte userHeader, ref SpanByte item, out long logicalAddress)
@@ -971,7 +943,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="entry">Entry to enqueue</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public ValueTask<long> EnqueueAsync(byte[] entry, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1006,7 +977,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="entry">Entry to enqueue</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public ValueTask<long> EnqueueAsync(ReadOnlyMemory<byte> entry, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1041,7 +1011,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="readOnlySpanBatch">Batch to enqueue</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public ValueTask<long> EnqueueAsync(IReadOnlySpanBatch readOnlySpanBatch, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1154,7 +1123,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="untilAddress">Address until which we should wait for commit, default 0 for tail of log</param>
     /// <param name ="commitNum">CommitNum until which we should wait for commit, default -1 for latest as of now</param>
-    /// <returns></returns>
     public void WaitForCommit(long untilAddress = 0, long commitNum = -1)
     {
         if (untilAddress == 0) untilAddress = TailAddress;
@@ -1175,7 +1143,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <param name="untilAddress">Address until which we should wait for commit, default 0 for tail of log</param>
     /// <param name ="commitNum">CommitNum until which we should wait for commit, default -1 for latest as of now</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask WaitForCommitAsync(long untilAddress = 0, long commitNum = -1, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1286,7 +1253,6 @@ public sealed class TsavoriteLog : IDisposable
     /// complete the commit. Throws exception if this or any 
     /// ongoing commit fails.
     /// </summary>
-    /// <returns></returns>
     public async ValueTask CommitAsync(CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1321,7 +1287,6 @@ public sealed class TsavoriteLog : IDisposable
     /// complete the commit. Throws exception if any commit
     /// from prevCommitTask to current fails.
     /// </summary>
-    /// <returns></returns>
     public async ValueTask<Task<LinkedCommitInfo>> CommitAsync(Task<LinkedCommitInfo> prevCommitTask, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1398,8 +1363,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Append entry to log - spin-waits until entry is committed to storage.
     /// Does NOT itself issue flush!
     /// </summary>
-    /// <param name="entry"></param>
-    /// <returns></returns>
     public long EnqueueAndWaitForCommit(byte[] entry)
     {
         long logicalAddress;
@@ -1413,8 +1376,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Append entry to log - spin-waits until entry is committed to storage.
     /// Does NOT itself issue flush!
     /// </summary>
-    /// <param name="entry"></param>
-    /// <returns></returns>
     public long EnqueueAndWaitForCommit(ReadOnlySpan<byte> entry)
     {
         long logicalAddress;
@@ -1428,8 +1389,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Append batch of entries to log - spin-waits until entry is committed to storage.
     /// Does NOT itself issue flush!
     /// </summary>
-    /// <param name="readOnlySpanBatch"></param>
-    /// <returns></returns>
     public long EnqueueAndWaitForCommit(IReadOnlySpanBatch readOnlySpanBatch)
     {
         long logicalAddress;
@@ -1481,7 +1440,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="entry">Entry to enqueue</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<long> EnqueueAndWaitForCommitAsync(byte[] entry, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1533,7 +1491,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="entry">Entry to enqueue</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<long> EnqueueAndWaitForCommitAsync(ReadOnlyMemory<byte> entry, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1583,9 +1540,7 @@ public sealed class TsavoriteLog : IDisposable
     /// Append batch of entries to log (async) - completes after batch is committed to storage.
     /// Does NOT itself issue flush!
     /// </summary>
-    /// <param name="readOnlySpanBatch"></param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<long> EnqueueAndWaitForCommitAsync(IReadOnlySpanBatch readOnlySpanBatch, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1754,10 +1709,6 @@ public sealed class TsavoriteLog : IDisposable
     /// Unsafely shift the begin address of the log and optionally truncate files on disk, without committing.
     /// Do not use unless you know what you are doing.
     /// </summary>
-    /// <param name="untilAddress"></param>
-    /// <param name="snapToPageStart"></param>
-    /// <param name="truncateLog"></param>
-    /// <param name="noFlush"></param>
     public void UnsafeShiftBeginAddress(long untilAddress, bool snapToPageStart = false, bool truncateLog = false, bool noFlush = false)
     {
         if (Utility.MonotonicUpdate(ref beginAddress, untilAddress, out _))
@@ -1800,8 +1751,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <param name="recover">Whether to recover named iterator from latest commit (if exists). If false, iterator starts from beginAddress.</param>
     /// <param name="scanBufferingMode">Use single or double buffering</param>
     /// <param name="scanUncommitted">Whether we scan uncommitted data</param>
-    /// <param name="logger"></param>
-    /// <returns></returns>
     public TsavoriteLogScanIterator Scan(long beginAddress, long endAddress, string name = null, bool recover = true, ScanBufferingMode scanBufferingMode = ScanBufferingMode.DoublePageBuffering, bool scanUncommitted = false, ILogger logger = null)
     {
         if (readOnlyMode)
@@ -1843,7 +1792,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <param name="address">Logical address to read from</param>
     /// <param name="estimatedLength">Estimated length of entry, if known</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<(byte[], int)> ReadAsync(long address, int estimatedLength = 0, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1874,7 +1822,6 @@ public sealed class TsavoriteLog : IDisposable
     /// <param name="memoryPool">MemoryPool to rent the destination buffer from</param>
     /// <param name="estimatedLength">Estimated length of entry, if known</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<(IMemoryOwner<byte>, int)> ReadAsync(long address, MemoryPool<byte> memoryPool, int estimatedLength = 0, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -1903,7 +1850,6 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     /// <param name="address">Logical address to read from</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     public async ValueTask<int> ReadRecordLengthAsync(long address, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -2799,16 +2745,12 @@ public sealed class TsavoriteLog : IDisposable
     /// <summary>
     /// Get length of entry from pointer to header
     /// </summary>
-    /// <param name="headerPtr"></param>
-    /// <returns></returns>
     public unsafe int UnsafeGetLength(byte* headerPtr)
         => GetLength(headerPtr);
 
     /// <summary>
     /// Get aligned version of record length
     /// </summary>
-    /// <param name="length"></param>
-    /// <returns></returns>
     public static int UnsafeAlign(int length)
         => Align(length);
 

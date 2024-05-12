@@ -37,17 +37,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="tsavoriteLog"></param>
-    /// <param name="hlog"></param>
-    /// <param name="beginAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <param name="scanBufferingMode"></param>
-    /// <param name="epoch"></param>
-    /// <param name="headerSize"></param>
-    /// <param name="name"></param>
-    /// <param name="getMemory"></param>
-    /// <param name="scanUncommitted"></param>
-    /// <param name="logger"></param>
     internal unsafe TsavoriteLogScanIterator(TsavoriteLog tsavoriteLog, BlittableAllocator<Empty, byte> hlog, long beginAddress, long endAddress, GetMemory getMemory, ScanBufferingMode scanBufferingMode, LightEpoch epoch, int headerSize, string name, bool scanUncommitted = false, ILogger logger = null)
         : base(beginAddress == 0 ? hlog.GetFirstValidLogicalAddress(0) : beginAddress, endAddress, scanBufferingMode, false, epoch, hlog.LogPageSizeBits, logger: logger)
     {
@@ -225,7 +214,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <param name="entry">Copy of entry, if found</param>
     /// <param name="entryLength">Actual length of entry</param>
     /// <param name="currentAddress">Logical address of entry</param>
-    /// <returns></returns>
     public unsafe bool GetNext(out byte[] entry, out int entryLength, out long currentAddress)
     {
         return GetNext(out entry, out entryLength, out currentAddress, out _);
@@ -238,7 +226,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <param name="entryLength">Actual length of entry</param>
     /// <param name="currentAddress">Logical address of entry</param>
     /// <param name="nextAddress">Logical address of next entry</param>
-    /// <returns></returns>
     public unsafe bool GetNext(out byte[] entry, out int entryLength, out long currentAddress, out long nextAddress)
     {
         if (disposed)
@@ -318,7 +305,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <param name="entry">Copy of entry, if found</param>
     /// <param name="entryLength">Actual length of entry</param>
     /// <param name="currentAddress">Logical address of entry</param>
-    /// <returns></returns>
     public unsafe bool GetNext(MemoryPool<byte> pool, out IMemoryOwner<byte> entry, out int entryLength, out long currentAddress)
     {
         return GetNext(pool, out entry, out entryLength, out currentAddress, out _);
@@ -332,7 +318,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <param name="entryLength">Actual length of entry</param>
     /// <param name="currentAddress">Logical address of entry</param>
     /// <param name="nextAddress">Logical address of next entry</param>
-    /// <returns></returns>
     public unsafe bool GetNext(MemoryPool<byte> pool, out IMemoryOwner<byte> entry, out int entryLength, out long currentAddress, out long nextAddress)
     {
         if (disposed)
@@ -454,7 +439,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// Consume the next entry in the log with the given consumer
     /// </summary>
     /// <param name="consumer">consumer</param>
-    /// <param name="maxChunkSize"></param>
     /// <typeparam name="T">concrete type of consumer</typeparam>
     /// <returns>whether a next entry is present</returns>
     public unsafe bool TryBulkConsumeNext<T>(T consumer, int maxChunkSize = 0) where T : IBulkLogEntryConsumer
@@ -544,7 +528,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// <param name="entryLength">Actual length of entry</param>
     /// <param name="currentAddress">Logical address of entry</param>
     /// <param name="nextAddress">Logical address of next entry</param>
-    /// <returns></returns>
     public unsafe bool UnsafeGetNext(out byte* entry, out int entryLength, out long currentAddress, out long nextAddress)
     {
         if (disposed)
@@ -609,7 +592,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// Mark iterator complete until specified address. Info is not
     /// persisted until a subsequent commit operation on the log.
     /// </summary>
-    /// <param name="address"></param>
     public void CompleteUntil(long address)
     {
         Utility.MonotonicUpdate(ref requestedCompletedUntilAddress, address, out _);
@@ -621,8 +603,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// on the log. Note: this is slower than CompleteUntil() because the
     /// record's length needs to be looked up first.
     /// </summary>
-    /// <param name="recordStartAddress"></param>
-    /// <param name="token"></param>
     /// <returns>The actual completion address (end address of the record)</returns>
     public async ValueTask<long> CompleteUntilRecordAtAsync(long recordStartAddress, CancellationToken token = default)
     {
@@ -740,13 +720,6 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     /// Retrieve physical address of next iterator value
     /// (under epoch protection if it is from main page buffer)
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <param name="entryLength"></param>
-    /// <param name="currentAddress"></param>
-    /// <param name="outNextAddress"></param>
-    /// <param name="commitRecord"></param>
-    /// <param name="onFrame"></param>
-    /// <returns></returns>
     private unsafe bool GetNextInternal(out long physicalAddress, out int entryLength, out long currentAddress, out long outNextAddress, out bool commitRecord, out bool onFrame)
     {
         while (true)

@@ -107,10 +107,6 @@ public abstract class GarnetServerBase : IGarnetServer
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
-    /// <param name="networkBufferSize"></param>
-    /// <param name="logger"></param>
     public GarnetServerBase(string address, int port, int networkBufferSize, ILogger logger = null)
     {
         this.logger = logger == null ? null : new SessionLogger(logger, $"[{address ?? StoreWrapper.GetIp()}:{port}] ");

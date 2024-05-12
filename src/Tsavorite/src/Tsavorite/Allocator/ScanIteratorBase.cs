@@ -70,13 +70,6 @@ public abstract class ScanIteratorBase
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="beginAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <param name="scanBufferingMode"></param>
-    /// <param name="epoch"></param>
-    /// <param name="logPageSizeBits"></param>
-    /// <param name="initForReads"></param>
-    /// <param name="logger"></param>
     public unsafe ScanIteratorBase(long beginAddress, long endAddress, ScanBufferingMode scanBufferingMode, bool includeSealedRecords, LightEpoch epoch, int logPageSizeBits, bool initForReads = true, ILogger logger = null)
     {
         this.logger = logger;
@@ -126,12 +119,6 @@ public abstract class ScanIteratorBase
     /// <summary>
     /// Buffer and load
     /// </summary>
-    /// <param name="currentAddress"></param>
-    /// <param name="currentPage"></param>
-    /// <param name="currentFrame"></param>
-    /// <param name="headAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <returns></returns>
     protected unsafe bool BufferAndLoad(long currentAddress, long currentPage, long currentFrame, long headAddress, long endAddress)
     {
         for (int i = 0; i < frameSize; i++)

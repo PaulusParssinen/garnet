@@ -41,8 +41,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Try remove worker through the forget command.
     /// </summary>
-    /// <param name="nodeid"></param>
-    /// <param name="expirySeconds"></param>
     /// <param name="errorMessage">The ASCII encoded error message if the method returned <see langword="false"/>; otherwise <see langword="default"/></param>
     public bool TryRemoveWorker(string nodeid, int expirySeconds, out ReadOnlySpan<byte> errorMessage)
     {
@@ -90,9 +88,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Reset cluster config and generated new node id if HARD reset specified
     /// </summary>
-    /// <param name="soft"></param>
-    /// <param name="expirySeconds"></param>
-    /// <returns></returns>
     public ReadOnlySpan<byte> TryReset(bool soft, int expirySeconds = 60)
     {
         try
@@ -140,11 +135,8 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Try to make this node a replica of node with nodeid
     /// </summary>
-    /// <param name="nodeid"></param>
     /// <param name="force">Check if node is clean (i.e. is PRIMARY without any assigned nodes)</param>
-    /// <param name="recovering"></param>
     /// <param name="errorMessage">The ASCII encoded error response if the method returned <see langword="false"/>; otherwise <see langword="default"/></param>
-    /// <param name="logger"></param>
     public bool TryAddReplica(string nodeid, bool force, ref bool recovering, out ReadOnlySpan<byte> errorMessage, ILogger logger = null)
     {
         errorMessage = default;
@@ -200,7 +192,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// List replicas of specified primary with given nodeid
     /// </summary>
-    /// <param name="nodeid"></param>
     public List<string> ListReplicas(string nodeid)
     {
         ClusterConfig current = CurrentConfig;

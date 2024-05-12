@@ -68,8 +68,6 @@ public sealed class LimitedFixedBufferPool : IDisposable
     /// <summary>
     /// Get buffer
     /// </summary>
-    /// <param name="size"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe PoolEntry Get(int size)
     {

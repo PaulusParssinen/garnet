@@ -8,7 +8,6 @@ namespace Tsavorite;
 /// <summary>
 /// Async queue
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public sealed class AsyncQueue<T>
 {
     private readonly SemaphoreSlim semaphore;
@@ -31,7 +30,6 @@ public sealed class AsyncQueue<T>
     /// <summary>
     /// Enqueue item
     /// </summary>
-    /// <param name="item"></param>
     public void Enqueue(T item)
     {
         queue.Enqueue(item);
@@ -41,8 +39,6 @@ public sealed class AsyncQueue<T>
     /// <summary>
     /// Async dequeue
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public async Task<T> DequeueAsync(CancellationToken cancellationToken = default)
     {
         for (; ; )
@@ -59,21 +55,16 @@ public sealed class AsyncQueue<T>
     /// <summary>
     /// Wait for queue to have at least one entry
     /// </summary>
-    /// <returns></returns>
     public void WaitForEntry() => semaphore.Wait();
 
     /// <summary>
     /// Wait for queue to have at least one entry
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     public Task WaitForEntryAsync(CancellationToken token = default) => semaphore.WaitAsync(token);
 
     /// <summary>
     /// Try dequeue (if item exists)
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
     public bool TryDequeue(out T item)
     {
         return queue.TryDequeue(out item);

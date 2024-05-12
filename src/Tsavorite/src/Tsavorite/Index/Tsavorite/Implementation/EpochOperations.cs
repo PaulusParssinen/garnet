@@ -27,7 +27,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Increment global current epoch
     /// </summary>
-    /// <returns></returns>
     public long BumpCurrentEpoch() => epoch.BumpCurrentEpoch();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

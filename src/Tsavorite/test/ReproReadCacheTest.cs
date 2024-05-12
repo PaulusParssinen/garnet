@@ -118,8 +118,6 @@ internal class RandomReadCacheTests
     {
         if (numThreads == 1 && keyContentionMode == KeyContentionMode.Contention)
             Assert.Ignore("Skipped because 1 thread cannot have contention");
-        if (numThreads > 2 && IsRunningAzureTests)
-            Assert.Ignore("Skipped because > 2 threads when IsRunningAzureTests");
         if (TestContext.CurrentContext.CurrentRepeatCount > 0)
             Debug.WriteLine($"*** Current test iteration: {TestContext.CurrentContext.CurrentRepeatCount + 1} ***");
 

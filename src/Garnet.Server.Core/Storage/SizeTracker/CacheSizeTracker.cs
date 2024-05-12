@@ -48,7 +48,6 @@ public class CacheSizeTracker
     /// <param name="store">Tsavorite store instance</param>
     /// <param name="logSettings">Hybrid log settings</param>
     /// <param name="targetSize">Total memory size target</param>
-    /// <param name="loggerFactory"></param>
     public CacheSizeTracker(TsavoriteKV<byte[], IGarnetObject> store, LogSettings logSettings, long targetSize, ILoggerFactory loggerFactory = null)
     {
         Debug.Assert(store != null);

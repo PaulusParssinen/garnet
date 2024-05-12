@@ -275,13 +275,6 @@ internal sealed class Options
     [Option("maxthreads", Required = false, HelpText = "Maximum worker and completion threads in thread pool, 0 uses the system default.")]
     public int ThreadPoolMaxThreads { get; set; }
 
-    [OptionValidation]
-    [Option("use-azure-storage", Required = false, HelpText = "Use Azure Page Blobs for storage instead of local storage.")]
-    public bool? UseAzureStorage { get; set; }
-
-    [Option("storage-string", Required = false, HelpText = "The connection string to use when establishing connection to Azure Blobs Storage.")]
-    public string AzureStorageConnectionString { get; set; }
-
     [IntRangeValidation(-1, int.MaxValue)]
     [Option("checkpoint-throttle-delay", Required = false, HelpText = "Whether and by how much should we throttle the disk IO for checkpoints: -1 - disable throttling; >= 0 - run checkpoint flush in separate task, sleep for specified time after each WriteAsync")]
     public int CheckpointThrottleFlushDelayMs { get; set; }
@@ -332,19 +325,9 @@ internal sealed class Options
     public ConfigFileType ConfigExportFormat { get; set; }
 
     [System.Text.Json.Serialization.JsonIgnore]
-    [OptionValidation]
-    [Option("use-azure-storage-for-config-import", Required = false, Default = false, HelpText = "Use Azure storage to import config file")]
-    public bool? UseAzureStorageForConfigImport { get; set; }
-
-    [System.Text.Json.Serialization.JsonIgnore]
     [FilePathValidation(false, false, false)]
     [Option("config-export-path", Required = false, HelpText = "Export (save) current configuration options to the provided path")]
     public string ConfigExportPath { get; set; }
-
-    [System.Text.Json.Serialization.JsonIgnore]
-    [OptionValidation]
-    [Option("use-azure-storage-for-config-export", Required = false, Default = false, HelpText = "Use Azure storage to export config file")]
-    public bool? UseAzureStorageForConfigExport { get; set; }
 
     [OptionValidation]
     [Option("use-native-device-linux", Required = false, HelpText = "Use native device on Linux for local storage")]
@@ -467,17 +450,11 @@ internal sealed class Options
 
     public GarnetServerOptions GetServerOptions(ILogger logger = null)
     {
-        bool useAzureStorage = UseAzureStorage.GetValueOrDefault();
         bool enableStorageTier = EnableStorageTier.GetValueOrDefault();
         bool enableRevivification = EnableRevivification.GetValueOrDefault();
 
-        if (useAzureStorage && string.IsNullOrEmpty(AzureStorageConnectionString))
-            throw new Exception("Cannot enable use-azure-storage without supplying storage-string.");
-
         string logDir = LogDir;
-        if (!useAzureStorage && enableStorageTier) logDir = new DirectoryInfo(string.IsNullOrEmpty(logDir) ? "." : logDir).FullName;
         string checkpointDir = CheckpointDir;
-        if (!useAzureStorage) checkpointDir = new DirectoryInfo(string.IsNullOrEmpty(checkpointDir) ? "." : checkpointDir).FullName;
 
         string address = !string.IsNullOrEmpty(this.Address) && this.Address.Equals("localhost", StringComparison.CurrentCultureIgnoreCase)
             ? IPAddress.Loopback.ToString()
@@ -579,9 +556,7 @@ internal sealed class Options
             QuietMode = QuietMode.GetValueOrDefault(),
             ThreadPoolMinThreads = ThreadPoolMinThreads,
             ThreadPoolMaxThreads = ThreadPoolMaxThreads,
-            DeviceFactoryCreator = useAzureStorage
-                ? () => new AzureStorageNamedDeviceFactory(AzureStorageConnectionString, logger)
-                : () => new LocalStorageNamedDeviceFactory(useNativeDeviceLinux: UseNativeDeviceLinux.GetValueOrDefault(), logger: logger),
+            DeviceFactoryCreator = () => new LocalStorageNamedDeviceFactory(useNativeDeviceLinux: UseNativeDeviceLinux.GetValueOrDefault(), logger: logger),
             CheckpointThrottleFlushDelayMs = CheckpointThrottleFlushDelayMs,
             EnableScatterGatherGet = EnableScatterGatherGet.GetValueOrDefault(),
             ReplicaSyncDelayMs = ReplicaSyncDelayMs,

@@ -200,7 +200,6 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     /// <summary>
     /// Allocate memory page, pinned in memory, and in sector aligned form, if possible
     /// </summary>
-    /// <param name="index"></param>
     internal override void AllocatePage(int index)
     {
         IncrementAllocatedPageCount();
@@ -304,11 +303,6 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     /// Invoked by users to obtain a record from disk. It uses sector aligned memory to read 
     /// the record efficiently into memory.
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="result"></param>
     protected override void AsyncReadRecordObjectsToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, AsyncIOContext<SpanByte, SpanByte> context, SectorAlignedMemory result = default)
     {
         throw new InvalidOperationException("AsyncReadRecordObjectsToMemory invalid for SpanByteAllocator");
@@ -317,9 +311,6 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     /// <summary>
     /// Retrieve objects from object log
     /// </summary>
-    /// <param name="record"></param>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     protected override bool RetrievedFullRecord(byte* record, ref AsyncIOContext<SpanByte, SpanByte> ctx) => true;
 
     public override ref SpanByte GetContextRecordKey(ref AsyncIOContext<SpanByte, SpanByte> ctx) => ref GetKey((long)ctx.record.GetValidPointer());
@@ -385,17 +376,6 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     /// <summary>
     /// Read pages from specified device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="readPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="frame"></param>
-    /// <param name="completed"></param>
-    /// <param name="devicePageOffset"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
     internal void AsyncReadPagesFromDeviceToFrame<TContext>(
                                     long readPageStart,
                                     int numPages,

@@ -18,8 +18,6 @@ public interface IGarnetAdvancedApi
     /// <summary>
     /// Complete pending read operations on main store
     /// </summary>
-    /// <param name="outputArr"></param>
-    /// <param name="wait"></param>
     bool GET_CompletePending((GarnetStatus, SpanByteAndMemory)[] outputArr, bool wait = false);
 
     /// <summary>

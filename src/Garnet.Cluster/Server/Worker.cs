@@ -80,6 +80,5 @@ public struct Worker
     /// <summary>
     /// ToString
     /// </summary>
-    /// <returns></returns>
     public override string ToString() => $"{Nodeid} {Address} {Port} {ConfigEpoch} {Role} {ReplicaOfNodeId}";
 }

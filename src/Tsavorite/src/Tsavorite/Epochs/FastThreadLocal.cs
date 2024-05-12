@@ -6,7 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Fast implementation of instance-thread-local variables
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class FastThreadLocal<T>
 {
     // Max instances supported

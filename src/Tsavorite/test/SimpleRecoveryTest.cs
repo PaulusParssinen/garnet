@@ -50,10 +50,6 @@ public class RecoveryTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public async ValueTask PageBlobSimpleRecoveryTest([Values] CheckpointType checkpointType, [Values] bool isAsync, [Values] bool testCommitCookie)
     {
-        TestUtils.IgnoreIfNotRunningAzureTests();
-        checkpointManager = new DeviceLogCommitCheckpointManager(
-            new AzureStorageNamedDeviceFactory(TestUtils.AzureEmulatedStorageString),
-            new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"));
         await SimpleRecoveryTest1_Worker(checkpointType, isAsync, testCommitCookie);
         checkpointManager.PurgeAll();
     }

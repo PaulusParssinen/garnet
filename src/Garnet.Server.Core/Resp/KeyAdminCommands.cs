@@ -132,11 +132,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// EXISTS multiple keys
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private bool NetworkEXISTS<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -170,10 +165,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Exists RESP command
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
     /// <param name="ptr">Reading pointer to network buffer</param>
     /// <param name="storageApi">Garnet API instance</param>
-    /// <returns></returns>
     private bool NetworkEXISTS<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -206,13 +199,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Set a timeout on a key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-
     /// <param name="command">Indicates which command to use, expire or pexpire.</param>
     /// <param name="count">Number of arguments sent with this command.</param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private bool NetworkEXPIRE<TGarnetApi>(RespCommand command, int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -275,10 +263,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// PERSIST command
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
     /// <param name="ptr">Reading pointer to the buffer</param>
     /// <param name="storageApi">The Garnet API instance</param>
-    /// <returns></returns>
     private bool NetworkPERSIST<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -311,11 +297,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the remaining time to live of a key that has a timeout.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="ptr"></param>
     /// <param name="command">either if the call is for tll or pttl command</param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private bool NetworkTTL<TGarnetApi>(byte* ptr, RespCommand command, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

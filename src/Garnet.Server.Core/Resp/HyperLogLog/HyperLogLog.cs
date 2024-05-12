@@ -110,7 +110,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Custom Garnet HyperLogLog Constructor
     /// </summary>
-    /// <param name="pbit"></param>
     public HyperLogLog(byte pbit)
     {
         this.pbit = pbit;
@@ -130,8 +129,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Extract register index
     /// </summary>
-    /// <param name="hv"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort RegIdx(long hv) => (ushort)(hv & (this.mcnt - 1));
 
@@ -149,9 +146,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Get register-idx value
     /// </summary>
-    /// <param name="reg"></param>
-    /// <param name="idx"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private byte _get_register(byte* reg, ushort idx)
     {
@@ -168,9 +162,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Set register-idx in register array to val.
     /// </summary>
-    /// <param name="reg"></param>
-    /// <param name="idx"></param>
-    /// <param name="val"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _set_register(byte* reg, ushort idx, byte val)
     {
@@ -191,25 +182,18 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Check if header is correctly formatted.
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsValidHYLL(byte* ptr) => (IsSparse(ptr) || IsDense(ptr)) && IsHYLL(ptr);
 
     /// <summary>
     /// Check if value is of type HLL
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <param name="length"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsValidHYLL(byte* ptr, int length) => IsHYLL(ptr) && IsValidHLLLength(ptr, length);
 
     /// <summary>
     /// Check if tag is correctly set.
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsHYLL(byte* ptr) => *(int*)(ptr + 4) == (int)0x48594C4C;
 
@@ -264,17 +248,12 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Check if previously calculated cardinality has been invalidated by previous update
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsValidCard(byte* ptr) => (GetCard(ptr) >= 0);
 
     /// <summary>
     /// Initialize HLL data structure
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="value"></param>
-    /// <param name="vlen"></param>
     public void Init(byte* input, byte* value, int vlen)
     {
         int count = *(int*)(input);
@@ -322,8 +301,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Initial length for HLL based on inserted value count from input
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     public int SparseInitialLength(byte* input)
     {
         int count = *(int*)(input);//get count of elements in sequence
@@ -344,8 +321,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Required space allocation for given count of inserted values
     /// </summary>
-    /// <param name="cnt"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int SparseRequiredBytes(int cnt)
     {
@@ -360,10 +335,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Check if allocated space is enough for [count] elements.
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="valueLen"></param>
-    /// <param name="count"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool CanGrowInPlace(byte* value, int valueLen, int count) => SparseCurrentSizeInBytes(value) + (SparseMaxBytesPerInsert * count) < valueLen;
 
@@ -389,9 +360,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Calculate growth for merge. 
     /// </summary>
-    /// <param name="srcHLL"></param>
-    /// <param name="dstHLL"></param>        
-    /// <returns></returns>
     public int MergeGrow(byte* srcHLL, byte* dstHLL)
     {
         byte dstType = GetType(dstHLL);
@@ -410,11 +378,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Merge operation triggered growth. First copy/transform oldHLL to newHLL and then merge srcHLL to newHLL.
     /// </summary>
-    /// <param name="srcHLLPtr"></param>
-    /// <param name="oldDstHLLPtr"></param>
-    /// <param name="newDstHLLPtr"></param>
-    /// <param name="oldValueLen"></param>
-    /// <param name="newValueLen"></param>
     public void CopyUpdateMerge(byte* srcHLLPtr, byte* oldDstHLLPtr, byte* newDstHLLPtr, int oldValueLen, int newValueLen)
     {
         if (oldValueLen == newValueLen)
@@ -434,11 +397,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Main Copy update used for growing sparse to sparse or dense
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="oldValue"></param>
-    /// <param name="newValue"></param>
-    /// <param name="newValueLen"></param>
-    /// <returns></returns>
     public bool CopyUpdate(byte* input, byte* oldValue, byte* newValue, int newValueLen)
     {
         bool fUpdated = false;
@@ -468,10 +426,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Copy oldValue (sparse) to newValue (dense) and insert new hash-value (hv)
     /// </summary>
-    /// <param name="hv"></param>
-    /// <param name="oldValue"></param>
-    /// <param name="newValue"></param>
-    /// <returns></returns>
     private bool SparseToDenseCopy(long hv, byte* oldValue, byte* newValue)
     {
         bool fUpdated = false;
@@ -484,10 +438,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Copy oldValue (sparse) to newValue (sparse) and insert new hash-value (hv)
     /// </summary>
-    /// <param name="hv"></param>
-    /// <param name="oldValue"></param>
-    /// <param name="newValue"></param>
-    /// <returns></returns>
     private bool SparseToSparseCopy(long hv, byte* oldValue, byte* newValue)
     {
         int sparseBlobBytes = SparseCurrentSizeInBytes(oldValue);
@@ -498,8 +448,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Merge denseBlobA to denseBlobB
     /// </summary>
-    /// <param name="srcDenseBlob"></param>
-    /// <param name="dstDenseBlob"></param>
     public bool DenseToDense(byte* srcDenseBlob, byte* dstDenseBlob)
     {
         bool fUpdated = false;
@@ -522,11 +470,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Main multi value update method
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="value"></param>
-    /// <param name="valueLen"></param>
-    /// <param name="updated"></param>
-    /// <returns></returns>           
     public bool Update(byte* input, byte* value, int valueLen, ref bool updated)
     {
         int count = *(int*)(input);
@@ -774,8 +717,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// No correction for large values sparse estimator
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     private long CountSparseNCEstimator(byte* ptr)
     {
         int* rhisto = stackalloc int[64];
@@ -831,8 +772,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// No correction for large values dense estimator
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     private long CountDenseNCEstimator(byte* ptr)
     {
         int* rhisto = stackalloc int[64];
@@ -897,10 +836,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// TryMerge - fails if cannot update in place
     /// </summary>
-    /// <param name="srcBlob"></param>
-    /// <param name="dstBlob"></param>
-    /// <param name="dstLen"></param>
-    /// <returns></returns>
     public bool TryMerge(byte* srcBlob, byte* dstBlob, int dstLen)
     {
         byte dTypeDst = GetType(dstBlob);
@@ -993,9 +928,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Merge sparseSrc to SparseDst
     /// </summary>
-    /// <param name="sparseSrc"></param>
-    /// <param name="sparceDst"></param>
-    /// <returns></returns>
     public bool SparseToSparse(byte* sparseSrc, byte* sparceDst)
     {
         bool fUpdated = false;
@@ -1024,8 +956,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Count zeros in dense
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     private int DenseCountNonZero(byte* ptr)
     {
         int cnt = 0;
@@ -1043,8 +973,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Count zeros in sparse
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     private int SparseCountNonZero(byte* ptr)
     {
         ushort rleSize = GetSparseRLESize(ptr);
@@ -1106,7 +1034,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Dump HLL structure raw bytes
     /// </summary>
-    /// <param name="ptr"></param>
     public void DumpRawBytes(byte* ptr)
     {
         byte dType = GetType(ptr);
@@ -1124,8 +1051,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Used for debugging to compare dense and sparse HLL
     /// </summary>
-    /// <param name="denseHLL"></param>
-    /// <param name="sparseHLL"></param>
     public void CompareSparseToDense(byte* denseHLL, byte* sparseHLL)
     {
         Dictionary<int, int> denseRegs = new();
@@ -1172,7 +1097,6 @@ public unsafe class HyperLogLog
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="ptr"></param>
     public void DumpRegs(byte* ptr)
     {
         byte dType = GetType(ptr);

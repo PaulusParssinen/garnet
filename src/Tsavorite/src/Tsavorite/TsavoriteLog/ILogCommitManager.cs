@@ -21,14 +21,11 @@ public interface ILogCommitManager : IDisposable
     /// <summary>
     /// Return commit metadata
     /// </summary>
-    /// <param name="commitNum"></param>
-    /// <returns></returns>
     byte[] GetCommitMetadata(long commitNum);
 
     /// <summary>
     /// Get list of commits, in order of usage preference
     /// </summary>
-    /// <returns></returns>
     public IEnumerable<long> ListCommits();
 
     /// <summary>

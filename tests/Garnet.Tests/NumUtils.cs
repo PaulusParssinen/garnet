@@ -8,8 +8,6 @@ internal static class NumUtils
     /// <summary>
     /// Convert integer into sequence of ASCII bytes
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="result"></param>
     public static unsafe void IntToBytes(int value, ref byte* result)
     {
         int length = NumDigits(value);
@@ -53,8 +51,6 @@ internal static class NumUtils
     /// <summary>
     /// Return number of digits in given number
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
     public static int NumDigits(int v)
     {
         if (v < 10) return 1;

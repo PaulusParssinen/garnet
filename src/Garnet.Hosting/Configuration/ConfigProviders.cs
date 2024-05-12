@@ -43,8 +43,6 @@ internal class ConfigProviderFactory
     /// Get a IConfigProvider instance based on its configuration file type
     /// </summary>
     /// <param name="fileType">The configuration file type</param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
     public static IConfigProvider GetConfigProvider(ConfigFileType fileType)
     {
         switch (fileType)

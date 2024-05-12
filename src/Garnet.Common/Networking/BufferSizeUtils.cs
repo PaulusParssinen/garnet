@@ -15,7 +15,6 @@ public static class BufferSizeUtils
     /// Compute required client buffer size
     /// </summary>
     /// <param name="maxSizeSettings">Settings</param>
-    /// <returns></returns>
     public static int ClientBufferSize(MaxSizeSettings maxSizeSettings)
     {
         int minSizeUpsert = maxSizeSettings.MaxKeySize + maxSizeSettings.MaxValueSize + 2 + BatchHeader.Size;
@@ -31,7 +30,6 @@ public static class BufferSizeUtils
     /// Compute required server buffer size
     /// </summary>
     /// <param name="maxSizeSettings">Settings</param>
-    /// <returns></returns>
     public static int ServerBufferSize(MaxSizeSettings maxSizeSettings)
     {
         int minSizeRead = maxSizeSettings.MaxOutputSize + 2 + BatchHeader.Size;

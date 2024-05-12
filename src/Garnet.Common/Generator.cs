@@ -14,7 +14,6 @@ public static class Generator
     /// Generates a random hex string of specified length
     /// </summary>
     /// <param name="size">The length of the hex identifier string</param>
-    /// <returns></returns>
     public static string CreateHexId(int size = 40)
     {
         Span<byte> nodeIdBuffer = stackalloc byte[size / 2];
@@ -26,7 +25,6 @@ public static class Generator
     /// Generates a default hex string of specified length (all zeros)
     /// </summary>
     /// <param name="size">The length of the hex identifier string</param>
-    /// <returns></returns>
     public static string DefaultHexId(int size = 40)
     {
         Span<byte> nodeIdBuffer = stackalloc byte[size / 2];

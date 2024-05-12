@@ -429,10 +429,6 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
     /// <summary>
     /// Note: will read potentially more data (based on sector alignment)
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="address"></param>
-    /// <param name="buffer"></param>
-    /// <param name="size"></param>
     protected unsafe void ReadInto(IDevice device, ulong address, out byte[] buffer, int size)
     {
         if (bufferPool == null)
@@ -455,10 +451,6 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
     /// <summary>
     /// Note: pads the bytes with zeros to achieve sector alignment
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="address"></param>
-    /// <param name="buffer"></param>
-    /// <param name="size"></param>
     protected unsafe void WriteInto(IDevice device, ulong address, byte[] buffer, int size)
     {
         if (bufferPool == null)

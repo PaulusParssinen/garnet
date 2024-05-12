@@ -60,7 +60,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Try to attach to primary for replication, recover checkpoint and initiate task for aof streaming
     /// </summary>
-    /// <returns></returns>
     public bool TryReplicateFromPrimary(out ReadOnlySpan<byte> errorMessage, bool background = false)
     {
         errorMessage = default;
@@ -229,8 +228,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Check if device needs to be initialized with a specifi segment size depending on the checkpoint file type
     /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
     public static bool ShouldInitialize(CheckpointFileType type)
     {
         //TODO: verify that the below checkpoint file types require initialization with segment size given as option
@@ -248,9 +245,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Get an IDevice that is also initialized if needed
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="type"></param>
-    /// <returns></returns>
     public IDevice GetInitializedSegmentFileDevice(Guid token, CheckpointFileType type)
     {
         var device = type switch
@@ -269,14 +263,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Process request from primary to start recovery process from the retrieved checkpoint.
     /// </summary>
-    /// <param name="recoverMainStoreFromToken"></param>
-    /// <param name="recoverObjectStoreFromToken"></param>
-    /// <param name="replayAOF"></param>
-    /// <param name="primary_replid"></param>
-    /// <param name="remoteCheckpoint"></param>
-    /// <param name="beginAddress"></param>
-    /// <param name="recoveredReplicationOffset"></param>
-    /// <returns></returns>
     public long BeginReplicaRecover(
         bool recoverMainStoreFromToken,
         bool recoverObjectStoreFromToken,

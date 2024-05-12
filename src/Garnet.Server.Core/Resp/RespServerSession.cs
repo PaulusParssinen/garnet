@@ -869,8 +869,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Gets the output object from the SpanByteAndMemory object
     /// </summary>
-    /// <param name="output"></param>
-    /// <returns></returns>
     private unsafe ObjectOutputHeader ProcessOutputWithHeader(SpanByteAndMemory output)
     {
         ReadOnlySpan<byte> outputSpan;

@@ -107,7 +107,6 @@ internal sealed unsafe class WatchedKeysContainer
     /// <summary>
     /// Validate record version to validate that records are unmodified
     /// </summary>
-    /// <returns></returns>
     public bool ValidateWatchVersion()
     {
         for (int i = 0; i < sliceCount; i++)

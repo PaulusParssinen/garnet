@@ -26,7 +26,6 @@ public abstract class LogCommitPolicy
     /// </summary>
     /// <param name="currentTail">If successful, this request will commit at least up to this tail</param>
     /// <param name="commitRequired">Whether commit may be required, i.e., tail address is higher than last covered commit request or metadata (e.g., iterators) changed </param>
-    /// <returns></returns>
     public abstract bool AdmitCommit(long currentTail, bool commitRequired);
 
     /// <summary>

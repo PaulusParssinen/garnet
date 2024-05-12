@@ -11,11 +11,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Apply primary AOF records.
     /// </summary>
-    /// <param name="record"></param>
-    /// <param name="recordLength"></param>
-    /// <param name="previousAddress"></param>
-    /// <param name="currentAddress"></param>
-    /// <param name="nextAddress"></param>
     public unsafe void ProcessPrimaryStream(byte* record, int recordLength, long previousAddress, long currentAddress, long nextAddress)
     {
         // logger?.LogInformation("Processing {recordLength} bytes; previousAddress {previousAddress}, currentAddress {currentAddress}, nextAddress {nextAddress}, current AOF tail {tail}", recordLength, previousAddress, currentAddress, nextAddress, storeWrapper.appendOnlyFile.TailAddress);

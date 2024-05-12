@@ -64,8 +64,7 @@ internal class TryEnqueueTests
         device = TestUtils.CreateTestDevice(deviceType, filename);
         log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
 
-        // Issue with Non Async Commit and Emulated Azure so don't run it - at least put after device creation to see if crashes doing that simple thing
-        if (OperatingSystem.IsWindows() && deviceType == TestUtils.DeviceType.EmulatedAzure)
+        if (OperatingSystem.IsWindows())
             return;
 
         // Reduce SpanBatch to make sure entry fits on page

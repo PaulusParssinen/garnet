@@ -203,7 +203,6 @@ public sealed unsafe class LightEpoch
     /// <summary>
     /// Increment global current epoch
     /// </summary>
-    /// <returns></returns>
     internal long BumpCurrentEpoch()
     {
         Debug.Assert(ThisInstanceProtected(), "BumpCurrentEpoch must be called on a protected thread");
@@ -222,7 +221,6 @@ public sealed unsafe class LightEpoch
     /// with the prior epoch
     /// </summary>
     /// <param name="onDrain">Trigger action</param>
-    /// <returns></returns>
     public void BumpCurrentEpoch(Action onDrain)
     {
         long PriorEpoch = BumpCurrentEpoch() - 1;
@@ -278,7 +276,6 @@ public sealed unsafe class LightEpoch
     /// </summary>
     /// <param name="markerIdx">ID of activity</param>
     /// <param name="version">Version</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Mark(int markerIdx, long version)
     {

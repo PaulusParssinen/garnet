@@ -53,7 +53,6 @@ internal sealed class CountdownWrapper
 /// <summary>
 /// Memory allocator for objects
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public sealed class MallocFixedPageSize<T> : IDisposable
 {
     // We will never get an index of 0 from (Bulk)Allocate
@@ -125,7 +124,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// Get physical address -- for blittable objects only
     /// </summary>
     /// <param name="logicalAddress">The logicalAddress of the allocation. For BulkAllocate, this may be an address within the chunk size, to reference that particular record.</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetPhysicalAddress(long logicalAddress)
     {
@@ -137,7 +135,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// Get object
     /// </summary>
     /// <param name="index">The index of the allocation. For BulkAllocate, this may be a value within the chunk size, to reference that particular record.</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe ref T Get(long index)
     {
@@ -151,8 +148,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Set object
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="value"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void Set(long index, ref T value)
     {
@@ -166,7 +161,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Free object
     /// </summary>
-    /// <param name="pointer"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Free(long pointer)
     {
@@ -295,13 +289,11 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Is checkpoint complete
     /// </summary>
-    /// <returns></returns>
     public bool IsCheckpointCompleted() => checkpointCallbackCount == 0;
 
     /// <summary>
     /// Is checkpoint completed
     /// </summary>
-    /// <returns></returns>
     public async ValueTask IsCheckpointCompletedAsync(CancellationToken token = default)
     {
         SemaphoreSlim s = checkpointSemaphore;
@@ -312,21 +304,12 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Public facing persistence API
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="offset"></param>
-    /// <param name="numBytesWritten"></param>
     public void BeginCheckpoint(IDevice device, ulong offset, out ulong numBytesWritten)
         => BeginCheckpoint(device, offset, out numBytesWritten, false, default, default);
 
     /// <summary>
     /// Internal persistence API
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="offset"></param>
-    /// <param name="numBytesWritten"></param>
-    /// <param name="useReadCache"></param>
-    /// <param name="skipReadCache"></param>
-    /// <param name="epoch"></param>
     internal unsafe void BeginCheckpoint(IDevice device, ulong offset, out ulong numBytesWritten, bool useReadCache, SkipReadCache skipReadCache, LightEpoch epoch)
     {
         int localCount = count;
@@ -395,13 +378,11 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Max valid address
     /// </summary>
-    /// <returns></returns>
     public int GetMaxValidAddress() => count;
 
     /// <summary>
     /// Get page size
     /// </summary>
-    /// <returns></returns>
     public int GetPageSize() => PageSize;
     #endregion
 
@@ -409,10 +390,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Recover
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="buckets"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="offset"></param>
     public void Recover(IDevice device, ulong offset, int buckets, ulong numBytes)
     {
         BeginRecovery(device, offset, buckets, numBytes, out _);
@@ -421,11 +398,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Recover
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="buckets"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="offset"></param>
     public async ValueTask<ulong> RecoverAsync(IDevice device, ulong offset, int buckets, ulong numBytes, CancellationToken cancellationToken)
     {
         BeginRecovery(device, offset, buckets, numBytes, out ulong numBytesRead, isAsync: true);
@@ -436,8 +408,6 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <summary>
     /// Check if recovery complete
     /// </summary>
-    /// <param name="waitUntilComplete"></param>
-    /// <returns></returns>
     public bool IsRecoveryCompleted(bool waitUntilComplete = false)
     {
         bool completed = recoveryCountdown.IsCompleted;

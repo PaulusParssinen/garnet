@@ -3,12 +3,13 @@
 
 #define CALLOC
 
+using Tsavorite.Device;
+
 namespace Tsavorite;
 
 /// <summary>
 /// Result of async page read
 /// </summary>
-/// <typeparam name="TContext"></typeparam>
 public sealed class PageAsyncReadResult<TContext>
 {
     internal long page;
@@ -96,7 +97,6 @@ internal sealed class FlushCompletionTracker
 /// <summary>
 /// Page async flush result
 /// </summary>
-/// <typeparam name="TContext"></typeparam>
 public sealed class PageAsyncFlushResult<TContext>
 {
     /// <summary>

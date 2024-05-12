@@ -453,10 +453,6 @@ public unsafe partial class BitmapManager
     /// <summary>
     /// Execute bitfield operation described at input on bitmap stored within value.
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="value"></param>
-    /// <param name="valLen"></param>
-    /// <returns></returns>
     public static (long, bool) BitFieldExecute(byte* input, byte* value, int valLen)
     {
         byte secondaryOPcode = GetBitFieldSecondaryOp(input);

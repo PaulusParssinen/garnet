@@ -9,7 +9,6 @@ namespace Tsavorite.Device;
 /// Asynchronous pool of fixed pre-filled capacity
 /// Supports sync get (TryGet) for fast path
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
 {
     readonly int size;
@@ -23,8 +22,6 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="size"></param>
-    /// <param name="creator"></param>
     public AsyncPool(int size, Func<T> creator)
     {
         this.size = size;
@@ -36,8 +33,6 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     /// <summary>
     /// Get item synchronously
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     public T Get(CancellationToken token = default)
     {
         for (; ; )
@@ -55,8 +50,6 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     /// <summary>
     /// Get item asynchronously
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     public async ValueTask<T> GetAsync(CancellationToken token = default)
     {
         for (; ; )
@@ -74,8 +67,6 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     /// <summary>
     /// Try get item (fast path)
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
     public bool TryGet(out T item)
     {
         if (disposed)
@@ -89,7 +80,6 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     /// <summary>
     /// Return item to pool
     /// </summary>
-    /// <param name="item"></param>
     public void Return(T item)
     {
         itemQueue.Enqueue(item);

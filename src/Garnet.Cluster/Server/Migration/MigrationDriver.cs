@@ -11,7 +11,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// Begin migration task
     /// </summary>
     /// <param name="errorMessage">The ASCII encoded error message if the method returned <see langword="false"/>; otherwise <see langword="default"/></param>
-    /// <returns></returns>
     public bool TryStartMigrationTask(out ReadOnlySpan<byte> errorMessage)
     {
         errorMessage = default;

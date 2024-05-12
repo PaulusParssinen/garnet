@@ -20,7 +20,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         /// <param name="status">The status code; for this variant of <typeparamref name="TAsyncResult"/> intantiation, this will not be pending</param>
         /// <param name="output">The completed output of the operation, if any</param>
         /// <param name="recordMetadata">The record metadata from the operation (currently used by RMW only)</param>
-        /// <returns></returns>
         TAsyncResult CreateCompletedResult(Status status, Output output, RecordMetadata recordMetadata);
 
         /// <summary>
@@ -31,7 +30,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         /// <param name="pendingContext">The <see cref="PendingContext{Input, Output, Context}"/> for the pending operation</param>
         /// <param name="tsavoriteSession">The <see cref="ITsavoriteSession{Key, Value, Input, Output, Context}"/> for this operation</param>
         /// <param name="output">The output to be populated by this operation</param>
-        /// <returns></returns>
         Status DoFastOperation(TsavoriteKV<Key, Value> tsavoriteKV, ref PendingContext<Input, Output, Context> pendingContext, ITsavoriteSession<Key, Value, Input, Output, Context> tsavoriteSession,
                                         out Output output);
         /// <summary>
@@ -41,7 +39,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         /// <param name="tsavoriteSession">The <see cref="ITsavoriteSession{Key, Value, Input, Output, Context}"/> for this operation</param>
         /// <param name="pendingContext">The <see cref="PendingContext{Input, Output, Context}"/> for the pending operation</param>
         /// <param name="token">The cancellation token, if any</param>
-        /// <returns></returns>
         ValueTask<TAsyncResult> DoSlowOperation(TsavoriteKV<Key, Value> tsavoriteKV, ITsavoriteSession<Key, Value, Input, Output, Context> tsavoriteSession,
                                         PendingContext<Input, Output, Context> pendingContext, CancellationToken token);
 

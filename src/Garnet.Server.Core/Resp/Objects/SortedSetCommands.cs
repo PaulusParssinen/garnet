@@ -28,11 +28,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Adds all the specified members with the specified scores to the sorted set stored at key.
     /// Current members get the score updated and reordered.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetAdd<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -104,11 +99,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Removes the specified members from the sorted set stored at key.
     /// Non existing members are ignored.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetRemove<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -190,11 +180,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the sorted set cardinality (number of elements) of the sorted set
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetLength<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -261,12 +246,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Min and max are range boundaries, where 0 is the first element, 1 is the next element and so on.
     /// There can also be negative numbers indicating offsets from the end of the sorted set, with -1 being the last element of the sorted set, -2 the penultimate element and so on.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetRange<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -355,11 +334,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Returns the specified range of elements in the sorted set stored at key.
     /// The ordering is reversed.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetReverseRange<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
        where TGarnetApi : IGarnetApi
     {
@@ -371,11 +345,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Returns the score of member in the sorted set at key.
     /// If member does not exist in the sorted set, or key does not exist, nil is returned.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetScore<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -450,11 +419,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Returns the score of member in the sorted set at key.
     /// If member does not exist in the sorted set, or key does not exist, nil is returned.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetScores<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -531,12 +495,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Removes and returns the first element from the sorted set stored at key,
     /// with the scores ordered from low to high (min) or high to low (max).
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetPop<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -619,11 +577,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the number of elements in the sorted set at key with a score between min and max.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetCount<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -706,12 +659,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// ZREMRANGEBYLEX: Removes all elements in the sorted set between the
     /// lexicographical range specified by min and max.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetLengthByValue<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -795,11 +742,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Increments the score of member in the sorted set stored at key by increment.
     /// If member does not exist in the sorted set, it is added with increment as its score (as if its previous score was 0.0).
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetIncrement<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -889,12 +831,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// ZRANK: Returns the rank of member in the sorted set, the scores in the sorted set are ordered from low to high
     /// ZREVRANK: Returns the rank of member in the sorted set, with the scores ordered from high to low
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetRank<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -970,12 +906,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Both start and stop are 0 -based indexes with 0 being the element with the lowest score.
     /// ZREMRANGEBYSCORE: Removes all elements in the sorted set stored at key with a score between min and max (inclusive by default).
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetRemoveRange<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -1054,11 +984,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns a random element from the sorted set key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool SortedSetRandomMember<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {
@@ -1155,11 +1080,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     ///  and returns the result to the client.
     ///  The total number of input keys is specified.
     /// </summary>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
-    /// <exception cref="GarnetException"></exception>
     private unsafe bool SortedSetDifference<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
          where TGarnetApi : IGarnetApi
     {

@@ -44,7 +44,6 @@ public class RespCommandsInfoProviderFactory
     /// </summary>
     /// <param name="fileType">The RESP commands info file type</param>
     /// <returns>IRespCommandsInfoProvider instance</returns>
-    /// <exception cref="NotImplementedException"></exception>
     public static IRespCommandsInfoProvider GetRespCommandsInfoProvider(RespCommandsObjectFileType fileType = RespCommandsObjectFileType.Default)
     {
         switch (fileType)

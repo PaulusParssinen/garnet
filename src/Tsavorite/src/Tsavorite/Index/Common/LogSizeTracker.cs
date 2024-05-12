@@ -50,7 +50,6 @@ public class LogSizeTracker<Key, Value, TLogSizeCalculator> : IObserver<ITsavori
     /// <param name="logSizeCalculator">Size calculator</param>
     /// <param name="targetSize">Target size for the hybrid log memory utilization</param>
     /// <param name="delta">Delta from target size to maintain memory utilization</param>
-    /// <param name="logger"></param>
     public LogSizeTracker(LogAccessor<Key, Value> logAccessor, TLogSizeCalculator logSizeCalculator, long targetSize, long delta, ILogger logger)
     {
         Debug.Assert(logAccessor != null);

@@ -41,8 +41,6 @@ public abstract class CustomRawStringFunctions : CustomFunctions
     /// <summary>
     /// Get first arg from input
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     protected static ReadOnlySpan<byte> GetFirstArg(ReadOnlySpan<byte> input)
     {
         int offset = 0;
@@ -70,7 +68,6 @@ public abstract class CustomRawStringFunctions : CustomFunctions
     /// Length of initial value, given input
     /// </summary>
     /// <param name="input">Input</param>
-    /// <returns></returns>
     public abstract int GetInitialLength(ReadOnlySpan<byte> input);
 
     /// <summary>

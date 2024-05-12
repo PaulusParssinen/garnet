@@ -27,7 +27,7 @@
     <ProjectReference Include="..\..\src\Garnet.Cluster\Garnet.Cluster.csproj" />
     <ProjectReference Include="..\..\src\Garnet.Common\Garnet.Common.csproj" />
     <ProjectReference Include="..\..\src\Garnet.Hosting\Garnet.Hosting.csproj" />
-    <ProjectReference Include="..\..\src\Garnet.Server.Core\Garnet.Server.Core.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Server\Garnet.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

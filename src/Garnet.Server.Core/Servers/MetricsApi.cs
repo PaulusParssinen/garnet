@@ -23,8 +23,6 @@ public class MetricsApi
     /// <summary>
     /// Get info metrics for specified info type
     /// </summary>
-    /// <param name="infoMetricsType"></param>
-    /// <returns></returns>
     public MetricsItem[] GetInfoMetrics(InfoMetricsType infoMetricsType)
     {
         GarnetInfoMetrics info = new();
@@ -35,7 +33,6 @@ public class MetricsApi
     /// Get info metrics for specified info types
     /// </summary>
     /// <param name="infoMetricsTypes">Info types to get, null to get all</param>
-    /// <returns></returns>
     public IEnumerable<(InfoMetricsType, MetricsItem[])> GetInfoMetrics(InfoMetricsType[] infoMetricsTypes = null)
     {
         GarnetInfoMetrics info = new();
@@ -52,7 +49,6 @@ public class MetricsApi
     /// <summary>
     /// Reset info metrics
     /// </summary>
-    /// <param name="infoMetricsType"></param>
     public void ResetInfoMetrics(InfoMetricsType infoMetricsType)
     {
         if (provider.StoreWrapper.monitor != null)
@@ -73,8 +69,6 @@ public class MetricsApi
     /// <summary>
     /// Get latency metrics (histogram) for specified latency type
     /// </summary>
-    /// <param name="latencyMetricsType"></param>
-    /// <returns></returns>
     public MetricsItem[] GetLatencyMetrics(LatencyMetricsType latencyMetricsType)
     {
         if (provider.StoreWrapper.monitor?.GlobalMetrics.globalLatencyMetrics == null) return Array.Empty<MetricsItem>();
@@ -85,7 +79,6 @@ public class MetricsApi
     /// Get latency metrics (histograms) for specified latency types
     /// </summary>
     /// <param name="latencyMetricsTypes">Latency types to get, null to get all</param>
-    /// <returns></returns>
     public IEnumerable<(LatencyMetricsType, MetricsItem[])> GetLatencyMetrics(LatencyMetricsType[] latencyMetricsTypes = null)
     {
         if (provider.StoreWrapper.monitor?.GlobalMetrics.globalLatencyMetrics == null) return Array.Empty<(LatencyMetricsType, MetricsItem[])>();
@@ -106,7 +99,6 @@ public class MetricsApi
     /// <summary>
     /// Reset latency histogram for eventTypes
     /// </summary>
-    /// <param name="latencyMetricsTypes"></param>
     public void ResetLatencyMetrics(LatencyMetricsType[] latencyMetricsTypes = null)
     {
         latencyMetricsTypes ??= GarnetLatencyMetrics.defaultLatencyTypes;

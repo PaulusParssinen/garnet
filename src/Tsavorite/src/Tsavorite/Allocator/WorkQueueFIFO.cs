@@ -8,7 +8,6 @@ namespace Tsavorite;
 /// <summary>
 /// Shared work queue that ensures one worker at any given time. Uses FIFO ordering of work.
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class WorkQueueFIFO<T> : IDisposable
 {
     const int kMaxQueueSize = 1 << 30;

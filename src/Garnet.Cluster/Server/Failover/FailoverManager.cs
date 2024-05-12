@@ -35,7 +35,6 @@ internal sealed class FailoverManager(ClusterProvider clusterProvider, ILogger l
     /// <summary>
     /// Retrieve the status of an ongoing failover
     /// </summary>
-    /// <returns></returns>
     public string GetFailoverStatus()
     {
         FailoverStatus? status = currentFailoverSession?.status;
@@ -48,7 +47,6 @@ internal sealed class FailoverManager(ClusterProvider clusterProvider, ILogger l
     /// </summary>
     /// <param name="option">Failover type option.</param>
     /// <param name="failoverTimeout">Timeout per failover operation.</param>
-    /// <returns></returns>
     public bool TryStartReplicaFailover(FailoverOption option, TimeSpan failoverTimeout = default)
     {
         if (!failoverTaskLock.TryWriteLock())
@@ -76,7 +74,6 @@ internal sealed class FailoverManager(ClusterProvider clusterProvider, ILogger l
     /// <param name="replicaPort">Port of replica.</param>
     /// <param name="option">Failover option type.</param>
     /// <param name="timeout">Timeout per failover operation.</param>
-    /// <returns></returns>
     public bool TryStartPrimaryFailover(string replicaAddress, int replicaPort, FailoverOption option, TimeSpan timeout)
     {
         if (!failoverTaskLock.TryWriteLock())

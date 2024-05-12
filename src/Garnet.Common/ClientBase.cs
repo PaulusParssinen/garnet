@@ -44,9 +44,6 @@ public abstract unsafe class ClientBase : IDisposable
     /// <summary>
     /// Create
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>       
-    /// <param name="BufferSize"></param>        
     public ClientBase(string address, int port, int BufferSize)
     {
         this.address = address;
@@ -74,16 +71,11 @@ public abstract unsafe class ClientBase : IDisposable
     /// <summary>
     /// Send specified number of bytes from buffer array.
     /// </summary>
-    /// <param name="buf"></param>
-    /// <param name="len"></param>
-    /// <param name="numTokens"></param>
     public abstract void Send(byte[] buf, int len, int numTokens);
 
     /// <summary>
     /// Send specified number of bytes from buffer pointer.
     /// </summary>        
-    /// <param name="len"></param>
-    /// <param name="numTokens"></param>
     public abstract void Send(int len, int numTokens = 1);
 
     /// <summary>

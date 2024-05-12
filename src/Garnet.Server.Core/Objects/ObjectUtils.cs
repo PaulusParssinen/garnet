@@ -39,15 +39,6 @@ internal static class ObjectUtils
     /// <summary>
     /// Reads and parses scan parameters from RESP format
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="length"></param>
-    /// <param name="output"></param>
-    /// <param name="cursorInput"></param>
-    /// <param name="pattern"></param>
-    /// <param name="patternLength"></param>
-    /// <param name="countInInput"></param>
-    /// <param name="bytesDone"></param>
-    /// <returns></returns>
     public static unsafe bool ReadScanInput(byte* input, int length, ref SpanByteAndMemory output, out int cursorInput, out byte* pattern, out int patternLength, out int countInInput, out int bytesDone)
     {
         var _input = (ObjectInputHeader*)input;
@@ -118,10 +109,6 @@ internal static class ObjectUtils
     /// <summary>
     /// Writes output for scan command using RESP format
     /// </summary>
-    /// <param name="items"></param>
-    /// <param name="cursor"></param>
-    /// <param name="output"></param>
-    /// <param name="bytesDone"></param>
     public static unsafe void WriteScanOutput(List<byte[]> items, long cursor, ref SpanByteAndMemory output, int bytesDone)
     {
         bool isMemory = false;

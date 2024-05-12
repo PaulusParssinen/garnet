@@ -11,8 +11,6 @@ public static class GarnetObject
     /// <summary>
     /// Create initial value of object
     /// </summary>
-    /// <param name="garnetObjectType"></param>
-    /// <returns></returns>
     internal static IGarnetObject Create(GarnetObjectType garnetObjectType, long expiration = 0)
     {
         return garnetObjectType switch
@@ -28,7 +26,6 @@ public static class GarnetObject
     /// <summary>
     /// Check if object creation is necessary
     /// </summary>
-    /// <returns></returns>
     internal static bool NeedToCreate(RespInputHeader header)
     {
         return header.type switch

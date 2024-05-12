@@ -96,9 +96,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Dispose session with Tsavorite
     /// </summary>
-    /// <param name="sessionID"></param>
-    /// <param name="sessionPhase"></param>
-    /// <returns></returns>
     internal void DisposeClientSession(int sessionID, Phase sessionPhase)
     {
         // If a session is disposed during a checkpoint cycle, we mark the session

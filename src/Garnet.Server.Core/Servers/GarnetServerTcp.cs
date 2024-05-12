@@ -50,12 +50,6 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     /// <summary>
     /// Constructor for server
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
-    /// <param name="networkBufferSize"></param>
-    /// <param name="tlsOptions"></param>
-    /// <param name="networkSendThrottleMax"></param>
-    /// <param name="logger"></param>
     public GarnetServerTcp(string address, int port, int networkBufferSize = default, IGarnetTlsOptions tlsOptions = null, int networkSendThrottleMax = 8, ILogger logger = null)
         : base(address, port, networkBufferSize, logger)
     {
@@ -151,10 +145,6 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     /// <summary>
     /// Create session (message consumer) given incoming bytes
     /// </summary>
-    /// <param name="bytes"></param>
-    /// <param name="networkSender"></param>
-    /// <param name="session"></param>
-    /// <returns></returns>
     public bool TryCreateMessageConsumer(Span<byte> bytes, INetworkSender networkSender, out IMessageConsumer session)
     {
         session = null;

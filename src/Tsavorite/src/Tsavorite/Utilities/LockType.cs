@@ -64,7 +64,6 @@ public interface ILockableKey
 /// <summary>
 /// A utility class to carry a fixed-length key (blittable or object type) and its assciated info for Locking
 /// </summary>
-/// <typeparam name="TKey"></typeparam>
 public struct FixedLengthLockableKeyStruct<TKey> : ILockableKey
 {
     /// <summary>
@@ -113,8 +112,6 @@ public struct FixedLengthLockableKeyStruct<TKey> : ILockableKey
     /// Sort the passed key array for use in <see cref="ILockableContext{TKey}.Lock{TLockableKey}(TLockableKey[])"/>
     /// and <see cref="ILockableContext{TKey}.Unlock{TLockableKey}(TLockableKey[])"/>
     /// </summary>
-    /// <param name="keys"></param>
-    /// <param name="context"></param>
     public static void Sort(FixedLengthLockableKeyStruct<TKey>[] keys, ILockableContext<TKey> context) => context.SortKeyHashes(keys);
 
     /// <inheritdoc/>

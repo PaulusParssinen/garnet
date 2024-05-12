@@ -8,8 +8,6 @@ namespace Tsavorite;
 /// <summary>
 /// Wrapper to process log-related commands
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public sealed class LogAccessor<Key, Value> : IObservable<ITsavoriteScanIterator<Key, Value>>
 {
     private readonly TsavoriteKV<Key, Value> store;
@@ -18,8 +16,6 @@ public sealed class LogAccessor<Key, Value> : IObservable<ITsavoriteScanIterator
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="store"></param>
-    /// <param name="allocator"></param>
     internal LogAccessor(TsavoriteKV<Key, Value> store, AllocatorBase<Key, Value> allocator)
     {
         this.store = store;

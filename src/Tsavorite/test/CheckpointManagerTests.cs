@@ -17,20 +17,10 @@ public class CheckpointManagerTests
     public async Task CheckpointManagerPurgeCheck([Values] DeviceMode deviceMode)
     {
         ICheckpointManager checkpointManager;
-        if (deviceMode == DeviceMode.Local)
-        {
-            checkpointManager = new DeviceLogCommitCheckpointManager(
-                new LocalStorageNamedDeviceFactory(),
-                new DefaultCheckpointNamingScheme(Path.Join(TestUtils.MethodTestDir, "checkpoints")), false); // PurgeAll deletes this directory
-        }
-        else
-        {
-            TestUtils.IgnoreIfNotRunningAzureTests();
-            checkpointManager = new DeviceLogCommitCheckpointManager(
-                new AzureStorageNamedDeviceFactory(TestUtils.AzureEmulatedStorageString),
-                new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"), false);
-        }
-
+        checkpointManager = new DeviceLogCommitCheckpointManager(
+            new LocalStorageNamedDeviceFactory(),
+            new DefaultCheckpointNamingScheme(Path.Join(TestUtils.MethodTestDir, "checkpoints")), false); // PurgeAll deletes this directory
+        
         using (IDevice log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "hlog.log"), deleteOnClose: true))
         {
             TestUtils.RecreateDirectory(TestUtils.MethodTestDir);

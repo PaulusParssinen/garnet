@@ -111,9 +111,6 @@ internal sealed class CheckpointStore
     /// Assume that addition of new entries executes at completion of a checkpoint.
     /// Since there can be not concurrent checkpoints this method is not thread safe.
     /// </summary>
-    /// <param name="entry"></param>
-    /// <param name="storeType"></param>
-    /// <param name="fullCheckpoint"></param>
     public void AddCheckpointEntry(CheckpointEntry entry, StoreType storeType, bool fullCheckpoint = false)
     {
         //If not full checkpoint index checkpoint will be the one of the previous checkpoint
@@ -209,9 +206,6 @@ internal sealed class CheckpointStore
     ///     if failed suspending new readers cannot delete token
     ///     else we need to move up the chain of entries and ensure the token is not shared with other entries
     /// </summary>
-    /// <param name="toDelete"></param>
-    /// <param name="fileType"></param>
-    /// <returns></returns>
     private bool CanDeleteToken(CheckpointEntry toDelete, CheckpointFileType fileType)
     {
         CheckpointEntry curr = toDelete.next;
@@ -237,7 +231,6 @@ internal sealed class CheckpointStore
     /// Return latest checkpoint entry and increment readers counter.
     /// Caller is responsible for releasing reader by calling removeReader on entry
     /// </summary>
-    /// <returns></returns>
     public CheckpointEntry GetLatestCheckpointEntryFromMemory()
     {
         CheckpointEntry _tail = tail;
@@ -265,7 +258,6 @@ internal sealed class CheckpointStore
     /// <summary>
     /// Return latest checkpoint entry from disk by scanning all available tokens
     /// </summary>
-    /// <returns></returns>
     public CheckpointEntry GetLatestCheckpointEntryFromDisk()
     {
         Guid objectStoreHLogToken = default;
@@ -317,8 +309,6 @@ internal sealed class CheckpointStore
     /// <summary>
     /// Logger wrapper for gathering CheckpointEntry data
     /// </summary>
-    /// <param name="msg"></param>
-    /// <param name="entry"></param>
     public void LogCheckpointEntry(string msg, CheckpointEntry entry)
     {
         logger?.LogTrace("{msg} {storeVersion} {storeHlogToken} {storeIndexToken} {objectStoreVersion} {objectStoreHlogToken} {objectStoreIndexToken}",

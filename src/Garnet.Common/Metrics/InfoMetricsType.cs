@@ -79,8 +79,6 @@ public static class InfoCommandUtils
     /// <summary>
     /// Return resp formatted info section
     /// </summary>
-    /// <param name="infoMetricsType"></param>
-    /// <returns></returns>
     public static byte[] GetRespFormattedInfoSection(InfoMetricsType infoMetricsType)
         => infoMetricsType == default ? default(byte[]) : infoSections[(int)infoMetricsType];
 }

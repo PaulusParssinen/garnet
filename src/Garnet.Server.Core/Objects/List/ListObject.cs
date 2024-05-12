@@ -209,9 +209,6 @@ public static class LinkedListHelper
     /// <summary>
     /// Extension method that gets an enumerable to compare the value of each node
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <returns></returns>
     public static IEnumerable<LinkedListNode<T>> Nodes<T>(this LinkedList<T> list)
     {
         for (LinkedListNode<T> node = list.First; node != null; node = node.Next)

@@ -21,7 +21,6 @@ public abstract class NetworkSenderBase : INetworkSender
     /// <summary>
     /// NetworkSenderBase constructor
     /// </summary>
-    /// <param name="maxSizeSettings"></param>        
     public NetworkSenderBase(MaxSizeSettings maxSizeSettings)
     {
         this.maxSizeSettings = maxSizeSettings;
@@ -31,7 +30,6 @@ public abstract class NetworkSenderBase : INetworkSender
     /// <summary>
     /// NetworkSenderBase constructor
     /// </summary>
-    /// <param name="serverBufferSize"></param>        
     public NetworkSenderBase(int serverBufferSize)
     {
         this.serverBufferSize = serverBufferSize;
@@ -40,7 +38,6 @@ public abstract class NetworkSenderBase : INetworkSender
     /// <summary>
     /// 
     /// </summary>
-    /// <returns></returns>
     public MaxSizeSettings GetMaxSizeSettings => this.maxSizeSettings;
 
     /// <inheritdoc />

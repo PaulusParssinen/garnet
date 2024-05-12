@@ -68,7 +68,6 @@ public struct TsavoriteLogRecoveryInfo
     /// <summary>
     /// Initialize from stream
     /// </summary>
-    /// <param name="input"></param>
     public void Initialize(ReadOnlySpan<byte> input)
     {
         int version = BinaryPrimitives.ReadInt32LittleEndian(input);

@@ -60,7 +60,6 @@ public struct Status
     /// <summary>
     /// Create status from given status code
     /// </summary>
-    /// <param name="statusCode"></param>
     internal Status(StatusCode statusCode) : this() => this.statusCode = statusCode;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

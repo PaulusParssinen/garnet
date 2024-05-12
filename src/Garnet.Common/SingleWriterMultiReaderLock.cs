@@ -24,7 +24,6 @@ public struct SingleWriterMultiReaderLock
     /// <summary>
     /// Attempt to acquire write lock but do not wait on failure
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryWriteLock()
         => Interlocked.CompareExchange(ref _lock, int.MinValue, 0) == 0;
@@ -53,7 +52,6 @@ public struct SingleWriterMultiReaderLock
     /// <summary>
     /// Try acquire read lock but do not wait on failure
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryReadLock()
     {

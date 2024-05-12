@@ -246,8 +246,6 @@ internal sealed class AofTaskStore : IDisposable
     /// <summary>
     /// Safely truncate iterator
     /// </summary>
-    /// <param name="CheckpointCoveredAofAddress"></param>
-    /// <returns></returns>
     public long SafeTruncateAof(long CheckpointCoveredAofAddress = long.MaxValue)
     {
         _lock.WriteLock();

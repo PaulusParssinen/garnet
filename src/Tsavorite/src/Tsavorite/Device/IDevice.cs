@@ -6,9 +6,6 @@ namespace Tsavorite.Device;
 /// <summary>
 /// Delegate for callback on IO completion
 /// </summary>
-/// <param name="errorCode"></param>
-/// <param name="numBytes"></param>
-/// <param name="context"></param>
 public delegate void DeviceIOCompletionCallback(uint errorCode, uint numBytes, object context);
 
 /// <summary>
@@ -63,9 +60,7 @@ public interface IDevice : IDisposable
     /// 
     /// This is a bit of a hack. 
     /// </summary>
-    /// <param name="segmentSize"></param>
     /// <param name="epoch">
-    /// <param name="omitSegmentIdFromFilename"></param>
     /// The instance of the epoch protection framework to use, if needed
     /// </param>
     void Initialize(long segmentSize, LightEpoch epoch = null, bool omitSegmentIdFromFilename = false);
@@ -73,36 +68,22 @@ public interface IDevice : IDisposable
     /// <summary>
     /// Try complete async IO completions
     /// </summary>
-    /// <returns></returns>
     bool TryComplete();
 
     /// <summary>
     /// Whether device should be throttled at this instant (i.e., caller should stop issuing new I/Os)
     /// </summary>
-    /// <returns></returns>
     bool Throttle();
 
     /* Segmented addressing API */
     /// <summary>
     /// Write
     /// </summary>
-    /// <param name="sourceAddress"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     void WriteAsync(IntPtr sourceAddress, int segmentId, ulong destinationAddress, uint numBytesToWrite, DeviceIOCompletionCallback callback, object context);
 
     /// <summary>
     /// Read
     /// </summary>
-    /// <param name="segmentId"></param>
-    /// <param name="sourceAddress"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="readLength"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     void ReadAsync(int segmentId, ulong sourceAddress, IntPtr destinationAddress, uint readLength, DeviceIOCompletionCallback callback, object context);
 
     /* Direct addressing API */
@@ -110,21 +91,11 @@ public interface IDevice : IDisposable
     /// <summary>
     /// Write
     /// </summary>
-    /// <param name="alignedSourceAddress"></param>
-    /// <param name="alignedDestinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     void WriteAsync(IntPtr alignedSourceAddress, ulong alignedDestinationAddress, uint numBytesToWrite, DeviceIOCompletionCallback callback, object context);
 
     /// <summary>
     /// Read
     /// </summary>
-    /// <param name="alignedSourceAddress"></param>
-    /// <param name="alignedDestinationAddress"></param>
-    /// <param name="aligned_read_length"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     void ReadAsync(ulong alignedSourceAddress, IntPtr alignedDestinationAddress, uint aligned_read_length, DeviceIOCompletionCallback callback, object context);
 
     /// <summary>
@@ -177,8 +148,6 @@ public interface IDevice : IDisposable
     /// <summary>
     /// Get file size for given segment
     /// </summary>
-    /// <param name="segment"></param>
-    /// <returns></returns>
     long GetFileSize(int segment);
 
     /// <summary>

@@ -27,8 +27,6 @@ public sealed unsafe class UnmanagedMemoryManager<T> : MemoryManager<T>
     /// <summary>
     /// Set destination for this object
     /// </summary>
-    /// <param name="pointer"></param>
-    /// <param name="length"></param>
     public void SetDestination(T* pointer, int length)
     {
         _pointer = pointer;

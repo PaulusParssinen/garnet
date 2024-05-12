@@ -13,10 +13,6 @@ public static class Extensions
     /// <summary>
     /// Create observable of log records
     /// </summary>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
-    /// <param name="source"></param>
-    /// <returns></returns>
     public static IObservable<Record<Key, Value>> ToRecordObservable<Key, Value>(this IObservable<ITsavoriteScanIterator<Key, Value>> source)
     {
         return new RecordObservable<Key, Value>(source);

@@ -110,7 +110,6 @@ public abstract class GarnetObjectBase : IGarnetObject
     /// <summary>
     /// Clone object (shallow copy)
     /// </summary>
-    /// <returns></returns>
     public abstract GarnetObjectBase Clone();
 
     /// <inheritdoc />
@@ -143,6 +142,5 @@ public abstract class GarnetObjectBase : IGarnetObject
     /// <param name="count">The number of items being taken in one iteration</param>
     /// <param name="pattern">A patter used to match the members of the collection</param>
     /// <param name="patternLength">The number of characters in the pattern</param>
-    /// <returns></returns>
     public abstract unsafe void Scan(long start, out List<byte[]> items, out long cursor, int count = 10, byte* pattern = default, int patternLength = 0);
 }

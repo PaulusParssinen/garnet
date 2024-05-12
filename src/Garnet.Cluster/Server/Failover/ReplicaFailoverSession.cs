@@ -20,8 +20,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// Helper method to re-use gossip connection to perform the failover
     /// </summary>
     /// <param name="nodeId">Node-id to use for search the connection array</param>
-    /// <returns></returns>
-    /// <exception cref="GarnetException"></exception>
     private GarnetClient GetOrAddConnection(string nodeId)
     {
         _ = clusterProvider.clusterManager.clusterConnectionStore.GetConnection(nodeId, out GarnetServerNode gsn);
@@ -60,7 +58,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// Helper method to establish connection towards remote node
     /// </summary>
     /// <param name="nodeId">Id of node to create connection for</param>
-    /// <returns></returns>
     private GarnetClient CreateConnection(string nodeId)
     {
         (string address, int port) = currentConfig.GetEndpointFromNodeId(nodeId);
@@ -90,8 +87,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// <summary>
     /// Acquire a connection to the node identified by given node-id.
     /// </summary>
-    /// <param name="nodeId"></param>
-    /// <returns></returns>
     private GarnetClient GetConnection(string nodeId)
     {
         return useGossipConnections ? GetOrAddConnection(nodeId) : CreateConnection(nodeId);
@@ -174,7 +169,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// </summary>
     /// <param name="replicaId">Replica-id to issue gossip and attache request</param>
     /// <param name="configByteArray">Serialized local cluster config data</param>
-    /// <returns></returns>
     private async Task BroadcastConfigAndRequestAttach(string replicaId, byte[] configByteArray)
     {
         ClusterConfig newConfig = clusterProvider.clusterManager.CurrentConfig;
@@ -239,7 +233,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// <summary>
     /// Issue attach message to remote replicas
     /// </summary>
-    /// <returns></returns>
     private async Task IssueAttachReplicas()
     {
         // Get information of local node from newConfig
@@ -287,7 +280,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// <summary>
     /// REPLICA main failover task
     /// </summary>
-    /// <returns></returns>
     public async Task<bool> BeginAsyncReplicaFailover()
     {
         // CLUSTER FAILOVER OPTIONS

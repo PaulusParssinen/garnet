@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Tsavorite.Device;
 
 namespace Tsavorite;
 
@@ -35,8 +36,6 @@ internal struct PageOffset
 /// <summary>
 /// Base class for hybrid log memory allocator
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 {
     /// <summary>
@@ -268,156 +267,104 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get start logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public abstract long GetStartLogicalAddress(long page);
     /// <summary>
     /// Get first valid logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public abstract long GetFirstValidLogicalAddress(long page);
     /// <summary>
     /// Get physical address
     /// </summary>
-    /// <param name="newLogicalAddress"></param>
-    /// <returns></returns>
     public abstract long GetPhysicalAddress(long newLogicalAddress);
     /// <summary>
     /// Get address info
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract ref RecordInfo GetInfo(long physicalAddress);
 
     /// <summary>
     /// Get info from byte pointer
     /// </summary>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
     public abstract unsafe ref RecordInfo GetInfoFromBytePointer(byte* ptr);
 
     /// <summary>
     /// Get key
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract ref Key GetKey(long physicalAddress);
     /// <summary>
     /// Get value
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract ref Value GetValue(long physicalAddress);
     /// <summary>
     /// Get value from address range. For <see cref="SpanByte"/> this will also initialize the value.
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <param name="endPhysicalAddress"></param>
-    /// <returns></returns>
     public virtual ref Value GetAndInitializeValue(long physicalAddress, long endPhysicalAddress) => ref GetValue(physicalAddress);
 
     /// <summary>
     /// Get address info for key
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract unsafe AddressInfo* GetKeyAddressInfo(long physicalAddress);
     /// <summary>
     /// Get address info for value
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract unsafe AddressInfo* GetValueAddressInfo(long physicalAddress);
 
     /// <summary>
     /// Get record size
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <returns></returns>
     public abstract (int actualSize, int allocatedSize) GetRecordSize(long physicalAddress);
 
     /// <summary>
     /// Get copy destination size for RMW, taking Input into account
     /// </summary>
-    /// <returns></returns>
     public abstract (int actualSize, int allocatedSize, int keySize) GetRMWCopyDestinationRecordSize<Input, TsavoriteSession>(ref Key key, ref Input input, ref Value value, ref RecordInfo recordInfo, TsavoriteSession tsavoriteSession)
         where TsavoriteSession : IVariableLengthInput<Value, Input>;
 
     /// <summary>
     /// Get number of bytes required
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <param name="availableBytes"></param>
-    /// <returns></returns>
     public virtual int GetRequiredRecordSize(long physicalAddress, int availableBytes) => GetAverageRecordSize();
 
     /// <summary>
     /// Get average record size
     /// </summary>
-    /// <returns></returns>
     public abstract int GetAverageRecordSize();
 
     /// <summary>
     /// Get size of fixed (known) part of record on the main log
     /// </summary>
-    /// <returns></returns>
     public abstract int GetFixedRecordSize();
 
     /// <summary>
     /// Get initial record size
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="input"></param>
-    /// <param name="tsavoriteSession"></param>
-    /// <returns></returns>
     public abstract (int actualSize, int allocatedSize, int keySize) GetRMWInitialRecordSize<Input, TsavoriteSession>(ref Key key, ref Input input, TsavoriteSession tsavoriteSession)
         where TsavoriteSession : IVariableLengthInput<Value, Input>;
 
     /// <summary>
     /// Get record size
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
     public abstract (int actualSize, int allocatedSize, int keySize) GetRecordSize(ref Key key, ref Value value);
 
     /// <summary>
     /// Get value size
     /// </summary>
-    /// <returns></returns>
     public abstract int GetValueLength(ref Value value);
 
     /// <summary>
     /// Allocate page
     /// </summary>
-    /// <param name="index"></param>
     internal abstract void AllocatePage(int index);
     /// <summary>
     /// Whether page is allocated
     /// </summary>
-    /// <param name="pageIndex"></param>
-    /// <returns></returns>
     internal abstract bool IsAllocated(int pageIndex);
     /// <summary>
     /// Populate page
     /// </summary>
-    /// <param name="src"></param>
-    /// <param name="required_bytes"></param>
-    /// <param name="destinationPage"></param>
     internal abstract unsafe void PopulatePage(byte* src, int required_bytes, long destinationPage);
     /// <summary>
     /// Write async to device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="startPage"></param>
-    /// <param name="flushPage"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
-    /// <param name="localSegmentOffsets"></param>
     /// <param name="fuzzyStartLogicalAddress">Start address of fuzzy region, which contains old and new version records (we use this to selectively flush only old-version records during snapshot checkpoint)</param>
     protected abstract void WriteAsyncToDevice<TContext>(long startPage, long flushPage, int pageSize, DeviceIOCompletionCallback callback, PageAsyncFlushResult<TContext> result, IDevice device, IDevice objectLogDevice, long[] localSegmentOffsets, long fuzzyStartLogicalAddress);
 
@@ -432,13 +379,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Delta flush
     /// </summary>
-    /// <param name="startAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <param name="prevEndAddress"></param>
-    /// <param name="version"></param>
-    /// <param name="deltaLog"></param>
-    /// <param name="completedSemaphore"></param>
-    /// <param name="throttleCheckpointFlushDelayMs"></param>
     internal virtual unsafe void AsyncFlushDeltaToDevice(long startAddress, long endAddress, long prevEndAddress, long version, DeltaLog deltaLog, out SemaphoreSlim completedSemaphore, int throttleCheckpointFlushDelayMs)
     {
         logger?.LogTrace("Starting async delta log flush with throttling {throttlingEnabled}", throttleCheckpointFlushDelayMs >= 0 ? $"enabled ({throttleCheckpointFlushDelayMs}ms)" : "disabled");
@@ -675,23 +615,10 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Read objects to memory (async)
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="result"></param>
     protected abstract unsafe void AsyncReadRecordObjectsToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, AsyncIOContext<Key, Value> context, SectorAlignedMemory result = default);
     /// <summary>
     /// Read page (async)
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="alignedSourceAddress"></param>
-    /// <param name="destinationPageIndex"></param>
-    /// <param name="aligned_read_length"></param>
-    /// <param name="callback"></param>
-    /// <param name="asyncResult"></param>
-    /// <param name="device"></param>
-    /// <param name="objlogDevice"></param>
     protected abstract void ReadAsync<TContext>(ulong alignedSourceAddress, int destinationPageIndex, uint aligned_read_length, DeviceIOCompletionCallback callback, PageAsyncReadResult<TContext> asyncResult, IDevice device, IDevice objlogDevice);
     /// <summary>
     /// Clear page
@@ -705,70 +632,50 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Write page (async)
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="flushPage"></param>
-    /// <param name="callback"></param>
-    /// <param name="asyncResult"></param>
     protected abstract void WriteAsync<TContext>(long flushPage, DeviceIOCompletionCallback callback, PageAsyncFlushResult<TContext> asyncResult);
     /// <summary>
     /// Retrieve full record
     /// </summary>
-    /// <param name="record"></param>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     protected abstract unsafe bool RetrievedFullRecord(byte* record, ref AsyncIOContext<Key, Value> ctx);
 
     /// <summary>
     /// Retrieve value from context
     /// </summary>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     public virtual ref Key GetContextRecordKey(ref AsyncIOContext<Key, Value> ctx) => ref ctx.key;
 
     /// <summary>
     /// Retrieve value from context
     /// </summary>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     public virtual ref Value GetContextRecordValue(ref AsyncIOContext<Key, Value> ctx) => ref ctx.value;
 
     /// <summary>
     /// Get heap container for pending key
     /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
     public abstract IHeapContainer<Key> GetKeyContainer(ref Key key);
 
     /// <summary>
     /// Get heap container for pending value
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
     public abstract IHeapContainer<Value> GetValueContainer(ref Value value);
 
     /// <summary>
     /// Copy value to context
     /// </summary>
-    /// <param name="ctx"></param>
-    /// <param name="value"></param>
     public virtual void PutContext(ref AsyncIOContext<Key, Value> ctx, ref Value value) => ctx.value = value;
 
     /// <summary>
     /// Whether key has objects
     /// </summary>
-    /// <returns></returns>
     public abstract bool KeyHasObjects();
 
     /// <summary>
     /// Whether value has objects
     /// </summary>
-    /// <returns></returns>
     public abstract bool ValueHasObjects();
 
     /// <summary>
     /// Get segment offsets
     /// </summary>
-    /// <returns></returns>
     public abstract long[] GetSegmentOffsets();
 
     #endregion
@@ -778,12 +685,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Instantiate base allocator
     /// </summary>
-    /// <param name="settings"></param>
-    /// <param name="comparer"></param>
-    /// <param name="evictCallback"></param>
-    /// <param name="epoch"></param>
-    /// <param name="flushCallback"></param>
-    /// <param name="logger"></param>
     public AllocatorBase(LogSettings settings, ITsavoriteEqualityComparer<Key> comparer, Action<long, long> evictCallback, LightEpoch epoch, Action<CommitInfo> flushCallback, ILogger logger = null)
     {
         // Validation
@@ -808,7 +709,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
         this.logger = logger;
         if (settings.LogDevice == null)
-            throw new TsavoriteException("LogSettings.LogDevice needs to be specified (e.g., use Devices.CreateLogDevice, AzureStorageDevice, or NullDevice)");
+            throw new TsavoriteException("LogSettings.LogDevice needs to be specified (e.g., use Devices.CreateLogDevice or NullDevice)");
 
         if (evictCallback != null)
         {
@@ -987,7 +888,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Initialize allocator
     /// </summary>
-    /// <param name="firstValidAddress"></param>
     protected void Initialize(long firstValidAddress)
     {
         Debug.Assert(firstValidAddress <= PageSize, $"firstValidAddress {firstValidAddress} shoulld be <= PageSize {PageSize}");
@@ -1137,7 +1037,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Segment size
     /// </summary>
-    /// <returns></returns>
     public long GetSegmentSize()
     {
         return SegmentSize;
@@ -1146,7 +1045,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get tail address
     /// </summary>
-    /// <returns></returns>
     public long GetTailAddress()
     {
         PageOffset local = TailPageOffset;
@@ -1161,8 +1059,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get page
     /// </summary>
-    /// <param name="logicalAddress"></param>
-    /// <returns></returns>
     public long GetPage(long logicalAddress)
     {
         return logicalAddress >> LogPageSizeBits;
@@ -1171,8 +1067,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get page index for page
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public int GetPageIndexForPage(long page)
     {
         return (int)(page % BufferSize);
@@ -1181,8 +1075,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get page index for address
     /// </summary>
-    /// <param name="address"></param>
-    /// <returns></returns>
     public int GetPageIndexForAddress(long address)
     {
         return (int)((address >> LogPageSizeBits) % BufferSize);
@@ -1191,7 +1083,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get capacity (number of pages)
     /// </summary>
-    /// <returns></returns>
     public int GetCapacityNumPages()
     {
         return BufferSize;
@@ -1201,7 +1092,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get page size
     /// </summary>
-    /// <returns></returns>
     public long GetPageSize()
     {
         return PageSize;
@@ -1210,8 +1100,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get offset in page
     /// </summary>
-    /// <param name="address"></param>
-    /// <returns></returns>
     public long GetOffsetInPage(long address)
     {
         return address & PageSizeMask;
@@ -1220,7 +1108,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Get sector size for main hlog device
     /// </summary>
-    /// <returns></returns>
     public int GetDeviceSectorSize()
     {
         return sectorSize;
@@ -1352,8 +1239,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Used by applications to make the current state of the database immutable quickly
     /// </summary>
-    /// <param name="tailAddress"></param>
-    /// <param name="notifyDone"></param>
     public bool ShiftReadOnlyToTail(out long tailAddress, out SemaphoreSlim notifyDone)
     {
         notifyDone = null;
@@ -1373,8 +1258,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Used by applications to move read-only forward
     /// </summary>
-    /// <param name="newReadOnlyAddress"></param>
-    /// <param name="noFlush"></param>
     public bool ShiftReadOnlyAddress(long newReadOnlyAddress, bool noFlush = false)
     {
         if (Utility.MonotonicUpdate(ref ReadOnlyAddress, newReadOnlyAddress, out _))
@@ -1388,9 +1271,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Shift begin address
     /// </summary>
-    /// <param name="newBeginAddress"></param>
-    /// <param name="truncateLog"></param>
-    /// <param name="noFlush"></param>
     public void ShiftBeginAddress(long newBeginAddress, bool truncateLog, bool noFlush = false)
     {
         // First update the begin address
@@ -1446,7 +1326,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Wraps <see cref="IDevice.TruncateUntilAddress(long)"/> when an allocator potentially has to interact with multiple devices
     /// </summary>
-    /// <param name="toAddress"></param>
     protected virtual void TruncateUntilAddress(long toAddress)
     {
         PersistedBeginAddress = toAddress;
@@ -1456,7 +1335,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Wraps <see cref="IDevice.TruncateUntilAddress(long)"/> when an allocator potentially has to interact with multiple devices
     /// </summary>
-    /// <param name="toAddress"></param>
     protected virtual void TruncateUntilAddressBlocking(long toAddress)
     {
         device.TruncateUntilAddress(toAddress);
@@ -1465,7 +1343,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Remove disk segment
     /// </summary>
-    /// <param name="segment"></param>
     protected virtual void RemoveSegment(int segment)
     {
         device.RemoveSegment(segment);
@@ -1480,8 +1357,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Seal: make sure there are no longer any threads writing to the page
     /// Flush: send page to secondary store
     /// </summary>
-    /// <param name="newSafeReadOnlyAddress"></param>
-    /// <param name="noFlush"></param>
     private void OnPagesMarkedReadOnly(long newSafeReadOnlyAddress, bool noFlush = false)
     {
         if (Utility.MonotonicUpdate(ref SafeReadOnlyAddress, newSafeReadOnlyAddress, out long oldSafeReadOnlyAddress))
@@ -1502,7 +1377,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Action to be performed for when all threads have 
     /// agreed that a page range is closed.
     /// </summary>
-    /// <param name="newSafeHeadAddress"></param>
     private void OnPagesClosed(long newSafeHeadAddress)
     {
         Debug.Assert(newSafeHeadAddress > 0);
@@ -1599,7 +1473,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// shifted only to page boundaries unlike ShiftReadOnlyToTail where shifting
     /// can happen to any fine-grained address.
     /// </summary>
-    /// <param name="currentTailAddress"></param>
     private void PageAlignedShiftReadOnlyAddress(long currentTailAddress)
     {
         long pageAlignedTailAddress = currentTailAddress & ~PageSizeMask;
@@ -1615,14 +1488,12 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Called whenever a new tail page is allocated or when the user is checking for a failed memory allocation
     /// Tries to shift head address based on the head offset lag size.
     /// </summary>
-    /// <param name="currentTailAddress"></param>
     private void PageAlignedShiftHeadAddress(long currentTailAddress)
         => ShiftHeadAddress((currentTailAddress & ~PageSizeMask) - HeadOffsetLagAddress);
 
     /// <summary>
     /// Tries to shift head address to specified value
     /// </summary>
-    /// <param name="desiredHeadAddress"></param>
     public long ShiftHeadAddress(long desiredHeadAddress)
     {
         //obtain local values of variables that can change
@@ -1712,10 +1583,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Reset for recovery
     /// </summary>
-    /// <param name="tailAddress"></param>
-    /// <param name="headAddress"></param>
-    /// <param name="beginAddress"></param>
-    /// <param name="readonlyAddress"></param>
     public void RecoveryReset(long tailAddress, long headAddress, long beginAddress, long readonlyAddress)
     {
         long tailPage = GetPage(tailAddress);
@@ -1760,10 +1627,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Invoked by users to obtain a record from disk. It uses sector aligned memory to read 
     /// the record efficiently into memory.
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     /// 
     internal unsafe void AsyncReadRecordToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, ref AsyncIOContext<Key, Value> context)
     {
@@ -1791,10 +1654,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Read record to memory - simple read context version
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     internal unsafe void AsyncReadRecordToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, ref SimpleReadContext context)
     {
         ulong fileOffset = (ulong)(AlignedPageSizeBytes * (fromLogical >> LogPageSizeBits) + (fromLogical & PageSizeMask));
@@ -1818,15 +1677,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Read pages from specified device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="readPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="devicePageOffset"></param>
-    /// <param name="logDevice"></param>
-    /// <param name="objectLogDevice"></param>
     public void AsyncReadPagesFromDevice<TContext>(
                             long readPageStart,
                             int numPages,
@@ -1843,16 +1693,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Read pages from specified device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="readPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="completed"></param>
-    /// <param name="devicePageOffset"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
     private void AsyncReadPagesFromDevice<TContext>(
                                     long readPageStart,
                                     int numPages,
@@ -1915,9 +1755,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Flush page range to disk
     /// Called when all threads have agreed that a page range is sealed.
     /// </summary>
-    /// <param name="fromAddress"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="noFlush"></param>
     public void AsyncFlushPages(long fromAddress, long untilAddress, bool noFlush = false)
     {
         long startPage = fromAddress >> LogPageSizeBits;
@@ -2005,11 +1842,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Flush pages asynchronously
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="flushPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public void AsyncFlushPages<TContext>(long flushPageStart, int numPages, DeviceIOCompletionCallback callback, TContext context)
     {
         for (long flushPage = flushPageStart; flushPage < (flushPageStart + numPages); flushPage++)
@@ -2031,14 +1863,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// Flush pages from startPage (inclusive) to endPage (exclusive)
     /// to specified log device and obj device
     /// </summary>
-    /// <param name="startPage"></param>
-    /// <param name="endPage"></param>
-    /// <param name="endLogicalAddress"></param>
-    /// <param name="fuzzyStartLogicalAddress"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
-    /// <param name="completedSemaphore"></param>
-    /// <param name="throttleCheckpointFlushDelayMs"></param>
     public void AsyncFlushPagesToDevice(long startPage, long endPage, long endLogicalAddress, long fuzzyStartLogicalAddress, IDevice device, IDevice objectLogDevice, out SemaphoreSlim completedSemaphore, int throttleCheckpointFlushDelayMs)
     {
         logger?.LogTrace("Starting async delta log flush with throttling {throttlingEnabled}", throttleCheckpointFlushDelayMs >= 0 ? $"enabled ({throttleCheckpointFlushDelayMs}ms)" : "disabled");
@@ -2168,9 +1992,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// IOCompletion callback for page flush
     /// </summary>
-    /// <param name="errorCode"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="context"></param>
     private void AsyncFlushPageCallback(uint errorCode, uint numBytes, object context)
     {
         try
@@ -2235,9 +2056,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// IOCompletion callback for page flush
     /// </summary>
-    /// <param name="errorCode"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="context"></param>
     protected void AsyncFlushPageToDeviceCallback(uint errorCode, uint numBytes, object context)
     {
         try
@@ -2304,8 +2122,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Serialize to log
     /// </summary>
-    /// <param name="src"></param>
-    /// <param name="physicalAddress"></param>
     public virtual void SerializeKey(ref Key src, long physicalAddress)
     {
         GetKey(physicalAddress) = src;
@@ -2314,8 +2130,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Serialize to log
     /// </summary>
-    /// <param name="src"></param>
-    /// <param name="physicalAddress"></param>
     public virtual void SerializeValue(ref Value src, long physicalAddress)
     {
         GetValue(physicalAddress) = src;

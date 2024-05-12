@@ -28,10 +28,6 @@ public interface IGarnetObject : IDisposable
     /// <summary>
     /// Operator on object
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="output"></param>
-    /// <param name="sizeChange"></param>
-    /// <returns></returns>
     bool Operate(ref SpanByte input, ref SpanByteAndMemory output, out long sizeChange);
 
     /// <summary>
@@ -53,6 +49,5 @@ public interface IGarnetObject : IDisposable
     /// <param name="count">The number of items being taken in one iteration</param>
     /// <param name="pattern">A patter used to match the members of the collection</param>
     /// <param name="patternLength">The number of characters in the pattern</param>
-    /// <returns></returns>
     unsafe void Scan(long start, out List<byte[]> items, out long cursor, int count = 10, byte* pattern = default, int patternLength = 0);
 }

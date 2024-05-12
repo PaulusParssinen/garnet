@@ -7,8 +7,6 @@ namespace Tsavorite;
 /// Lightweight iterator for memory page (copied to buffer). GetNext() can be used outside epoch protection and locking,
 /// but ctor must be called within epoch protection.
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 internal sealed class MemoryPageScanIterator<Key, Value> : ITsavoriteScanIterator<Key, Value>
 {
     readonly Record<Key, Value>[] page;

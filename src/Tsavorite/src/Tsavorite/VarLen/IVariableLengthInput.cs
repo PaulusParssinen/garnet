@@ -16,7 +16,5 @@ internal interface IVariableLengthInput<TValue, TInput>
     /// <summary>
     /// Initial expected length of value object when populated by RMW using given input
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     int GetRMWInitialValueLength(ref TInput input);
 }

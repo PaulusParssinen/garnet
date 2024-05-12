@@ -8,9 +8,6 @@ namespace Tsavorite;
 /// Return Status.NotFound => TryAdd succeededed (item added).
 /// Return Status.Found => TryAdd failed (item not added, key was already present).
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Context"></typeparam>
 public class TryAddFunctions<Key, Value, Context> : SimpleFunctions<Key, Value, Context>
 {
     /// <inheritdoc />
@@ -24,6 +21,4 @@ public class TryAddFunctions<Key, Value, Context> : SimpleFunctions<Key, Value, 
 /// Return Status.NotFound => TryAdd succeededed (item added)
 /// Return Status.Found => TryAdd failed (item not added, key was already present)
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public class TryAddFunctions<Key, Value> : TryAddFunctions<Key, Value, Empty> { }

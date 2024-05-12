@@ -210,7 +210,6 @@ public sealed unsafe partial class AofProcessor
     /// Method to process a batch of entries as a single txn.
     /// Assumes that operations arg does not contain transaction markers (i.e. TxnStart,TxnCommit,TxnAbort)
     /// </summary>
-    /// <param name="operations"></param>
     private unsafe void ProcessTxn(List<byte[]> operations)
     {
         foreach (byte[] entry in operations)
@@ -325,9 +324,6 @@ public sealed unsafe partial class AofProcessor
     /// <summary>
     /// On recovery apply records with header.version greater than CurrentVersion.
     /// </summary>
-    /// <param name="header"></param>
-    /// <returns></returns>
-    /// <exception cref="GarnetException"></exception>
     bool SkipRecord(AofHeader header)
     {
         AofStoreType storeType = ToAofStoreType(header.opType);

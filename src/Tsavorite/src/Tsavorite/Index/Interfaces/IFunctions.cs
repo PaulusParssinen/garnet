@@ -6,11 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Callback functions to Tsavorite
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Input"></typeparam>
-/// <typeparam name="Output"></typeparam>
-/// <typeparam name="Context"></typeparam>
 public interface IFunctions<Key, Value, Input, Output, Context>
 {
     #region Reads
@@ -314,8 +309,6 @@ public interface IFunctions<Key, Value, Input, Output, Context>
 /// <summary>
 /// Callback functions to Tsavorite (two-param version)
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public interface IFunctions<Key, Value> : IFunctions<Key, Value, Value, Value, Empty>
 {
 }
@@ -323,9 +316,6 @@ public interface IFunctions<Key, Value> : IFunctions<Key, Value, Value, Value, E
 /// <summary>
 /// Callback functions to Tsavorite (two-param version with context)
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Context"></typeparam>
 public interface IFunctions<Key, Value, Context> : IFunctions<Key, Value, Value, Value, Context>
 {
 }

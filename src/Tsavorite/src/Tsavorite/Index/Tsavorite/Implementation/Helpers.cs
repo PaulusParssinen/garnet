@@ -41,7 +41,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// the operation to think that the version of the key has reached v+1 and thus to incorrectly update in place.
     /// </summary>
     /// <param name="logicalAddress">The logical address of the traced record for the key</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsRecordVersionNew(long logicalAddress)
     {
@@ -54,7 +53,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// The semantics of this function are to check the tail of a bucket (indicated by entry), so we name it this way.
     /// </summary>
     /// <param name="entry">the last entry of a bucket</param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsEntryVersionNew(ref HashBucketEntry entry)
     {

@@ -25,8 +25,6 @@ public interface IBulkLogEntryConsumer
     /// <summary>
     /// Consumes the given bulk entries (raw data) under epoch protection - do not block.
     /// </summary>
-    /// <param name="payloadPtr"></param>
-    /// <param name="payloadLength"></param>
     /// <param name="currentAddress"> address of the consumed entry </param>
     /// <param name="nextAddress"> (predicted) address of the next entry </param>
     unsafe void Consume(byte* payloadPtr, int payloadLength, long currentAddress, long nextAddress);

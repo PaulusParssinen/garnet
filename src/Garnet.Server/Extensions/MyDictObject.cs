@@ -99,13 +99,6 @@ class MyDict : CustomObjectBase
     /// Returns the items from this object using a cursor to indicate the start of the scan,
     /// a pattern to filter out the items to return, and a count to indicate the number of items to return.
     /// </summary>
-    /// <param name="start"></param>
-    /// <param name="items"></param>
-    /// <param name="cursor"></param>
-    /// <param name="count"></param>
-    /// <param name="pattern"></param>
-    /// <param name="patternLength"></param>
-    /// <returns></returns>
     public override unsafe void Scan(long start, out List<byte[]> items, out long cursor, int count = 10, byte* pattern = null, int patternLength = 0)
     {
         cursor = start;

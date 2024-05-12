@@ -155,7 +155,6 @@ public sealed class ByteArrayTsavoriteEqualityComparer : ITsavoriteEqualityCompa
 /// <summary>
 /// Low-performance Tsavorite equality comparer wrapper around EqualityComparer.Default
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class DefaultTsavoriteEqualityComparer<T> : ITsavoriteEqualityComparer<T>
 {
     /// <summary>

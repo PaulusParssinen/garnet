@@ -52,8 +52,6 @@ public static class FailoverUtils
     /// <summary>
     /// Return resp formatted failover option
     /// </summary>
-    /// <param name="failoverOption"></param>
-    /// <returns></returns>
     public static byte[] GetRespFormattedFailoverOption(FailoverOption failoverOption)
         => infoSections[(int)failoverOption];
 }

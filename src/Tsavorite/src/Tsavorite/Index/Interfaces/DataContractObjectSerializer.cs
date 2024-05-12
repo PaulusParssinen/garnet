@@ -9,7 +9,6 @@ namespace Tsavorite;
 /// <summary>
 /// Serializer (for class types) based on DataContract
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public sealed class DataContractObjectSerializer<T> : BinaryObjectSerializer<T>
 {
     private static readonly DataContractSerializer serializer = new DataContractSerializer(typeof(T));
@@ -17,7 +16,6 @@ public sealed class DataContractObjectSerializer<T> : BinaryObjectSerializer<T>
     /// <summary>
     /// Deserialize
     /// </summary>
-    /// <param name="obj"></param>
     public override void Deserialize(out T obj)
     {
         int count = reader.ReadInt32();
@@ -30,7 +28,6 @@ public sealed class DataContractObjectSerializer<T> : BinaryObjectSerializer<T>
     /// <summary>
     /// Serialize
     /// </summary>
-    /// <param name="obj"></param>
     public override void Serialize(ref T obj)
     {
         using var ms = new MemoryStream();

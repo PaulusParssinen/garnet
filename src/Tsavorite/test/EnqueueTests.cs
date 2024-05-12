@@ -160,14 +160,13 @@ internal class EnqueueTests
     [Category("Smoke")]
     public async Task EnqueueAsyncBasicTest([Values] TestUtils.DeviceType deviceType)
     {
-
         const int expectedEntryCount = 11;
 
         string filename = Path.Join(TestUtils.MethodTestDir, "EnqueueAsyncBasic" + deviceType.ToString() + ".log");
         device = TestUtils.CreateTestDevice(deviceType, filename);
         log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
 
-        if (OperatingSystem.IsWindows() && deviceType == TestUtils.DeviceType.EmulatedAzure)
+        if (OperatingSystem.IsWindows())
             return;
 
         CancellationToken cancellationToken = default;

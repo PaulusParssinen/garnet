@@ -40,11 +40,6 @@ internal sealed unsafe class ReceiveCheckpointHandler
     /// <summary>
     /// Process file segments send from primary
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="type"></param>
-    /// <param name="startAddress"></param>
-    /// <param name="data"></param>
-    /// <param name="segmentId"></param>
     public void ProcessFileSegments(int segmentId, Guid token, CheckpointFileType type, long startAddress, Span<byte> data)
     {
         clusterProvider.replicationManager.UpdateLastPrimarySyncTime();
@@ -68,11 +63,6 @@ internal sealed unsafe class ReceiveCheckpointHandler
     /// <summary>
     /// Note: pads the bytes with zeros to achieve sector alignment
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="address"></param>
-    /// <param name="buffer"></param>
-    /// <param name="size"></param>
     private unsafe void WriteInto(IDevice device, ulong address, Span<byte> buffer, int size, int segmentId = -1)
     {
         if (writeCheckpointBufferPool == null)

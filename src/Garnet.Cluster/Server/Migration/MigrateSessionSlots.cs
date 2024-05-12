@@ -10,7 +10,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Main data driver of migration task
     /// </summary>
-    /// <returns></returns>
     private bool MigrateSlotsDataDriver()
     {
         try

@@ -158,7 +158,6 @@ internal sealed unsafe class ScratchBufferManager
     /// View remaining scratch space (of specified minimum length) as an ArgSlice
     /// Does NOT move the offset forward
     /// </summary>
-    /// <returns></returns>
     public ArgSlice ViewRemainingArgSlice(int minLength = 0)
     {
         ExpandScratchBufferIfNeeded(minLength);
@@ -189,8 +188,6 @@ internal sealed unsafe class ScratchBufferManager
     /// RESP format: $[size]\r\n[value]\r\n
     /// Total size: 1 + [number of digits in the size value] + 2 + [size of value] + 2
     /// </summary>
-    /// <param name="slice"></param>
-    /// <returns></returns>
     static int GetRespFormattedStringLength(ArgSlice slice)
         => 1 + NumUtils.NumDigits(slice.Length) + 2 + slice.Length + 2;
 

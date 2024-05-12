@@ -54,27 +54,6 @@ internal class ClusterTestContext
     /// <summary>
     /// Create instances with provided configuration
     /// </summary>
-    /// <param name="shards"></param>
-    /// <param name="cleanClusterConfig"></param>
-    /// <param name="tryRecover"></param>
-    /// <param name="disableObjects"></param>
-    /// <param name="lowMemory"></param>
-    /// <param name="MemorySize"></param>
-    /// <param name="PageSize"></param>
-    /// <param name="SegmentSize"></param>
-    /// <param name="enableAOF"></param>
-    /// <param name="MainMemoryReplication"></param>
-    /// <param name="OnDemandCheckpoint"></param>
-    /// <param name="AofMemorySize"></param>
-    /// <param name="CommitFrequencyMs"></param>
-    /// <param name="DisableStorageTier"></param>
-    /// <param name="EnableIncrementalSnapshots"></param>
-    /// <param name="FastCommit"></param>
-    /// <param name="useAcl"></param>
-    /// <param name="clusterCreds"></param>
-    /// <param name="timeout"></param>
-    /// <param name="useTLS"></param>
-    /// <param name="certificates"></param>
     public void CreateInstances(
         int shards,
         bool cleanClusterConfig = true,
@@ -134,29 +113,6 @@ internal class ClusterTestContext
     /// <summary>
     /// Create single cluster instance with corresponding options
     /// </summary>
-    /// <param name="Port"></param>
-    /// <param name="cleanClusterConfig"></param>
-    /// <param name="tryRecover"></param>
-    /// <param name="disableObjects"></param>
-    /// <param name="lowMemory"></param>
-    /// <param name="MemorySize"></param>
-    /// <param name="PageSize"></param>
-    /// <param name="SegmentSize"></param>
-    /// <param name="enableAOF"></param>
-    /// <param name="MainMemoryReplication"></param>
-    /// <param name="OnDemandCheckpoint"></param>
-    /// <param name="AofMemorySize"></param>
-    /// <param name="CommitFrequencyMs"></param>
-    /// <param name="DisableStorageTier"></param>
-    /// <param name="EnableIncrementalSnapshots"></param>
-    /// <param name="FastCommit"></param>
-    /// <param name="timeout"></param>
-    /// <param name="gossipDelay"></param>
-    /// <param name="useTLS"></param>
-    /// <param name="useAcl"></param>
-    /// <param name="clusterCreds"></param>
-    /// <param name="certificates"></param>
-    /// <returns></returns>
     public GarnetServer CreateInstance(
         int Port,
         bool cleanClusterConfig = true,
@@ -238,9 +194,6 @@ internal class ClusterTestContext
     /// <summary>
     /// Establish connection to cluster.
     /// </summary>
-    /// <param name="useTLS"></param>
-    /// <param name="certificates"></param>
-    /// <param name="clientCreds"></param>
     public void CreateConnection(
         bool useTLS = false,
         X509CertificateCollection certificates = null,
@@ -261,7 +214,6 @@ internal class ClusterTestContext
     /// <summary>
     /// Generate credential file through credManager
     /// </summary>
-    /// <param name="customCreds"></param>
     public void GenerateCredentials(ServerCredential[] customCreds = null)
         => credManager.GenerateCredentials(TestFolder, customCreds);
 

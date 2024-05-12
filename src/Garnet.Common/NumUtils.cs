@@ -40,9 +40,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Convert long into sequence of ASCII bytes
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="length"></param>
-    /// <param name="result"></param>
     public static unsafe void LongToBytes(long value, int length, ref byte* result)
     {
         byte sign = (byte)(value < 0 ? 1 : 0);
@@ -153,7 +150,6 @@ public static unsafe class NumUtils
     /// </summary>
     /// <param name="length">Length of number</param>
     /// <param name="source">Source bytes</param>
-    /// <returns></returns>
     public static int BytesToInt(int length, byte* source)
     {
         bool fNeg = (*source == '-');
@@ -201,8 +197,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Return number of digits in given number
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
     public static int NumDigits(int v)
     {
         v = v < 0 ? ((~v) + 1) : v;
@@ -225,7 +219,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Num digits in long divide n conquer.
     /// </summary>
-    /// <param name="v"></param>
     /// <returns>returns digit count not including sign.</returns>
     public static int NumDigitsInLong(long v)
     {
@@ -316,9 +309,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Return number of digits in given number
     /// </summary>
-    /// <param name="v"></param>
-    /// <param name="fNeg"></param>
-    /// <returns></returns>
     public static int NumDigitsInLong(long v, ref bool fNeg)
     {
         if (v == long.MinValue)
@@ -495,8 +485,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Compute hash slot of given data
     /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
     public static unsafe ushort HashSlot(byte[] key)
     {
         fixed (byte* keyPtr = key)
@@ -506,9 +494,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Compute hash slot of given data
     /// </summary>
-    /// <param name="keyPtr"></param>
-    /// <param name="ksize"></param>
-    /// <returns></returns>
     public static unsafe ushort HashSlot(byte* keyPtr, int ksize)
     {
         byte* startTag = keyPtr;
@@ -531,10 +516,6 @@ public static unsafe class NumUtils
     /// <summary>
     /// Try to parse from pointer to integer
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="len"></param>
-    /// <param name="result"></param>
-    /// <returns></returns>
     public static unsafe bool TryBytesToInt(byte* source, int len, out int result)
     {
         bool fNeg = (*source == '-');

@@ -52,13 +52,11 @@ internal sealed class GenericScanIterator<Key, Value> : ScanIteratorBase, ITsavo
     /// <summary>
     /// Gets reference to current key
     /// </summary>
-    /// <returns></returns>
     public ref Key GetKey() => ref currentKey;
 
     /// <summary>
     /// Gets reference to current value
     /// </summary>
-    /// <returns></returns>
     public ref Value GetValue() => ref currentValue;
 
     /// <inheritdoc/>
@@ -243,10 +241,6 @@ internal sealed class GenericScanIterator<Key, Value> : ScanIteratorBase, ITsavo
     /// <summary>
     /// Get next record using iterator
     /// </summary>
-    /// <param name="recordInfo"></param>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
     public bool GetNext(out RecordInfo recordInfo, out Key key, out Value value)
     {
         if (GetNext(out recordInfo))

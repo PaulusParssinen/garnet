@@ -25,14 +25,8 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="store"></param>
-    /// <param name="hlog"></param>
-    /// <param name="beginAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <param name="scanBufferingMode"></param>
     /// <param name="epoch">Epoch to use for protection; may be null if <paramref name="forceInMemory"/> is true.</param>
     /// <param name="forceInMemory">Provided address range is known by caller to be in memory, even if less than HeadAddress</param>
-    /// <param name="logger"></param>
     internal SpanByteScanIterator(TsavoriteKV<SpanByte, SpanByte> store, SpanByteAllocator hlog, long beginAddress, long endAddress,
             ScanBufferingMode scanBufferingMode, bool includeSealedRecords, LightEpoch epoch, bool forceInMemory = false, ILogger logger = null)
         : base(beginAddress == 0 ? hlog.GetFirstValidLogicalAddress(0) : beginAddress, endAddress, scanBufferingMode, includeSealedRecords, epoch, hlog.LogPageSizeBits, logger: logger)
@@ -280,7 +274,6 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
     /// <summary>
     /// Get next record in iterator
     /// </summary>
-    /// <returns></returns>
     public bool GetNext(out RecordInfo recordInfo, out SpanByte key, out SpanByte value)
         => throw new NotSupportedException("Use GetNext(out RecordInfo) to retrieve references to key/value");
 

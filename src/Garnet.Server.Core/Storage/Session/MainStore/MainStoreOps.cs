@@ -232,15 +232,12 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Returns the remaining time to live of a key that has a timeout.
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <typeparam name="TObjectContext"></typeparam>
     /// <param name="key">The key to get the remaining time to live in the store.</param>
     /// <param name="storeType">The store to operate on</param>
     /// <param name="output">Span to allocate the output of the operation</param>
     /// <param name="context">Basic Context of the store</param>
     /// <param name="objectContext">Object Context of the store</param>
     /// <param name="milliseconds">when true the command to execute is PTTL.</param>
-    /// <returns></returns>
     public unsafe GarnetStatus TTL<TContext, TObjectContext>(ref SpanByte key, StoreType storeType, ref SpanByteAndMemory output, ref TContext context, ref TObjectContext objectContext, bool milliseconds = false)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
@@ -605,13 +602,10 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Returns if key is an existing one in the store.
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <typeparam name="TObjectContext"></typeparam>
     /// <param name="key">The name of the key to use in the operation</param>
     /// <param name="storeType">The store to operate on.</param>
     /// <param name="context">Basic context for the main store.</param>
     /// <param name="objectContext">Object context for the object store.</param>
-    /// <returns></returns>
     public GarnetStatus EXISTS<TContext, TObjectContext>(ArgSlice key, StoreType storeType, ref TContext context, ref TObjectContext objectContext)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
@@ -644,8 +638,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Set a timeout on key
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <typeparam name="TObjectContext"></typeparam>
     /// <param name="key">The key to set the timeout on.</param>
     /// <param name="expiryMs">Milliseconds value for the timeout.</param>
     /// <param name="timeoutSet">True when the timeout was properly set.</param>
@@ -653,7 +645,6 @@ sealed partial class StorageSession : IDisposable
     /// <param name="expireOption">>Flags to use for the operation.</param>
     /// <param name="context">Basic context for the main store.</param>
     /// <param name="objectStoreContext">Object context for the object store.</param>
-    /// <returns></returns>
     public unsafe GarnetStatus EXPIRE<TContext, TObjectContext>(ArgSlice key, ArgSlice expiryMs, out bool timeoutSet, StoreType storeType, ExpireOption expireOption, ref TContext context, ref TObjectContext objectStoreContext)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
@@ -662,8 +653,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Set a timeout on key.
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <typeparam name="TObjectContext"></typeparam>
     /// <param name="key">The key to set the timeout on.</param>
     /// <param name="expiry">The timespan value to set the expiration for.</param>
     /// <param name="timeoutSet">True when the timeout was properly set.</param>
@@ -672,7 +661,6 @@ sealed partial class StorageSession : IDisposable
     /// <param name="context">Basic context for the main store</param>
     /// <param name="objectStoreContext">Object context for the object store</param>
     /// <param name="milliseconds">When true the command executed is PEXPIRE, expire by default.</param>
-    /// <returns></returns>
     public unsafe GarnetStatus EXPIRE<TContext, TObjectContext>(ArgSlice key, TimeSpan expiry, out bool timeoutSet, StoreType storeType, ExpireOption expireOption, ref TContext context, ref TObjectContext objectStoreContext, bool milliseconds = false)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
@@ -779,13 +767,11 @@ sealed partial class StorageSession : IDisposable
     /// For existing keys - overwrites part of the value at a specified offset (in-place if possible)
     /// For non-existing keys - creates a new string with the value at a specified offset (padded with '\0's)
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
     /// <param name="key">The key for which to set the range</param>
     /// <param name="value">The value to place at an offset</param>
     /// <param name="offset">The offset at which to place the value</param>
     /// <param name="output">The length of the updated string</param>
     /// <param name="context">Basic context for the main store</param>
-    /// <returns></returns>
     public unsafe GarnetStatus SETRANGE<TContext>(ArgSlice key, ArgSlice value, int offset, ref ArgSlice output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {

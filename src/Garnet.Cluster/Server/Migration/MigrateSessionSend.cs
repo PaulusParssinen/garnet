@@ -12,8 +12,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Write main store key-value pair directly to client buffer or flush buffer to make space and try again writing.
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
     /// <returns>True on success, else false</returns>
     private bool WriteOrSendMainStoreKeyValuePair(ref SpanByte key, ref SpanByte value)
     {
@@ -37,10 +35,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Write object store key-value pair directly to client buffer or flush buffer to make space and try again writing.
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <param name="expiration"></param>
-    /// <returns></returns>
     private bool WriteOrSendObjectStoreKeyValuePair(byte[] key, byte[] value, long expiration)
     {
         // Check if we need to initialize cluster migrate command arguments
@@ -60,7 +54,6 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <summary>
     /// Handle response from migrate data task
     /// </summary>
-    /// <param name="task"></param>
     /// <returns>True on successful completion of data send, otherwise false</returns>
     public bool HandleMigrateTaskResponse(Task<string> task)
     {

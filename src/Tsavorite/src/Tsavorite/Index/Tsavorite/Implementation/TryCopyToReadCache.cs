@@ -8,13 +8,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Copy a record from the disk to the read cache.
     /// </summary>
-    /// <param name="pendingContext"></param>
-    /// <param name="key"></param>
-    /// <param name="input"></param>
-    /// <param name="recordValue"></param>
     /// <param name="stackCtx">Contains the <see cref="HashEntryInfo"/> and <see cref="RecordSource{Key, Value}"/> structures for this operation,
     ///     and allows passing back the newLogicalAddress for invalidation in the case of exceptions.</param>
-    /// <param name="tsavoriteSession"></param>
     /// <returns>True if copied to readcache, else false; readcache is "best effort", and we don't fail the read process, or slow it down by retrying.
     /// </returns>
     internal bool TryCopyToReadCache<Input, Output, Context, TsavoriteSession>(TsavoriteSession tsavoriteSession, ref PendingContext<Input, Output, Context> pendingContext,

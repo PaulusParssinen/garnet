@@ -27,7 +27,6 @@ public static class Devices
     /// <param name="useIoCompletionPort">Whether we use IO completion port with polling</param>
     /// <param name="disableFileBuffering">Whether file buffering (during write) is disabled (default of true requires aligned writes)</param>
     /// <param name="useNativeDeviceLinux">Use native device on Linux, instead of managed device based on FileStream</param>
-    /// <param name="logger"></param>
     /// <returns>Device instance</returns>
     public static IDevice CreateLogDevice(string logPath, bool preallocateFile = false, bool deleteOnClose = false, long capacity = CAPACITY_UNSPECIFIED, bool recoverDevice = false, bool useIoCompletionPort = false, bool disableFileBuffering = true, bool useNativeDeviceLinux = false, ILogger logger = null)
     {

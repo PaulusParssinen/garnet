@@ -160,7 +160,6 @@ internal class GarnetClusterConnectionStore
     /// </summary>
     /// <param name="nodeId">Node-id to search for.</param>
     /// <param name="conn">Connection object returned on success otherwise null.</param>
-    /// <returns></returns>
     public bool GetConnection(string nodeId, out GarnetServerNode conn)
     {
         conn = null;
@@ -233,7 +232,6 @@ internal class GarnetClusterConnectionStore
     /// </summary>
     /// <param name="nodeId">Node-id to search for.</param>
     /// <param name="linkStatus">Metrics info to retrieve for connection.</param>
-    /// <returns></returns>
     public bool GetConnectionInfo(string nodeId, ref MetricsItem[] linkStatus)
     {
         try

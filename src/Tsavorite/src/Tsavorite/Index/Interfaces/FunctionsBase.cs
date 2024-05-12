@@ -8,11 +8,6 @@ namespace Tsavorite;
 /// <summary>
 /// Default empty functions base class to make it easy for users to provide their own implementation of IFunctions
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Input"></typeparam>
-/// <typeparam name="Output"></typeparam>
-/// <typeparam name="Context"></typeparam>
 public abstract class FunctionsBase<Key, Value, Input, Output, Context> : IFunctions<Key, Value, Input, Output, Context>
 {
     /// <inheritdoc/>
@@ -75,9 +70,6 @@ public abstract class FunctionsBase<Key, Value, Input, Output, Context> : IFunct
 /// <summary>
 /// Default empty functions base class to make it easy for users to provide their own implementation of FunctionsBase
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Context"></typeparam>
 public class SimpleFunctions<Key, Value, Context> : FunctionsBase<Key, Value, Value, Value, Context>
 {
     private readonly Func<Value, Value, Value> merger;

@@ -26,12 +26,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// If field exists the operation has no effect.
     /// HMSET key field value [field value ...](deprecated) Same effect as HSET
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="hop"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool HashSet<TGarnetApi>(int count, byte* ptr, HashOperation hop, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -110,12 +104,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// HashGetMultiple: Returns the values associated with the specified fields in the hash stored at key.
     /// HashRandomField: Returns a random field from the hash value stored at key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
     /// <param name="op">HGET, HGETALL, HMGET, HRANDFIELD</param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool HashGet<TGarnetApi>(int count, byte* ptr, HashOperation op, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -215,11 +204,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the number of fields contained in the hash key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool HashLength<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -286,11 +270,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the string length of the value associated with field in the hash stored at key. If the key or the field do not exist, 0 is returned.
     /// </summary>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <returns></returns>
     private unsafe bool HashStrLength<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -360,11 +339,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Removes the specified fields from the hash stored at key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool HashDelete<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -440,11 +414,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns if field exists in the hash stored at key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool HashExists<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
        where TGarnetApi : IGarnetApi
     {
@@ -513,12 +482,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// HashKeys: Returns all field names in the hash key.
     /// HashVals: Returns all values in the hash key.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool HashKeys<TGarnetApi>(int count, byte* ptr, HashOperation op, ref TGarnetApi storageApi)
       where TGarnetApi : IGarnetApi
     {
@@ -600,12 +563,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// HashIncrement: Increments the number stored at field in the hash stored at key by increment.
     /// HashIncrementByFloat: Increment the specified field of a hash stored at key, and representing a floating point number, by the specified increment. 
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool HashIncrement<TGarnetApi>(int count, byte* ptr, HashOperation op, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

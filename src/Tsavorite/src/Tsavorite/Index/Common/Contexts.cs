@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using Tsavorite.Device;
 
 namespace Tsavorite;
 
@@ -408,8 +409,6 @@ public struct HybridLogRecoveryInfo
     /// <summary>
     /// Initialize
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="_version"></param>
     public void Initialize(Guid token, long _version)
     {
         guid = token;
@@ -431,7 +430,6 @@ public struct HybridLogRecoveryInfo
     /// <summary>
     /// Initialize from stream
     /// </summary>
-    /// <param name="reader"></param>
     public void Initialize(StreamReader reader)
     {
         continueTokens = new();
@@ -532,9 +530,6 @@ public struct HybridLogRecoveryInfo
     /// <summary>
     ///  Recover info from token
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="checkpointManager"></param>
-    /// <param name="deltaLog"></param>
     /// <param name = "scanDelta">
     /// whether to scan the delta log to obtain the latest info contained in an incremental snapshot checkpoint.
     /// If false, this will recover the base snapshot info but avoid potentially expensive scans.
@@ -552,9 +547,6 @@ public struct HybridLogRecoveryInfo
     /// <summary>
     ///  Recover info from token
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="checkpointManager"></param>
-    /// <param name="deltaLog"></param>
     /// <param name="commitCookie"> Any user-specified commit cookie written as part of the checkpoint </param>
     /// <param name = "scanDelta">
     /// whether to scan the delta log to obtain the latest info contained in an incremental snapshot checkpoint.

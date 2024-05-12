@@ -40,13 +40,11 @@ public interface IClusterProvider : IDisposable
     /// <summary>
     /// Is replica
     /// </summary>
-    /// <returns></returns>
     bool IsReplica();
 
     /// <summary>
     /// On checkpoint initiated
     /// </summary>
-    /// <param name="CheckpointCoveredAofAddress"></param>
     void OnCheckpointInitiated(out long CheckpointCoveredAofAddress);
 
     /// <summary>

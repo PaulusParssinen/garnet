@@ -11,16 +11,11 @@ public interface IServerHook
     /// <summary>
     /// Try creating a message consumer
     /// </summary>
-    /// <param name="bytesReceived"></param>
-    /// <param name="networkSender"></param>
-    /// <param name="session"></param>
-    /// <returns></returns>
     bool TryCreateMessageConsumer(Span<byte> bytesReceived, INetworkSender networkSender, out IMessageConsumer session);
 
     /// <summary>
     /// Dispose message consumer
     /// </summary>
-    /// <param name="session"></param>
     void DisposeMessageConsumer(INetworkHandler session);
 
     /// <summary>

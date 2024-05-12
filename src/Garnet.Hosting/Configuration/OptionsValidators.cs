@@ -100,11 +100,10 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
 
     /// <summary>
     /// Directory validation logic, checks access to directory by instantiating a DirectoryInfo object
-    /// Invalid if exception thrown during DirectoryInfo instantiation or if directory must exist and doesn't (not applicable for Azure Storage)
+    /// Invalid if exception thrown during DirectoryInfo instantiation or if directory must exist and doesn't
     /// </summary>
     /// <param name="value">Path to the local directory</param>
     /// <param name="validationContext">Validation context</param>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string directoryPath))
@@ -124,12 +123,6 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
         }
 
         var options = (Options)validationContext.ObjectInstance;
-
-        // Ignore directory exists if pertains to path on Azure Storage
-        if ((validationContext.MemberName == nameof(Options.ConfigImportPath) && options.UseAzureStorageForConfigImport.GetValueOrDefault()) ||
-            (validationContext.MemberName == nameof(Options.ConfigExportPath) && options.UseAzureStorageForConfigExport.GetValueOrDefault()) ||
-            (validationContext.MemberName != nameof(Options.ConfigImportPath) && validationContext.MemberName != nameof(Options.ConfigExportPath) && options.UseAzureStorage.GetValueOrDefault()))
-            return ValidationResult.Success;
 
         if (this._mustExist && !directoryInfo.Exists)
         {
@@ -162,7 +155,6 @@ internal sealed class DirectoryPathsValidationAttribute : OptionValidationAttrib
     /// </summary>
     /// <param name="value">Paths to the local directories</param>
     /// <param name="validationContext">Validation context</param>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         if (TryInitialValidation<IEnumerable<string>>(value, validationContext, out ValidationResult initValidationResult, out IEnumerable<string> directoryPaths))
@@ -220,7 +212,7 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
 
     /// <summary>
     /// File validation logic, checks access to file by instantiating a FileInfo object
-    /// Invalid if exception thrown during FileInfo instantiation or if directory must exist and doesn't or if file must exist and doesn't (not applicable for Azure Storage)
+    /// Invalid if exception thrown during FileInfo instantiation or if directory must exist and doesn't or if file must exist and doesn't
     /// </summary>
     /// <param name="value">Path to the local file</param>
     /// <param name="validationContext">Validation context</param>
@@ -243,12 +235,6 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
         }
 
         var options = (Options)validationContext.ObjectInstance;
-
-        // Ignore file exists / directory exists if pertains to path on Azure Storage
-        if ((validationContext.MemberName == nameof(Options.ConfigImportPath) && options.UseAzureStorageForConfigImport.GetValueOrDefault()) ||
-            (validationContext.MemberName == nameof(Options.ConfigExportPath) && options.UseAzureStorageForConfigExport.GetValueOrDefault()) ||
-            (validationContext.MemberName != nameof(Options.ConfigImportPath) && validationContext.MemberName != nameof(Options.ConfigExportPath) && options.UseAzureStorage.GetValueOrDefault()))
-            return ValidationResult.Success;
 
         if (this._fileMustExist && !fileInfo.Exists)
         {
@@ -290,7 +276,6 @@ internal sealed class IpAddressValidationAttribute : OptionValidationAttribute
     /// </summary>
     /// <param name="value">String containing IP address</param>
     /// <param name="validationContext">Validation Logic</param>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string ipAddress))
@@ -322,7 +307,6 @@ internal sealed class MemorySizeValidationAttribute : OptionValidationAttribute
     /// </summary>
     /// <param name="value">String containing memory size</param>
     /// <param name="validationContext">Validation context</param>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string memorySize))
@@ -393,7 +377,6 @@ internal class RangeValidationAttribute : OptionValidationAttribute
     /// </summary>
     /// <param name="value">Integer value</param>
     /// <param name="validationContext">Validation context</param>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         object[] initValParams = new[] { value, validationContext, null, null };
@@ -451,18 +434,9 @@ internal class LogDirValidationAttribute : DirectoryPathValidationAttribute
     {
     }
 
-    /// <summary>
-    /// Validation logic for Log Directory, valid if UseAzureStorage is specified or if EnableStorageTier is not specified in parent Options object
-    /// If neither applies, reverts to OptionValidationAttribute validation
-    /// </summary>
-    /// <param name="value">Value of Log Directory</param>
-    /// <param name="validationContext">Validation context</param>
-    /// <returns>Validation result</returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         var options = (Options)validationContext.ObjectInstance;
-        if (options.UseAzureStorage.GetValueOrDefault() || !options.EnableStorageTier.GetValueOrDefault())
-            return ValidationResult.Success;
 
         return base.IsValid(value, validationContext);
     }
@@ -478,19 +452,9 @@ internal sealed class CheckpointDirValidationAttribute : DirectoryPathValidation
     {
     }
 
-    /// <summary>
-    /// Validation logic for Checkpoint Directory, valid if UseAzureStorage is specified in parent Options object
-    /// If not, reverts to OptionValidationAttribute validation
-    /// </summary>
-    /// <param name="value">Value of Log Directory</param>
-    /// <param name="validationContext">Validation context</param>
-    /// <returns>Validation result</returns>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         var options = (Options)validationContext.ObjectInstance;
-        if (options.UseAzureStorage.GetValueOrDefault())
-            return ValidationResult.Success;
 
         return base.IsValid(value, validationContext);
     }
@@ -514,7 +478,6 @@ internal sealed class CertFileValidationAttribute : FilePathValidationAttribute
     /// <param name="value">Value of CertFileName</param>
     /// <param name="validationContext">Validation context</param>
     /// <returns>Validation result</returns>
-    /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         var options = (Options)validationContext.ObjectInstance;

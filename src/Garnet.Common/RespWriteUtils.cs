@@ -411,10 +411,6 @@ public static unsafe class RespWriteUtils
     /// *scan commands have an array of two elements
     /// a cursor and an array of items or fields
     /// </summary>
-    /// <param name="cursor"></param>
-    /// <param name="curr"></param>
-    /// <param name="end"></param>
-    /// <returns></returns>
     public static bool WriteScanOutputHeader(long cursor, ref byte* curr, byte* end)
     {
         if (!WriteArrayLength(2, ref curr, end))

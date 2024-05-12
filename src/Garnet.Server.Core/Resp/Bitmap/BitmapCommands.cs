@@ -81,11 +81,6 @@ public struct BitFieldCmdArgs
     /// <summary>
     /// add a command to execute in bitfield
     /// </summary>
-    /// <param name="secondaryOpCode"></param>
-    /// <param name="typeInfo"></param>
-    /// <param name="offset"></param>
-    /// <param name="value"></param>
-    /// <param name="overflowType"></param>
     public BitFieldCmdArgs(byte secondaryOpCode, byte typeInfo, long offset, long value, byte overflowType)
     {
         this.secondaryOpCode = secondaryOpCode;

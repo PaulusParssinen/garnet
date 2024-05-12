@@ -699,20 +699,12 @@ public class RecoveryCheckSnapshotTests : RecoveryCheckBase
     public async ValueTask IncrSnapshotRecoveryCheck([Values] DeviceMode deviceMode)
     {
         ICheckpointManager checkpointManager;
-        if (deviceMode == DeviceMode.Local)
-        {
-            checkpointManager = new DeviceLogCommitCheckpointManager(
-                new LocalStorageNamedDeviceFactory(),
-                new DefaultCheckpointNamingScheme(TestUtils.MethodTestDir + "/checkpoints/"));  // PurgeAll deletes this directory
-        }
-        else
-        {
-            TestUtils.IgnoreIfNotRunningAzureTests();
-            checkpointManager = new DeviceLogCommitCheckpointManager(
-                new AzureStorageNamedDeviceFactory(TestUtils.AzureEmulatedStorageString),
-                new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"));
-        }
+        // TODO: device matrix
 
+        checkpointManager = new DeviceLogCommitCheckpointManager(
+            new LocalStorageNamedDeviceFactory(),
+            new DefaultCheckpointNamingScheme(TestUtils.MethodTestDir + "/checkpoints/"));  // PurgeAll deletes this directory
+        
         await IncrSnapshotRecoveryCheck(checkpointManager);
         checkpointManager.PurgeAll();
         checkpointManager.Dispose();

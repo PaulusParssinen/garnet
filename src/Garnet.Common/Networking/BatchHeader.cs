@@ -55,8 +55,6 @@ public struct BatchHeader
     /// <summary>
     /// Set num messages and wire protocol
     /// </summary>
-    /// <param name="numMessages"></param>
-    /// <param name="protocol"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetNumMessagesProtocol(int numMessages, WireFormat protocol)
     {

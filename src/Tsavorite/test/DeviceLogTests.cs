@@ -17,37 +17,6 @@ internal class DeviceLogTests
 
     [Test]
     [Category("TsavoriteLog")]
-    public async ValueTask PageBlobTsavoriteLogTest1([Values] LogChecksumType logChecksum, [Values] TsavoriteLogTestBase.IteratorType iteratorType)
-    {
-        TestUtils.IgnoreIfNotRunningAzureTests();
-        var device = new AzureStorageDevice(TestUtils.AzureEmulatedStorageString, TestUtils.AzureTestContainer, TestUtils.AzureTestDirectory, "Tsavoritelog.log", deleteOnClose: true, logger: TestUtils.TestLoggerFactory.CreateLogger("asd"));
-        var checkpointManager = new DeviceLogCommitCheckpointManager(
-            new AzureStorageNamedDeviceFactory(TestUtils.AzureEmulatedStorageString),
-            new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"));
-        await TsavoriteLogTest1(logChecksum, device, checkpointManager, iteratorType);
-        device.Dispose();
-        checkpointManager.PurgeAll();
-        checkpointManager.Dispose();
-    }
-
-    [Test]
-    [Category("TsavoriteLog")]
-    public async ValueTask PageBlobTsavoriteLogTestWithLease([Values] LogChecksumType logChecksum, [Values] TsavoriteLogTestBase.IteratorType iteratorType)
-    {
-        TestUtils.IgnoreIfNotRunningAzureTests();
-        var device = new AzureStorageDevice(TestUtils.AzureEmulatedStorageString, TestUtils.AzureTestContainer, TestUtils.AzureTestDirectory, "TsavoritelogLease.log", deleteOnClose: true, underLease: true, blobManager: null, logger: TestUtils.TestLoggerFactory.CreateLogger("asd"));
-        var checkpointManager = new DeviceLogCommitCheckpointManager(
-            new AzureStorageNamedDeviceFactory(TestUtils.AzureEmulatedStorageString),
-            new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"));
-        await TsavoriteLogTest1(logChecksum, device, checkpointManager, iteratorType);
-        device.Dispose();
-        checkpointManager.PurgeAll();
-        checkpointManager.Dispose();
-    }
-
-
-    [Test]
-    [Category("TsavoriteLog")]
     public void BasicHighLatencyDeviceTest()
     {
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);

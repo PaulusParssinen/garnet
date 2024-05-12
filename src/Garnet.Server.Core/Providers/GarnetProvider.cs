@@ -23,9 +23,6 @@ public sealed class GarnetProvider : TsavoriteKVProviderBase<SpanByte, SpanByte,
     /// <summary>
     /// Create SpanByte TsavoriteKV backend for Garnet
     /// </summary>
-    /// <param name="storeWrapper"></param>
-    /// <param name="broker"></param>
-    /// <param name="maxSizeSettings"></param>        
     public GarnetProvider(StoreWrapper storeWrapper,
         SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> broker = null,
         MaxSizeSettings maxSizeSettings = default)

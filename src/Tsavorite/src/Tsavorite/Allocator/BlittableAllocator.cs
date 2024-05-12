@@ -133,7 +133,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Allocate memory page, pinned in memory, and in sector aligned form, if possible
     /// </summary>
-    /// <param name="index"></param>
     internal override void AllocatePage(int index)
     {
         IncrementAllocatedPageCount();
@@ -196,8 +195,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Get start logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public override long GetStartLogicalAddress(long page)
     {
         return page << LogPageSizeBits;
@@ -207,8 +204,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Get first valid logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public override long GetFirstValidLogicalAddress(long page)
     {
         if (page == 0)
@@ -259,11 +254,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// Invoked by users to obtain a record from disk. It uses sector aligned memory to read 
     /// the record efficiently into memory.
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="result"></param>
     protected override void AsyncReadRecordObjectsToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, AsyncIOContext<Key, Value> context, SectorAlignedMemory result = default)
     {
         throw new InvalidOperationException("AsyncReadRecordObjectsToMemory invalid for BlittableAllocator");
@@ -272,9 +262,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Retrieve objects from object log
     /// </summary>
-    /// <param name="record"></param>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     protected override bool RetrievedFullRecord(byte* record, ref AsyncIOContext<Key, Value> ctx)
     {
         ctx.key = GetKey((long)record);
@@ -285,7 +272,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Whether KVS has keys to serialize/deserialize
     /// </summary>
-    /// <returns></returns>
     public override bool KeyHasObjects()
     {
         return false;
@@ -294,7 +280,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Whether KVS has values to serialize/deserialize
     /// </summary>
-    /// <returns></returns>
     public override bool ValueHasObjects()
     {
         return false;
@@ -356,18 +341,6 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     /// <summary>
     /// Read pages from specified device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="readPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="frame"></param>
-    /// <param name="completed"></param>
-    /// <param name="devicePageOffset"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
-    /// <param name="cts"></param>
     internal void AsyncReadPagesFromDeviceToFrame<TContext>(
                                     long readPageStart,
                                     int numPages,

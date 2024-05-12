@@ -203,8 +203,6 @@ internal sealed partial class ReplicationManager : IDisposable
     /// <summary>
     /// Wait for local replication offset to sync with input value
     /// </summary>
-    /// <param name="primaryReplicationOffset"></param>
-    /// <returns></returns>
     public async Task<long> WaitForReplicationOffset(long primaryReplicationOffset)
     {
         while (ReplicationOffset < primaryReplicationOffset)

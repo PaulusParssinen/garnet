@@ -18,6 +18,5 @@ public interface IReadOnlySpanBatch
     /// Retrieve batch entry at specified index
     /// </summary>
     /// <param name="index">Index</param>
-    /// <returns></returns>
     ReadOnlySpan<byte> Get(int index);
 }

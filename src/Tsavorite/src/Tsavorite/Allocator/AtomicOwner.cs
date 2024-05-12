@@ -20,7 +20,6 @@ struct AtomicOwner
     /// true: success + caller is new owner
     /// false: success + someone else is owner
     /// </summary>
-    /// <returns></returns>
     public bool Enqueue()
     {
         while (true)
@@ -43,7 +42,6 @@ struct AtomicOwner
     /// true: successful dequeue
     /// false: failed dequeue
     /// </summary>
-    /// <returns></returns>
     public bool Dequeue()
     {
         while (true)
@@ -64,7 +62,6 @@ struct AtomicOwner
     /// true: successful release
     /// false: failed release
     /// </summary>
-    /// <returns></returns>
     public bool Release()
     {
         while (true)

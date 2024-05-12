@@ -750,8 +750,6 @@ class LongStressChainTests
     {
         if (numReadThreads == 0 && numWriteThreads == 0)
             Assert.Ignore("Skipped due to 0 threads for both read and update");
-        if ((numReadThreads > 2 || numWriteThreads > 2) && IsRunningAzureTests)
-            Assert.Ignore("Skipped because > 2 threads when IsRunningAzureTests");
         if (TestContext.CurrentContext.CurrentRepeatCount > 0)
             Debug.WriteLine($"*** Current test iteration: {TestContext.CurrentContext.CurrentRepeatCount + 1} ***");
 
@@ -970,8 +968,6 @@ class SpanByteStressChainTests
     {
         if (numReadThreads == 0 && numWriteThreads == 0)
             Assert.Ignore("Skipped due to 0 threads for both read and update");
-        if ((numReadThreads > 2 || numWriteThreads > 2) && IsRunningAzureTests)
-            Assert.Ignore("Skipped because > 2 threads when IsRunningAzureTests");
         if (TestContext.CurrentContext.CurrentRepeatCount > 0)
             Debug.WriteLine($"*** Current test iteration: {TestContext.CurrentContext.CurrentRepeatCount + 1} ***");
 

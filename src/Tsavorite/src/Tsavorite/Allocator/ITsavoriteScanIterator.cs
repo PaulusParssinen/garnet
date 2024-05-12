@@ -27,35 +27,27 @@ public enum ScanBufferingMode
 /// <summary>
 /// Scan iterator interface for Tsavorite log
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public interface ITsavoriteScanIterator<Key, Value> : IDisposable
 {
     /// <summary>
     /// Gets reference to current key
     /// </summary>
-    /// <returns></returns>
     ref Key GetKey();
 
     /// <summary>
     /// Gets reference to current value
     /// </summary>
-    /// <returns></returns>
     ref Value GetValue();
 
     /// <summary>
     /// Get next record
     /// </summary>
-    /// <param name="recordInfo"></param>
     /// <returns>True if record found, false if end of scan</returns>
     bool GetNext(out RecordInfo recordInfo);
 
     /// <summary>
     /// Get next record
     /// </summary>
-    /// <param name="recordInfo"></param>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
     /// <returns>True if record found, false if end of scan</returns>
     bool GetNext(out RecordInfo recordInfo, out Key key, out Value value);
 

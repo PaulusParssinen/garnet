@@ -28,7 +28,7 @@ public class GarnetServerConfigTests
     public void DefaultConfigurationOptionsCoverage()
     {
         string json;
-        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, Assembly.GetExecutingAssembly());
         using (Stream stream = streamProvider.Read(ServerSettingsManager.DefaultOptionsEmbeddedFileName))
         {
             using (var streamReader = new StreamReader(stream))
@@ -178,45 +178,5 @@ public class GarnetServerConfigTests
         Assert.IsTrue(File.Exists(garnetConfigPath));
 
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
-    }
-
-    [Test]
-    public void ImportExportConfigAzure()
-    {
-        string AzureTestDirectory = $"{TestContext.CurrentContext.Test.MethodName.ToLowerInvariant()}";
-        string configPath = $"{AzureTestDirectory}/test1.config";
-        string AzureEmulatedStorageString = "UseDevelopmentStorage=true;";
-
-        if (TestUtils.IsRunningAzureTests)
-        {
-            // Delete blob if exists
-            var deviceFactory = new AzureStorageNamedDeviceFactory(AzureEmulatedStorageString, default);
-            deviceFactory.Initialize(AzureTestDirectory);
-            deviceFactory.Delete(new FileDescriptor { directoryName = "" });
-
-            bool parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(null, out Options options, out List<string> invalidOptions);
-            Assert.IsTrue(parseSuccessful);
-            Assert.AreEqual(invalidOptions.Count, 0);
-            Assert.IsTrue(options.PageSize == "32m");
-            Assert.IsTrue(options.MemorySize == "16g");
-
-            string[] args = new string[] { "--storage-string", AzureEmulatedStorageString, "--use-azure-storage-for-config-export", "true", "--config-export-path", configPath, "-p", "4m", "-m", "8g" };
-            parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out options, out invalidOptions);
-            Assert.IsTrue(parseSuccessful);
-            Assert.AreEqual(invalidOptions.Count, 0);
-            Assert.IsTrue(options.PageSize == "4m");
-            Assert.IsTrue(options.MemorySize == "8g");
-
-            args = ["--storage-string", AzureEmulatedStorageString, "--use-azure-storage-for-config-import", "true", "--config-import-path", configPath];
-            parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out options, out invalidOptions);
-            Assert.IsTrue(parseSuccessful);
-            Assert.AreEqual(invalidOptions.Count, 0);
-            Assert.IsTrue(options.PageSize == "4m");
-            Assert.IsTrue(options.MemorySize == "8g");
-
-            // Delete blob
-            deviceFactory.Initialize(AzureTestDirectory);
-            deviceFactory.Delete(new FileDescriptor { directoryName = "" });
-        }
     }
 }

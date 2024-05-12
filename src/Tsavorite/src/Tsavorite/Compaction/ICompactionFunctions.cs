@@ -6,8 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Optional functions to be called during compaction.
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public interface ICompactionFunctions<Key, Value>
 {
     /// <summary>
@@ -22,9 +20,6 @@ public interface ICompactionFunctions<Key, Value>
     /// compaction can skip the record.
     /// </para>
     /// </remarks>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
     bool IsDeleted(ref Key key, ref Value value);
 }
 

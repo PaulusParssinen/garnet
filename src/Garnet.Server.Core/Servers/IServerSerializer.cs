@@ -42,8 +42,6 @@ public unsafe interface IServerSerializer<Key, Value, Input, Output>
     /// <summary>
     /// Get length of given output
     /// </summary>
-    /// <param name="o"></param>
-    /// <returns></returns>
     int GetLength(ref Output o);
 
     /// <summary>

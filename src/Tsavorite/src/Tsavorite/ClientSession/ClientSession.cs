@@ -10,12 +10,6 @@ namespace Tsavorite;
 /// <summary>
 /// Thread-independent session interface to Tsavorite
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="Input"></typeparam>
-/// <typeparam name="Output"></typeparam>
-/// <typeparam name="Context"></typeparam>
-/// <typeparam name="Functions"></typeparam>
 public sealed class ClientSession<Key, Value, Input, Output, Context, Functions> : IClientSession, ITsavoriteContext<Key, Value, Input, Output, Context>, IDisposable
     where Functions : IFunctions<Key, Value, Input, Output, Context>
 {
@@ -738,7 +732,6 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// <summary>
     /// Get list of pending requests (for current session)
     /// </summary>
-    /// <returns></returns>
     public IEnumerable<long> GetPendingRequests()
     {
         foreach (KeyValuePair<long, TsavoriteKV<Key, Value>.PendingContext<Input, Output, Context>> kvp in ctx.prevCtx?.ioPendingRequests)
@@ -848,8 +841,6 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// Check if at least one synchronous request is ready for CompletePending to be called on
     /// Returns completed immediately if there are no outstanding synchronous requests
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     public async ValueTask ReadyToCompletePendingAsync(CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -906,7 +897,6 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// Wait for commit of all operations completed until the current point in session.
     /// Does not itself issue checkpoint/commits.
     /// </summary>
-    /// <returns></returns>
     public async ValueTask WaitForCommitAsync(CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
@@ -991,10 +981,6 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// <summary>
     /// Copy key and value to tail, succeed only if key is known to not exist in between expectedLogicalAddress and tail.
     /// </summary>
-    /// <param name="key"></param>
-    /// <param name="input"></param>
-    /// <param name="output"></param>
-    /// <param name="value"></param>
     /// <param name="untilAddress">Lower-bound address (addresses are searched from tail (high) to head (low); do not search for "future records" earlier than this)</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal Status CompactionCopyToTail(ref Key key, ref Input input, ref Value value, ref Output output, long untilAddress)
@@ -1014,9 +1000,6 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// Push a scan record to client if key is known to not exist in between expectedLogicalAddress and tail.
     /// </summary>
     /// <param name="scanCursorState">Scan cursor tracking state, from the session on which this scan was initiated</param>
-    /// <param name="recordInfo"></param>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
     /// <param name="untilAddress">Lower-bound address (addresses are searched from tail (high) to head (low); do not search for "future records" earlier than this)</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal Status ConditionalScanPush(ScanCursorState<Key, Value> scanCursorState, RecordInfo recordInfo, ref Key key, ref Value value, long untilAddress)

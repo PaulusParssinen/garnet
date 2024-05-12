@@ -32,9 +32,6 @@ public static class GeoHash
     /// <summary>
     /// Encodes the latitude,longitude coords to a unique 52-bit integer
     /// </summary>
-    /// <param name="latitude"></param>
-    /// <param name="longitude"></param>
-    /// <returns></returns>
     public static long GeoToLongValue(double latitude, double longitude)
     {
         int i = 0;
@@ -65,7 +62,6 @@ public static class GeoHash
     /// Latitude refers to the Y-values and are between -90 and +90 degrees.
     /// Longitude refers to the X-coordinates and are between -180 and +180 degrees.
     /// </summary>
-    /// <param name="longValue"></param>
     /// <returns>(latitude, longitude)</returns>
     public static (double, double) GetCoordinatesFromLong(long longValue)
     {
@@ -95,7 +91,6 @@ public static class GeoHash
     /// <summary>
     /// Gets the base32 value
     /// </summary>
-    /// <param name="longEncodedValue"></param>
     /// <returns>The GeoHash representation of the 52bit</returns>
     public static string GetGeoHashCode(long longEncodedValue)
     {
@@ -142,11 +137,6 @@ public static class GeoHash
     /// Gets the distance in meters using Haversine Formula
     /// https://en.wikipedia.org/wiki/Haversine_formula
     /// </summary>
-    /// <param name="sourceLat"></param>
-    /// <param name="sourceLon"></param>
-    /// <param name="targetLat"></param>
-    /// <param name="targetLon"></param>
-    /// <returns></returns>
     public static double Distance(double sourceLat, double sourceLon, double targetLat, double targetLon)
     {
         // Convert to Radians
@@ -168,14 +158,6 @@ public static class GeoHash
     /// height/2 or width/2,
     /// the point is in the rectangle.
     /// </summary>
-    /// <param name="widthMts"></param>
-    /// <param name="heightMts"></param>
-    /// <param name="latCenterPoint"></param>
-    /// <param name="lonCenterPoint"></param>
-    /// <param name="lat2"></param>
-    /// <param name="lon2"></param>
-    /// <param name="distance"></param>
-    /// <returns></returns>
     public static bool GetDistanceWhenInRectangle(double widthMts, double heightMts, double latCenterPoint, double lonCenterPoint, double lat2, double lon2, ref double distance)
     {
         double lon_distance = Distance(lat2, lon2, latCenterPoint, lon2);
@@ -207,9 +189,6 @@ public static class GeoHash
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="units"></param>
-    /// <returns></returns>
     public static double ConvertValueToMeters(double value, byte[] units)
     {
         if (units.Length == 2)
@@ -238,9 +217,6 @@ public static class GeoHash
     /// <summary>
     /// Helper to convert meters to kilometers, feet, or miles
     /// </summary>
-    /// <param name="value"></param>
-    /// <param name="units"></param>
-    /// <returns></returns>
     public static double ConvertMetersToUnits(double value, byte[] units)
     {
         if (units.Length == 2)

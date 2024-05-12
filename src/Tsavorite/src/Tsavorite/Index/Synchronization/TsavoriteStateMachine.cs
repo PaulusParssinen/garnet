@@ -161,9 +161,6 @@ public partial class TsavoriteKV<Key, Value>
     /// <summary>
     /// Check whether thread is in same cycle compared to current systemState
     /// </summary>
-    /// <param name="ctx"></param>
-    /// <param name="threadState"></param>
-    /// <returns></returns>
     internal bool SameCycle<Input, Output, Context>(TsavoriteExecutionContext<Input, Output, Context> ctx, SystemState threadState)
     {
         if (ctx == null)
@@ -183,7 +180,6 @@ public partial class TsavoriteKV<Key, Value>
     /// <param name="tsavoriteSession">Tsavorite session.</param>
     /// <param name="valueTasks">Return list of tasks that caller needs to await, to continue checkpointing</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns></returns>
     private void ThreadStateMachineStep<Input, Output, Context, TsavoriteSession>(
         TsavoriteExecutionContext<Input, Output, Context> ctx,
         TsavoriteSession tsavoriteSession,

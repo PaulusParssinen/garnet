@@ -78,8 +78,6 @@ class UniformPartitionScheme : IPartitionScheme
     /// <summary>
     /// vararg version of <see cref="UniformPartitionScheme(long, IList{IDevice})"/>
     /// </summary>
-    /// <param name="chunkSize"></param>
-    /// <param name="devices"></param>
     public UniformPartitionScheme(long chunkSize, params IDevice[] devices) : this(chunkSize, (IList<IDevice>)devices)
     {
     }
@@ -87,12 +85,6 @@ class UniformPartitionScheme : IPartitionScheme
     /// <summary>
     /// <see cref="IPartitionScheme.MapRange(long, long, out int, out long, out long)"/>
     /// </summary>
-    /// <param name="startAddress"></param>
-    /// <param name="endAddress"></param>
-    /// <param name="shard"></param>
-    /// <param name="shardStartAddress"></param>
-    /// <param name="shardEndAddress"></param>
-    /// <returns></returns>
     public long MapRange(long startAddress, long endAddress, out int shard, out long shardStartAddress, out long shardEndAddress)
     {
         long chunkId = startAddress / chunkSize;
@@ -114,9 +106,6 @@ class UniformPartitionScheme : IPartitionScheme
     /// <summary>
     /// <see cref="IPartitionScheme.MapSectorSize(long, int)"/>
     /// </summary>
-    /// <param name="sectorSize"></param>
-    /// <param name="shard"></param>
-    /// <returns></returns>
     public long MapSectorSize(long sectorSize, int shard)
     {
         long numChunks = sectorSize / chunkSize;
@@ -156,9 +145,6 @@ class ShardedStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.Initialize(long, LightEpoch, bool)"/>
     /// </summary>
-    /// <param name="segmentSize"></param>
-    /// <param name="epoch"></param>
-    /// <param name="omitSegmentIdFromFilename"></param>
     public override void Initialize(long segmentSize, LightEpoch epoch, bool omitSegmentIdFromFilename = false)
     {
         base.Initialize(segmentSize, epoch, omitSegmentIdFromFilename);
@@ -172,9 +158,6 @@ class ShardedStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.RemoveSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="segment"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public override void RemoveSegmentAsync(int segment, AsyncCallback callback, IAsyncResult result)
     {
         var countdown = new CountdownEvent(partitions.Devices.Count);
@@ -194,12 +177,6 @@ class ShardedStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.WriteAsync(IntPtr, int, ulong, uint, DeviceIOCompletionCallback, object)"/>
     /// </summary>
-    /// <param name="sourceAddress"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override unsafe void WriteAsync(IntPtr sourceAddress, int segmentId, ulong destinationAddress, uint numBytesToWrite, DeviceIOCompletionCallback callback, object context)
     {
         // Starts off in one, in order to prevent some issued writes calling the callback before all parallel writes are issued.
@@ -247,12 +224,6 @@ class ShardedStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.ReadAsync(int, ulong, IntPtr, uint, DeviceIOCompletionCallback, object)"/>
     /// </summary>
-    /// <param name="segmentId"></param>
-    /// <param name="sourceAddress"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="readLength"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override unsafe void ReadAsync(int segmentId, ulong sourceAddress, IntPtr destinationAddress, uint readLength, DeviceIOCompletionCallback callback, object context)
     {
         // Starts off in one, in order to prevent some issued writes calling the callback before all parallel writes are issued.

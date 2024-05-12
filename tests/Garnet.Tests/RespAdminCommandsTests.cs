@@ -149,12 +149,10 @@ public class RespAdminCommandsTests
     }
 
     [Test]
-    public void SeSaveRecoverTest([Values] bool disableObj, [Values] bool useAzure)
+    public void SeSaveRecoverTest([Values] bool disableObj)
     {
-        if (useAzure)
-            TestUtils.IgnoreIfNotRunningAzureTests();
         server.Dispose();
-        server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, DisableObjects: disableObj, UseAzureStorage: useAzure);
+        server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, DisableObjects: disableObj);
         server.Start();
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
@@ -169,7 +167,7 @@ public class RespAdminCommandsTests
         }
 
         server.Dispose(false);
-        server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, tryRecover: true, UseAzureStorage: useAzure);
+        server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, tryRecover: true);
         server.Start();
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))

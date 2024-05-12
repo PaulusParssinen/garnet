@@ -20,7 +20,6 @@ public unsafe partial class BitmapManager
     /// <param name="srcKeyCount">Number of source keys.</param>
     /// <param name="minSize">Minimum size of source bitmap.</param>
     /// <param name="bitop">Type of bitop operation being executed.</param>
-    /// <returns></returns>
     public static bool BitOpMainUnsafeMultiKey(byte* dstPtr, int dstLen, byte** srcStartPtrs, byte** srcEndPtrs, int srcKeyCount, int minSize, byte bitop)
     {
         switch (bitop)

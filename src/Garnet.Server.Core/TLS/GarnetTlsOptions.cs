@@ -162,10 +162,6 @@ public class GarnetTlsOptions : IGarnetTlsOptions
     /// <summary>
     /// Callback to verify the TLS certificate
     /// </summary>
-    /// <param name="issuerCertificatePath"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
     RemoteCertificateValidationCallback ValidateCertificateCallback(string issuerCertificatePath)
     {
         if (!ClientCertificateRequired)
@@ -201,9 +197,6 @@ public class GarnetTlsOptions : IGarnetTlsOptions
     /// https://stackoverflow.com/questions/6497040/how-do-i-validate-that-a-certificate-was-created-by-a-particular-certification-a
     /// Make sure to validate for your requirements before using in production.
     /// </summary>
-    /// <param name="certificateToValidate"></param>
-    /// <param name="authority"></param>
-    /// <returns></returns>
     bool ValidateCertificateIssuer(X509Certificate2 certificateToValidate, X509Certificate2 authority)
     {
         using X509Chain chain = new();

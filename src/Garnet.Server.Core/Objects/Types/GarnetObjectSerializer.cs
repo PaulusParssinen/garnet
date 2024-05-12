@@ -29,8 +29,6 @@ public sealed class GarnetObjectSerializer : BinaryObjectSerializer<IGarnetObjec
     }
 
     /// <summary>Thread-safe version of Deserialize</summary>
-    /// <param name="data"></param>
-    /// <returns></returns>
     public IGarnetObject Deserialize(byte[] data)
     {
         Debug.Assert(data != null);
@@ -65,8 +63,6 @@ public sealed class GarnetObjectSerializer : BinaryObjectSerializer<IGarnetObjec
     public override void Serialize(ref IGarnetObject obj) => SerializeInternal(base.writer, obj);
 
     /// <summary>Thread safe version of Serialize.</summary>
-    /// <param name="obj"></param>
-    /// <returns></returns>
     public static byte[] Serialize(IGarnetObject obj)
     {
         Debug.Assert(obj != null);

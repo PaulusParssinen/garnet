@@ -8,15 +8,9 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Copy a record from the immutable region of the log, from the disk, or from ConditionalCopyToTail to the tail of the log (or splice into the log/readcache boundary).
     /// </summary>
-    /// <param name="pendingContext"></param>
-    /// <param name="key"></param>
-    /// <param name="input"></param>
-    /// <param name="value"></param>
-    /// <param name="output"></param>
     /// <param name="stackCtx">Contains the <see cref="HashEntryInfo"/> and <see cref="RecordSource{Key, Value}"/> structures for this operation,
     ///     and allows passing back the newLogicalAddress for invalidation in the case of exceptions.</param>
     /// <param name="srcRecordInfo">if <paramref name="stackCtx"/>.<see cref="RecordSource{Key, Value}.HasInMemorySrc"/>, the recordInfo to close, if transferring.</param>
-    /// <param name="tsavoriteSession"></param>
     /// <param name="reason">The reason for this operation.</param>
     /// <returns>
     ///     <list type="bullet">

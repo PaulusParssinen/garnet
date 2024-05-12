@@ -23,8 +23,6 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     /// <summary>
     /// Redirect message for readonly operation COUNTKEYS GETKEYSINSLOT
     /// </summary>
-    /// <param name="slot"></param>
-    /// <param name="config"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Redirect(ushort slot, ClusterConfig config)
     {
@@ -112,15 +110,6 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     /// <summary>
     /// Check if write is permitted on an array of RESP formatted keys starting at ptr, in sequence/interleaved with values and generate appropriate resp response.
     /// </summary>
-    /// <param name="keyCount"></param>
-    /// <param name="ptr"></param>
-    /// <param name="endPtr"></param>        
-    /// <param name="interleavedKeys"></param>
-    /// <param name="readOnly"></param>
-    /// <param name="SessionAsking"></param>
-    /// <param name="dcurr"></param>
-    /// <param name="dend"></param>
-    /// <param name="retVal"></param>
     /// <returns>True if redirect, False if can serve</returns>
     public bool NetworkArraySlotVerify(int keyCount, ref byte* ptr, byte* endPtr, bool interleavedKeys, bool readOnly, byte SessionAsking, ref byte* dcurr, ref byte* dend, out bool retVal)
     {
@@ -143,13 +132,6 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     /// <summary>
     /// Check if read/write is permitted on an array of keys and generate appropriate resp response.
     /// </summary>
-    /// <param name="keys"></param>
-    /// <param name="readOnly"></param>
-    /// <param name="SessionAsking"></param>
-    /// <param name="dcurr"></param>
-    /// <param name="dend"></param>
-    /// <param name="count"></param>
-    /// <returns></returns>
     public bool NetworkKeyArraySlotVerify(ref ArgSlice[] keys, bool readOnly, byte SessionAsking, ref byte* dcurr, ref byte* dend, int count = -1)
     {
         // If cluster is not enabled or a transaction is running skip slot check

@@ -104,7 +104,6 @@ class SetUserTests : AclTest
     /// <summary>
     /// Tests disabling/enabling of users
     /// </summary>
-    /// <returns></returns>
     [Test]
     public async Task EnableAndDisableUsers()
     {
@@ -316,7 +315,6 @@ class SetUserTests : AclTest
     /// <summary>
     /// Checks that passwordless users can login with any password
     /// </summary>
-    /// <returns></returns>
     [Test]
     public async Task PasswordlessUserTest()
     {
@@ -339,7 +337,6 @@ class SetUserTests : AclTest
     /// <summary>
     /// Tests that ACL op 'resetpass' resets all password
     /// </summary>
-    /// <returns></returns>
     [Test]
     public async Task ResetPasswordsTest()
     {

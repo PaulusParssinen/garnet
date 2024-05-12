@@ -8,7 +8,6 @@ namespace Garnet.Common;
 /// <summary>
 /// Object pool
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
 {
     private readonly Func<T> factory;
@@ -18,8 +17,6 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="factory"></param>
-    /// <param name="maxObjects"></param>
     public SimpleObjectPool(Func<T> factory, int maxObjects = 128)
     {
         this.factory = factory;
@@ -51,7 +48,6 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
     /// <summary>
     /// Checkout item
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Checkout()
     {
@@ -68,7 +64,6 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
     /// <summary>
     /// Return item
     /// </summary>
-    /// <param name="obj"></param>
     public void Return(T obj)
     {
         if (!stack.TryPush(obj))

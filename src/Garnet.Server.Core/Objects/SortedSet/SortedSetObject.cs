@@ -143,8 +143,6 @@ public partial class SortedSetObject : GarnetObjectBase
     /// <summary>
     /// Add to SortedSet
     /// </summary>
-    /// <param name="item"></param>
-    /// <param name="score"></param>
     public void Add(byte[] item, double score)
     {
         sortedSetDict.Add(item, score);

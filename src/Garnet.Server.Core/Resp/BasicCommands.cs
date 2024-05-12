@@ -919,7 +919,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Mark this session as readonly session
     /// </summary>
-    /// <returns></returns>
     private bool NetworkREADONLY()
     {
         //*1\r\n$8\r\nREADONLY\r\n
@@ -932,7 +931,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Mark this session as readwrite
     /// </summary>
-    /// <returns></returns>
     private bool NetworkREADWRITE()
     {
         //*1\r\n$9\r\nREADWRITE\r\n
@@ -945,10 +943,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Returns the length of the string value stored at key. An -1 is returned when key is not found
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private bool NetworkSTRLEN<TGarnetApi>(byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

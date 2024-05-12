@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using NUnit.Framework;
+using Tsavorite.Device;
 
 namespace Tsavorite.Tests.ReadCacheTests;
 

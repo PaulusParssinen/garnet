@@ -18,7 +18,6 @@ public class TsavoriteException : Exception
     /// <summary>
     /// Throw Tsavorite exception with message
     /// </summary>
-    /// <param name="message"></param>
     public TsavoriteException(string message) : base(message)
     {
     }
@@ -26,8 +25,6 @@ public class TsavoriteException : Exception
     /// <summary>
     /// Throw Tsavorite exception with message and inner exception
     /// </summary>
-    /// <param name="message"></param>
-    /// <param name="innerException"></param>
     public TsavoriteException(string message, Exception innerException) : base(message, innerException)
     {
     }
@@ -41,8 +38,6 @@ public class TsavoriteIOException : TsavoriteException
     /// <summary>
     /// Throw Tsavorite exception
     /// </summary>
-    /// <param name="message"></param>
-    /// <param name="innerException"></param>
     public TsavoriteIOException(string message, Exception innerException) : base(message, innerException)
     {
     }

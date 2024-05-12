@@ -30,11 +30,9 @@ sealed partial class StorageSession : IDisposable
     /// <param name="patternB">ptr to the matching pattern</param>
     /// <param name="allKeys">true when the pattern is *</param>
     /// <param name="cursor">cursor sent in the request</param>
-    /// <param name="storeCursor"></param>
     /// <param name="keys">The list with the keys from the store</param>
     /// <param name="count">size of every block or keys to return</param>
     /// <param name="typeObject">The type object to filter out</param>
-    /// <returns></returns>
     internal unsafe bool DbScan(ArgSlice patternB, bool allKeys, long cursor, out long storeCursor, out List<byte[]> keys, long count = 10, Span<byte> typeObject = default)
     {
         const long IsObjectStoreCursor = 1L << 49;
@@ -110,10 +108,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Iterate the contents of the main store
     /// </summary>
-    /// <typeparam name="TScanFunctions"></typeparam>
-    /// <param name="scanFunctions"></param>
-    /// <param name="untilAddress"></param>
-    /// <returns></returns>
     internal bool IterateMainStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
         where TScanFunctions : IScanIteratorFunctions<SpanByte, SpanByte>
         => session.Iterate(ref scanFunctions, untilAddress);
@@ -127,10 +121,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Iterate the contents of the object store
     /// </summary>
-    /// <typeparam name="TScanFunctions"></typeparam>
-    /// <param name="scanFunctions"></param>
-    /// <param name="untilAddress"></param>
-    /// <returns></returns>
     internal bool IterateObjectStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
         where TScanFunctions : IScanIteratorFunctions<byte[], IGarnetObject>
         => objectStoreSession.Iterate(ref scanFunctions, untilAddress);
@@ -145,7 +135,6 @@ sealed partial class StorageSession : IDisposable
     ///  Get a list of the keys in the store and object store
     ///  when using pattern
     /// </summary>
-    /// <returns></returns>
     internal unsafe List<byte[]> DBKeys(ArgSlice pattern)
     {
         Keys ??= new();
@@ -170,7 +159,6 @@ sealed partial class StorageSession : IDisposable
     /// <summary>
     /// Count the number of keys in main and object store
     /// </summary>
-    /// <returns></returns>
     internal int DbSize()
     {
         mainStoreDbSizeFuncs ??= new();

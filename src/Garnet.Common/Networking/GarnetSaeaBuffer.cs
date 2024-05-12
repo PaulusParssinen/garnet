@@ -24,7 +24,6 @@ public unsafe class GarnetSaeaBuffer : IDisposable
     /// Construct new instance
     /// </summary>
     /// <param name="eventHandler">Event handler</param>
-    /// <param name="networkPool"></param>
     public GarnetSaeaBuffer(EventHandler<SocketAsyncEventArgs> eventHandler, LimitedFixedBufferPool networkPool)
     {
         socketEventAsyncArgs = new SocketAsyncEventArgs();

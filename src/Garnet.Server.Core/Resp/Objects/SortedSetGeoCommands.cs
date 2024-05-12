@@ -12,11 +12,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Adds the specified geospatial items (longitude, latitude, name) to the specified key.
     /// Data is stored into the key as a sorted set.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private unsafe bool GeoAdd<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -89,12 +84,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// GEOPOS: Returns the positions (longitude,latitude) of all the specified members in the sorted set.
     /// GEOSEARCH: Returns the members of a sorted set populated with geospatial data, which are within the borders of the area specified by a given shape.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <param name="op"></param>
-    /// <returns></returns>
     private unsafe bool GeoCommands<TGarnetApi>(int count, byte* ptr, SortedSetOperation op, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

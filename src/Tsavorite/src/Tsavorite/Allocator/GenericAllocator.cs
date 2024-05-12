@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Tsavorite.Device;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -57,7 +58,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
         if (settings.ObjectLogDevice == null)
         {
-            throw new TsavoriteException("LogSettings.ObjectLogDevice needs to be specified (e.g., use Devices.CreateLogDevice, AzureStorageDevice, or NullDevice)");
+            throw new TsavoriteException("LogSettings.ObjectLogDevice needs to be specified (e.g., use Devices.CreateLogDevice or NullDevice)");
         }
 
         if (typeof(Key) == typeof(SpanByte))
@@ -133,8 +134,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Get start logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public override long GetStartLogicalAddress(long page)
     {
         return page << LogPageSizeBits;
@@ -143,8 +142,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Get first valid logical address
     /// </summary>
-    /// <param name="page"></param>
-    /// <returns></returns>
     public override long GetFirstValidLogicalAddress(long page)
     {
         if (page == 0)
@@ -269,7 +266,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Allocate memory page, pinned in memory, and in sector aligned form, if possible
     /// </summary>
-    /// <param name="index"></param>
     internal override void AllocatePage(int index)
     {
         values[index] = AllocatePage();
@@ -695,9 +691,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// IOCompletion callback for page flush
     /// </summary>
-    /// <param name="errorCode"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="context"></param>
     private void AsyncFlushPartialObjectLogCallback<TContext>(uint errorCode, uint numBytes, object context)
     {
         if (errorCode != 0)
@@ -778,11 +771,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// Invoked by users to obtain a record from disk. It uses sector aligned memory to read 
     /// the record efficiently into memory.
     /// </summary>
-    /// <param name="fromLogical"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="result"></param>
     protected override void AsyncReadRecordObjectsToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, AsyncIOContext<Key, Value> context, SectorAlignedMemory result = default)
     {
         ulong fileOffset = (ulong)(AlignedPageSizeBytes * (fromLogical >> LogPageSizeBits) + (fromLogical & PageSizeMask));
@@ -812,17 +800,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Read pages from specified device
     /// </summary>
-    /// <typeparam name="TContext"></typeparam>
-    /// <param name="readPageStart"></param>
-    /// <param name="numPages"></param>
-    /// <param name="untilAddress"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
-    /// <param name="frame"></param>
-    /// <param name="completed"></param>
-    /// <param name="devicePageOffset"></param>
-    /// <param name="device"></param>
-    /// <param name="objectLogDevice"></param>
     internal void AsyncReadPagesFromDeviceToFrame<TContext>(
                                     long readPageStart,
                                     int numPages,
@@ -886,10 +863,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Deseialize part of page from stream
     /// </summary>
-    /// <param name="raw"></param>
     /// <param name="ptr">From pointer</param>
     /// <param name="untilptr">Until pointer</param>
-    /// <param name="src"></param>
     /// <param name="stream">Stream</param>
     public void Deserialize(byte* raw, long ptr, long untilptr, Record<Key, Value>[] src, Stream stream)
     {
@@ -966,12 +941,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Get location and range of object log addresses for specified log page
     /// </summary>
-    /// <param name="raw"></param>
-    /// <param name="ptr"></param>
-    /// <param name="untilptr"></param>
-    /// <param name="objectBlockSize"></param>
-    /// <param name="startptr"></param>
-    /// <param name="size"></param>
     public void GetObjectInfo(byte* raw, ref long ptr, long untilptr, int objectBlockSize, out long startptr, out long size)
     {
         long minObjAddress = long.MaxValue;
@@ -1036,9 +1005,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Retrieve objects from object log
     /// </summary>
-    /// <param name="record"></param>
-    /// <param name="ctx"></param>
-    /// <returns></returns>
     protected override bool RetrievedFullRecord(byte* record, ref AsyncIOContext<Key, Value> ctx)
     {
         if (!KeyHasObjects())
@@ -1111,7 +1077,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Whether KVS has keys to serialize/deserialize
     /// </summary>
-    /// <returns></returns>
     public override bool KeyHasObjects()
     {
         return SerializerSettings.keySerializer != null;
@@ -1120,7 +1085,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Whether KVS has values to serialize/deserialize
     /// </summary>
-    /// <returns></returns>
     public override bool ValueHasObjects()
     {
         return SerializerSettings.valueSerializer != null;
@@ -1158,7 +1122,6 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <summary>
     /// Iterator interface for scanning Tsavorite log
     /// </summary>
-    /// <returns></returns>
     public override ITsavoriteScanIterator<Key, Value> Scan(TsavoriteKV<Key, Value> store, long beginAddress, long endAddress, ScanBufferingMode scanBufferingMode, bool includeSealedRecords)
         => new GenericScanIterator<Key, Value>(store, this, beginAddress, endAddress, scanBufferingMode, includeSealedRecords, epoch);
 

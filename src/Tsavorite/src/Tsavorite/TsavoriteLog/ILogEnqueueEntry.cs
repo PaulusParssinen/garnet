@@ -8,7 +8,6 @@ namespace Tsavorite;
 /// </summary>
 public interface ILogEnqueueEntry
 {
-    /// <summary></summary>
     /// <returns> the size in bytes after serialization onto TsavoriteLog</returns>
     public int SerializedLength { get; }
 

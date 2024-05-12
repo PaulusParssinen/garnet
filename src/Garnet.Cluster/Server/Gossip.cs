@@ -221,8 +221,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Run meet background task
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
     public void RunMeetTask(string address, int port)
         => Task.Run(() => Meet(address, port));
 
@@ -230,8 +228,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// Meet will immediately communicate with the new node and try to merge the retrieve configuration to its own.
     /// If node to meet was previous in the ban list then it will not be added to the cluster
     /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
     public void Meet(string address, int port)
     {
         GarnetServerNode gsn = null;

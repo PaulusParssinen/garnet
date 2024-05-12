@@ -803,10 +803,6 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     /// Gets the rank of a member of the sorted set
     /// in ascending or descending order
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="length"></param>
-    /// <param name="output"></param>
-    /// <param name="ascending"></param>
     private void GetRank(byte* input, int length, byte* output, bool ascending = true)
     {
         //ZRANK key member
@@ -838,14 +834,11 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     /// <summary>
     /// Gets the elements that belong to the Range using lexicographical order
     /// </summary>
-    /// <param name="minParamByteArray"></param>
-    /// <param name="maxParamByteArray"></param>
     /// <param name="doReverse">Perfom reverse order</param>
     /// <param name="validLimit">Use a limit offset count</param>
     /// <param name="rem">Remove elements</param>
     /// <param name="errorCode">errorCode</param>
     /// <param name="limit">offset and count values</param>
-    /// <returns></returns>
     private List<(double, byte[])> GetElementsInRangeByLex(byte[] minParamByteArray, byte[] maxParamByteArray, bool doReverse, bool validLimit, bool rem, out int errorCode, (int, int) limit = default)
     {
         var elementsInLex = new List<(double, byte[])>();
@@ -910,16 +903,6 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     /// Gets a range of elements using by score filters, when
     /// rem flag is true, removes the elements in the range
     /// </summary>
-    /// <param name="minValue"></param>
-    /// <param name="maxValue"></param>
-    /// <param name="minExclusive"></param>
-    /// <param name="maxExclusive"></param>
-    /// <param name="withScore"></param>
-    /// <param name="doReverse"></param>
-    /// <param name="validLimit"></param>
-    /// <param name="rem"></param>
-    /// <param name="limit"></param>
-    /// <returns></returns>
     private List<(double, byte[])> GetElementsInRangeByScore(double minValue, double maxValue, bool minExclusive, bool maxExclusive, bool withScore, bool doReverse, bool validLimit, bool rem, (int, int) limit = default)
     {
         List<(double, byte[])> scoredElements = new();
@@ -964,9 +947,6 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     /// <summary>
     /// Removes and returns up to COUNT members with the low or high score
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="output"></param>
-    /// <param name="op"></param>
     private void PopMinOrMaxCount(byte* input, ref SpanByteAndMemory output, SortedSetOperation op)
     {
         var _input = (ObjectInputHeader*)input;

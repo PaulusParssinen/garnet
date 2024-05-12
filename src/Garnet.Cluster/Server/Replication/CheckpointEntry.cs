@@ -66,10 +66,7 @@ sealed class CheckpointEntry
     /// <summary>
     /// Compare tokens for specified CheckpointFileType
     /// </summary>
-    /// <param name="entry"></param>
-    /// <param name="fileType"></param>
     /// <returns>(true) if token is shared between entries, (false) otherwise</returns>
-    /// <exception cref="Exception"></exception>
     public bool ContainsSharedToken(CheckpointEntry entry, CheckpointFileType fileType)
     {
         return fileType switch

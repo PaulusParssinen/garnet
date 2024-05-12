@@ -11,7 +11,6 @@ public interface INetworkSender : IDisposable
     /// <summary>
     /// 
     /// </summary>
-    /// <returns></returns>
     MaxSizeSettings GetMaxSizeSettings { get; }
 
     /// <summary>
@@ -32,13 +31,11 @@ public interface INetworkSender : IDisposable
     /// <summary>
     /// Get current response object head ptr;
     /// </summary>
-    /// <returns></returns>
     unsafe byte* GetResponseObjectHead();
 
     /// <summary>
     /// Get current response object tail ptr;
     /// </summary>
-    /// <returns></returns>
     unsafe byte* GetResponseObjectTail();
 
     /// <summary>

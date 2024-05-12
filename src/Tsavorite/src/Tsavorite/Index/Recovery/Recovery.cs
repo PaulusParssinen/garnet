@@ -160,8 +160,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// GetLatestCheckpointTokens
     /// </summary>
-    /// <param name="hlogToken"></param>
-    /// <param name="indexToken"></param>
     public void GetLatestCheckpointTokens(out Guid hlogToken, out Guid indexToken)
     {
         GetClosestHybridLogCheckpointInfo(-1, out hlogToken, out HybridLogCheckpointInfo recoveredHlcInfo, out byte[] _);
@@ -172,7 +170,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Get HLog latest version
     /// </summary>
-    /// <returns></returns>
     public long GetLatestCheckpointVersion()
     {
         GetClosestHybridLogCheckpointInfo(-1, out Guid hlogToken, out HybridLogCheckpointInfo hlcInfo, out byte[] _);
@@ -190,9 +187,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Get size of snapshot files for token
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="version"></param>
-    /// <returns></returns>
     public LogFileInfo GetLogFileSize(Guid token, long version = -1)
     {
         using var current = new HybridLogCheckpointInfo();
@@ -212,8 +206,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Get size of index file for token
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     public long GetIndexFileSize(Guid token)
     {
         IndexCheckpointInfo recoveredICInfo = new IndexCheckpointInfo();
@@ -1106,10 +1098,6 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Restore log
     /// </summary>
-    /// <param name="beginAddress"></param>
-    /// <param name="headAddress"></param>
-    /// <param name="fromAddress"></param>
-    /// <param name="untilAddress"></param>
     /// <param name="numPagesToPreload">Number of pages to preload into memory after recovery</param>
     public void RestoreHybridLog(long beginAddress, long headAddress, long fromAddress, long untilAddress, int numPagesToPreload = -1)
     {
@@ -1125,12 +1113,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <summary>
     /// Restore log
     /// </summary>
-    /// <param name="beginAddress"></param>
-    /// <param name="headAddress"></param>
-    /// <param name="fromAddress"></param>
-    /// <param name="untilAddress"></param>
     /// <param name="numPagesToPreload">Number of pages to preload into memory after recovery</param>
-    /// <param name="cancellationToken"></param>
     public async ValueTask RestoreHybridLogAsync(long beginAddress, long headAddress, long fromAddress, long untilAddress, int numPagesToPreload = -1, CancellationToken cancellationToken = default)
     {
         if (RestoreHybridLogInitializePages(beginAddress, headAddress, fromAddress, untilAddress, numPagesToPreload, out RecoveryStatus recoveryStatus, out long headPage, out long tailPage))

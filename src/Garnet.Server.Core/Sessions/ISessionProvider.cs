@@ -22,6 +22,5 @@ public interface ISessionProvider
     /// <summary>
     /// 
     /// </summary>
-    /// <returns></returns>
     MaxSizeSettings GetMaxSizeSettings { get; }
 }

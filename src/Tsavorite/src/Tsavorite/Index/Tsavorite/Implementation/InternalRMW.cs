@@ -400,10 +400,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// <summary>
     /// Create a new record for RMW
     /// </summary>
-    /// <typeparam name="Input"></typeparam>
-    /// <typeparam name="Output"></typeparam>
-    /// <typeparam name="Context"></typeparam>
-    /// <typeparam name="TsavoriteSession"></typeparam>
     /// <param name="key">The record Key</param>
     /// <param name="input">Input to the operation</param>
     /// <param name="value">Old value</param>
@@ -417,7 +413,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     ///     this is the <see cref="RecordInfo"/> for <see cref="RecordSource{Key, Value}.LogicalAddress"/>. Otherwise, if called from pending IO,
     ///     this is the <see cref="RecordInfo"/> read from disk. If neither of these, it is a default <see cref="RecordInfo"/>.</param>
     /// <param name="doingCU">Whether we are doing a CopyUpdate, either from in-memory or pending IO</param>
-    /// <returns></returns>
     private OperationStatus CreateNewRecordRMW<Input, Output, Context, TsavoriteSession>(ref Key key, ref Input input, ref Value value, ref Output output,
                                                                                       ref PendingContext<Input, Output, Context> pendingContext, TsavoriteSession tsavoriteSession,
                                                                                       ref OperationStackContext<Key, Value> stackCtx, ref RecordInfo srcRecordInfo, bool doingCU)

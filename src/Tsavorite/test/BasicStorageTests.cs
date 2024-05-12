@@ -18,23 +18,6 @@ internal class BasicStorageTests
         TestDeviceWriteRead(Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "BasicDiskTests.log"), deleteOnClose: true));
     }
 
-    [Test]
-    [Category("TsavoriteKV")]
-    [Category("Smoke")]
-    public void PageBlobWriteRead()
-    {
-        TestUtils.IgnoreIfNotRunningAzureTests();
-        TestDeviceWriteRead(new AzureStorageDevice(TestUtils.AzureEmulatedStorageString, TestUtils.AzureTestContainer, TestUtils.AzureTestDirectory, "BasicDiskTests", logger: TestUtils.TestLoggerFactory.CreateLogger("asd")));
-    }
-
-    [Test]
-    [Category("TsavoriteKV")]
-    [Category("Smoke")]
-    public void PageBlobWriteReadWithLease()
-    {
-        TestUtils.IgnoreIfNotRunningAzureTests();
-        TestDeviceWriteRead(new AzureStorageDevice(TestUtils.AzureEmulatedStorageString, TestUtils.AzureTestContainer, TestUtils.AzureTestDirectory, "BasicDiskTests", null, true, true, logger: TestUtils.TestLoggerFactory.CreateLogger("asd")));
-    }
 
     [Test]
     [Category("TsavoriteKV")]
@@ -44,18 +27,10 @@ internal class BasicStorageTests
         TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
         IDevice tested;
         IDevice localDevice = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "BasicDiskTests.log"), deleteOnClose: true, capacity: 1 << 30);
-        if (TestUtils.IsRunningAzureTests)
-        {
-            IDevice cloudDevice = new AzureStorageDevice(TestUtils.AzureEmulatedStorageString, TestUtils.AzureTestContainer, TestUtils.AzureTestDirectory, "BasicDiskTests", logger: TestUtils.TestLoggerFactory.CreateLogger("asd"));
-            tested = new TieredStorageDevice(1, localDevice, cloudDevice);
-        }
-        else
-        {
-            // If no Azure is enabled, just use another disk
-            IDevice localDevice2 = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "BasicDiskTests2.log"), deleteOnClose: true, capacity: 1 << 30);
-            tested = new TieredStorageDevice(1, localDevice, localDevice2);
+        
+        IDevice localDevice2 = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "BasicDiskTests2.log"), deleteOnClose: true, capacity: 1 << 30);
+        tested = new TieredStorageDevice(1, localDevice, localDevice2);
 
-        }
         TestDeviceWriteRead(tested);
     }
 

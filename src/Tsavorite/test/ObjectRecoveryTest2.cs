@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using NUnit.Framework;
+using Tsavorite.Device;
 
 namespace Tsavorite.Tests.recovery.objects;
 
@@ -26,7 +27,6 @@ public class ObjectRecoveryTests2
     [Category("TsavoriteKV")]
     [Category("CheckpointRestore")]
     [Category("Smoke")]
-
     public async ValueTask ObjectRecoveryTest2(
         [Values] CheckpointType checkpointType,
         [Range(300, 700, 300)] int iterations,

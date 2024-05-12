@@ -101,7 +101,6 @@ public struct RespInputHeader
     /// or based on current time in normal operation.
     /// </summary>
     /// <param name="expireTime">Expiration time</param>
-    /// <returns></returns>
     internal unsafe bool CheckExpiry(long expireTime)
     {
         if ((flags & RespInputFlags.Deterministic) != 0)

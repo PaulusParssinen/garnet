@@ -9,7 +9,6 @@ namespace Garnet.Common;
 /// <summary>
 /// Circular buffer
 /// </summary>
-/// <typeparam name="T"></typeparam>
 [DataContract]
 sealed class CircularBuffer<T>
 {
@@ -83,7 +82,6 @@ sealed class CircularBuffer<T>
 /// <summary>
 /// Elastic circular buffer
 /// </summary>
-/// <typeparam name="T"></typeparam>
 [DataContract]
 public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
 {
@@ -105,7 +103,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Enqueue
     /// </summary>
-    /// <param name="value"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Enqueue(ref T value)
     {
@@ -133,7 +130,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Enqueue
     /// </summary>
-    /// <param name="value"></param>
     public void Enqueue(T value)
     {
         Enqueue(ref value);
@@ -142,7 +138,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Dequeue
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Dequeue()
     {
@@ -162,7 +157,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Peek at head
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T PeekFirst()
     {
@@ -182,7 +176,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Peek at tail
     /// </summary>
-    /// <returns></returns>
     public T PeekLast()
     {
         if (tail.Value.IsEmpty())
@@ -193,7 +186,6 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Is empty
     /// </summary>
-    /// <returns></returns>
     public bool IsEmpty() => (head.Value.IsEmpty() && (head == tail));
 
     IEnumerable<T> Iterate()
@@ -210,12 +202,10 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Get enumerator
     /// </summary>
-    /// <returns></returns>
     public IEnumerator<T> GetEnumerator() => Iterate().GetEnumerator();
 
     /// <summary>
     /// Get enumerator
     /// </summary>
-    /// <returns></returns>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 }

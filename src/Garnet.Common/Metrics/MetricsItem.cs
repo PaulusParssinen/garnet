@@ -21,8 +21,6 @@ public readonly struct MetricsItem
     /// <summary>
     /// Metrics Item Constructor
     /// </summary>
-    /// <param name="Name"></param>
-    /// <param name="Value"></param>
     public MetricsItem(string Name, string Value)
     {
         this.Name = Name;

@@ -29,8 +29,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// 
     /// </summary>
     /// <param name="filename">File name (or prefix) with path</param>
-    /// <param name="preallocateFile"></param>
-    /// <param name="deleteOnClose"></param>
     /// <param name="disableFileBuffering">Whether file buffering (during write) is disabled (default of true requires aligned writes)</param>
     /// <param name="capacity">The maximal number of bytes this storage device can accommondate, or CAPACITY_UNSPECIFIED if there is no such limit</param>
     /// <param name="recoverDevice">Whether to recover device metadata from existing files</param>
@@ -115,12 +113,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// <summary>
     /// Read async
     /// </summary>
-    /// <param name="segmentId"></param>
-    /// <param name="sourceAddress"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="readLength"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override void ReadAsync(int segmentId, ulong sourceAddress,
                                  IntPtr destinationAddress,
                                  uint readLength,
@@ -217,12 +209,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="sourceAddress"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override void WriteAsync(IntPtr sourceAddress,
                                   int segmentId,
                                   ulong destinationAddress,
@@ -324,7 +310,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.RemoveSegment(int)"/>
     /// </summary>
-    /// <param name="segment"></param>
     public override void RemoveSegment(int segment)
     {
         if (logHandles.TryRemove(segment, out (AsyncPool<Stream>, AsyncPool<Stream>) logHandle))
@@ -342,9 +327,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.RemoveSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="segment"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public override void RemoveSegmentAsync(int segment, AsyncCallback callback, IAsyncResult result)
     {
         RemoveSegment(segment);
@@ -472,9 +454,6 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     /// Sets file size to the specified value.
     /// Does not reset file seek pointer to original location.
     /// </summary>
-    /// <param name="logHandle"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
     private static bool SetFileSize(Stream logHandle, long size)
     {
         logHandle.SetLength(size);

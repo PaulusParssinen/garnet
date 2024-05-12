@@ -119,7 +119,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Add to this session metrics tracker
     /// </summary>
-    /// <param name="add"></param>
     internal void Add(GarnetSessionMetrics add)
     {
         incr_total_net_input_bytes(add.get_total_net_input_bytes());
@@ -163,7 +162,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_net_input_bytes
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_net_input_bytes() => total_net_input_bytes;
 
@@ -176,7 +174,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_net_output_bytes
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_net_output_bytes() => total_net_output_bytes;
 
@@ -189,7 +186,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_commands_processed
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_commands_processed() => total_commands_processed;
 
@@ -202,7 +198,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_pending
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_pending() => total_pending;
 
@@ -215,7 +210,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_found
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_found() => total_found;
 
@@ -228,7 +222,6 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_notfound
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_notfound() => total_notfound;
 
@@ -241,14 +234,12 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_cluster_commands_processed
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_cluster_commands_processed() => total_cluster_commands_processed;
 
     /// <summary>
     /// Add to total_write_commands_processed
     /// </summary>
-    /// <param name="count"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void add_total_write_commands_processed(ulong count) => total_write_commands_processed += count;
 
@@ -261,14 +252,12 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_write_commands_processed
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_write_commands_processed() => total_write_commands_processed;
 
     /// <summary>
     /// Add to total_read_commands_processed
     /// </summary>
-    /// <param name="count"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void add_total_read_commands_processed(ulong count) => total_read_commands_processed += count;
 
@@ -281,21 +270,18 @@ public class GarnetSessionMetrics
     /// <summary>
     /// Get total_read_commands_processed
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_read_commands_processed() => total_read_commands_processed;
 
     /// <summary>
     /// Increment total_number_resp_server_session_exceptions
     /// </summary>
-    /// <param name="count"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void incr_total_number_resp_server_session_exceptions(ulong count) => total_number_resp_server_session_exceptions += count;
 
     /// <summary>
     /// Get total_number_resp_server_session_exceptions
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong get_total_number_resp_server_session_exceptions() => total_number_resp_server_session_exceptions;
 }

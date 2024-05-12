@@ -11,8 +11,6 @@ public static class ConvertUtils
     /// <summary>
     /// Convert diff ticks - utcNow.ticks to seconds.
     /// </summary>
-    /// <param name="ticks"></param>
-    /// <returns></returns>
     public static long SecondsFromDiffUtcNowTicks(long ticks)
     {
         long seconds = -1;
@@ -28,8 +26,6 @@ public static class ConvertUtils
     /// <summary>
     /// Convert diff ticks - utcNow.ticks to milliseconds.
     /// </summary>
-    /// <param name="ticks"></param>
-    /// <returns></returns>
     public static long MillisecondsFromDiffUtcNowTicks(long ticks)
     {
         long milliseconds = -1;

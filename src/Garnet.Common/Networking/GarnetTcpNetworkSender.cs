@@ -51,9 +51,6 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="socket"></param>
-    /// <param name="networkPool"></param>
-    /// <param name="throttleMax"></param>
     public GarnetTcpNetworkSender(
         Socket socket,
         LimitedFixedBufferPool networkPool,

@@ -19,7 +19,6 @@ public class SpanByteFunctionsForServer<Context> : SpanByteFunctions<Context>
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="memoryPool"></param>
     public SpanByteFunctionsForServer(MemoryPool<byte> memoryPool = default)
     {
         this.memoryPool = memoryPool ?? MemoryPool<byte>.Shared;
@@ -36,9 +35,6 @@ public class SpanByteFunctionsForServer<Context> : SpanByteFunctions<Context>
     /// <summary>
     /// Copy to given SpanByteAndMemory (header length and payload copied to actual span/memory)
     /// </summary>
-    /// <param name="src"></param>
-    /// <param name="dst"></param>
-    /// <param name="memoryPool"></param>
     private static unsafe bool CopyWithHeaderTo(ref SpanByte src, ref SpanByteAndMemory dst, MemoryPool<byte> memoryPool)
     {
         if (dst.IsSpanByte)

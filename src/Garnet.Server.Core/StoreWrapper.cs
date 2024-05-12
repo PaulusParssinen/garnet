@@ -170,7 +170,6 @@ public sealed class StoreWrapper
     /// <summary>
     /// Get IP
     /// </summary>
-    /// <returns></returns>
     public static string GetIp()
     {
         string localIP;
@@ -372,8 +371,6 @@ public sealed class StoreWrapper
     /// <summary>
     /// Append a checkpoint commit to the AOF
     /// </summary>
-    /// <param name="isMainStore"></param>
-    /// <param name="version"></param>
     public void EnqueueCommit(bool isMainStore, long version)
     {
         AofHeader header = new()
@@ -490,7 +487,6 @@ public sealed class StoreWrapper
     }
 
     /// <summary>Grows indexes of both main store and object store if current size is too small.</summary>
-    /// <param name="token"></param>
     private async void IndexAutoGrowTask(CancellationToken token)
     {
         try
@@ -523,11 +519,6 @@ public sealed class StoreWrapper
     /// Decision is based on whether overflow bucket allocation is more than a threshold which indicates a contention
     /// in the index leading many allocations to the same bucket.
     /// </summary>
-    /// <param name="storeType"></param>
-    /// <param name="indexMaxSize"></param>
-    /// <param name="overflowCount"></param>
-    /// <param name="indexSizeRetriever"></param>
-    /// <param name="growAction"></param>
     /// <returns>True if index has reached its max size</returns>
     private bool GrowIndexIfNeeded(StoreType storeType, long indexMaxSize, long overflowCount, Func<long> indexSizeRetriever, Action growAction)
     {
@@ -563,7 +554,6 @@ public sealed class StoreWrapper
     /// <summary>
     /// Mark the beginning of a checkpoint by taking and a lock to avoid concurrent checkpoint tasks
     /// </summary>
-    /// <returns></returns>
     bool StartCheckpoint()
         => _checkpointTaskLock.TryWriteLock();
 
@@ -576,8 +566,6 @@ public sealed class StoreWrapper
     /// <summary>
     /// Take a checkpoint if no checkpoint was taken after the provided time offset
     /// </summary>
-    /// <param name="entryTime"></param>
-    /// <returns></returns>
     public async Task TakeOnDemandCheckpoint(DateTimeOffset entryTime)
     {
         // Take lock to ensure no other task will be taking a checkpoint
@@ -598,10 +586,6 @@ public sealed class StoreWrapper
     /// <summary>
     /// Take checkpoint
     /// </summary>
-    /// <param name="background"></param>
-    /// <param name="storeType"></param>
-    /// <param name="logger"></param>
-    /// <returns></returns>
     public bool TakeCheckpoint(bool background, StoreType storeType = StoreType.All, ILogger logger = null)
     {
         if (!StartCheckpoint()) return false;

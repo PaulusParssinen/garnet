@@ -11,7 +11,6 @@ static class RespLatencyHelp
     /// <summary>
     /// Get supported latency commands and a short description
     /// </summary>
-    /// <returns></returns>
     public static List<string> GetLatencyCommands()
     {
         return new List<string>()

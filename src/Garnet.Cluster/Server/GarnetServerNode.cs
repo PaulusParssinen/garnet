@@ -131,7 +131,6 @@ internal sealed class GarnetServerNode
     /// <summary>
     /// Keep track of updated config per connection. Useful when gossip sampling so as to ensure updates are propagated
     /// </summary>
-    /// <returns></returns>
     private byte[] GetMostRecentConfig()
     {
         ClusterConfig conf = clusterProvider.clusterManager.CurrentConfig;
@@ -152,7 +151,6 @@ internal sealed class GarnetServerNode
     /// <summary>
     /// Send gossip message or process response and send again.
     /// </summary>
-    /// <returns></returns>
     public bool TryGossip()
     {
         byte[] configByteArray = GetMostRecentConfig();

@@ -95,12 +95,6 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="segmentId"></param>
-    /// <param name="sourceAddress"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="readLength"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override void ReadAsync(int segmentId, ulong sourceAddress,
                                  IntPtr destinationAddress,
                                  uint readLength,
@@ -123,12 +117,6 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="sourceAddress"></param>
-    /// <param name="segmentId"></param>
-    /// <param name="destinationAddress"></param>
-    /// <param name="numBytesToWrite"></param>
-    /// <param name="callback"></param>
-    /// <param name="context"></param>
     public override void WriteAsync(IntPtr sourceAddress,
                                   int segmentId,
                                   ulong destinationAddress,
@@ -158,7 +146,6 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.RemoveSegment(int)"/>
     /// </summary>
-    /// <param name="segment"></param>
     public override void RemoveSegment(int segment)
     {
     }
@@ -166,9 +153,6 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
     /// <summary>
     /// <see cref="IDevice.RemoveSegmentAsync(int, AsyncCallback, IAsyncResult)"/>
     /// </summary>
-    /// <param name="segment"></param>
-    /// <param name="callback"></param>
-    /// <param name="result"></param>
     public override void RemoveSegmentAsync(int segment, AsyncCallback callback, IAsyncResult result)
     {
         RemoveSegment(segment);

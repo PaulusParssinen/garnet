@@ -6,7 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Heap container to store keys and values when they go pending
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public interface IHeapContainer<T> : IDisposable
 {
     /// <summary>
@@ -18,7 +17,6 @@ public interface IHeapContainer<T> : IDisposable
 /// <summary>
 /// Heap container for standard C# objects (non-variable-length)
 /// </summary>
-/// <typeparam name="T"></typeparam>
 internal sealed class StandardHeapContainer<T> : IHeapContainer<T>
 {
     private T obj;

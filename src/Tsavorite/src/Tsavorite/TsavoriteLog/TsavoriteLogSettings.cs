@@ -7,7 +7,6 @@ namespace Tsavorite;
 /// Delegate for getting memory from user
 /// </summary>
 /// <param name="minLength">Minimum length of returned byte array</param>
-/// <returns></returns>
 public delegate byte[] GetMemory(int minLength);
 
 /// <summary>

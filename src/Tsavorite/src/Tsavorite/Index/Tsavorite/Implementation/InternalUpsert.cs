@@ -13,7 +13,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// else inserts a new record with 'key' and 'value'.
     /// </summary>
     /// <param name="key">key of the record.</param>
-    /// <param name="keyHash"></param>
     /// <param name="input">input used to update the value.</param>
     /// <param name="value">value to be updated to (or inserted if key does not exist).</param>
     /// <param name="output">output where the result of the update can be placed</param>

@@ -6,7 +6,6 @@ namespace Tsavorite;
 /// <summary>
 /// Lockable context functions. Useful when doing generic locking across diverse <see cref="LockableUnsafeContext{Key, Value, Input, Output, Context, Functions}"/> and <see cref="LockableContext{Key, Value, Input, Output, Context, Functions}"/> specializations.
 /// </summary>
-/// <typeparam name="TKey"></typeparam>
 public interface ILockableContext<TKey>
 {
     /// <summary>
@@ -66,7 +65,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     void Lock<TLockableKey>(TLockableKey[] keys)
         where TLockableKey : ILockableKey;
@@ -74,7 +72,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">key hashCodes to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="start">The starting key index to Lock</param>
     /// <param name="count">The number of keys to Lock</param>
@@ -84,7 +81,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     bool TryLock<TLockableKey>(TLockableKey[] keys)
         where TLockableKey : ILockableKey;
@@ -92,7 +88,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="timeout">TimeSpan limiting the duration of the TryLock() call over all keys.</param>
     bool TryLock<TLockableKey>(TLockableKey[] keys, TimeSpan timeout)
@@ -101,7 +96,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="start">The starting key index to Lock</param>
     /// <param name="count">The number of keys to Lock</param>
@@ -112,7 +106,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="cancellationToken">The cancellation token</param>
     bool TryLock<TLockableKey>(TLockableKey[] keys, CancellationToken cancellationToken)
@@ -121,7 +114,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="start">The starting key index to Lock</param>
     /// <param name="count">The number of keys to Lock</param>
@@ -132,7 +124,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Locks the keys identified in the passed array, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">keys to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="timeout">TimeSpan limiting the duration of the TryLock() call over all keys.</param>
     /// <param name="cancellationToken">The cancellation token</param>
@@ -142,7 +133,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Promotes a shared lock on the key to an exclusive lock, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">key hashCodes to be locked, and whether that locking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="start">The starting key index to Lock</param>
     /// <param name="count">The number of keys to Lock</param>
@@ -154,7 +144,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Tries to promote a shared lock the key to an exclusive lock, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="key">key whose lock is to be promoted.</param>
     /// <remarks>On success, the caller must update the ILockableKey.LockType so the unlock has the right type</remarks>
     bool TryPromoteLock<TLockableKey>(TLockableKey key)
@@ -163,7 +152,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Promotes a shared lock on the key to an exclusive lock, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="key">key whose lock is to be promoted.</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <remarks>On success, the caller must update the ILockableKey.LockType so the unlock has the right type</remarks>
@@ -173,7 +161,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Promotes a shared lock on the key to an exclusive lock, with retry limits or cancellation.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="key">key whose lock is to be promoted.</param>
     /// <param name="timeout">TimeSpan limiting the duration of the TryPromoteLock() call.</param>
     /// <param name="cancellationToken">The cancellation token, if any</param>
@@ -184,7 +171,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Unlocks the keys identified in the passed array.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">key hashCodes to be unlocked, and whether that unlocking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     void Unlock<TLockableKey>(TLockableKey[] keys)
     where TLockableKey : ILockableKey;
@@ -192,7 +178,6 @@ public interface ILockableContext<TKey>
     /// <summary>
     /// Unlocks the keys identified in the passed array.
     /// </summary>
-    /// <typeparam name="TLockableKey"></typeparam>
     /// <param name="keys">key hashCodes to be unlocked, and whether that unlocking is shared or exclusive; must be sorted by <see cref="SortKeyHashes{TLockableKey}(TLockableKey[])"/>.</param>
     /// <param name="start">The starting index to Unlock</param>
     /// <param name="count">The number of keys to Unlock</param>

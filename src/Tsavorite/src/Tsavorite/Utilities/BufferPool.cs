@@ -100,8 +100,6 @@ public sealed unsafe class SectorAlignedMemory
     /// <summary>
     /// Create new instance of SectorAlignedMemory
     /// </summary>
-    /// <param name="numRecords"></param>
-    /// <param name="sectorSize"></param>
     public SectorAlignedMemory(int numRecords, int sectorSize)
     {
         int recordSize = 1;
@@ -137,7 +135,6 @@ public sealed unsafe class SectorAlignedMemory
     /// <summary>
     /// Get valid pointer
     /// </summary>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte* GetValidPointer()
     {
@@ -147,7 +144,6 @@ public sealed unsafe class SectorAlignedMemory
     /// <summary>
     /// ToString
     /// </summary>
-    /// <returns></returns>
     public override string ToString()
     {
         return string.Format($"{(long)aligned_pointer} {offset} {valid_offset} {required_bytes} {available_bytes}"
@@ -202,7 +198,6 @@ public sealed class SectorAlignedBufferPool
     /// <summary>
     /// Return
     /// </summary>
-    /// <param name="page"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return(SectorAlignedMemory page)
     {
@@ -246,8 +241,6 @@ public sealed class SectorAlignedBufferPool
     /// <summary>
     /// Get buffer
     /// </summary>
-    /// <param name="numRecords"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe SectorAlignedMemory Get(int numRecords)
     {

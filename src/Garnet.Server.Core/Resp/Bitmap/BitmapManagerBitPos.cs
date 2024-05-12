@@ -15,7 +15,6 @@ public unsafe partial class BitmapManager
     /// <param name="bSetVal">Bit value to search for (0|1).</param>
     /// <param name="startBitOffset">Start most significant bit offset in byte value.</param>
     /// <param name="endBitOffset">End most significant bit offset in bitmap.</param>
-    /// <returns></returns>
     private static long BitPosIndexBitSingleByteSearch(byte value, byte bSetVal, int startBitOffset = 0, int endBitOffset = 8)
     {
         Debug.Assert(startBitOffset >= 0 && startBitOffset <= 8);
@@ -48,7 +47,6 @@ public unsafe partial class BitmapManager
     /// <param name="value">Pointer to start of bitmap.</param>
     /// <param name="bSetVal">Bit value to search for (0|1).</param>
     /// <param name="offset">Bit offset in bitmap.</param>
-    /// <returns></returns>
     private static long BitPosIndexBitSearch(byte* value, byte bSetVal, long offset = 0)
     {
         bool bflag = (bSetVal == 0);
@@ -76,7 +74,6 @@ public unsafe partial class BitmapManager
     /// <param name="input">Input properties for bitmap operation.</param>
     /// <param name="value">Pointer to start of bitmap.</param>
     /// <param name="valLen">Length of bitmap.</param>
-    /// <returns></returns>
     public static long BitPosDriver(byte* input, byte* value, int valLen)
     {
         //4 byte: length
@@ -141,10 +138,8 @@ public unsafe partial class BitmapManager
     /// Find pos of set/clear bit in a sequence of bytes.
     /// </summary>
     /// <param name="value">Pointer to start of bitmap.</param>
-    /// <param name="bSetVal"></param>
     /// <param name="startOffset">Starting offset into bitmap.</param>
     /// <param name="endOffset">End offset into bitmap.</param>
-    /// <returns></returns>
     private static long BitPosByte(byte* value, byte bSetVal, long startOffset, long endOffset)
     {
         // Mask set to look for 0 or 1 depending on clear/set flag

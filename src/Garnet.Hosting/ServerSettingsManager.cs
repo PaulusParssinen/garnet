@@ -96,9 +96,7 @@ Please check the syntax of your command. For detailed usage information run with
         {
             importSuccessful = TryImportServerOptions(
                 cmdLineOptions.ConfigImportPath,
-                cmdLineOptions.ConfigImportFormat, initOptions, logger,
-                cmdLineOptions.UseAzureStorageForConfigImport.GetValueOrDefault() ? FileLocationType.AzureStorage : FileLocationType.Local,
-                cmdLineOptions.AzureStorageConnectionString);
+                cmdLineOptions.ConfigImportFormat, initOptions, logger);
 
             if (!importSuccessful)
                 return false;
@@ -127,8 +125,7 @@ Please check the syntax of your command. For detailed usage information run with
                 options.ConfigExportFormat,
                 options,
                 logger,
-                options.UseAzureStorageForConfigExport.GetValueOrDefault() ? FileLocationType.AzureStorage : FileLocationType.Local,
-                options.AzureStorageConnectionString);
+                 FileLocationType.Local);
 
         return true;
     }
@@ -231,13 +228,12 @@ Please check the syntax of your command. For detailed usage information run with
     /// <param name="options">Options object to import options into</param>
     /// <param name="logger">Logger</param>
     /// <param name="fileLocationType">Type of file location of configuration file</param>
-    /// <param name="connString">Connection string to Azure Storage, if applicable</param>
     /// <returns>True if import succeeded</returns>
     private static bool TryImportServerOptions(string path, ConfigFileType configFileType, Options options, ILogger logger, FileLocationType fileLocationType, string connString = null)
     {
         Assembly assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
 
-        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, assembly);
         IConfigProvider configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
 
         using Stream stream = streamProvider.Read(path);
@@ -246,7 +242,6 @@ Please check the syntax of your command. For detailed usage information run with
         string fileLocation = fileLocationType switch
         {
             FileLocationType.Local => "local machine",
-            FileLocationType.AzureStorage => "Azure storage",
             FileLocationType.EmbeddedResource => "embedded resource",
             _ => throw new NotImplementedException()
         };
@@ -265,13 +260,12 @@ Please check the syntax of your command. For detailed usage information run with
     /// <param name="options">Options object to export</param>
     /// <param name="logger">Logger</param>
     /// <param name="fileLocationType">Type of file location of configuration file</param>
-    /// <param name="connString">Connection string to Azure Storage, if applicable</param>
     /// <returns>True if export succeeded</returns>
-    private static bool TryExportServerOptions(string path, ConfigFileType configFileType, Options options, ILogger logger, FileLocationType fileLocationType, string connString = null)
+    private static bool TryExportServerOptions(string path, ConfigFileType configFileType, Options options, ILogger logger, FileLocationType fileLocationType)
     {
         Assembly assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
 
-        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, assembly);
         IConfigProvider configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
 
         bool exportSucceeded = configProvider.TryExportOptions(path, streamProvider, options, logger);
@@ -279,7 +273,6 @@ Please check the syntax of your command. For detailed usage information run with
         string fileLocation = fileLocationType switch
         {
             FileLocationType.Local => "local machine",
-            FileLocationType.AzureStorage => "Azure storage",
             FileLocationType.EmbeddedResource => "embedded resource",
             _ => throw new NotImplementedException()
         };

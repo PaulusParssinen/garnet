@@ -15,8 +15,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Reads the n tokens from the current buffer, and returns
     /// total tokens read
     /// </summary>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
     private int ReadLeftToken(int count, ref byte* ptr)
     {
         int totalTokens = 0;

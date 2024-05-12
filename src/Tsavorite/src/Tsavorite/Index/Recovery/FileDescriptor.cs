@@ -20,8 +20,6 @@ public struct FileDescriptor
     /// <summary>
     /// Create FileInfo instance
     /// </summary>
-    /// <param name="directoryName"></param>
-    /// <param name="fileName"></param>
     public FileDescriptor(string directoryName, string fileName)
     {
         this.directoryName = directoryName;

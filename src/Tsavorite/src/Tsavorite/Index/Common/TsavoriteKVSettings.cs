@@ -154,7 +154,6 @@ public sealed class TsavoriteKVSettings<Key, Value> : IDisposable
     /// </summary>
     /// <param name="baseDir">Base directory (without trailing path separator)</param>
     /// <param name="deleteDirOnDispose">Whether to delete base directory on dispose. This option prevents later recovery.</param>
-    /// <param name="logger"></param>
     public TsavoriteKVSettings(string baseDir, bool deleteDirOnDispose = false, ILogger logger = null)
     {
         this.logger = logger;

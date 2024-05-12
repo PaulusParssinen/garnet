@@ -164,10 +164,6 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// <summary>
     /// Async (background) authentication of TLS as server
     /// </summary>
-    /// <param name="tlsOptions"></param>
-    /// <param name="remoteEndpointName"></param>
-    /// <param name="token"></param>
-    /// <returns></returns>
     async Task AuthenticateAsServerAsync(SslServerAuthenticationOptions tlsOptions, string remoteEndpointName, CancellationToken token = default)
     {
         Debug.Assert(readerStatus == TlsReaderStatus.Active);
@@ -575,7 +571,6 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     /// Expected to be called exactly once, by the same thread that listens to network
     /// and calls the mono-threaded ProcessMessage.
     /// </summary>
-    /// <exception cref="Exception"></exception>
     protected void DisposeImpl()
     {
         // We might dispose either via SAEA callback or via user Dispose code path

@@ -470,8 +470,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <summary>
     /// Recover from specific index and log token (blocking operation)
     /// </summary>
-    /// <param name="indexCheckpointToken"></param>
-    /// <param name="hybridLogCheckpointToken"></param>
     /// <param name="numPagesToPreload">Number of pages to preload into memory after recovery</param>
     /// <param name="undoNextVersion">Whether records with versions beyond checkpoint version need to be undone (and invalidated on log)</param>
     /// <returns>Version we actually recovered to</returns>
@@ -500,7 +498,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <summary>
     /// Dispose recoverable session with given ID, use RecoverableSessions to get recoverable session details
     /// </summary>
-    /// <param name="sessionID"></param>
     public void DisposeRecoverableSession(int sessionID)
     {
         if (_recoveredSessions != null && _recoveredSessions.TryRemove(sessionID, out (string, CommitPoint) entry))
@@ -522,8 +519,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <summary>
     /// Asynchronously recover from specific index and log token (blocking operation)
     /// </summary>
-    /// <param name="indexCheckpointToken"></param>
-    /// <param name="hybridLogCheckpointToken"></param>
     /// <param name="numPagesToPreload">Number of pages to preload into memory after recovery</param>
     /// <param name="undoNextVersion">Whether records with versions beyond checkpoint version need to be undone (and invalidated on log)</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -534,7 +529,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <summary>
     /// Wait for ongoing checkpoint to complete
     /// </summary>
-    /// <returns></returns>
     public async ValueTask CompleteCheckpointAsync(CancellationToken token = default)
     {
         if (epoch.ThisInstanceProtected())
@@ -786,7 +780,6 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <summary>
     /// Total number of valid entries in hash table
     /// </summary>
-    /// <returns></returns>
     private unsafe long GetEntryCount()
     {
         int version = resizeInfo.version;

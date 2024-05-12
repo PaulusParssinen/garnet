@@ -26,7 +26,6 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// Base constructor
     /// </summary>
     /// <param name="type">Object type</param>
-    /// <param name="size"></param>
     protected CustomObjectBase(byte type, long expiration, long size = 0)
         : base(expiration, size)
     {
@@ -141,8 +140,6 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// <summary>
     /// Get first arg from input
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     protected static ReadOnlySpan<byte> GetFirstArg(ReadOnlySpan<byte> input)
     {
         int offset = 0;
@@ -162,7 +159,6 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// <summary>
     /// Clone object (shallow copy)
     /// </summary>
-    /// <returns></returns>
     public sealed override GarnetObjectBase Clone() => CloneObject();
 
     /// <inheritdoc />

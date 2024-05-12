@@ -346,10 +346,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get log settings
     /// </summary>
-    /// <param name="logSettings"></param>
-    /// <param name="indexSize"></param>
-    /// <param name="revivSettings"></param>
-    /// <param name="logFactory"></param>
     public void GetSettings(out LogSettings logSettings, out int indexSize, out RevivificationSettings revivSettings, out INamedDeviceFactory logFactory)
     {
         if (MutablePercent < 10 || MutablePercent > 95)
@@ -463,7 +459,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get memory size
     /// </summary>
-    /// <returns></returns>
     public static int MemorySizeBits(string memorySize, string storePageSize, out int emptyPageCount)
     {
         emptyPageCount = 0;
@@ -482,11 +477,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get object store settings
     /// </summary>
-    /// <param name="objLogSettings"></param>
-    /// <param name="objRevivSettings"></param>
-    /// <param name="objIndexSize"></param>
-    /// <param name="objTotalMemorySize"></param>
-
     public void GetObjectStoreSettings(out LogSettings objLogSettings, out RevivificationSettings objRevivSettings, out int objIndexSize, out long objTotalMemorySize)
     {
         if (ObjectStoreMutablePercent < 10 || ObjectStoreMutablePercent > 95)
@@ -572,7 +562,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get AOF settings
     /// </summary>
-    /// <param name="tsavoriteLogSettings"></param>
     public void GetAofSettings(out TsavoriteLogSettings tsavoriteLogSettings)
     {
         tsavoriteLogSettings = new TsavoriteLogSettings
@@ -601,8 +590,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Gets a new instance of device factory initialized with the supplied baseName.
     /// </summary>
-    /// <param name="baseName"></param>
-    /// <returns></returns>
     public INamedDeviceFactory GetInitializedDeviceFactory(string baseName)
     {
         INamedDeviceFactory deviceFactory = GetDeviceFactory();
@@ -613,7 +600,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get AOF memory size in bits
     /// </summary>
-    /// <returns></returns>
     public int AofMemorySizeBits()
     {
         long size = ParseSize(AofMemorySize);
@@ -626,7 +612,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get AOF Page size in bits
     /// </summary>
-    /// <returns></returns>
     public int AofPageSizeBits()
     {
         long size = ParseSize(AofPageSize);
@@ -639,7 +624,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get maximum AOF size in bits
     /// </summary>
-    /// <returns></returns>
     public int AofSizeLimitSizeBits()
     {
         long size = ParseSize(AofSizeLimit);
@@ -652,7 +636,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get object store page size
     /// </summary>
-    /// <returns></returns>
     public int ObjectStorePageSizeBits()
     {
         long size = ParseSize(ObjectStorePageSize);
@@ -665,7 +648,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get object store segment size
     /// </summary>
-    /// <returns></returns>
     public int ObjectStoreSegmentSizeBits()
     {
         long size = ParseSize(ObjectStoreSegmentSize);
@@ -678,7 +660,6 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get device for AOF
     /// </summary>
-    /// <returns></returns>
     IDevice GetAofDevice()
     {
         if (!MainMemoryReplication && UseAofNullDevice)
@@ -690,6 +671,5 @@ public class GarnetServerOptions : ServerOptions
     /// <summary>
     /// Get device factory
     /// </summary>
-    /// <returns></returns>
     public INamedDeviceFactory GetDeviceFactory() => DeviceFactoryCreator();
 }

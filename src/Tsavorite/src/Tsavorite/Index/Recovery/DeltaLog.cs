@@ -187,10 +187,6 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     /// <summary>
     /// Get next entry
     /// </summary>
-    /// <param name="physicalAddress"></param>
-    /// <param name="entryLength"></param>
-    /// <param name="type"></param>
-    /// <returns></returns>
     public unsafe bool GetNext(out long physicalAddress, out int entryLength, out DeltaLogEntryType type)
     {
         while (true)
@@ -296,7 +292,6 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     /// <summary>
     /// Initialize for writes
     /// </summary>
-    /// <param name="memory"></param>
     public void InitializeForWrites(SectorAlignedBufferPool memory)
     {
         this.memory = memory;
@@ -371,7 +366,6 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     /// <summary>
     /// Flush
     /// </summary>
-    /// <returns></returns>
     public async Task FlushAsync()
     {
         // Flush last page if needed
@@ -388,9 +382,6 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     /// <summary>
     /// IOCompletion callback for page flush
     /// </summary>
-    /// <param name="errorCode"></param>
-    /// <param name="numBytes"></param>
-    /// <param name="context"></param>
     private void AsyncFlushPageToDeviceCallback(uint errorCode, uint numBytes, object context)
     {
         try

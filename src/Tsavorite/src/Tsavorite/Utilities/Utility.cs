@@ -58,9 +58,6 @@ public static class Utility
     /// <summary>
     /// Num bits in the previous power of 2 for specified number
     /// </summary>
-    /// <param name="v"></param>
-    /// <param name="logger"></param>
-    /// <returns></returns>
     internal static int NumBitsPreviousPowerOf2(long v, ILogger logger = null)
     {
         long adjustedSize = PreviousPowerOf2(v);
@@ -72,8 +69,6 @@ public static class Utility
     /// <summary>
     /// Previous power of 2
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
     internal static long PreviousPowerOf2(long v)
     {
         v |= v >> 1;
@@ -88,8 +83,6 @@ public static class Utility
     /// <summary>
     /// Pretty print value
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
     internal static string PrettySize(long value)
     {
         char[] suffix = new char[] { 'K', 'M', 'G', 'T', 'P' };
@@ -142,15 +135,11 @@ public static class Utility
     /// <summary>
     /// Is type blittable
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
     internal static bool IsBlittable<T>() => !RuntimeHelpers.IsReferenceOrContainsReferences<T>();
 
     /// <summary>
     /// Get 64-bit hash code for a long value
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetHashCode(long input)
     {
@@ -169,9 +158,6 @@ public static class Utility
     /// <summary>
     /// Get 64-bit hash code for a byte array
     /// </summary>
-    /// <param name="pbString"></param>
-    /// <param name="len"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe long HashBytes(byte* pbString, int len)
     {
@@ -195,9 +181,6 @@ public static class Utility
     /// <summary>
     /// Compute XOR of all provided bytes
     /// </summary>
-    /// <param name="src"></param>
-    /// <param name="length"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe ulong XorBytes(byte* src, int length)
     {
@@ -245,8 +228,6 @@ public static class Utility
     /// <summary>
     /// Check if power of two
     /// </summary>
-    /// <param name="x"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Is32Bit(long x)
     {
@@ -256,8 +237,6 @@ public static class Utility
     /// <summary>
     /// A 32-bit murmur3 implementation.
     /// </summary>
-    /// <param name="h"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Murmur3(int h)
     {
@@ -342,7 +321,6 @@ public static class Utility
     /// <summary>
     /// 
     /// </summary>
-    /// <returns></returns>
     public static ulong GetCurrentMilliseconds()
     {
         Debug.Assert(Stopwatch.IsHighResolution, "Expected Stopwatch.IsHighResolution to be true");

@@ -24,8 +24,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="slot"></param>
-    /// <returns></returns>
     public static bool OutOfRange(int slot) => slot >= MAX_HASH_SLOT_VALUE || slot < MIN_HASH_SLOT_VALUE;
 
     /// <summary>
@@ -62,8 +60,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Create cluster config
     /// </summary>
-    /// <param name="slotMap"></param>
-    /// <param name="workers"></param>
     public ClusterConfig(HashSlot[] slotMap, Worker[] workers)
     {
         this.slotMap = slotMap;
@@ -245,7 +241,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Return all primary endpoints. Used from replica that is becoming a primary during a failover.
     /// </summary>
-    /// <param name="includeMyPrimaryFirst"></param>
     /// <returns>List of pairs (address,port) representing known primary endpoints</returns>
     public List<(string, int)> GetLocalNodePrimaryEndpoints(bool includeMyPrimaryFirst = false)
     {
@@ -307,7 +302,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Get worker id from node id.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>Integer representing offset of worker in worker list.</returns>
     public int GetWorkerIdFromNodeId(string nodeId)
     {
@@ -322,7 +316,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Get role from node-id.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>Node role type</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public NodeRole GetNodeRoleFromNodeId(string nodeId) => workers[GetWorkerIdFromNodeId(nodeId)].Role;
@@ -330,14 +323,12 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Get worker from node-id.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>Worker struct</returns>
     public Worker GetWorkerFromNodeId(string nodeId) => workers[GetWorkerIdFromNodeId(nodeId)];
 
     /// <summary>
     /// Get worker (IP address and port) for node-id.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>Pair of (string,int) representing worker endpoint.</returns>
     public (string address, int port) GetWorkerAddressFromNodeId(string nodeId)
     {
@@ -350,7 +341,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Get hostname from node-id.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>String representing node's hostname.</returns>
     public string GetHostNameFromNodeId(string nodeId)
     {
@@ -370,7 +360,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Returns compressed representation of slots claimed by given node.
     /// </summary>
-    /// <param name="nodeId"></param>
     /// <returns>Byte array representing bitmap of claimed slots.</returns>
     public byte[] GetClaimedSlotsFromNodeId(string nodeId)
     {
@@ -744,7 +733,6 @@ internal sealed partial class ClusterConfig
     /// Get Replicas for node-id.
     /// </summary>
     /// <param name="nodeid">Node-id string.</param>
-    /// <returns></returns>
     public List<string> GetReplicas(string nodeid)
     {
         List<string> replicas = new();
@@ -760,8 +748,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="nodeid"></param>
-    /// <returns></returns>
     public List<string> GetReplicaIds(string nodeid)
     {
         List<string> replicas = new();
@@ -1008,7 +994,6 @@ internal sealed partial class ClusterConfig
     /// <summary>
     /// Set role of local worker.
     /// </summary>
-    /// <param name="role"></param>
     /// <returns>ClusterConfig object with updates.</returns>
     public ClusterConfig SetLocalWorkerRole(NodeRole role)
     {

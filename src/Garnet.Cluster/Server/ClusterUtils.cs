@@ -24,12 +24,6 @@ internal static class ClusterUtils
     /// <summary>
     /// Note: pads the bytes with zeros to achieve sector alignment
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="pool"></param>
-    /// <param name="address"></param>
-    /// <param name="buffer"></param>
-    /// <param name="size"></param>
-    /// <param name="logger"></param>
     public static unsafe void WriteInto(IDevice device, SectorAlignedBufferPool pool, ulong address, byte[] buffer, int size = 0, ILogger logger = null)
     {
         if (size == 0) size = buffer.Length;
@@ -58,12 +52,6 @@ internal static class ClusterUtils
     /// <summary>
     /// Note: will read potentially more data (based on sector alignment)
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="pool"></param>
-    /// <param name="address"></param>
-    /// <param name="buffer"></param>
-    /// <param name="size"></param>
-    /// <param name="logger"></param>
     private static unsafe void ReadInto(IDevice device, SectorAlignedBufferPool pool, ulong address, out byte[] buffer, int size, ILogger logger = null)
     {
         using var semaphore = new SemaphoreSlim(0);

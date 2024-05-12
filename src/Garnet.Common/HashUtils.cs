@@ -30,10 +30,6 @@ public static class HashUtils
     /// <summary>
     /// MurmurHash3 - 64 bit fast
     /// </summary>
-    /// <param name="bString"></param>
-    /// <param name="len"></param>
-    /// <param name="seed"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe ulong MurmurHash3x64A(byte* bString, int len, uint seed = 0)
     {
@@ -86,10 +82,6 @@ public static class HashUtils
     /// <summary>
     /// Murmurhash 3 - 64 bit
     /// </summary>
-    /// <param name="bString"></param>
-    /// <param name="len"></param>
-    /// <param name="seed"></param>
-    /// <returns></returns>        
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe ulong MurmurHash3x64(byte* bString, int len, uint seed = 0)
     {
@@ -101,10 +93,6 @@ public static class HashUtils
     /// <summary>
     /// Murmurhash 3 - 128 bit
     /// </summary>
-    /// <param name="bString"></param>
-    /// <param name="len"></param>
-    /// <param name="seed"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe (ulong, ulong) MurmurHash3x128(byte* bString, int len, uint seed = 0)
     {
@@ -192,10 +180,6 @@ public static class HashUtils
     /// <summary>
     /// MurmurHash2 Get 64-bit hash code for a byte array
     /// </summary>
-    /// <param name="bString"></param>
-    /// <param name="len"></param>
-    /// <param name="seed"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe ulong MurmurHash2x64A(byte* bString, int len, uint seed = 0)
     {

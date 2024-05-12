@@ -451,7 +451,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Methods used to cleanup keys for given slot collection in main store
     /// </summary>
-    /// <param name="BasicGarnetApi"></param>
     /// <param name="slots">Slot list</param>
     public static unsafe void DeleteKeysInSlotsFromMainStore(BasicGarnetApi BasicGarnetApi, HashSet<int> slots)
     {
@@ -468,7 +467,6 @@ internal sealed partial class ClusterManager : IDisposable
     /// <summary>
     /// Methods used to cleanup keys for given slot collection in object store
     /// </summary>
-    /// <param name="BasicGarnetApi"></param>
     /// <param name="slots">Slot list</param>
     public static unsafe void DeleteKeysInSlotsFromObjectStore(BasicGarnetApi BasicGarnetApi, HashSet<int> slots)
     {

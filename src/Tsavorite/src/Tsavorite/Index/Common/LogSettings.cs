@@ -1,13 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using Tsavorite.Device;
+
 namespace Tsavorite;
 
 /// <summary>
 /// Configuration settings for serializing objects
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
 public class SerializerSettings<Key, Value>
 {
     /// <summary>

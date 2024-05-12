@@ -32,9 +32,6 @@ internal sealed partial class FailoverSession : IDisposable
     /// <param name="clusterTimeout">Timeout for individual communication between replica.</param>
     /// <param name="failoverTimeout">End to end timeout for failover</param>
     /// <param name="isReplicaSession">Flag indicating if this session is controlled by a replica</param>
-    /// <param name="hostAddress"></param>
-    /// <param name="hostPort"></param>
-    /// <param name="logger"></param>
     public FailoverSession(
         ClusterProvider clusterProvider,
         FailoverOption option,

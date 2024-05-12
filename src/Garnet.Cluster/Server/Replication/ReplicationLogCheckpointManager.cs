@@ -63,8 +63,6 @@ internal sealed class ReplicationLogCheckpointManager(
     /// 2. 8 bytes for checkpointCoveredAddress
     /// 3. 40 bytes for primaryReplicationId
     /// </summary>        
-    /// <param name="commitMetadata"></param>
-    /// <returns></returns>
     private unsafe byte[] AddCookie(byte[] commitMetadata)
     {
         int cookieSize = sizeof(long) + this.CurrentReplicationId.Length;
@@ -125,8 +123,6 @@ internal sealed class ReplicationLogCheckpointManager(
     /// <summary>
     /// Commit log checkpoint metadata and append cookie
     /// </summary>
-    /// <param name="logToken"></param>
-    /// <param name="commitMetadata"></param>
     public override unsafe void CommitLogCheckpoint(Guid logToken, byte[] commitMetadata)
     {
         byte[] commitMetadataWithCookie = AddCookie(commitMetadata);
@@ -136,8 +132,6 @@ internal sealed class ReplicationLogCheckpointManager(
     /// <summary>
     /// Commit log checkpoint metadata with included cookie in byte array
     /// </summary>
-    /// <param name="logToken"></param>
-    /// <param name="commitMetadataWithCookie"></param>
     public void CommiLogCheckpointWithCookie(Guid logToken, byte[] commitMetadataWithCookie)
         => base.CommitLogCheckpoint(logToken, commitMetadataWithCookie);
 

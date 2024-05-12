@@ -241,7 +241,6 @@ public static unsafe class Native32
     /// <summary>
     /// Get number of groups (sockets) and processors per group
     /// </summary>
-    /// <returns></returns>
     public static (uint numGroups, uint numProcsPerGroup) GetNumGroupsProcsPerGroup()
     {
         uint nrOfProcessors = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
@@ -303,7 +302,6 @@ public static unsafe class Native32
     /// <summary>
     /// Enable privilege for process
     /// </summary>
-    /// <returns></returns>
     public static bool EnableProcessPrivileges()
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -385,9 +383,6 @@ public static unsafe class Native32
     /// <summary>
     /// Set file size
     /// </summary>
-    /// <param name="file_handle"></param>
-    /// <param name="file_size"></param>
-    /// <returns></returns>
     public static bool SetFileSize(SafeFileHandle file_handle, long file_size)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

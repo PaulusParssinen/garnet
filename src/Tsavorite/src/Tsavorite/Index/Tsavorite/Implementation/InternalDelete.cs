@@ -13,7 +13,6 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     /// If at head, tries to remove item from hash chain
     /// </summary>
     /// <param name="key">Key of the record to be deleted.</param>
-    /// <param name="keyHash"></param>
     /// <param name="userContext">User context for the operation, in case it goes pending.</param>
     /// <param name="pendingContext">Pending context used internally to store the context of the operation.</param>
     /// <param name="tsavoriteSession">Callback functions.</param>

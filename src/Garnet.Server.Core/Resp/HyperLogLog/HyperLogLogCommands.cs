@@ -14,11 +14,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <summary>
     /// Adds one element to the HyperLogLog data structure stored at the variable name specified.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
     private bool HyperLogLogAdd<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
@@ -95,12 +90,6 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// Returns the approximated cardinality computed by the HyperLogLog data structure stored at the specified key,
     /// or 0 if the key does not exist.
     /// </summary>
-    /// <typeparam name="TGarnetApi"></typeparam>
-    /// <param name="count"></param>
-    /// <param name="ptr"></param>
-    /// <param name="storageApi"></param>
-    /// <returns></returns>
-    /// <exception cref="GarnetException"></exception>
     private bool HyperLogLogLength<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {

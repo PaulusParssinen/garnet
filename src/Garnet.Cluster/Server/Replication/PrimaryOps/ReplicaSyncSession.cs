@@ -492,10 +492,6 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
     /// <summary>
     /// Note: will read potentially more data (based on sector alignment)
     /// </summary>
-    /// <param name="device"></param>
-    /// <param name="address"></param>
-    /// <param name="size"></param>
-    /// <param name="segmentId"></param>
     private unsafe (SectorAlignedMemory, int) ReadInto(IDevice device, ulong address, int size, int segmentId = -1)
     {
         bufferPool ??= new SectorAlignedBufferPool(1, (int)device.SectorSize);

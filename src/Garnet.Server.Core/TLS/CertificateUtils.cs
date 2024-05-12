@@ -13,9 +13,6 @@ public static class CertificateUtils
     /// <summary>
     /// Gets machine certificate by subject name
     /// </summary>
-    /// <param name="subjectName"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
     public static X509Certificate2 GetMachineCertificateBySubjectName(string subjectName)
     {
         X509Store store = null;
@@ -50,10 +47,6 @@ public static class CertificateUtils
     /// <summary>
     /// Gets machine certificate by file name
     /// </summary>
-    /// <param name="fileName"></param>
-    /// <param name="password"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
     public static X509Certificate2 GetMachineCertificateByFile(string fileName, string password)
     {
         return new X509Certificate2(fileName, password);

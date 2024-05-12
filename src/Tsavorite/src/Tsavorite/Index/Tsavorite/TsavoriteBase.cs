@@ -71,8 +71,6 @@ public unsafe partial class TsavoriteBase
     /// <summary>
     /// Initialize
     /// </summary>
-    /// <param name="size"></param>
-    /// <param name="sector_size"></param>
     public void Initialize(long size, int sector_size)
     {
         if (!Utility.IsPowerOfTwo(size))
@@ -94,9 +92,6 @@ public unsafe partial class TsavoriteBase
     /// <summary>
     /// Initialize
     /// </summary>
-    /// <param name="version"></param>
-    /// <param name="size"></param>
-    /// <param name="sector_size"></param>
     internal void Initialize(int version, long size, int sector_size)
     {
         long size_bytes = size * sizeof(HashBucket);
@@ -341,11 +336,6 @@ public unsafe partial class TsavoriteBase
     /// Helper function used to update the slot atomically with the
     /// new offset value using the CAS operation
     /// </summary>
-    /// <param name="bucket"></param>
-    /// <param name="entrySlot"></param>
-    /// <param name="expected"></param>
-    /// <param name="desired"></param>
-    /// <param name="found"></param>
     /// <returns>If atomic update was successful</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool UpdateSlot(HashBucket* bucket, int entrySlot, long expected, long desired, out long found)

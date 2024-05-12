@@ -296,10 +296,6 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
     /// <summary>
     /// Create session (message consumer) given incoming bytes
     /// </summary>
-    /// <param name="bytes"></param>
-    /// <param name="networkSender"></param>
-    /// <param name="session"></param>
-    /// <returns></returns>
     public bool TryCreateMessageConsumer(Span<byte> bytes, INetworkSender networkSender, out IMessageConsumer session)
     {
         session = null;

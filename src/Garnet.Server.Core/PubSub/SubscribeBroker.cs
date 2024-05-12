@@ -12,9 +12,6 @@ namespace Garnet.Server;
 /// Broker used for PUB-SUB to Tsavorite KV store. There is a broker per TsavoriteKV instance.
 /// A single broker can be used with multiple TsavoriteKVProviders. 
 /// </summary>
-/// <typeparam name="Key"></typeparam>
-/// <typeparam name="Value"></typeparam>
-/// <typeparam name="KeyValueSerializer"></typeparam>
 public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposable
     where KeyValueSerializer : IKeySerializer<Key>
 {
@@ -202,7 +199,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Key to subscribe to</param>
     /// <param name="session">Server session</param>
-    /// <returns></returns>
     public unsafe int Subscribe(ref byte* key, ServerSessionBase session)
     {
         byte* start = key;
@@ -232,7 +228,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <param name="prefix">prefix to subscribe to</param>
     /// <param name="session">Server session</param>
     /// <param name="ascii">is key ascii?</param>
-    /// <returns></returns>
     public unsafe int PSubscribe(ref byte* prefix, ServerSessionBase session, bool ascii = false)
     {
         byte* start = prefix;
@@ -261,7 +256,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Key to subscribe to</param>
     /// <param name="session">Server session</param>
-    /// <returns></returns>
     public unsafe bool Unsubscribe(byte* key, ServerSessionBase session)
     {
         bool ret = false;
@@ -292,7 +286,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Pattern to subscribe to</param>
     /// <param name="session">Server session</param>
-    /// <returns></returns>
     public unsafe void PUnsubscribe(byte* key, ServerSessionBase session)
     {
         byte* start = key;
@@ -322,8 +315,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <summary>
     /// List all subscriptions made by a session
     /// </summary>
-    /// <param name="session"></param>
-    /// <returns></returns>
     public unsafe List<byte[]> ListAllSubscriptions(ServerSessionBase session)
     {
         List<byte[]> sessionSubscriptions = new();
@@ -341,8 +332,6 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <summary>
     /// List all pattern subscriptions made by a session
     /// </summary>
-    /// <param name="session"></param>
-    /// <returns></returns>
     public unsafe List<byte[]> ListAllPSubscriptions(ServerSessionBase session)
     {
         List<byte[]> sessionPSubscriptions = new();

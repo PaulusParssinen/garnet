@@ -47,8 +47,6 @@ public struct VersionSchemeState
             Word |= (((long)value) & kPhaseMaskInInteger) << kPhaseShiftInWord;
         }
     }
-
-    /// <summary></summary>
     /// <returns>whether EPVS is in intermediate state now (transitioning between two states)</returns>
     public bool IsIntermediate() => (Phase & kIntermediateMask) != 0;
 
@@ -76,9 +74,6 @@ public struct VersionSchemeState
     /// <summary>
     /// Make a state with the given phase and version
     /// </summary>
-    /// <param name="phase"></param>
-    /// <param name="version"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static VersionSchemeState Make(byte phase, long version)
     {
@@ -168,8 +163,6 @@ public abstract class VersionSchemeStateMachine
         this.toVersion = toVersion;
         actualToVersion = toVersion;
     }
-
-    /// <summary></summary>
     /// <returns> version to transition to, or -1 if unconditionally transitioning to an unspecified next version</returns>
     public long ToVersion() => toVersion;
 
@@ -263,8 +256,6 @@ public class EpochProtectedVersionScheme
         state = VersionSchemeState.Make(VersionSchemeState.REST, 1);
         currentMachine = null;
     }
-
-    /// <summary></summary>
     /// <returns> the current state</returns>
     public VersionSchemeState CurrentState() => state;
 

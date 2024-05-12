@@ -270,7 +270,6 @@ public class ClusterProvider : IClusterProvider
     /// <summary>
     /// Wait for config transition
     /// </summary>
-    /// <returns></returns>
     internal bool WaitForConfigTransition()
     {
         GarnetServerTcp server = storeWrapper.GetServer();

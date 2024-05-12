@@ -11,7 +11,6 @@ namespace Garnet.Common;
 public enum FileLocationType
 {
     Local,
-    AzureStorage,
     EmbeddedResource
 }
 
@@ -114,17 +113,12 @@ public class StreamProviderFactory
     /// Get a StreamProvider instance
     /// </summary>
     /// <param name="locationType">Type of location of files the stream provider reads from / writes to</param>
-    /// <param name="connectionString">Connection string to Azure Storage, if applicable</param>
     /// <param name="resourceAssembly">Assembly from which to load the embedded resource, if applicable</param>
     /// <returns>StreamProvider instance</returns>
-    public static IStreamProvider GetStreamProvider(FileLocationType locationType, string connectionString = null, Assembly resourceAssembly = null)
+    public static IStreamProvider GetStreamProvider(FileLocationType locationType, Assembly resourceAssembly = null)
     {
         switch (locationType)
         {
-            case FileLocationType.AzureStorage:
-                if (string.IsNullOrEmpty(connectionString))
-                    throw new ArgumentException("Azure Storage connection string is required to read/write settings to Azure Storage", nameof(connectionString));
-                return new AzureStreamProvider(connectionString);
             case FileLocationType.Local:
                 return new LocalFileStreamProvider();
             case FileLocationType.EmbeddedResource:
@@ -132,40 +126,6 @@ public class StreamProviderFactory
             default:
                 throw new NotImplementedException();
         }
-    }
-}
-
-/// <summary>
-/// StreamProvider for reading / writing files in Azure Storage
-/// </summary>
-internal class AzureStreamProvider : StreamProviderBase
-{
-    private readonly string _connectionString;
-
-    public AzureStreamProvider(string connectionString)
-    {
-        this._connectionString = connectionString;
-    }
-
-    protected override IDevice GetDevice(string path)
-    {
-        var fileInfo = new FileInfo(path);
-        INamedDeviceFactory settingsDeviceFactoryCreator = new AzureStorageNamedDeviceFactory(this._connectionString, default);
-
-        // Get the container info, if it does not exist it will be created
-        settingsDeviceFactoryCreator.Initialize($"{fileInfo.Directory?.Name}");
-        var settingsDevice = settingsDeviceFactoryCreator.Get(new FileDescriptor("", fileInfo.Name));
-        settingsDevice.Initialize(MaxConfigFileSizeAligned, epoch: null, omitSegmentIdFromFilename: false);
-        return settingsDevice;
-    }
-
-    protected override long GetBytesToWrite(byte[] bytes, IDevice device)
-    {
-        long numBytesToWrite = bytes.Length;
-        numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
-        if (numBytesToWrite > MaxConfigFileSizeAligned)
-            throw new Exception($"Config file size {numBytesToWrite} is larger than the maximum allowed size {MaxConfigFileSizeAligned}");
-        return numBytesToWrite;
     }
 }
 
