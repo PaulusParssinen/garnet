@@ -1,67 +1,66 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+internal sealed class PendingFlushList
 {
-    internal sealed class PendingFlushList
+    public readonly LinkedList<PageAsyncFlushResult<Empty>> list;
+
+    public PendingFlushList()
     {
-        public readonly LinkedList<PageAsyncFlushResult<Empty>> list;
+        list = new();
+    }
 
-        public PendingFlushList()
+    public void Add(PageAsyncFlushResult<Empty> t)
+    {
+        lock (list)
         {
-            list = new();
+            list.AddFirst(t);
         }
+    }
 
-        public void Add(PageAsyncFlushResult<Empty> t)
+    /// <summary>
+    /// Remove item from flush list with from-address equal to the specified address
+    /// </summary>
+    public bool RemoveNextAdjacent(long address, out PageAsyncFlushResult<Empty> request)
+    {
+        lock (list)
         {
-            lock (list)
+            for (var it = list.First; it != null;)
             {
-                list.AddFirst(t);
-            }
-        }
-
-        /// <summary>
-        /// Remove item from flush list with from-address equal to the specified address
-        /// </summary>
-        public bool RemoveNextAdjacent(long address, out PageAsyncFlushResult<Empty> request)
-        {
-            lock (list)
-            {
-                for (var it = list.First; it != null;)
+                request = it.Value;
+                if (request.fromAddress == address)
                 {
-                    request = it.Value;
-                    if (request.fromAddress == address)
-                    {
-                        list.Remove(it);
-                        return true;
-                    }
-                    it = it.Next;
+                    list.Remove(it);
+                    return true;
                 }
+                it = it.Next;
             }
-            request = null;
-            return false;
         }
+        request = null;
+        return false;
+    }
 
-        /// <summary>
-        /// Remove item from flush list with until-address equal to the specified address
-        /// </summary>
-        public bool RemovePreviousAdjacent(long address, out PageAsyncFlushResult<Empty> request)
+    /// <summary>
+    /// Remove item from flush list with until-address equal to the specified address
+    /// </summary>
+    public bool RemovePreviousAdjacent(long address, out PageAsyncFlushResult<Empty> request)
+    {
+        lock (list)
         {
-            lock (list)
+            for (var it = list.First; it != null;)
             {
-                for (var it = list.First; it != null;)
+                request = it.Value;
+                if (request.untilAddress == address)
                 {
-                    request = it.Value;
-                    if (request.untilAddress == address)
-                    {
-                        list.Remove(it);
-                        return true;
-                    }
-                    it = it.Next;
+                    list.Remove(it);
+                    return true;
                 }
+                it = it.Next;
             }
-            request = null;
-            return false;
         }
+        request = null;
+        return false;
     }
 }

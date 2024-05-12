@@ -4,106 +4,105 @@
 using Microsoft.Extensions.Logging;
 using Tsavorite;
 
-namespace Garnet.Cluster
+namespace Garnet.Cluster;
+
+internal sealed class AofSyncTaskInfo : IBulkLogEntryConsumer, IDisposable
 {
-    internal sealed class AofSyncTaskInfo : IBulkLogEntryConsumer, IDisposable
+    readonly ClusterProvider clusterProvider;
+    readonly AofTaskStore aofTaskStore;
+    readonly string localNodeId;
+    public readonly string remoteNodeId;
+    readonly ILogger logger;
+    public readonly GarnetClientSession garnetClient;
+    readonly CancellationTokenSource cts;
+    TsavoriteLogScanIterator iter;
+    readonly long startAddress;
+    public long previousAddress;
+
+    public AofSyncTaskInfo(
+        ClusterProvider clusterProvider,
+        AofTaskStore aofTaskStore,
+        string localNodeId,
+        string remoteNodeId,
+        GarnetClientSession garnetClient,
+        CancellationTokenSource cts,
+        long startAddress,
+        ILogger logger)
     {
-        readonly ClusterProvider clusterProvider;
-        readonly AofTaskStore aofTaskStore;
-        readonly string localNodeId;
-        public readonly string remoteNodeId;
-        readonly ILogger logger;
-        public readonly GarnetClientSession garnetClient;
-        readonly CancellationTokenSource cts;
-        TsavoriteLogScanIterator iter;
-        readonly long startAddress;
-        public long previousAddress;
+        this.clusterProvider = clusterProvider;
+        this.aofTaskStore = aofTaskStore;
+        this.localNodeId = localNodeId;
+        this.remoteNodeId = remoteNodeId;
+        this.logger = logger;
+        this.garnetClient = garnetClient;
+        this.cts = cts;
+        this.startAddress = startAddress;
+        previousAddress = startAddress;
+    }
 
-        public AofSyncTaskInfo(
-            ClusterProvider clusterProvider,
-            AofTaskStore aofTaskStore,
-            string localNodeId,
-            string remoteNodeId,
-            GarnetClientSession garnetClient,
-            CancellationTokenSource cts,
-            long startAddress,
-            ILogger logger)
+    public void Dispose()
+    {
+        iter?.Dispose();
+        cts?.Dispose();
+    }
+
+    public unsafe void Consume(byte* payloadPtr, int payloadLength, long currentAddress, long nextAddress)
+    {
+        try
         {
-            this.clusterProvider = clusterProvider;
-            this.aofTaskStore = aofTaskStore;
-            this.localNodeId = localNodeId;
-            this.remoteNodeId = remoteNodeId;
-            this.logger = logger;
-            this.garnetClient = garnetClient;
-            this.cts = cts;
-            this.startAddress = startAddress;
-            previousAddress = startAddress;
+            // logger?.LogInformation("Sending {payloadLength} bytes to {remoteNodeId} at address {currentAddress}-{nextAddress}", payloadLength, remoteNodeId, currentAddress, nextAddress);
+
+            // This is called under epoch protection, so we have to wait for appending to complete
+            garnetClient.ExecuteClusterAppendLog(localNodeId, previousAddress, currentAddress, nextAddress, (long)payloadPtr, payloadLength);
+
+            // Set task address to nextAddress, as the iterator is currently at nextAddress
+            // (records at currentAddress are already sent above)
+            previousAddress = nextAddress;
         }
-
-        public void Dispose()
+        catch (Exception ex)
         {
-            iter?.Dispose();
-            cts?.Dispose();
+            logger?.LogWarning(ex, "An exception occurred at ReplicationManager.AofSyncTaskInfo.Consume");
+            throw;
         }
+    }
 
-        public unsafe void Consume(byte* payloadPtr, int payloadLength, long currentAddress, long nextAddress)
+    public void Throttle()
+    {
+        garnetClient.Throttle();
+    }
+
+    /// <summary>
+    /// Main replica aof sync task.
+    /// </summary>
+    public async Task ReplicaSyncTask()
+    {
+        logger?.LogInformation("Starting ReplicationManager.ReplicaSyncTask for remote node {remoteNodeId} starting from address {address}", remoteNodeId, startAddress);
+
+        try
         {
-            try
-            {
-                // logger?.LogInformation("Sending {payloadLength} bytes to {remoteNodeId} at address {currentAddress}-{nextAddress}", payloadLength, remoteNodeId, currentAddress, nextAddress);
+            garnetClient.Connect();
 
-                // This is called under epoch protection, so we have to wait for appending to complete
-                garnetClient.ExecuteClusterAppendLog(localNodeId, previousAddress, currentAddress, nextAddress, (long)payloadPtr, payloadLength);
+            iter = clusterProvider.storeWrapper.appendOnlyFile.Scan(startAddress, long.MaxValue, name: remoteNodeId[..20], scanUncommitted: true, recover: false, logger: logger);
 
-                // Set task address to nextAddress, as the iterator is currently at nextAddress
-                // (records at currentAddress are already sent above)
-                previousAddress = nextAddress;
-            }
-            catch (Exception ex)
+            while (true)
             {
-                logger?.LogWarning(ex, "An exception occurred at ReplicationManager.AofSyncTaskInfo.Consume");
-                throw;
+                if (cts.Token.IsCancellationRequested) break;
+                await iter.BulkConsumeAllAsync(this, clusterProvider.serverOptions.ReplicaSyncDelayMs, maxChunkSize: 1 << 20, cts.Token);
             }
         }
-
-        public void Throttle()
+        catch (Exception ex)
         {
-            garnetClient.Throttle();
+            logger?.LogWarning(ex, "An exception occurred at ReplicationManager.ReplicaSyncTask - terminating");
         }
-
-        /// <summary>
-        /// Main replica aof sync task.
-        /// </summary>
-        public async Task ReplicaSyncTask()
+        finally
         {
-            logger?.LogInformation("Starting ReplicationManager.ReplicaSyncTask for remote node {remoteNodeId} starting from address {address}", remoteNodeId, startAddress);
+            garnetClient.Dispose();
+            var (address, port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(remoteNodeId);
+            logger?.LogWarning("AofSync task terminated; client disposed {remoteNodeId} {address} {port} {currentAddress}", remoteNodeId, address, port, previousAddress);
 
-            try
+            if (!aofTaskStore.TryRemove(this))
             {
-                garnetClient.Connect();
-
-                iter = clusterProvider.storeWrapper.appendOnlyFile.Scan(startAddress, long.MaxValue, name: remoteNodeId[..20], scanUncommitted: true, recover: false, logger: logger);
-
-                while (true)
-                {
-                    if (cts.Token.IsCancellationRequested) break;
-                    await iter.BulkConsumeAllAsync(this, clusterProvider.serverOptions.ReplicaSyncDelayMs, maxChunkSize: 1 << 20, cts.Token);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger?.LogWarning(ex, "An exception occurred at ReplicationManager.ReplicaSyncTask - terminating");
-            }
-            finally
-            {
-                garnetClient.Dispose();
-                var (address, port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(remoteNodeId);
-                logger?.LogWarning("AofSync task terminated; client disposed {remoteNodeId} {address} {port} {currentAddress}", remoteNodeId, address, port, previousAddress);
-
-                if (!aofTaskStore.TryRemove(this))
-                {
-                    logger?.LogInformation("Did not remove {remoteNodeId} from aofTaskStore at end of ReplicaSyncTask", remoteNodeId);
-                }
+                logger?.LogInformation("Did not remove {remoteNodeId} from aofTaskStore at end of ReplicaSyncTask", remoteNodeId);
             }
         }
     }

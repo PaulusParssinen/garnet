@@ -3,30 +3,29 @@
 
 using System.Collections.Concurrent;
 
-namespace Garnet.Common
+namespace Garnet.Common;
+
+/// <summary>
+/// Pool level
+/// </summary>
+public class PoolLevel
 {
     /// <summary>
-    /// Pool level
+    /// Size
     /// </summary>
-    public class PoolLevel
+    public int size;
+
+    /// <summary>
+    /// Items
+    /// </summary>
+    public readonly ConcurrentQueue<PoolEntry> items;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public PoolLevel()
     {
-        /// <summary>
-        /// Size
-        /// </summary>
-        public int size;
-
-        /// <summary>
-        /// Items
-        /// </summary>
-        public readonly ConcurrentQueue<PoolEntry> items;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public PoolLevel()
-        {
-            size = 0;
-            items = new ConcurrentQueue<PoolEntry>();
-        }
+        size = 0;
+        items = new ConcurrentQueue<PoolEntry>();
     }
 }

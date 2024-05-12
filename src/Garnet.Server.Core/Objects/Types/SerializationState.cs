@@ -3,22 +3,21 @@
 
 using System.Runtime.InteropServices;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+[StructLayout(LayoutKind.Explicit, Size = 4)]
+struct SerializationState
 {
-    [StructLayout(LayoutKind.Explicit, Size = 4)]
-    struct SerializationState
+    [FieldOffset(0)]
+    public SerializationPhase phase;
+
+    [FieldOffset(4)]
+    public int word;
+
+    public static SerializationState Make(SerializationPhase serializationPhase)
     {
-        [FieldOffset(0)]
-        public SerializationPhase phase;
-
-        [FieldOffset(4)]
-        public int word;
-
-        public static SerializationState Make(SerializationPhase serializationPhase)
-        {
-            SerializationState state = default;
-            state.phase = serializationPhase;
-            return state;
-        }
+        SerializationState state = default;
+        state.phase = serializationPhase;
+        return state;
     }
 }

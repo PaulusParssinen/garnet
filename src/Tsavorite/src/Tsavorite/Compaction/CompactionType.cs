@@ -1,21 +1,20 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Type of log compaction
+/// </summary>
+public enum CompactionType
 {
     /// <summary>
-    /// Type of log compaction
+    /// Scan from untilAddress to read-only address to check for record liveness checking
     /// </summary>
-    public enum CompactionType
-    {
-        /// <summary>
-        /// Scan from untilAddress to read-only address to check for record liveness checking
-        /// </summary>
-        Scan,
+    Scan,
 
-        /// <summary>
-        /// Lookup each record in compaction range, for record liveness checking using hash chain
-        /// </summary>
-        Lookup,
-    }
+    /// <summary>
+    /// Lookup each record in compaction range, for record liveness checking using hash chain
+    /// </summary>
+    Lookup,
 }

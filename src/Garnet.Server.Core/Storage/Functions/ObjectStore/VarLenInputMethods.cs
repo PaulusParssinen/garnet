@@ -4,23 +4,22 @@
 using Garnet.Common;
 using Tsavorite;
 
-namespace Garnet.Server
-{
-    /// <summary>
-    /// Object store functions
-    /// </summary>
-    public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
-    {
-        /// <inheritdoc/>
-        public int GetRMWModifiedValueLength(ref IGarnetObject value, ref SpanByte input)
-        {
-            throw new GarnetException("GetRMWModifiedValueLength is not available on the object store");
-        }
+namespace Garnet.Server;
 
-        /// <inheritdoc/>
-        public int GetRMWInitialValueLength(ref SpanByte input)
-        {
-            throw new GarnetException("GetRMWInitialValueLength is not available on the object store");
-        }
+/// <summary>
+/// Object store functions
+/// </summary>
+public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
+{
+    /// <inheritdoc/>
+    public int GetRMWModifiedValueLength(ref IGarnetObject value, ref SpanByte input)
+    {
+        throw new GarnetException("GetRMWModifiedValueLength is not available on the object store");
+    }
+
+    /// <inheritdoc/>
+    public int GetRMWInitialValueLength(ref SpanByte input)
+    {
+        throw new GarnetException("GetRMWInitialValueLength is not available on the object store");
     }
 }

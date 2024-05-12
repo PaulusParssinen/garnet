@@ -4,58 +4,57 @@
 using Microsoft.Extensions.Logging;
 using Tsavorite;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions>, BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>>;
+
+/// <summary>
+/// Local server session
+/// </summary>
+public class LocalServerSession : IDisposable
 {
-    using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions>, BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>>;
+    readonly GarnetSessionMetrics sessionMetrics;
+    readonly GarnetLatencyMetricsSession LatencyMetrics;
+    readonly ILogger logger = null;
+    readonly StoreWrapper storeWrapper;
+    readonly StorageSession storageSession;
+    readonly ScratchBufferManager scratchBufferManager;
 
     /// <summary>
-    /// Local server session
+    /// Basic Garnet API
     /// </summary>
-    public class LocalServerSession : IDisposable
+    public BasicGarnetApi BasicGarnetApi;
+
+    /// <summary>
+    /// Create new local server session
+    /// </summary>
+    public LocalServerSession(StoreWrapper storeWrapper)
     {
-        readonly GarnetSessionMetrics sessionMetrics;
-        readonly GarnetLatencyMetricsSession LatencyMetrics;
-        readonly ILogger logger = null;
-        readonly StoreWrapper storeWrapper;
-        readonly StorageSession storageSession;
-        readonly ScratchBufferManager scratchBufferManager;
+        this.storeWrapper = storeWrapper;
 
-        /// <summary>
-        /// Basic Garnet API
-        /// </summary>
-        public BasicGarnetApi BasicGarnetApi;
+        this.sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
+        this.LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
+        logger = storeWrapper.sessionLogger != null ? new SessionLogger(storeWrapper.sessionLogger, $"[local] [local] [{GetHashCode():X8}] ") : null;
 
-        /// <summary>
-        /// Create new local server session
-        /// </summary>
-        public LocalServerSession(StoreWrapper storeWrapper)
-        {
-            this.storeWrapper = storeWrapper;
+        logger?.LogDebug("Starting LocalServerSession");
 
-            this.sessionMetrics = storeWrapper.serverOptions.MetricsSamplingFrequency > 0 ? new GarnetSessionMetrics() : null;
-            this.LatencyMetrics = storeWrapper.serverOptions.LatencyMonitor ? new GarnetLatencyMetricsSession(storeWrapper.monitor) : null;
-            logger = storeWrapper.sessionLogger != null ? new SessionLogger(storeWrapper.sessionLogger, $"[local] [local] [{GetHashCode():X8}] ") : null;
+        // Initialize session-local scratch buffer of size 64 bytes, used for constructing arguments in GarnetApi
+        this.scratchBufferManager = new ScratchBufferManager();
 
-            logger?.LogDebug("Starting LocalServerSession");
+        // Create storage session and API
+        this.storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
 
-            // Initialize session-local scratch buffer of size 64 bytes, used for constructing arguments in GarnetApi
-            this.scratchBufferManager = new ScratchBufferManager();
+        this.BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
+    }
 
-            // Create storage session and API
-            this.storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        logger?.LogDebug("Disposing LocalServerSession");
 
-            this.BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
-        }
+        if (storeWrapper.serverOptions.MetricsSamplingFrequency > 0 || storeWrapper.serverOptions.LatencyMonitor)
+            storeWrapper.monitor.AddMetricsHistory(sessionMetrics, LatencyMetrics);
 
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            logger?.LogDebug("Disposing LocalServerSession");
-
-            if (storeWrapper.serverOptions.MetricsSamplingFrequency > 0 || storeWrapper.serverOptions.LatencyMonitor)
-                storeWrapper.monitor.AddMetricsHistory(sessionMetrics, LatencyMetrics);
-
-            storageSession.Dispose();
-        }
+        storageSession.Dispose();
     }
 }

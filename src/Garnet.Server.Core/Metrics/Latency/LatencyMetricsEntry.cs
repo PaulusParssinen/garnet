@@ -1,18 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+struct LatencyMetricsEntry
 {
-    struct LatencyMetricsEntry
+    static readonly long HISTOGRAM_LOWER_BOUND = 1;
+    static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
+
+    public readonly LongHistogram latency;
+
+    public LatencyMetricsEntry()
     {
-        static readonly long HISTOGRAM_LOWER_BOUND = 1;
-        static readonly long HISTOGRAM_UPPER_BOUND = TimeStamp.Seconds(100);
-
-        public readonly LongHistogram latency;
-
-        public LatencyMetricsEntry()
-        {
-            latency = new LongHistogram(HISTOGRAM_LOWER_BOUND, HISTOGRAM_UPPER_BOUND, 2);
-        }
+        latency = new LongHistogram(HISTOGRAM_LOWER_BOUND, HISTOGRAM_UPPER_BOUND, 2);
     }
 }

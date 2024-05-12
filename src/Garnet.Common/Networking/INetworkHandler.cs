@@ -1,16 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.networking
+namespace Garnet.networking;
+
+/// <summary>
+/// Network handler interface
+/// </summary>
+public interface INetworkHandler : IDisposable
 {
     /// <summary>
-    /// Network handler interface
+    /// Get session
     /// </summary>
-    public interface INetworkHandler : IDisposable
-    {
-        /// <summary>
-        /// Get session
-        /// </summary>
-        IMessageConsumer Session { get; }
-    }
+    IMessageConsumer Session { get; }
 }

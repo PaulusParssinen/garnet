@@ -3,35 +3,34 @@
 
 using System.Security.Cryptography;
 
-namespace Garnet.Common
+namespace Garnet.Common;
+
+/// <summary>
+/// Collection of methods generating hex ids
+/// </summary>
+public static class Generator
 {
     /// <summary>
-    /// Collection of methods generating hex ids
+    /// Generates a random hex string of specified length
     /// </summary>
-    public static class Generator
+    /// <param name="size">The length of the hex identifier string</param>
+    /// <returns></returns>
+    public static string CreateHexId(int size = 40)
     {
-        /// <summary>
-        /// Generates a random hex string of specified length
-        /// </summary>
-        /// <param name="size">The length of the hex identifier string</param>
-        /// <returns></returns>
-        public static string CreateHexId(int size = 40)
-        {
-            Span<byte> nodeIdBuffer = stackalloc byte[size / 2];
-            RandomNumberGenerator.Fill(nodeIdBuffer);
-            return Convert.ToHexString(nodeIdBuffer).ToLowerInvariant();
-        }
+        Span<byte> nodeIdBuffer = stackalloc byte[size / 2];
+        RandomNumberGenerator.Fill(nodeIdBuffer);
+        return Convert.ToHexString(nodeIdBuffer).ToLowerInvariant();
+    }
 
-        /// <summary>
-        /// Generates a default hex string of specified length (all zeros)
-        /// </summary>
-        /// <param name="size">The length of the hex identifier string</param>
-        /// <returns></returns>
-        public static string DefaultHexId(int size = 40)
-        {
-            Span<byte> nodeIdBuffer = stackalloc byte[size / 2];
-            nodeIdBuffer.Clear();
-            return Convert.ToHexString(nodeIdBuffer).ToLowerInvariant();
-        }
+    /// <summary>
+    /// Generates a default hex string of specified length (all zeros)
+    /// </summary>
+    /// <param name="size">The length of the hex identifier string</param>
+    /// <returns></returns>
+    public static string DefaultHexId(int size = 40)
+    {
+        Span<byte> nodeIdBuffer = stackalloc byte[size / 2];
+        nodeIdBuffer.Clear();
+        return Convert.ToHexString(nodeIdBuffer).ToLowerInvariant();
     }
 }

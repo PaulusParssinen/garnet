@@ -1,20 +1,19 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Type of custom command
+/// </summary>
+public enum CustomCommandType : byte
 {
     /// <summary>
-    /// Type of custom command
+    /// Read
     /// </summary>
-    public enum CustomCommandType : byte
-    {
-        /// <summary>
-        /// Read
-        /// </summary>
-        Read,
-        /// <summary>
-        /// Read-modify-write
-        /// </summary>
-        ReadModifyWrite
-    }
+    Read,
+    /// <summary>
+    /// Read-modify-write
+    /// </summary>
+    ReadModifyWrite
 }

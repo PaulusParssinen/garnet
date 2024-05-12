@@ -1,34 +1,33 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Server session for RESP protocol - basic commands are in this file
+/// </summary>
+internal sealed class CustomCommandManagerSession
 {
-    /// <summary>
-    /// Server session for RESP protocol - basic commands are in this file
-    /// </summary>
-    internal sealed class CustomCommandManagerSession
+    readonly CustomCommandManager customCommandManager;
+    public readonly (CustomTransactionProcedure, int)[] sessionTransactionProcMap;
+
+    public CustomCommandManagerSession(CustomCommandManager customCommandManager)
     {
-        readonly CustomCommandManager customCommandManager;
-        public readonly (CustomTransactionProcedure, int)[] sessionTransactionProcMap;
+        this.customCommandManager = customCommandManager;
+        sessionTransactionProcMap = new (CustomTransactionProcedure, int)[CustomCommandManager.MaxRegistrations];
+    }
 
-        public CustomCommandManagerSession(CustomCommandManager customCommandManager)
+    public (CustomTransactionProcedure, int) GetCustomTransactionProcedure(int id, TransactionManager txnManager, ScratchBufferManager scratchBufferManager)
+    {
+        if (sessionTransactionProcMap[id].Item1 == null)
         {
-            this.customCommandManager = customCommandManager;
-            sessionTransactionProcMap = new (CustomTransactionProcedure, int)[CustomCommandManager.MaxRegistrations];
-        }
+            var entry = customCommandManager.transactionProcMap[id];
+            sessionTransactionProcMap[id].Item1 = entry.proc != null ? entry.proc() : null;
+            sessionTransactionProcMap[id].Item2 = entry.NumParams;
 
-        public (CustomTransactionProcedure, int) GetCustomTransactionProcedure(int id, TransactionManager txnManager, ScratchBufferManager scratchBufferManager)
-        {
-            if (sessionTransactionProcMap[id].Item1 == null)
-            {
-                var entry = customCommandManager.transactionProcMap[id];
-                sessionTransactionProcMap[id].Item1 = entry.proc != null ? entry.proc() : null;
-                sessionTransactionProcMap[id].Item2 = entry.NumParams;
-
-                sessionTransactionProcMap[id].Item1.txnManager = txnManager;
-                sessionTransactionProcMap[id].Item1.scratchBufferManager = scratchBufferManager;
-            }
-            return sessionTransactionProcMap[id];
+            sessionTransactionProcMap[id].Item1.txnManager = txnManager;
+            sessionTransactionProcMap[id].Item1.scratchBufferManager = scratchBufferManager;
         }
+        return sessionTransactionProcMap[id];
     }
 }

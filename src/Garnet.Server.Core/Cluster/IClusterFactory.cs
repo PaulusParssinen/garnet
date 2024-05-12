@@ -4,21 +4,20 @@
 using Microsoft.Extensions.Logging;
 using Tsavorite;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Cluster factory
+/// </summary>
+public interface IClusterFactory
 {
     /// <summary>
-    /// Cluster factory
+    /// Create checkpoint manager
     /// </summary>
-    public interface IClusterFactory
-    {
-        /// <summary>
-        /// Create checkpoint manager
-        /// </summary>
-        DeviceLogCommitCheckpointManager CreateCheckpointManager(INamedDeviceFactory deviceFactory, ICheckpointNamingScheme checkpointNamingScheme, bool isMainStore, ILogger logger = default);
+    DeviceLogCommitCheckpointManager CreateCheckpointManager(INamedDeviceFactory deviceFactory, ICheckpointNamingScheme checkpointNamingScheme, bool isMainStore, ILogger logger = default);
 
-        /// <summary>
-        /// Create cluster provider
-        /// </summary>
-        IClusterProvider CreateClusterProvider(StoreWrapper store);
-    }
+    /// <summary>
+    /// Create cluster provider
+    /// </summary>
+    IClusterProvider CreateClusterProvider(StoreWrapper store);
 }

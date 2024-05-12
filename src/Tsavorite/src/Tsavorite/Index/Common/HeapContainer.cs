@@ -1,35 +1,34 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Heap container to store keys and values when they go pending
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public interface IHeapContainer<T> : IDisposable
 {
     /// <summary>
-    /// Heap container to store keys and values when they go pending
+    /// Get a reference to the contained object
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public interface IHeapContainer<T> : IDisposable
+    ref T Get();
+}
+
+/// <summary>
+/// Heap container for standard C# objects (non-variable-length)
+/// </summary>
+/// <typeparam name="T"></typeparam>
+internal sealed class StandardHeapContainer<T> : IHeapContainer<T>
+{
+    private T obj;
+
+    public StandardHeapContainer(ref T obj)
     {
-        /// <summary>
-        /// Get a reference to the contained object
-        /// </summary>
-        ref T Get();
+        this.obj = obj;
     }
 
-    /// <summary>
-    /// Heap container for standard C# objects (non-variable-length)
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    internal sealed class StandardHeapContainer<T> : IHeapContainer<T>
-    {
-        private T obj;
+    public ref T Get() => ref obj;
 
-        public StandardHeapContainer(ref T obj)
-        {
-            this.obj = obj;
-        }
-
-        public ref T Get() => ref obj;
-
-        public void Dispose() { }
-    }
+    public void Dispose() { }
 }

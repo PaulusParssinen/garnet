@@ -1,37 +1,36 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Factory for getting IDevice instances for checkpointing
+/// </summary>
+public interface INamedDeviceFactory
 {
     /// <summary>
-    /// Factory for getting IDevice instances for checkpointing
+    /// Initialize base name or container
     /// </summary>
-    public interface INamedDeviceFactory
-    {
-        /// <summary>
-        /// Initialize base name or container
-        /// </summary>
-        /// <param name="baseName">Base name or container</param>
-        void Initialize(string baseName);
+    /// <param name="baseName">Base name or container</param>
+    void Initialize(string baseName);
 
-        /// <summary>
-        /// Get IDevice instance for given file info
-        /// </summary>
-        /// <param name="fileInfo">File info</param>
-        /// <returns></returns>
-        IDevice Get(FileDescriptor fileInfo);
+    /// <summary>
+    /// Get IDevice instance for given file info
+    /// </summary>
+    /// <param name="fileInfo">File info</param>
+    /// <returns></returns>
+    IDevice Get(FileDescriptor fileInfo);
 
-        /// <summary>
-        /// Delete IDevice for given file info
-        /// </summary>
-        /// <param name="fileInfo">File info</param>
-        /// <returns></returns>
-        void Delete(FileDescriptor fileInfo);
+    /// <summary>
+    /// Delete IDevice for given file info
+    /// </summary>
+    /// <param name="fileInfo">File info</param>
+    /// <returns></returns>
+    void Delete(FileDescriptor fileInfo);
 
-        /// <summary>
-        /// List path contents, in order of preference
-        /// </summary>
-        /// <returns></returns>
-        IEnumerable<FileDescriptor> ListContents(string path);
-    }
+    /// <summary>
+    /// List path contents, in order of preference
+    /// </summary>
+    /// <returns></returns>
+    IEnumerable<FileDescriptor> ListContents(string path);
 }

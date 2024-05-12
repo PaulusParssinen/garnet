@@ -1,22 +1,21 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace GarnetClientSample
+namespace GarnetClientSample;
+
+/// <summary>
+/// Use Garnet with GarnetClient and StackExchange.Redis clients
+/// </summary>
+class Program
 {
-    /// <summary>
-    /// Use Garnet with GarnetClient and StackExchange.Redis clients
-    /// </summary>
-    class Program
+    static readonly string address = "127.0.0.1";
+    static readonly int port = 3278;
+    static readonly bool useTLS = false;
+
+    static async Task Main()
     {
-        static readonly string address = "127.0.0.1";
-        static readonly int port = 3278;
-        static readonly bool useTLS = false;
+        await new GarnetClientSamples(address, port, useTLS).RunAll();
 
-        static async Task Main()
-        {
-            await new GarnetClientSamples(address, port, useTLS).RunAll();
-
-            // await new SERedisSamples(address, port).RunAll();
-        }
+        // await new SERedisSamples(address, port).RunAll();
     }
 }

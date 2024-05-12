@@ -1,82 +1,81 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Scan buffering mode
+/// </summary>
+public enum ScanBufferingMode
 {
     /// <summary>
-    /// Scan buffering mode
+    /// Buffer only current page being scanned
     /// </summary>
-    public enum ScanBufferingMode
-    {
-        /// <summary>
-        /// Buffer only current page being scanned
-        /// </summary>
-        SinglePageBuffering,
-
-        /// <summary>
-        /// Buffer current and next page in scan sequence
-        /// </summary>
-        DoublePageBuffering,
-
-        /// <summary>
-        /// Do not buffer - with this mode, you can only scan records already in main memory
-        /// </summary>
-        NoBuffering
-    }
+    SinglePageBuffering,
 
     /// <summary>
-    /// Scan iterator interface for Tsavorite log
+    /// Buffer current and next page in scan sequence
     /// </summary>
-    /// <typeparam name="Key"></typeparam>
-    /// <typeparam name="Value"></typeparam>
-    public interface ITsavoriteScanIterator<Key, Value> : IDisposable
-    {
-        /// <summary>
-        /// Gets reference to current key
-        /// </summary>
-        /// <returns></returns>
-        ref Key GetKey();
+    DoublePageBuffering,
 
-        /// <summary>
-        /// Gets reference to current value
-        /// </summary>
-        /// <returns></returns>
-        ref Value GetValue();
+    /// <summary>
+    /// Do not buffer - with this mode, you can only scan records already in main memory
+    /// </summary>
+    NoBuffering
+}
 
-        /// <summary>
-        /// Get next record
-        /// </summary>
-        /// <param name="recordInfo"></param>
-        /// <returns>True if record found, false if end of scan</returns>
-        bool GetNext(out RecordInfo recordInfo);
+/// <summary>
+/// Scan iterator interface for Tsavorite log
+/// </summary>
+/// <typeparam name="Key"></typeparam>
+/// <typeparam name="Value"></typeparam>
+public interface ITsavoriteScanIterator<Key, Value> : IDisposable
+{
+    /// <summary>
+    /// Gets reference to current key
+    /// </summary>
+    /// <returns></returns>
+    ref Key GetKey();
 
-        /// <summary>
-        /// Get next record
-        /// </summary>
-        /// <param name="recordInfo"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns>True if record found, false if end of scan</returns>
-        bool GetNext(out RecordInfo recordInfo, out Key key, out Value value);
+    /// <summary>
+    /// Gets reference to current value
+    /// </summary>
+    /// <returns></returns>
+    ref Value GetValue();
 
-        /// <summary>
-        /// Current address
-        /// </summary>
-        long CurrentAddress { get; }
+    /// <summary>
+    /// Get next record
+    /// </summary>
+    /// <param name="recordInfo"></param>
+    /// <returns>True if record found, false if end of scan</returns>
+    bool GetNext(out RecordInfo recordInfo);
 
-        /// <summary>
-        /// Next address
-        /// </summary>
-        long NextAddress { get; }
+    /// <summary>
+    /// Get next record
+    /// </summary>
+    /// <param name="recordInfo"></param>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns>True if record found, false if end of scan</returns>
+    bool GetNext(out RecordInfo recordInfo, out Key key, out Value value);
 
-        /// <summary>
-        /// The starting address of the scan
-        /// </summary>
-        long BeginAddress { get; }
+    /// <summary>
+    /// Current address
+    /// </summary>
+    long CurrentAddress { get; }
 
-        /// <summary>
-        /// The ending address of the scan
-        /// </summary>
-        long EndAddress { get; }
-    }
+    /// <summary>
+    /// Next address
+    /// </summary>
+    long NextAddress { get; }
+
+    /// <summary>
+    /// The starting address of the scan
+    /// </summary>
+    long BeginAddress { get; }
+
+    /// <summary>
+    /// The ending address of the scan
+    /// </summary>
+    long EndAddress { get; }
 }

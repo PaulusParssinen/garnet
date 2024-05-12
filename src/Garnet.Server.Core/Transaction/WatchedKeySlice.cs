@@ -3,21 +3,20 @@
 
 using System.Runtime.InteropServices;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+[StructLayout(LayoutKind.Explicit, Size = 29)]
+struct WatchedKeySlice
 {
-    [StructLayout(LayoutKind.Explicit, Size = 29)]
-    struct WatchedKeySlice
-    {
-        [FieldOffset(0)]
-        public long version;
+    [FieldOffset(0)]
+    public long version;
 
-        [FieldOffset(8)]
-        public ArgSlice slice;
+    [FieldOffset(8)]
+    public ArgSlice slice;
 
-        [FieldOffset(20)]
-        public long hash;
+    [FieldOffset(20)]
+    public long hash;
 
-        [FieldOffset(28)]
-        public StoreType type;
-    }
+    [FieldOffset(28)]
+    public StoreType type;
 }

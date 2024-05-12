@@ -3,20 +3,19 @@
 
 #pragma warning disable 0162
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Exception thrown when commit fails
+/// </summary>
+public sealed class CommitFailureException : TsavoriteException
 {
     /// <summary>
-    /// Exception thrown when commit fails
+    /// Commit info and next commit task in chain
     /// </summary>
-    public sealed class CommitFailureException : TsavoriteException
-    {
-        /// <summary>
-        /// Commit info and next commit task in chain
-        /// </summary>
-        public LinkedCommitInfo LinkedCommitInfo { get; private set; }
+    public LinkedCommitInfo LinkedCommitInfo { get; private set; }
 
-        internal CommitFailureException(LinkedCommitInfo linkedCommitInfo, string message)
-            : base(message)
-            => LinkedCommitInfo = linkedCommitInfo;
-    }
+    internal CommitFailureException(LinkedCommitInfo linkedCommitInfo, string message)
+        : base(message)
+        => LinkedCommitInfo = linkedCommitInfo;
 }

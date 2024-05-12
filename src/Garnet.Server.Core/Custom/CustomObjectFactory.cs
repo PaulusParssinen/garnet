@@ -1,23 +1,22 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Base class for creating custom objects
+/// </summary>
+public abstract class CustomObjectFactory
 {
     /// <summary>
-    /// Base class for creating custom objects
+    /// Create new (empty) instance of custom object
     /// </summary>
-    public abstract class CustomObjectFactory
-    {
-        /// <summary>
-        /// Create new (empty) instance of custom object
-        /// </summary>
-        public abstract CustomObjectBase Create(byte type);
+    public abstract CustomObjectBase Create(byte type);
 
-        /// <summary>
-        /// Deserialize value object from given reader
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="reader"></param>
-        public abstract CustomObjectBase Deserialize(byte type, BinaryReader reader);
-    }
+    /// <summary>
+    /// Deserialize value object from given reader
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="reader"></param>
+    public abstract CustomObjectBase Deserialize(byte type, BinaryReader reader);
 }

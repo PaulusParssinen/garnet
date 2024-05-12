@@ -3,22 +3,21 @@
 
 using Tsavorite;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Output type used by Garnet object store.
+/// Does not convert to heap when going pending, because we immediately complete pending operations for object store.
+/// </summary>
+public struct GarnetObjectStoreOutput
 {
     /// <summary>
-    /// Output type used by Garnet object store.
-    /// Does not convert to heap when going pending, because we immediately complete pending operations for object store.
+    /// span byte and memory
     /// </summary>
-    public struct GarnetObjectStoreOutput
-    {
-        /// <summary>
-        /// span byte and memory
-        /// </summary>
-        public SpanByteAndMemory spanByteAndMemory;
+    public SpanByteAndMemory spanByteAndMemory;
 
-        /// <summary>
-        /// Garnet object
-        /// </summary>
-        public IGarnetObject garnetObject;
-    }
+    /// <summary>
+    /// Garnet object
+    /// </summary>
+    public IGarnetObject garnetObject;
 }

@@ -3,58 +3,57 @@
 
 using System.Text;
 
-namespace Garnet.Common
+namespace Garnet.Common;
+
+/// <summary>
+/// Failover option flags
+/// </summary>
+public enum FailoverOption : byte
 {
     /// <summary>
-    /// Failover option flags
+    /// Internal use only
     /// </summary>
-    public enum FailoverOption : byte
-    {
-        /// <summary>
-        /// Internal use only
-        /// </summary>
-        DEFAULT,
-        /// <summary>
-        /// Internal use only
-        /// </summary>
-        INVALID,
-
-        /// <summary>
-        /// Failover endpoint input marker
-        /// </summary>
-        TO,
-        /// <summary>
-        /// Force failover flag
-        /// </summary>
-        FORCE,
-        /// <summary>
-        /// Issue abort of ongoing failover
-        /// </summary>
-        ABORT,
-        /// <summary>
-        /// Timeout marker
-        /// </summary>
-        TIMEOUT,
-        /// <summary>
-        /// Issue takeover without consensus to replica
-        /// </summary>
-        TAKEOVER
-    }
+    DEFAULT,
+    /// <summary>
+    /// Internal use only
+    /// </summary>
+    INVALID,
 
     /// <summary>
-    /// Utils for info command
+    /// Failover endpoint input marker
     /// </summary>
-    public static class FailoverUtils
-    {
-        static readonly byte[][] infoSections = Enum.GetValues<FailoverOption>()
-            .Select(x => Encoding.ASCII.GetBytes($"${x.ToString().Length}\r\n{x}\r\n")).ToArray();
+    TO,
+    /// <summary>
+    /// Force failover flag
+    /// </summary>
+    FORCE,
+    /// <summary>
+    /// Issue abort of ongoing failover
+    /// </summary>
+    ABORT,
+    /// <summary>
+    /// Timeout marker
+    /// </summary>
+    TIMEOUT,
+    /// <summary>
+    /// Issue takeover without consensus to replica
+    /// </summary>
+    TAKEOVER
+}
 
-        /// <summary>
-        /// Return resp formatted failover option
-        /// </summary>
-        /// <param name="failoverOption"></param>
-        /// <returns></returns>
-        public static byte[] GetRespFormattedFailoverOption(FailoverOption failoverOption)
-            => infoSections[(int)failoverOption];
-    }
+/// <summary>
+/// Utils for info command
+/// </summary>
+public static class FailoverUtils
+{
+    static readonly byte[][] infoSections = Enum.GetValues<FailoverOption>()
+        .Select(x => Encoding.ASCII.GetBytes($"${x.ToString().Length}\r\n{x}\r\n")).ToArray();
+
+    /// <summary>
+    /// Return resp formatted failover option
+    /// </summary>
+    /// <param name="failoverOption"></param>
+    /// <returns></returns>
+    public static byte[] GetRespFormattedFailoverOption(FailoverOption failoverOption)
+        => infoSections[(int)failoverOption];
 }

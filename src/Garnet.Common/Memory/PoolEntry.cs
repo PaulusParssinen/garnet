@@ -5,86 +5,85 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Garnet.Common
+namespace Garnet.Common;
+
+/// <summary>
+/// Pool entry
+/// </summary>
+public unsafe class PoolEntry : IDisposable
 {
     /// <summary>
-    /// Pool entry
+    /// Entry
     /// </summary>
-    public unsafe class PoolEntry : IDisposable
+    public readonly byte[] entry;
+
+    /// <summary>
+    /// Entry pointer
+    /// </summary>
+    public byte* entryPtr;
+
+    readonly bool useHandlesForPin;
+    GCHandle handle;
+    readonly LimitedFixedBufferPool pool;
+    bool disposed;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public PoolEntry(int size, LimitedFixedBufferPool pool, bool useHandlesForPin = false)
     {
-        /// <summary>
-        /// Entry
-        /// </summary>
-        public readonly byte[] entry;
-
-        /// <summary>
-        /// Entry pointer
-        /// </summary>
-        public byte* entryPtr;
-
-        readonly bool useHandlesForPin;
-        GCHandle handle;
-        readonly LimitedFixedBufferPool pool;
-        bool disposed;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public PoolEntry(int size, LimitedFixedBufferPool pool, bool useHandlesForPin = false)
+        Debug.Assert(pool != null);
+        this.pool = pool;
+        this.useHandlesForPin = useHandlesForPin;
+        this.disposed = false;
+        if (useHandlesForPin)
         {
-            Debug.Assert(pool != null);
-            this.pool = pool;
-            this.useHandlesForPin = useHandlesForPin;
-            this.disposed = false;
-            if (useHandlesForPin)
-            {
-                entry = new byte[size];
-                Pin();
-            }
-            else
-            {
-                entry = GC.AllocateArray<byte>(size, pinned: true);
-                entryPtr = (byte*)Unsafe.AsPointer(ref entry[0]);
-            }
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            Debug.Assert(!disposed);
-            disposed = true;
-            Unpin();
-            pool.Return(this);
-        }
-
-        /// <summary>
-        /// Reuse
-        /// </summary>
-        public void Reuse()
-        {
-            Debug.Assert(disposed);
-            disposed = false;
+            entry = new byte[size];
             Pin();
         }
-
-        /// <summary>
-        /// Pin
-        /// </summary>
-        void Pin()
+        else
         {
-            if (useHandlesForPin)
-            {
-                handle = GCHandle.Alloc(entry, GCHandleType.Pinned);
-                entryPtr = (byte*)handle.AddrOfPinnedObject();
-            }
+            entry = GC.AllocateArray<byte>(size, pinned: true);
+            entryPtr = (byte*)Unsafe.AsPointer(ref entry[0]);
         }
+    }
 
-        /// <summary>
-        /// Unpin
-        /// </summary>
-        void Unpin()
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Debug.Assert(!disposed);
+        disposed = true;
+        Unpin();
+        pool.Return(this);
+    }
+
+    /// <summary>
+    /// Reuse
+    /// </summary>
+    public void Reuse()
+    {
+        Debug.Assert(disposed);
+        disposed = false;
+        Pin();
+    }
+
+    /// <summary>
+    /// Pin
+    /// </summary>
+    void Pin()
+    {
+        if (useHandlesForPin)
         {
-            if (useHandlesForPin) handle.Free();
+            handle = GCHandle.Alloc(entry, GCHandleType.Pinned);
+            entryPtr = (byte*)handle.AddrOfPinnedObject();
         }
+    }
+
+    /// <summary>
+    /// Unpin
+    /// </summary>
+    void Unpin()
+    {
+        if (useHandlesForPin) handle.Free();
     }
 }

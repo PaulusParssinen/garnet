@@ -3,73 +3,72 @@
 
 using System.Collections.Concurrent;
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Fixed size pool of overflow objects
+/// </summary>
+/// <typeparam name="T"></typeparam>
+internal sealed class OverflowPool<T> : IDisposable
 {
+    readonly int size;
+    readonly ConcurrentQueue<T> itemQueue;
+    readonly Action<T> disposer;
+
     /// <summary>
-    /// Fixed size pool of overflow objects
+    /// Number of pages in pool
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    internal sealed class OverflowPool<T> : IDisposable
+    public int Count => itemQueue.Count;
+
+    bool disposed = false;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="size"></param>
+    /// <param name="disposer"></param>
+    public OverflowPool(int size, Action<T> disposer = null)
     {
-        readonly int size;
-        readonly ConcurrentQueue<T> itemQueue;
-        readonly Action<T> disposer;
+        this.size = size;
+        itemQueue = new ConcurrentQueue<T>();
+        this.disposer = disposer ?? (e => { });
+    }
 
-        /// <summary>
-        /// Number of pages in pool
-        /// </summary>
-        public int Count => itemQueue.Count;
+    /// <summary>
+    /// Try get overflow item, if it exists
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public bool TryGet(out T item)
+    {
+        return itemQueue.TryDequeue(out item);
+    }
 
-        bool disposed = false;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="size"></param>
-        /// <param name="disposer"></param>
-        public OverflowPool(int size, Action<T> disposer = null)
+    /// <summary>
+    /// Try to add overflow item to pool
+    /// </summary>
+    /// <param name="item"></param>
+    public bool TryAdd(T item)
+    {
+        if (itemQueue.Count < size && !disposed)
         {
-            this.size = size;
-            itemQueue = new ConcurrentQueue<T>();
-            this.disposer = disposer ?? (e => { });
+            itemQueue.Enqueue(item);
+            return true;
         }
-
-        /// <summary>
-        /// Try get overflow item, if it exists
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        public bool TryGet(out T item)
+        else
         {
-            return itemQueue.TryDequeue(out item);
+            disposer(item);
+            return false;
         }
+    }
 
-        /// <summary>
-        /// Try to add overflow item to pool
-        /// </summary>
-        /// <param name="item"></param>
-        public bool TryAdd(T item)
-        {
-            if (itemQueue.Count < size && !disposed)
-            {
-                itemQueue.Enqueue(item);
-                return true;
-            }
-            else
-            {
-                disposer(item);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Dispose
-        /// </summary>
-        public void Dispose()
-        {
-            disposed = true;
-            while (itemQueue.TryDequeue(out var item))
-                disposer(item);
-        }
+    /// <summary>
+    /// Dispose
+    /// </summary>
+    public void Dispose()
+    {
+        disposed = true;
+        while (itemQueue.TryDequeue(out var item))
+            disposer(item);
     }
 }

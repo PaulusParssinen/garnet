@@ -3,17 +3,16 @@
 
 using Garnet.Common;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// ArgSlice utils
+/// </summary>
+public static class ArgSliceUtils
 {
     /// <summary>
-    /// ArgSlice utils
+    /// Compute hash slot of given ArgSlice
     /// </summary>
-    public static class ArgSliceUtils
-    {
-        /// <summary>
-        /// Compute hash slot of given ArgSlice
-        /// </summary>
-        public static unsafe ushort HashSlot(ArgSlice argSlice)
-            => NumUtils.HashSlot(argSlice.ptr, argSlice.Length);
-    }
+    public static unsafe ushort HashSlot(ArgSlice argSlice)
+        => NumUtils.HashSlot(argSlice.ptr, argSlice.Length);
 }

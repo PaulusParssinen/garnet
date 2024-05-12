@@ -4,64 +4,63 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet
+namespace Garnet;
+
+/// <summary>
+/// Custom logger that writes logs to memory
+/// </summary>
+internal class MemoryLogger : ILogger
 {
-    /// <summary>
-    /// Custom logger that writes logs to memory
-    /// </summary>
-    internal class MemoryLogger : ILogger
+    private readonly List<(LogLevel, Exception, string)> _memoryLog = new();
+
+    public IDisposable BeginScope<TState>(TState state)
     {
-        private readonly List<(LogLevel, Exception, string)> _memoryLog = new();
+        return null;
+    }
 
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            return null;
-        }
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return true;
+    }
 
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            this._memoryLog.Add((logLevel, exception, formatter(state, exception)));
-        }
-
-        /// <summary>
-        /// Flushes logger entries into a destination logger.
-        /// </summary>
-        /// <param name="dstLogger">The logger to which to flush log entries</param>
-        public void FlushLogger(ILogger dstLogger)
-        {
-            foreach (var entry in this._memoryLog)
-            {
-                dstLogger.Log(entry.Item1, entry.Item2, entry.Item3);
-            }
-            this._memoryLog.Clear();
-        }
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    {
+        this._memoryLog.Add((logLevel, exception, formatter(state, exception)));
     }
 
     /// <summary>
-    /// Custom logger provider that creates instances of MemoryLogger
+    /// Flushes logger entries into a destination logger.
     /// </summary>
-    internal class MemoryLoggerProvider : ILoggerProvider
+    /// <param name="dstLogger">The logger to which to flush log entries</param>
+    public void FlushLogger(ILogger dstLogger)
     {
-        private readonly ConcurrentDictionary<string, MemoryLogger> _memoryLoggers = new(StringComparer.OrdinalIgnoreCase);
-
-        public ILogger CreateLogger(string categoryName) => this._memoryLoggers.GetOrAdd(categoryName, _ => new MemoryLogger());
-
-        public void Dispose()
+        foreach (var entry in this._memoryLog)
         {
-            _memoryLoggers.Clear();
+            dstLogger.Log(entry.Item1, entry.Item2, entry.Item3);
         }
+        this._memoryLog.Clear();
     }
+}
 
-    internal static class LoggingBuilderExtensions
+/// <summary>
+/// Custom logger provider that creates instances of MemoryLogger
+/// </summary>
+internal class MemoryLoggerProvider : ILoggerProvider
+{
+    private readonly ConcurrentDictionary<string, MemoryLogger> _memoryLoggers = new(StringComparer.OrdinalIgnoreCase);
+
+    public ILogger CreateLogger(string categoryName) => this._memoryLoggers.GetOrAdd(categoryName, _ => new MemoryLogger());
+
+    public void Dispose()
     {
-        public static ILoggingBuilder AddMemory(this ILoggingBuilder builder)
-        {
-            return builder.AddProvider(new MemoryLoggerProvider());
-        }
+        _memoryLoggers.Clear();
+    }
+}
+
+internal static class LoggingBuilderExtensions
+{
+    public static ILoggingBuilder AddMemory(this ILoggingBuilder builder)
+    {
+        return builder.AddProvider(new MemoryLoggerProvider());
     }
 }

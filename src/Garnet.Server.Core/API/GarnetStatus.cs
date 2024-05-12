@@ -1,24 +1,23 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Garnet API call return status
+/// </summary>
+public enum GarnetStatus : byte
 {
     /// <summary>
-    /// Garnet API call return status
+    /// OK
     /// </summary>
-    public enum GarnetStatus : byte
-    {
-        /// <summary>
-        /// OK
-        /// </summary>
-        OK,
-        /// <summary>
-        /// Not Found
-        /// </summary>
-        NOTFOUND,
-        /// <summary>
-        /// Moved
-        /// </summary>
-        MOVED
-    }
+    OK,
+    /// <summary>
+    /// Not Found
+    /// </summary>
+    NOTFOUND,
+    /// <summary>
+    /// Moved
+    /// </summary>
+    MOVED
 }

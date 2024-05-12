@@ -4,32 +4,31 @@
 using System.Buffers;
 using Tsavorite;
 
-namespace Garnet.Server
-{
-    /// <summary>
-    /// State for Functions - one instance per session is created
-    /// </summary>
-    internal sealed class FunctionsState
-    {
-        public readonly TsavoriteLog appendOnlyFile;
-        public readonly CustomCommand[] customCommands;
-        public readonly CustomObjectCommandWrapper[] customObjectCommands;
-        public readonly WatchVersionMap watchVersionMap;
-        public readonly MemoryPool<byte> memoryPool;
-        public readonly CacheSizeTracker objectStoreSizeTracker;
-        public readonly GarnetObjectSerializer garnetObjectSerializer;
-        public bool StoredProcMode;
+namespace Garnet.Server;
 
-        public FunctionsState(TsavoriteLog appendOnlyFile, WatchVersionMap watchVersionMap, CustomCommand[] customCommands, CustomObjectCommandWrapper[] customObjectCommands,
-            MemoryPool<byte> memoryPool, CacheSizeTracker objectStoreSizeTracker, GarnetObjectSerializer garnetObjectSerializer)
-        {
-            this.appendOnlyFile = appendOnlyFile;
-            this.watchVersionMap = watchVersionMap;
-            this.customCommands = customCommands;
-            this.customObjectCommands = customObjectCommands;
-            this.memoryPool = memoryPool ?? MemoryPool<byte>.Shared;
-            this.objectStoreSizeTracker = objectStoreSizeTracker;
-            this.garnetObjectSerializer = garnetObjectSerializer;
-        }
+/// <summary>
+/// State for Functions - one instance per session is created
+/// </summary>
+internal sealed class FunctionsState
+{
+    public readonly TsavoriteLog appendOnlyFile;
+    public readonly CustomCommand[] customCommands;
+    public readonly CustomObjectCommandWrapper[] customObjectCommands;
+    public readonly WatchVersionMap watchVersionMap;
+    public readonly MemoryPool<byte> memoryPool;
+    public readonly CacheSizeTracker objectStoreSizeTracker;
+    public readonly GarnetObjectSerializer garnetObjectSerializer;
+    public bool StoredProcMode;
+
+    public FunctionsState(TsavoriteLog appendOnlyFile, WatchVersionMap watchVersionMap, CustomCommand[] customCommands, CustomObjectCommandWrapper[] customObjectCommands,
+        MemoryPool<byte> memoryPool, CacheSizeTracker objectStoreSizeTracker, GarnetObjectSerializer garnetObjectSerializer)
+    {
+        this.appendOnlyFile = appendOnlyFile;
+        this.watchVersionMap = watchVersionMap;
+        this.customCommands = customCommands;
+        this.customObjectCommands = customObjectCommands;
+        this.memoryPool = memoryPool ?? MemoryPool<byte>.Shared;
+        this.objectStoreSizeTracker = objectStoreSizeTracker;
+        this.garnetObjectSerializer = garnetObjectSerializer;
     }
 }

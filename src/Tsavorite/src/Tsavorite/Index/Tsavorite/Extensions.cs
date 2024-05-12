@@ -3,65 +3,64 @@
 
 #pragma warning disable 0162
 
-namespace Tsavorite
+namespace Tsavorite;
+
+/// <summary>
+/// Log subscription extensions
+/// </summary>
+public static class Extensions
 {
     /// <summary>
-    /// Log subscription extensions
+    /// Create observable of log records
     /// </summary>
-    public static class Extensions
+    /// <typeparam name="Key"></typeparam>
+    /// <typeparam name="Value"></typeparam>
+    /// <param name="source"></param>
+    /// <returns></returns>
+    public static IObservable<Record<Key, Value>> ToRecordObservable<Key, Value>(this IObservable<ITsavoriteScanIterator<Key, Value>> source)
     {
-        /// <summary>
-        /// Create observable of log records
-        /// </summary>
-        /// <typeparam name="Key"></typeparam>
-        /// <typeparam name="Value"></typeparam>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        public static IObservable<Record<Key, Value>> ToRecordObservable<Key, Value>(this IObservable<ITsavoriteScanIterator<Key, Value>> source)
+        return new RecordObservable<Key, Value>(source);
+    }
+
+    internal sealed class RecordObservable<Key, Value> : IObservable<Record<Key, Value>>
+    {
+        readonly IObservable<ITsavoriteScanIterator<Key, Value>> o;
+
+        public RecordObservable(IObservable<ITsavoriteScanIterator<Key, Value>> o)
         {
-            return new RecordObservable<Key, Value>(source);
+            this.o = o;
         }
 
-        internal sealed class RecordObservable<Key, Value> : IObservable<Record<Key, Value>>
+        public IDisposable Subscribe(IObserver<Record<Key, Value>> observer)
         {
-            readonly IObservable<ITsavoriteScanIterator<Key, Value>> o;
+            return o.Subscribe(new RecordObserver<Key, Value>(observer));
+        }
+    }
 
-            public RecordObservable(IObservable<ITsavoriteScanIterator<Key, Value>> o)
-            {
-                this.o = o;
-            }
+    internal sealed class RecordObserver<Key, Value> : IObserver<ITsavoriteScanIterator<Key, Value>>
+    {
+        private readonly IObserver<Record<Key, Value>> observer;
 
-            public IDisposable Subscribe(IObserver<Record<Key, Value>> observer)
-            {
-                return o.Subscribe(new RecordObserver<Key, Value>(observer));
-            }
+        public RecordObserver(IObserver<Record<Key, Value>> observer)
+        {
+            this.observer = observer;
         }
 
-        internal sealed class RecordObserver<Key, Value> : IObserver<ITsavoriteScanIterator<Key, Value>>
+        public void OnCompleted()
         {
-            private readonly IObserver<Record<Key, Value>> observer;
+            observer.OnCompleted();
+        }
 
-            public RecordObserver(IObserver<Record<Key, Value>> observer)
-            {
-                this.observer = observer;
-            }
+        public void OnError(Exception error)
+        {
+            observer.OnError(error);
+        }
 
-            public void OnCompleted()
+        public void OnNext(ITsavoriteScanIterator<Key, Value> v)
+        {
+            while (v.GetNext(out RecordInfo info, out Key key, out Value value))
             {
-                observer.OnCompleted();
-            }
-
-            public void OnError(Exception error)
-            {
-                observer.OnError(error);
-            }
-
-            public void OnNext(ITsavoriteScanIterator<Key, Value> v)
-            {
-                while (v.GetNext(out RecordInfo info, out Key key, out Value value))
-                {
-                    observer.OnNext(new Record<Key, Value> { info = info, key = key, value = value });
-                }
+                observer.OnNext(new Record<Key, Value> { info = info, key = key, value = value });
             }
         }
     }

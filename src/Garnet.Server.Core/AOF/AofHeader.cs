@@ -3,18 +3,17 @@
 
 using System.Runtime.InteropServices;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+[StructLayout(LayoutKind.Explicit, Size = 14)]
+struct AofHeader
 {
-    [StructLayout(LayoutKind.Explicit, Size = 14)]
-    struct AofHeader
-    {
-        [FieldOffset(0)]
-        public AofEntryType opType;
-        [FieldOffset(1)]
-        public byte type;
-        [FieldOffset(2)]
-        public long version;
-        [FieldOffset(10)]
-        public int sessionID;
-    }
+    [FieldOffset(0)]
+    public AofEntryType opType;
+    [FieldOffset(1)]
+    public byte type;
+    [FieldOffset(2)]
+    public long version;
+    [FieldOffset(10)]
+    public int sessionID;
 }

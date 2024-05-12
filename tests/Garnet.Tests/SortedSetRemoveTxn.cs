@@ -5,35 +5,34 @@ using Garnet.Common;
 using Garnet.Server;
 using Tsavorite;
 
-namespace Garnet
+namespace Garnet;
+
+/// <summary>
+/// Functions to implement custom tranasction Sorted set remove 
+/// 
+/// Format: SortedSetRemove 2 key member
+/// 
+/// Description: Remove member from key member
+/// </summary>
+sealed class SortedSetRemoveTxn : CustomTransactionProcedure
 {
-    /// <summary>
-    /// Functions to implement custom tranasction Sorted set remove 
-    /// 
-    /// Format: SortedSetRemove 2 key member
-    /// 
-    /// Description: Remove member from key member
-    /// </summary>
-    sealed class SortedSetRemoveTxn : CustomTransactionProcedure
+    public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
-        public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
-        {
-            int offset = 0;
-            ArgSlice subscriptionContainerKey = GetNextArg(input, ref offset);
+        int offset = 0;
+        ArgSlice subscriptionContainerKey = GetNextArg(input, ref offset);
 
-            AddKey(subscriptionContainerKey, LockType.Exclusive, true);
-            return true;
-        }
+        AddKey(subscriptionContainerKey, LockType.Exclusive, true);
+        return true;
+    }
 
-        public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
-        {
-            int offset = 0;
-            var subscriptionContainerKey = GetNextArg(input, ref offset);
-            var subscriptionContainerEntry = GetNextArg(input, ref offset);
+    public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
+    {
+        int offset = 0;
+        var subscriptionContainerKey = GetNextArg(input, ref offset);
+        var subscriptionContainerEntry = GetNextArg(input, ref offset);
 
-            api.SortedSetRemove(subscriptionContainerKey, subscriptionContainerEntry, out _);
+        api.SortedSetRemove(subscriptionContainerKey, subscriptionContainerEntry, out _);
 
-            WriteSimpleString(ref output, "SUCCESS");
-        }
+        WriteSimpleString(ref output, "SUCCESS");
     }
 }

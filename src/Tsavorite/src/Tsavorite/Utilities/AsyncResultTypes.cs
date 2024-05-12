@@ -3,30 +3,29 @@
 
 #define CALLOC
 
-namespace Tsavorite
+namespace Tsavorite;
+
+internal struct AsyncGetFromDiskResult<TContext>
 {
-    internal struct AsyncGetFromDiskResult<TContext>
-    {
-        public TContext context;
-    }
+    public TContext context;
+}
 
-    internal unsafe struct HashIndexPageAsyncFlushResult
-    {
-        public int chunkIndex;
-        public SectorAlignedMemory mem;
-    }
+internal unsafe struct HashIndexPageAsyncFlushResult
+{
+    public int chunkIndex;
+    public SectorAlignedMemory mem;
+}
 
-    internal unsafe struct HashIndexPageAsyncReadResult
-    {
-        public int chunkIndex;
-    }
+internal unsafe struct HashIndexPageAsyncReadResult
+{
+    public int chunkIndex;
+}
 
-    internal struct OverflowPagesFlushAsyncResult
-    {
-        public SectorAlignedMemory mem;
-    }
+internal struct OverflowPagesFlushAsyncResult
+{
+    public SectorAlignedMemory mem;
+}
 
-    internal struct OverflowPagesReadAsyncResult
-    {
-    }
+internal struct OverflowPagesReadAsyncResult
+{
 }

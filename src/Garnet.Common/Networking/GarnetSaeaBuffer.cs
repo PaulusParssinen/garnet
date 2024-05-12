@@ -3,45 +3,44 @@
 
 using System.Net.Sockets;
 
-namespace Garnet.Common
+namespace Garnet.Common;
+
+/// <summary>
+/// Buffer of SocketAsyncEventArgs and pinned byte array for transport
+/// </summary>
+public unsafe class GarnetSaeaBuffer : IDisposable
 {
     /// <summary>
-    /// Buffer of SocketAsyncEventArgs and pinned byte array for transport
+    /// SocketAsyncEventArgs
     /// </summary>
-    public unsafe class GarnetSaeaBuffer : IDisposable
+    public readonly SocketAsyncEventArgs socketEventAsyncArgs;
+
+    /// <summary>
+    /// Byte buffer used by instance
+    /// </summary>
+    public readonly PoolEntry buffer;
+
+    /// <summary>
+    /// Construct new instance
+    /// </summary>
+    /// <param name="eventHandler">Event handler</param>
+    /// <param name="networkPool"></param>
+    public GarnetSaeaBuffer(EventHandler<SocketAsyncEventArgs> eventHandler, LimitedFixedBufferPool networkPool)
     {
-        /// <summary>
-        /// SocketAsyncEventArgs
-        /// </summary>
-        public readonly SocketAsyncEventArgs socketEventAsyncArgs;
+        socketEventAsyncArgs = new SocketAsyncEventArgs();
 
-        /// <summary>
-        /// Byte buffer used by instance
-        /// </summary>
-        public readonly PoolEntry buffer;
+        buffer = networkPool.Get(networkPool.MinAllocationSize);
+        socketEventAsyncArgs.SetBuffer(buffer.entry, 0, buffer.entry.Length);
+        socketEventAsyncArgs.Completed += eventHandler;
+    }
 
-        /// <summary>
-        /// Construct new instance
-        /// </summary>
-        /// <param name="eventHandler">Event handler</param>
-        /// <param name="networkPool"></param>
-        public GarnetSaeaBuffer(EventHandler<SocketAsyncEventArgs> eventHandler, LimitedFixedBufferPool networkPool)
-        {
-            socketEventAsyncArgs = new SocketAsyncEventArgs();
-
-            buffer = networkPool.Get(networkPool.MinAllocationSize);
-            socketEventAsyncArgs.SetBuffer(buffer.entry, 0, buffer.entry.Length);
-            socketEventAsyncArgs.Completed += eventHandler;
-        }
-
-        /// <summary>
-        /// Dispose instance
-        /// </summary>
-        public void Dispose()
-        {
-            buffer.Dispose();
-            socketEventAsyncArgs.UserToken = null;
-            socketEventAsyncArgs.Dispose();
-        }
+    /// <summary>
+    /// Dispose instance
+    /// </summary>
+    public void Dispose()
+    {
+        buffer.Dispose();
+        socketEventAsyncArgs.UserToken = null;
+        socketEventAsyncArgs.Dispose();
     }
 }

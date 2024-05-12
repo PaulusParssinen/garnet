@@ -3,334 +3,333 @@
 
 using Tsavorite;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+sealed partial class StorageSession : IDisposable
 {
-    sealed partial class StorageSession : IDisposable
+    // These are classes so instantiate once and re-initialize
+    private ArrayKeyIterationFunctions.MainStoreGetDBSize mainStoreDbSizeFuncs;
+    private ArrayKeyIterationFunctions.ObjectStoreGetDBSize objectStoreDbSizeFuncs;
+
+    // Iterators for SCAN command
+    private ArrayKeyIterationFunctions.MainStoreGetDBKeys mainStoreDbScanFuncs;
+    private ArrayKeyIterationFunctions.ObjectStoreGetDBKeys objStoreDbScanFuncs;
+
+    // Iterators for KEYS command
+    private ArrayKeyIterationFunctions.MainStoreGetDBKeys mainStoreDbKeysFuncs;
+    private ArrayKeyIterationFunctions.ObjectStoreGetDBKeys objStoreDbKeysFuncs;
+
+    long lastScanCursor;
+    List<byte[]> objStoreKeys;
+    List<byte[]> Keys;
+
+    /// <summary>
+    ///  Gets keys matching the pattern with a limit of count in every iteration
+    ///  when using pattern
+    /// </summary>
+    /// <param name="patternB">ptr to the matching pattern</param>
+    /// <param name="allKeys">true when the pattern is *</param>
+    /// <param name="cursor">cursor sent in the request</param>
+    /// <param name="storeCursor"></param>
+    /// <param name="keys">The list with the keys from the store</param>
+    /// <param name="count">size of every block or keys to return</param>
+    /// <param name="typeObject">The type object to filter out</param>
+    /// <returns></returns>
+    internal unsafe bool DbScan(ArgSlice patternB, bool allKeys, long cursor, out long storeCursor, out List<byte[]> keys, long count = 10, Span<byte> typeObject = default)
     {
-        // These are classes so instantiate once and re-initialize
-        private ArrayKeyIterationFunctions.MainStoreGetDBSize mainStoreDbSizeFuncs;
-        private ArrayKeyIterationFunctions.ObjectStoreGetDBSize objectStoreDbSizeFuncs;
+        const long IsObjectStoreCursor = 1L << 49;
+        Keys ??= new();
+        Keys.Clear();
 
-        // Iterators for SCAN command
-        private ArrayKeyIterationFunctions.MainStoreGetDBKeys mainStoreDbScanFuncs;
-        private ArrayKeyIterationFunctions.ObjectStoreGetDBKeys objStoreDbScanFuncs;
+        objStoreKeys ??= new();
+        objStoreKeys.Clear();
 
-        // Iterators for KEYS command
-        private ArrayKeyIterationFunctions.MainStoreGetDBKeys mainStoreDbKeysFuncs;
-        private ArrayKeyIterationFunctions.ObjectStoreGetDBKeys objStoreDbKeysFuncs;
+        keys = Keys;
 
-        long lastScanCursor;
-        List<byte[]> objStoreKeys;
-        List<byte[]> Keys;
-
-        /// <summary>
-        ///  Gets keys matching the pattern with a limit of count in every iteration
-        ///  when using pattern
-        /// </summary>
-        /// <param name="patternB">ptr to the matching pattern</param>
-        /// <param name="allKeys">true when the pattern is *</param>
-        /// <param name="cursor">cursor sent in the request</param>
-        /// <param name="storeCursor"></param>
-        /// <param name="keys">The list with the keys from the store</param>
-        /// <param name="count">size of every block or keys to return</param>
-        /// <param name="typeObject">The type object to filter out</param>
-        /// <returns></returns>
-        internal unsafe bool DbScan(ArgSlice patternB, bool allKeys, long cursor, out long storeCursor, out List<byte[]> keys, long count = 10, Span<byte> typeObject = default)
+        Type matchType = null;
+        if (typeObject != default)
         {
-            const long IsObjectStoreCursor = 1L << 49;
-            Keys ??= new();
-            Keys.Clear();
-
-            objStoreKeys ??= new();
-            objStoreKeys.Clear();
-
-            keys = Keys;
-
-            Type matchType = null;
-            if (typeObject != default)
+            if (typeObject.SequenceEqual(CmdStrings.ZSET) || typeObject.SequenceEqual(CmdStrings.zset))
             {
-                if (typeObject.SequenceEqual(CmdStrings.ZSET) || typeObject.SequenceEqual(CmdStrings.zset))
-                {
-                    matchType = typeof(SortedSetObject);
-                }
-                else if (typeObject.SequenceEqual(CmdStrings.LIST) || typeObject.SequenceEqual(CmdStrings.list))
-                {
-                    matchType = typeof(ListObject);
-                }
-                else if (typeObject.SequenceEqual(CmdStrings.SET) || typeObject.SequenceEqual(CmdStrings.set))
-                {
-                    matchType = typeof(SetObject);
-                }
-                else if (typeObject.SequenceEqual(CmdStrings.HASH) || typeObject.SequenceEqual(CmdStrings.hash))
-                {
-                    matchType = typeof(HashObject);
-                }
-                else if (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))
-                {
-                    // Unexpected typeObject type
-                    storeCursor = lastScanCursor = 0;
-                    return true;
-                }
+                matchType = typeof(SortedSetObject);
             }
-
-            byte* patternPtr = patternB.ptr;
-
-            mainStoreDbScanFuncs ??= new();
-            mainStoreDbScanFuncs.Initialize(Keys, allKeys ? null : patternPtr, patternB.Length);
-            objStoreDbScanFuncs ??= new();
-            objStoreDbScanFuncs.Initialize(objStoreKeys, allKeys ? null : patternPtr, patternB.Length, matchType);
-
-            storeCursor = cursor;
-            long remainingCount = count;
-
-            // Cursor is zero or not an object store address
-            // Scan main store only for string or default key type
-            if ((cursor & IsObjectStoreCursor) == 0 && (typeObject == default || typeObject.SequenceEqual(CmdStrings.STRING) || typeObject.SequenceEqual(CmdStrings.stringt)))
+            else if (typeObject.SequenceEqual(CmdStrings.LIST) || typeObject.SequenceEqual(CmdStrings.list))
             {
-                session.ScanCursor(ref storeCursor, count, mainStoreDbScanFuncs, validateCursor: cursor != 0 && cursor != lastScanCursor);
-                remainingCount -= Keys.Count;
+                matchType = typeof(ListObject);
             }
-
-            // Scan object store with the type parameter
-            // Check the cursor value corresponds to the object store
-            if (objectStoreSession != null && remainingCount > 0 && (typeObject == default || (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))))
+            else if (typeObject.SequenceEqual(CmdStrings.SET) || typeObject.SequenceEqual(CmdStrings.set))
             {
-                var validateCursor = storeCursor != 0 && storeCursor != lastScanCursor;
-                storeCursor &= ~IsObjectStoreCursor;
-                objectStoreSession.ScanCursor(ref storeCursor, remainingCount, objStoreDbScanFuncs, validateCursor: validateCursor);
-                if (storeCursor != 0)
-                    storeCursor |= IsObjectStoreCursor;
-                Keys.AddRange(objStoreKeys);
+                matchType = typeof(SetObject);
             }
-
-            lastScanCursor = storeCursor;
-            return true;
+            else if (typeObject.SequenceEqual(CmdStrings.HASH) || typeObject.SequenceEqual(CmdStrings.hash))
+            {
+                matchType = typeof(HashObject);
+            }
+            else if (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))
+            {
+                // Unexpected typeObject type
+                storeCursor = lastScanCursor = 0;
+                return true;
+            }
         }
 
-        /// <summary>
-        /// Iterate the contents of the main store
-        /// </summary>
-        /// <typeparam name="TScanFunctions"></typeparam>
-        /// <param name="scanFunctions"></param>
-        /// <param name="untilAddress"></param>
-        /// <returns></returns>
-        internal bool IterateMainStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
-            where TScanFunctions : IScanIteratorFunctions<SpanByte, SpanByte>
-            => session.Iterate(ref scanFunctions, untilAddress);
+        byte* patternPtr = patternB.ptr;
 
-        /// <summary>
-        /// Iterate the contents of the main store (pull based)
-        /// </summary>
-        internal ITsavoriteScanIterator<SpanByte, SpanByte> IterateMainStore()
-            => session.Iterate();
+        mainStoreDbScanFuncs ??= new();
+        mainStoreDbScanFuncs.Initialize(Keys, allKeys ? null : patternPtr, patternB.Length);
+        objStoreDbScanFuncs ??= new();
+        objStoreDbScanFuncs.Initialize(objStoreKeys, allKeys ? null : patternPtr, patternB.Length, matchType);
 
-        /// <summary>
-        /// Iterate the contents of the object store
-        /// </summary>
-        /// <typeparam name="TScanFunctions"></typeparam>
-        /// <param name="scanFunctions"></param>
-        /// <param name="untilAddress"></param>
-        /// <returns></returns>
-        internal bool IterateObjectStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
-            where TScanFunctions : IScanIteratorFunctions<byte[], IGarnetObject>
-            => objectStoreSession.Iterate(ref scanFunctions, untilAddress);
+        storeCursor = cursor;
+        long remainingCount = count;
 
-        /// <summary>
-        /// Iterate the contents of the main store (pull based)
-        /// </summary>
-        internal ITsavoriteScanIterator<byte[], IGarnetObject> IterateObjectStore()
-            => objectStoreSession.Iterate();
-
-        /// <summary>
-        ///  Get a list of the keys in the store and object store
-        ///  when using pattern
-        /// </summary>
-        /// <returns></returns>
-        internal unsafe List<byte[]> DBKeys(ArgSlice pattern)
+        // Cursor is zero or not an object store address
+        // Scan main store only for string or default key type
+        if ((cursor & IsObjectStoreCursor) == 0 && (typeObject == default || typeObject.SequenceEqual(CmdStrings.STRING) || typeObject.SequenceEqual(CmdStrings.stringt)))
         {
-            Keys ??= new();
-            Keys.Clear();
-
-            var allKeys = *pattern.ptr == '*' && pattern.Length == 1;
-
-            mainStoreDbKeysFuncs ??= new();
-            mainStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length);
-            session.Iterate(ref mainStoreDbKeysFuncs);
-
-            if (objectStoreSession != null)
-            {
-                objStoreDbKeysFuncs ??= new();
-                objStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length, matchType: null);
-                objectStoreSession.Iterate(ref objStoreDbKeysFuncs);
-            }
-
-            return Keys;
+            session.ScanCursor(ref storeCursor, count, mainStoreDbScanFuncs, validateCursor: cursor != 0 && cursor != lastScanCursor);
+            remainingCount -= Keys.Count;
         }
 
-        /// <summary>
-        /// Count the number of keys in main and object store
-        /// </summary>
-        /// <returns></returns>
-        internal int DbSize()
+        // Scan object store with the type parameter
+        // Check the cursor value corresponds to the object store
+        if (objectStoreSession != null && remainingCount > 0 && (typeObject == default || (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))))
         {
-            mainStoreDbSizeFuncs ??= new();
-            mainStoreDbSizeFuncs.Initialize();
-            long cursor = 0;
-            session.ScanCursor(ref cursor, long.MaxValue, mainStoreDbSizeFuncs);
-            int count = mainStoreDbSizeFuncs.count;
-            if (objectStoreSession != null)
-            {
-                objectStoreDbSizeFuncs ??= new();
-                objectStoreDbSizeFuncs.Initialize();
-                cursor = 0;
-                objectStoreSession.ScanCursor(ref cursor, long.MaxValue, objectStoreDbSizeFuncs);
-                count += objectStoreDbSizeFuncs.count;
-            }
-
-            return count;
+            var validateCursor = storeCursor != 0 && storeCursor != lastScanCursor;
+            storeCursor &= ~IsObjectStoreCursor;
+            objectStoreSession.ScanCursor(ref storeCursor, remainingCount, objStoreDbScanFuncs, validateCursor: validateCursor);
+            if (storeCursor != 0)
+                storeCursor |= IsObjectStoreCursor;
+            Keys.AddRange(objStoreKeys);
         }
 
-        internal static unsafe class ArrayKeyIterationFunctions
+        lastScanCursor = storeCursor;
+        return true;
+    }
+
+    /// <summary>
+    /// Iterate the contents of the main store
+    /// </summary>
+    /// <typeparam name="TScanFunctions"></typeparam>
+    /// <param name="scanFunctions"></param>
+    /// <param name="untilAddress"></param>
+    /// <returns></returns>
+    internal bool IterateMainStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
+        where TScanFunctions : IScanIteratorFunctions<SpanByte, SpanByte>
+        => session.Iterate(ref scanFunctions, untilAddress);
+
+    /// <summary>
+    /// Iterate the contents of the main store (pull based)
+    /// </summary>
+    internal ITsavoriteScanIterator<SpanByte, SpanByte> IterateMainStore()
+        => session.Iterate();
+
+    /// <summary>
+    /// Iterate the contents of the object store
+    /// </summary>
+    /// <typeparam name="TScanFunctions"></typeparam>
+    /// <param name="scanFunctions"></param>
+    /// <param name="untilAddress"></param>
+    /// <returns></returns>
+    internal bool IterateObjectStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
+        where TScanFunctions : IScanIteratorFunctions<byte[], IGarnetObject>
+        => objectStoreSession.Iterate(ref scanFunctions, untilAddress);
+
+    /// <summary>
+    /// Iterate the contents of the main store (pull based)
+    /// </summary>
+    internal ITsavoriteScanIterator<byte[], IGarnetObject> IterateObjectStore()
+        => objectStoreSession.Iterate();
+
+    /// <summary>
+    ///  Get a list of the keys in the store and object store
+    ///  when using pattern
+    /// </summary>
+    /// <returns></returns>
+    internal unsafe List<byte[]> DBKeys(ArgSlice pattern)
+    {
+        Keys ??= new();
+        Keys.Clear();
+
+        var allKeys = *pattern.ptr == '*' && pattern.Length == 1;
+
+        mainStoreDbKeysFuncs ??= new();
+        mainStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length);
+        session.Iterate(ref mainStoreDbKeysFuncs);
+
+        if (objectStoreSession != null)
         {
-            internal sealed class MainStoreGetDBKeys : IScanIteratorFunctions<SpanByte, SpanByte>
+            objStoreDbKeysFuncs ??= new();
+            objStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length, matchType: null);
+            objectStoreSession.Iterate(ref objStoreDbKeysFuncs);
+        }
+
+        return Keys;
+    }
+
+    /// <summary>
+    /// Count the number of keys in main and object store
+    /// </summary>
+    /// <returns></returns>
+    internal int DbSize()
+    {
+        mainStoreDbSizeFuncs ??= new();
+        mainStoreDbSizeFuncs.Initialize();
+        long cursor = 0;
+        session.ScanCursor(ref cursor, long.MaxValue, mainStoreDbSizeFuncs);
+        int count = mainStoreDbSizeFuncs.count;
+        if (objectStoreSession != null)
+        {
+            objectStoreDbSizeFuncs ??= new();
+            objectStoreDbSizeFuncs.Initialize();
+            cursor = 0;
+            objectStoreSession.ScanCursor(ref cursor, long.MaxValue, objectStoreDbSizeFuncs);
+            count += objectStoreDbSizeFuncs.count;
+        }
+
+        return count;
+    }
+
+    internal static unsafe class ArrayKeyIterationFunctions
+    {
+        internal sealed class MainStoreGetDBKeys : IScanIteratorFunctions<SpanByte, SpanByte>
+        {
+            List<byte[]> keys;
+            byte* patternB;
+            int patternLength;
+
+            internal void Initialize(List<byte[]> keys, byte* patternB, int length)
             {
-                List<byte[]> keys;
-                byte* patternB;
-                int patternLength;
-
-                internal void Initialize(List<byte[]> keys, byte* patternB, int length)
-                {
-                    this.keys = keys;
-                    this.patternB = patternB;
-                    this.patternLength = length;
-                }
-
-                public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
-                        => ConcurrentReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
-
-                public bool ConcurrentReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
-                {
-                    if ((patternB != null && !GlobUtils.Match(patternB, patternLength, key.ToPointer(), key.Length, true))
-                        || (value.MetadataSize != 0 && MainStoreFunctions.CheckExpiry(ref value)))
-                    {
-                        cursorRecordResult = CursorRecordResult.Skip;
-                    }
-                    else
-                    {
-                        cursorRecordResult = CursorRecordResult.Accept;
-                        keys.Add(key.ToByteArray());
-                    }
-                    return true;
-                }
-
-                public bool OnStart(long beginAddress, long endAddress) => true;
-                public void OnStop(bool completed, long numberOfRecords) { }
-                public void OnException(Exception exception, long numberOfRecords) { }
+                this.keys = keys;
+                this.patternB = patternB;
+                this.patternLength = length;
             }
 
-            internal sealed class ObjectStoreGetDBKeys : IScanIteratorFunctions<byte[], IGarnetObject>
-            {
-                List<byte[]> keys;
-                byte* patternB;
-                int patternLength;
-                private Type matchType;
-
-                internal void Initialize(List<byte[]> keys, byte* patternB, int length, Type matchType = null)
-                {
-                    this.keys = keys;
-                    this.patternB = patternB;
-                    this.patternLength = length;
-                    this.matchType = matchType;
-                }
-
-                public bool SingleReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+            public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
                     => ConcurrentReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
 
-                public bool ConcurrentReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+            public bool ConcurrentReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+            {
+                if ((patternB != null && !GlobUtils.Match(patternB, patternLength, key.ToPointer(), key.Length, true))
+                    || (value.MetadataSize != 0 && MainStoreFunctions.CheckExpiry(ref value)))
                 {
-                    if (value.Expiration > 0 && ObjectStoreFunctions.CheckExpiry(value))
-                    {
-                        cursorRecordResult = CursorRecordResult.Skip;
-                        return true;
-                    }
+                    cursorRecordResult = CursorRecordResult.Skip;
+                }
+                else
+                {
+                    cursorRecordResult = CursorRecordResult.Accept;
+                    keys.Add(key.ToByteArray());
+                }
+                return true;
+            }
 
-                    if (patternB != null)
+            public bool OnStart(long beginAddress, long endAddress) => true;
+            public void OnStop(bool completed, long numberOfRecords) { }
+            public void OnException(Exception exception, long numberOfRecords) { }
+        }
+
+        internal sealed class ObjectStoreGetDBKeys : IScanIteratorFunctions<byte[], IGarnetObject>
+        {
+            List<byte[]> keys;
+            byte* patternB;
+            int patternLength;
+            private Type matchType;
+
+            internal void Initialize(List<byte[]> keys, byte* patternB, int length, Type matchType = null)
+            {
+                this.keys = keys;
+                this.patternB = patternB;
+                this.patternLength = length;
+                this.matchType = matchType;
+            }
+
+            public bool SingleReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+                => ConcurrentReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
+
+            public bool ConcurrentReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+            {
+                if (value.Expiration > 0 && ObjectStoreFunctions.CheckExpiry(value))
+                {
+                    cursorRecordResult = CursorRecordResult.Skip;
+                    return true;
+                }
+
+                if (patternB != null)
+                {
+                    fixed (byte* keyPtr = key)
                     {
-                        fixed (byte* keyPtr = key)
+                        if (!GlobUtils.Match(patternB, patternLength, keyPtr, key.Length, true))
                         {
-                            if (!GlobUtils.Match(patternB, patternLength, keyPtr, key.Length, true))
-                            {
-                                cursorRecordResult = CursorRecordResult.Skip;
-                                return true;
-                            }
+                            cursorRecordResult = CursorRecordResult.Skip;
+                            return true;
                         }
                     }
+                }
 
-                    if (matchType != null && value.GetType() != matchType)
-                    {
-                        cursorRecordResult = CursorRecordResult.Skip;
-                        return true;
-                    }
+                if (matchType != null && value.GetType() != matchType)
+                {
+                    cursorRecordResult = CursorRecordResult.Skip;
+                    return true;
+                }
 
-                    keys.Add(key);
+                keys.Add(key);
+                cursorRecordResult = CursorRecordResult.Accept;
+                return true;
+            }
+
+            public bool OnStart(long beginAddress, long endAddress) => true;
+            public void OnStop(bool completed, long numberOfRecords) { }
+            public void OnException(Exception exception, long numberOfRecords) { }
+        }
+
+        internal sealed class MainStoreGetDBSize : IScanIteratorFunctions<SpanByte, SpanByte>
+        {
+            // This must be a class as it is passed through pending IO operations
+            internal int count;
+
+            internal void Initialize() => count = 0;
+
+            public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+            {
+                if (value.MetadataSize != 0 && MainStoreFunctions.CheckExpiry(ref value))
+                    cursorRecordResult = CursorRecordResult.Skip;
+                else
+                {
                     cursorRecordResult = CursorRecordResult.Accept;
-                    return true;
+                    ++count;
                 }
-
-                public bool OnStart(long beginAddress, long endAddress) => true;
-                public void OnStop(bool completed, long numberOfRecords) { }
-                public void OnException(Exception exception, long numberOfRecords) { }
+                return true;
             }
+            public bool ConcurrentReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+                => SingleReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
+            public bool OnStart(long beginAddress, long endAddress) => true;
+            public void OnStop(bool completed, long numberOfRecords) { }
+            public void OnException(Exception exception, long numberOfRecords) { }
+        }
 
-            internal sealed class MainStoreGetDBSize : IScanIteratorFunctions<SpanByte, SpanByte>
+        internal sealed class ObjectStoreGetDBSize : IScanIteratorFunctions<byte[], IGarnetObject>
+        {
+            // This must be a class as it is passed through pending IO operations
+            internal int count;
+
+            internal void Initialize() => count = 0;
+
+            public bool SingleReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
             {
-                // This must be a class as it is passed through pending IO operations
-                internal int count;
-
-                internal void Initialize() => count = 0;
-
-                public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+                if (value.Expiration > 0 && ObjectStoreFunctions.CheckExpiry(value))
+                    cursorRecordResult = CursorRecordResult.Skip;
+                else
                 {
-                    if (value.MetadataSize != 0 && MainStoreFunctions.CheckExpiry(ref value))
-                        cursorRecordResult = CursorRecordResult.Skip;
-                    else
-                    {
-                        cursorRecordResult = CursorRecordResult.Accept;
-                        ++count;
-                    }
-                    return true;
+                    cursorRecordResult = CursorRecordResult.Accept;
+                    ++count;
                 }
-                public bool ConcurrentReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
-                    => SingleReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
-                public bool OnStart(long beginAddress, long endAddress) => true;
-                public void OnStop(bool completed, long numberOfRecords) { }
-                public void OnException(Exception exception, long numberOfRecords) { }
+                return true;
             }
-
-            internal sealed class ObjectStoreGetDBSize : IScanIteratorFunctions<byte[], IGarnetObject>
-            {
-                // This must be a class as it is passed through pending IO operations
-                internal int count;
-
-                internal void Initialize() => count = 0;
-
-                public bool SingleReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
-                {
-                    if (value.Expiration > 0 && ObjectStoreFunctions.CheckExpiry(value))
-                        cursorRecordResult = CursorRecordResult.Skip;
-                    else
-                    {
-                        cursorRecordResult = CursorRecordResult.Accept;
-                        ++count;
-                    }
-                    return true;
-                }
-                public bool ConcurrentReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
-                    => SingleReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
-                public bool OnStart(long beginAddress, long endAddress) => true;
-                public void OnStop(bool completed, long numberOfRecords) { }
-                public void OnException(Exception exception, long numberOfRecords) { }
-            }
+            public bool ConcurrentReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
+                => SingleReader(ref key, ref value, recordMetadata, numberOfRecords, out cursorRecordResult);
+            public bool OnStart(long beginAddress, long endAddress) => true;
+            public void OnStop(bool completed, long numberOfRecords) { }
+            public void OnException(Exception exception, long numberOfRecords) { }
         }
     }
 }

@@ -3,404 +3,403 @@
 
 using NUnit.Framework;
 
-namespace Tsavorite.Tests
+namespace Tsavorite.Tests;
+
+[TestFixture]
+internal class LogScanTests
 {
-    [TestFixture]
-    internal class LogScanTests
+    private TsavoriteLog log;
+    private IDevice device;
+    private TsavoriteLog logUncommitted;
+    private IDevice deviceUnCommitted;
+
+    static byte[] entry;
+    const int entryLength = 100;
+    const int numEntries = 1000;
+    static readonly int entryFlag = 9999;
+
+    // Create and populate the log file so can do various scans
+    [SetUp]
+    public void Setup()
     {
-        private TsavoriteLog log;
-        private IDevice device;
-        private TsavoriteLog logUncommitted;
-        private IDevice deviceUnCommitted;
+        entry = new byte[100];
+        // Clean up log files from previous test runs in case they weren't cleaned up
+        TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
+    }
 
-        static byte[] entry;
-        const int entryLength = 100;
-        const int numEntries = 1000;
-        static readonly int entryFlag = 9999;
+    [TearDown]
+    public void TearDown()
+    {
+        log?.Dispose();
+        log = null;
+        device?.Dispose();
+        device = null;
+        deviceUnCommitted?.Dispose();
+        deviceUnCommitted = null;
+        logUncommitted?.Dispose();
+        logUncommitted = null;
 
-        // Create and populate the log file so can do various scans
-        [SetUp]
-        public void Setup()
+        // Clean up log files
+        TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
+    }
+
+    public void PopulateLog(TsavoriteLog log)
+    {
+        //****** Populate log for Basic data for tests 
+        // Set Default entry data
+        for (int i = 0; i < entryLength; i++)
+            entry[i] = (byte)i;
+
+        // Enqueue but set each Entry in a way that can differentiate between entries
+        for (int i = 0; i < numEntries; i++)
         {
-            entry = new byte[100];
-            // Clean up log files from previous test runs in case they weren't cleaned up
-            TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
+            // Flag one part of entry data that corresponds to index
+            if (i < entryLength)
+                entry[i] = (byte)entryFlag;
+
+            // puts back the previous entry value
+            if ((i > 0) && (i < entryLength))
+                entry[i - 1] = (byte)(i - 1);
+
+            // Add to TsavoriteLog
+            log.Enqueue(entry);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            log?.Dispose();
-            log = null;
-            device?.Dispose();
-            device = null;
-            deviceUnCommitted?.Dispose();
-            deviceUnCommitted = null;
-            logUncommitted?.Dispose();
-            logUncommitted = null;
+        // Commit to the log
+        log.Commit(true);
+    }
 
-            // Clean up log files
-            TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
+    public void PopulateUncommittedLog(TsavoriteLog logUncommitted)
+    {
+        //****** Populate uncommitted log / device for ScanUncommittedTest
+        // Set Default entry data
+        for (int j = 0; j < entryLength; j++)
+            entry[j] = (byte)j;
+
+        // Enqueue but set each Entry in a way that can differentiate between entries
+        for (int j = 0; j < numEntries; j++)
+        {
+            // Flag one part of entry data that corresponds to index
+            if (j < entryLength)
+                entry[j] = (byte)entryFlag;
+
+            // puts back the previous entry value
+            if ((j > 0) && (j < entryLength))
+                entry[j - 1] = (byte)(j - 1);
+
+            // Add to TsavoriteLog
+            logUncommitted.Enqueue(entry);
         }
+    }
 
-        public void PopulateLog(TsavoriteLog log)
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanBasicDefaultTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Basic default scan from start to end 
+        // Indirectly used in other tests, but good to have the basic test here for completeness
+
+        // Read the log - Look for the flag so know each entry is unique
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000))
         {
-            //****** Populate log for Basic data for tests 
-            // Set Default entry data
-            for (int i = 0; i < entryLength; i++)
-                entry[i] = (byte)i;
-
-            // Enqueue but set each Entry in a way that can differentiate between entries
-            for (int i = 0; i < numEntries; i++)
-            {
-                // Flag one part of entry data that corresponds to index
-                if (i < entryLength)
-                    entry[i] = (byte)entryFlag;
-
-                // puts back the previous entry value
-                if ((i > 0) && (i < entryLength))
-                    entry[i - 1] = (byte)(i - 1);
-
-                // Add to TsavoriteLog
-                log.Enqueue(entry);
-            }
-
-            // Commit to the log
-            log.Commit(true);
-        }
-
-        public void PopulateUncommittedLog(TsavoriteLog logUncommitted)
-        {
-            //****** Populate uncommitted log / device for ScanUncommittedTest
-            // Set Default entry data
-            for (int j = 0; j < entryLength; j++)
-                entry[j] = (byte)j;
-
-            // Enqueue but set each Entry in a way that can differentiate between entries
-            for (int j = 0; j < numEntries; j++)
-            {
-                // Flag one part of entry data that corresponds to index
-                if (j < entryLength)
-                    entry[j] = (byte)entryFlag;
-
-                // puts back the previous entry value
-                if ((j > 0) && (j < entryLength))
-                    entry[j - 1] = (byte)(j - 1);
-
-                // Add to TsavoriteLog
-                logUncommitted.Enqueue(entry);
-            }
-        }
-
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanBasicDefaultTest([Values] TestUtils.DeviceType deviceType)
-        {
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Basic default scan from start to end 
-            // Indirectly used in other tests, but good to have the basic test here for completeness
-
-            // Read the log - Look for the flag so know each entry is unique
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000))
-            {
-                while (iter.GetNext(out byte[] result, out _, out _))
-                {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
-                }
-            }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
-        }
-
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanBehindBeginAddressTest([Values] TestUtils.DeviceType deviceType)
-        {
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Basic default scan from start to end 
-            // Indirectly used in other tests, but good to have the basic test here for completeness
-
-            // Read the log - Look for the flag so know each entry is unique
-            using (var iter = log.Scan(0, 100_000_000))
-            {
-                var next = iter.GetNext(out byte[] result, out _, out _);
-                Assert.IsTrue(next);
-
-                // Verify result
-                Assert.AreEqual((byte)entryFlag, result[0]);
-
-                // truncate log to tail
-                log.TruncateUntil(log.TailAddress);
-                log.Commit(true);
-                Assert.AreEqual(log.TailAddress, log.BeginAddress);
-
-                // Wait for allocator to realize the new BeginAddress
-                // Needed as this is done post-commit
-                while (log.AllocatorBeginAddress < log.TailAddress)
-                    Thread.Yield();
-
-                // Iterator will skip ahead to tail
-                next = iter.GetNext(out result, out _, out _);
-                Assert.IsFalse(next);
-
-                // WaitAsync should not complete, as we are at end of iteration
-                var tcs = new CancellationTokenSource();
-                var task = iter.WaitAsync(tcs.Token);
-                Assert.IsFalse(task.IsCompleted);
-                tcs.Cancel();
-                try
-                {
-                    task.GetAwaiter().GetResult();
-                }
-                catch { }
-            }
-        }
-
-
-        internal class TestConsumer : ILogEntryConsumer
-        {
-            internal int currentEntry = 0;
-
-            public void Consume(ReadOnlySpan<byte> entry, long currentAddress, long nextAddress)
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
                 if (currentEntry < entryLength)
                 {
                     // Span Batch only added first entry several times so have separate verification
-                    Assert.AreEqual((byte)entryFlag, entry[currentEntry]);
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
                     currentEntry++;
                 }
             }
         }
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanConsumerTest([Values] TestUtils.DeviceType deviceType)
+
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
+
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanBehindBeginAddressTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Basic default scan from start to end 
+        // Indirectly used in other tests, but good to have the basic test here for completeness
+
+        // Read the log - Look for the flag so know each entry is unique
+        using (var iter = log.Scan(0, 100_000_000))
         {
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
+            var next = iter.GetNext(out byte[] result, out _, out _);
+            Assert.IsTrue(next);
 
-            // Basic default scan from start to end 
-            // Indirectly used in other tests, but good to have the basic test here for completeness
+            // Verify result
+            Assert.AreEqual((byte)entryFlag, result[0]);
 
-            // Read the log - Look for the flag so know each entry is unique
-            var consumer = new TestConsumer();
-            using (var iter = log.Scan(0, 100_000_000))
+            // truncate log to tail
+            log.TruncateUntil(log.TailAddress);
+            log.Commit(true);
+            Assert.AreEqual(log.TailAddress, log.BeginAddress);
+
+            // Wait for allocator to realize the new BeginAddress
+            // Needed as this is done post-commit
+            while (log.AllocatorBeginAddress < log.TailAddress)
+                Thread.Yield();
+
+            // Iterator will skip ahead to tail
+            next = iter.GetNext(out result, out _, out _);
+            Assert.IsFalse(next);
+
+            // WaitAsync should not complete, as we are at end of iteration
+            var tcs = new CancellationTokenSource();
+            var task = iter.WaitAsync(tcs.Token);
+            Assert.IsFalse(task.IsCompleted);
+            tcs.Cancel();
+            try
             {
-                while (iter.TryConsumeNext(consumer)) { }
+                task.GetAwaiter().GetResult();
             }
+            catch { }
+        }
+    }
 
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, consumer.currentEntry);
+
+    internal class TestConsumer : ILogEntryConsumer
+    {
+        internal int currentEntry = 0;
+
+        public void Consume(ReadOnlySpan<byte> entry, long currentAddress, long nextAddress)
+        {
+            if (currentEntry < entryLength)
+            {
+                // Span Batch only added first entry several times so have separate verification
+                Assert.AreEqual((byte)entryFlag, entry[currentEntry]);
+                currentEntry++;
+            }
+        }
+    }
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanConsumerTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDefault" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Basic default scan from start to end 
+        // Indirectly used in other tests, but good to have the basic test here for completeness
+
+        // Read the log - Look for the flag so know each entry is unique
+        var consumer = new TestConsumer();
+        using (var iter = log.Scan(0, 100_000_000))
+        {
+            while (iter.TryConsumeNext(consumer)) { }
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        public void ScanNoDefaultTest([Values] TestUtils.DeviceType deviceType)
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, consumer.currentEntry);
+    }
+
+    [Test]
+    [Category("TsavoriteLog")]
+    public void ScanNoDefaultTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Test where all params are set just to make sure handles it ok
+
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanNoDefault" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Read the log - Look for the flag so know each entry is unique
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000, name: null, recover: true, scanBufferingMode: ScanBufferingMode.DoublePageBuffering, scanUncommitted: false))
         {
-            // Test where all params are set just to make sure handles it ok
-
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanNoDefault" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Read the log - Look for the flag so know each entry is unique
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000, name: null, recover: true, scanBufferingMode: ScanBufferingMode.DoublePageBuffering, scanUncommitted: false))
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanByNameTest([Values] TestUtils.DeviceType deviceType)
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
+
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanByNameTest([Values] TestUtils.DeviceType deviceType)
+    {
+        //You can persist iterators(or more precisely, their CompletedUntilAddress) as part of a commit by simply naming them during their creation. 
+
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanByName" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Read the log - Look for the flag so know each entry is unique
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000, name: "TestScan", recover: true))
         {
-            //You can persist iterators(or more precisely, their CompletedUntilAddress) as part of a commit by simply naming them during their creation. 
-
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanByName" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Read the log - Look for the flag so know each entry is unique
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000, name: "TestScan", recover: true))
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanWithoutRecoverTest([Values] TestUtils.DeviceType deviceType)
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
+
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanWithoutRecoverTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // You may also force an iterator to start at the specified begin address, i.e., without recovering: recover parameter = false
+
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanWithoutRecover" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Read the log 
+        int currentEntry = 9;   // since starting at specified address of 1000, need to set current entry as 9 so verification starts at proper spot
+        using (var iter = log.Scan(1000, 100_000_000, recover: false))
         {
-            // You may also force an iterator to start at the specified begin address, i.e., without recovering: recover parameter = false
-
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanWithoutRecover" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Read the log 
-            int currentEntry = 9;   // since starting at specified address of 1000, need to set current entry as 9 so verification starts at proper spot
-            using (var iter = log.Scan(1000, 100_000_000, recover: false))
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanBufferingModeDoublePageTest([Values] TestUtils.DeviceType deviceType)
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
+
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanBufferingModeDoublePageTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Same as default, but do it just to make sure have test in case default changes
+
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDoublePage" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Read the log - Look for the flag so know each entry is unique
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.DoublePageBuffering))
         {
-            // Same as default, but do it just to make sure have test in case default changes
-
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanDoublePage" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
-
-            // Read the log - Look for the flag so know each entry is unique
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.DoublePageBuffering))
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanBufferingModeSinglePageTest([Values] TestUtils.DeviceType deviceType)
-        {
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScanSinglePage" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
-            PopulateLog(log);
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
 
-            // Read the log - Look for the flag so know each entry is unique
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanBufferingModeSinglePageTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScanSinglePage" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir });
+        PopulateLog(log);
+
+        // Read the log - Look for the flag so know each entry is unique
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
+        {
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
 
-        [Test]
-        [Category("TsavoriteLog")]
-        [Category("Smoke")]
-        public void ScanUncommittedTest([Values] TestUtils.DeviceType deviceType)
-        {
-            // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
-            string filename = Path.Join(TestUtils.MethodTestDir, "LogScan" + deviceType.ToString() + ".log");
-            device = TestUtils.CreateTestDevice(deviceType, filename);
-            log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir, AutoRefreshSafeTailAddress = true });
-            PopulateUncommittedLog(log);
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
+    }
 
-            // Setting scanUnCommitted to true is actual test here.
-            // Read the log - Look for the flag so know each entry is unique and still reads uncommitted
-            int currentEntry = 0;
-            using (var iter = log.Scan(0, 100_000_000, scanUncommitted: true))
+    [Test]
+    [Category("TsavoriteLog")]
+    [Category("Smoke")]
+    public void ScanUncommittedTest([Values] TestUtils.DeviceType deviceType)
+    {
+        // Create log and device here (not in setup) because using DeviceType Enum which can't be used in Setup
+        string filename = Path.Join(TestUtils.MethodTestDir, "LogScan" + deviceType.ToString() + ".log");
+        device = TestUtils.CreateTestDevice(deviceType, filename);
+        log = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, SegmentSizeBits = 22, LogCommitDir = TestUtils.MethodTestDir, AutoRefreshSafeTailAddress = true });
+        PopulateUncommittedLog(log);
+
+        // Setting scanUnCommitted to true is actual test here.
+        // Read the log - Look for the flag so know each entry is unique and still reads uncommitted
+        int currentEntry = 0;
+        using (var iter = log.Scan(0, 100_000_000, scanUncommitted: true))
+        {
+            while (iter.GetNext(out byte[] result, out _, out _))
             {
-                while (iter.GetNext(out byte[] result, out _, out _))
+                if (currentEntry < entryLength)
                 {
-                    if (currentEntry < entryLength)
-                    {
-                        // Span Batch only added first entry several times so have separate verification
-                        Assert.AreEqual((byte)entryFlag, result[currentEntry]);
-                        currentEntry++;
-                    }
+                    // Span Batch only added first entry several times so have separate verification
+                    Assert.AreEqual((byte)entryFlag, result[currentEntry]);
+                    currentEntry++;
                 }
             }
-
-            // Make sure expected length is same as current - also makes sure that data verification was not skipped
-            Assert.AreEqual(entryLength, currentEntry);
         }
+
+        // Make sure expected length is same as current - also makes sure that data verification was not skipped
+        Assert.AreEqual(entryLength, currentEntry);
     }
 }

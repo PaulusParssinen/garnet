@@ -1,23 +1,22 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
-{
-    class CustomTransaction
-    {
-        public readonly string nameStr;
-        public readonly int NumParams;
-        public readonly byte[] name;
-        public readonly byte id;
-        public readonly Func<CustomTransactionProcedure> proc;
+namespace Garnet.Server;
 
-        internal CustomTransaction(string name, byte id, int numParams, Func<CustomTransactionProcedure> proc)
-        {
-            nameStr = name.ToUpperInvariant();
-            this.name = System.Text.Encoding.ASCII.GetBytes(nameStr);
-            this.id = id;
-            NumParams = numParams;
-            this.proc = proc;
-        }
+class CustomTransaction
+{
+    public readonly string nameStr;
+    public readonly int NumParams;
+    public readonly byte[] name;
+    public readonly byte id;
+    public readonly Func<CustomTransactionProcedure> proc;
+
+    internal CustomTransaction(string name, byte id, int numParams, Func<CustomTransactionProcedure> proc)
+    {
+        nameStr = name.ToUpperInvariant();
+        this.name = System.Text.Encoding.ASCII.GetBytes(nameStr);
+        this.id = id;
+        NumParams = numParams;
+        this.proc = proc;
     }
 }

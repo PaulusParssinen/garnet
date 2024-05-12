@@ -1,11 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+struct PageUnit
 {
-    struct PageUnit
-    {
-        public byte[] value;
-        public long pointer;
-    }
+    public byte[] value;
+    public long pointer;
 }

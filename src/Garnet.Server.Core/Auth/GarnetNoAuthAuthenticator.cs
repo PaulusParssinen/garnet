@@ -3,20 +3,19 @@
 
 using System.Diagnostics;
 
-namespace Garnet.Server.Auth
+namespace Garnet.Server.Auth;
+
+class GarnetNoAuthAuthenticator : IGarnetAuthenticator
 {
-    class GarnetNoAuthAuthenticator : IGarnetAuthenticator
+    public bool IsAuthenticated => true;
+
+    public bool CanAuthenticate => false;
+
+    public bool HasACLSupport => false;
+
+    public bool Authenticate(ReadOnlySpan<byte> password, ReadOnlySpan<byte> username)
     {
-        public bool IsAuthenticated => true;
-
-        public bool CanAuthenticate => false;
-
-        public bool HasACLSupport => false;
-
-        public bool Authenticate(ReadOnlySpan<byte> password, ReadOnlySpan<byte> username)
-        {
-            Debug.Fail("No auth authenticator should never authenticate.");
-            return false;
-        }
+        Debug.Fail("No auth authenticator should never authenticate.");
+        return false;
     }
 }

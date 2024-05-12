@@ -1,214 +1,213 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server.Custom
+namespace Garnet.Server.Custom;
+
+/// <summary>
+/// Base custom command / transaction registration arguments
+/// </summary>
+internal abstract class RegisterArgsBase
 {
     /// <summary>
-    /// Base custom command / transaction registration arguments
+    /// Custom command / transaction name
     /// </summary>
-    internal abstract class RegisterArgsBase
-    {
-        /// <summary>
-        /// Custom command / transaction name
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Number of parameters required by custom command / transaction
-        /// </summary>
-        public int NumParams { get; set; }
-
-        /// <summary>
-        /// RESP command info
-        /// </summary>
-        public RespCommandsInfo CommandInfo { get; set; }
-    }
-
+    public string Name { get; set; }
 
     /// <summary>
-    /// Custom command registration arguments
+    /// Number of parameters required by custom command / transaction
     /// </summary>
-    internal class RegisterCmdArgs : RegisterArgsBase
-    {
-        public CommandType CommandType { get; set; }
-
-        public long ExpirationTicks { get; set; }
-    }
+    public int NumParams { get; set; }
 
     /// <summary>
-    /// Custom transaction registration arguments
+    /// RESP command info
     /// </summary>
-    internal sealed class RegisterTxnArgs : RegisterArgsBase
-    {
-    }
+    public RespCommandsInfo CommandInfo { get; set; }
+}
 
-    /// <summary>
-    /// Factory for registration providers
-    /// </summary>
-    internal class RegisterCustomCommandProviderFactory
+
+/// <summary>
+/// Custom command registration arguments
+/// </summary>
+internal class RegisterCmdArgs : RegisterArgsBase
+{
+    public CommandType CommandType { get; set; }
+
+    public long ExpirationTicks { get; set; }
+}
+
+/// <summary>
+/// Custom transaction registration arguments
+/// </summary>
+internal sealed class RegisterTxnArgs : RegisterArgsBase
+{
+}
+
+/// <summary>
+/// Factory for registration providers
+/// </summary>
+internal class RegisterCustomCommandProviderFactory
+{
+    public static IRegisterCustomCommandProvider GetRegisterCustomCommandProvider(object instance, RegisterArgsBase args)
     {
-        public static IRegisterCustomCommandProvider GetRegisterCustomCommandProvider(object instance, RegisterArgsBase args)
+        if (instance is CustomRawStringFunctions rsf && args is RegisterCmdArgs rsfa)
         {
-            if (instance is CustomRawStringFunctions rsf && args is RegisterCmdArgs rsfa)
-            {
-                return new RegisterRawStringFunctionProvider(rsf, rsfa);
-            }
-
-            if (instance is CustomObjectFactory cof && args is RegisterCmdArgs cofa)
-            {
-                return new RegisterCustomObjectFactoryProvider(cof, cofa);
-            }
-
-            if (instance is CustomTransactionProcedure ctp && args is RegisterTxnArgs ctpa)
-            {
-                return new RegisterCustomTransactionProcedureProvider(ctp, ctpa);
-            }
-
-            return null;
+            return new RegisterRawStringFunctionProvider(rsf, rsfa);
         }
-    }
 
-    /// <summary>
-    /// Registration provider interface
-    /// </summary>
-    internal interface IRegisterCustomCommandProvider
-    {
-        /// <summary>
-        /// Register custom command instance
-        /// </summary>
-        /// <param name="customCommandManager">CustomCommandManager used to register custom command instance</param>
-        void Register(CustomCommandManager customCommandManager);
-    }
-
-    internal abstract class RegisterCustomCommandProviderBase : IRegisterCustomCommandProvider
-    {
-        /// <summary>
-        /// All supported custom command types 
-        /// </summary>
-        public static Lazy<Type[]> SupportedCustomCommandBaseTypesLazy = new(() =>
+        if (instance is CustomObjectFactory cof && args is RegisterCmdArgs cofa)
         {
-            var supportedTypes = new HashSet<Type>();
-            foreach (var type in typeof(RegisterCustomCommandProviderBase).Assembly.GetTypes().Where(t =>
-                         typeof(RegisterCustomCommandProviderBase).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract))
+            return new RegisterCustomObjectFactoryProvider(cof, cofa);
+        }
+
+        if (instance is CustomTransactionProcedure ctp && args is RegisterTxnArgs ctpa)
+        {
+            return new RegisterCustomTransactionProcedureProvider(ctp, ctpa);
+        }
+
+        return null;
+    }
+}
+
+/// <summary>
+/// Registration provider interface
+/// </summary>
+internal interface IRegisterCustomCommandProvider
+{
+    /// <summary>
+    /// Register custom command instance
+    /// </summary>
+    /// <param name="customCommandManager">CustomCommandManager used to register custom command instance</param>
+    void Register(CustomCommandManager customCommandManager);
+}
+
+internal abstract class RegisterCustomCommandProviderBase : IRegisterCustomCommandProvider
+{
+    /// <summary>
+    /// All supported custom command types 
+    /// </summary>
+    public static Lazy<Type[]> SupportedCustomCommandBaseTypesLazy = new(() =>
+    {
+        var supportedTypes = new HashSet<Type>();
+        foreach (var type in typeof(RegisterCustomCommandProviderBase).Assembly.GetTypes().Where(t =>
+                     typeof(RegisterCustomCommandProviderBase).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract))
+        {
+            var baseType = type.BaseType;
+            while (baseType != null && baseType != typeof(RegisterCustomCommandProviderBase))
             {
-                var baseType = type.BaseType;
-                while (baseType != null && baseType != typeof(RegisterCustomCommandProviderBase))
+                if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() ==
+                    typeof(RegisterCustomCommandProviderBase<,>))
                 {
-                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() ==
-                        typeof(RegisterCustomCommandProviderBase<,>))
+                    var customCmdType = baseType.GetGenericArguments().FirstOrDefault();
+                    if (customCmdType != null)
                     {
-                        var customCmdType = baseType.GetGenericArguments().FirstOrDefault();
-                        if (customCmdType != null)
-                        {
-                            supportedTypes.Add(customCmdType);
-                            break;
-                        }
+                        supportedTypes.Add(customCmdType);
+                        break;
                     }
-
-                    baseType = baseType.BaseType;
                 }
+
+                baseType = baseType.BaseType;
             }
+        }
 
-            return supportedTypes.ToArray();
-        });
+        return supportedTypes.ToArray();
+    });
 
-        public abstract void Register(CustomCommandManager customCommandManager);
-    }
+    public abstract void Register(CustomCommandManager customCommandManager);
+}
+
+/// <summary>
+/// Base registration provider
+/// </summary>
+/// <typeparam name="T">Type of custom command / transaction</typeparam>
+/// <typeparam name="TArgs">Type of arguments required to register command / transaction</typeparam>
+internal abstract class RegisterCustomCommandProviderBase<T, TArgs> : RegisterCustomCommandProviderBase where TArgs : RegisterArgsBase
+{
+    /// <summary>
+    /// Arguments required for command / transaction registration
+    /// </summary>
+    protected TArgs RegisterArgs { get; }
 
     /// <summary>
-    /// Base registration provider
+    /// Instance of custom command class
     /// </summary>
-    /// <typeparam name="T">Type of custom command / transaction</typeparam>
-    /// <typeparam name="TArgs">Type of arguments required to register command / transaction</typeparam>
-    internal abstract class RegisterCustomCommandProviderBase<T, TArgs> : RegisterCustomCommandProviderBase where TArgs : RegisterArgsBase
+    protected T Instance { get; }
+
+    protected RegisterCustomCommandProviderBase(T instance, TArgs args)
     {
-        /// <summary>
-        /// Arguments required for command / transaction registration
-        /// </summary>
-        protected TArgs RegisterArgs { get; }
+        this.Instance = instance;
+        this.RegisterArgs = args;
+    }
+}
 
-        /// <summary>
-        /// Instance of custom command class
-        /// </summary>
-        protected T Instance { get; }
+/// <summary>
+/// Base custom command registration provider
+/// </summary>
+/// <typeparam name="T">Type of custom command</typeparam>
+internal abstract class RegisterCustomCmdProvider<T> : RegisterCustomCommandProviderBase<T, RegisterCmdArgs>
+{
+    protected RegisterCustomCmdProvider(T instance, RegisterCmdArgs args) : base(instance, args)
+    {
+    }
+}
 
-        protected RegisterCustomCommandProviderBase(T instance, TArgs args)
-        {
-            this.Instance = instance;
-            this.RegisterArgs = args;
-        }
+/// <summary>
+/// Base custom transaction registration provider
+/// </summary>
+/// <typeparam name="T">Type of custom transaction</typeparam>
+internal abstract class RegisterCustomTxnProvider<T> : RegisterCustomCommandProviderBase<T, RegisterTxnArgs>
+{
+    protected RegisterCustomTxnProvider(T instance, RegisterTxnArgs args) : base(instance, args)
+    {
+    }
+}
+
+/// <summary>
+/// RawStringFunction registration provider
+/// </summary>
+internal sealed class RegisterRawStringFunctionProvider : RegisterCustomCmdProvider<CustomRawStringFunctions>
+{
+    public RegisterRawStringFunctionProvider(CustomRawStringFunctions instance, RegisterCmdArgs args) : base(instance, args)
+    {
     }
 
-    /// <summary>
-    /// Base custom command registration provider
-    /// </summary>
-    /// <typeparam name="T">Type of custom command</typeparam>
-    internal abstract class RegisterCustomCmdProvider<T> : RegisterCustomCommandProviderBase<T, RegisterCmdArgs>
+    public override void Register(CustomCommandManager customCommandManager)
     {
-        protected RegisterCustomCmdProvider(T instance, RegisterCmdArgs args) : base(instance, args)
-        {
-        }
+        customCommandManager.Register(
+            this.RegisterArgs.Name,
+            this.RegisterArgs.NumParams,
+            this.RegisterArgs.CommandType,
+            this.Instance,
+            this.RegisterArgs.CommandInfo,
+            this.RegisterArgs.ExpirationTicks);
+    }
+}
+
+/// <summary>
+/// CustomObjectFactory registration provider
+/// </summary>
+internal sealed class RegisterCustomObjectFactoryProvider : RegisterCustomCmdProvider<CustomObjectFactory>
+{
+    public RegisterCustomObjectFactoryProvider(CustomObjectFactory instance, RegisterCmdArgs args) : base(instance, args)
+    {
     }
 
-    /// <summary>
-    /// Base custom transaction registration provider
-    /// </summary>
-    /// <typeparam name="T">Type of custom transaction</typeparam>
-    internal abstract class RegisterCustomTxnProvider<T> : RegisterCustomCommandProviderBase<T, RegisterTxnArgs>
+    public override void Register(CustomCommandManager customCommandManager)
     {
-        protected RegisterCustomTxnProvider(T instance, RegisterTxnArgs args) : base(instance, args)
-        {
-        }
+        customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, this.RegisterArgs.CommandType, this.Instance, this.RegisterArgs.CommandInfo);
+    }
+}
+
+/// <summary>
+/// TransactionProcedureProvider registration provider
+/// </summary>
+internal sealed class RegisterCustomTransactionProcedureProvider : RegisterCustomTxnProvider<CustomTransactionProcedure>
+{
+    public RegisterCustomTransactionProcedureProvider(CustomTransactionProcedure instance, RegisterTxnArgs args) : base(instance, args)
+    {
     }
 
-    /// <summary>
-    /// RawStringFunction registration provider
-    /// </summary>
-    internal sealed class RegisterRawStringFunctionProvider : RegisterCustomCmdProvider<CustomRawStringFunctions>
+    public override void Register(CustomCommandManager customCommandManager)
     {
-        public RegisterRawStringFunctionProvider(CustomRawStringFunctions instance, RegisterCmdArgs args) : base(instance, args)
-        {
-        }
-
-        public override void Register(CustomCommandManager customCommandManager)
-        {
-            customCommandManager.Register(
-                this.RegisterArgs.Name,
-                this.RegisterArgs.NumParams,
-                this.RegisterArgs.CommandType,
-                this.Instance,
-                this.RegisterArgs.CommandInfo,
-                this.RegisterArgs.ExpirationTicks);
-        }
-    }
-
-    /// <summary>
-    /// CustomObjectFactory registration provider
-    /// </summary>
-    internal sealed class RegisterCustomObjectFactoryProvider : RegisterCustomCmdProvider<CustomObjectFactory>
-    {
-        public RegisterCustomObjectFactoryProvider(CustomObjectFactory instance, RegisterCmdArgs args) : base(instance, args)
-        {
-        }
-
-        public override void Register(CustomCommandManager customCommandManager)
-        {
-            customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, this.RegisterArgs.CommandType, this.Instance, this.RegisterArgs.CommandInfo);
-        }
-    }
-
-    /// <summary>
-    /// TransactionProcedureProvider registration provider
-    /// </summary>
-    internal sealed class RegisterCustomTransactionProcedureProvider : RegisterCustomTxnProvider<CustomTransactionProcedure>
-    {
-        public RegisterCustomTransactionProcedureProvider(CustomTransactionProcedure instance, RegisterTxnArgs args) : base(instance, args)
-        {
-        }
-
-        public override void Register(CustomCommandManager customCommandManager)
-        {
-            customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, () => this.Instance);
-        }
+        customCommandManager.Register(this.RegisterArgs.Name, this.RegisterArgs.NumParams, () => this.Instance);
     }
 }

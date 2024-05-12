@@ -3,106 +3,105 @@
 
 using NUnit.Framework;
 
-namespace Tsavorite.Tests
+namespace Tsavorite.Tests;
+
+
+[TestFixture]
+internal class GenericByteArrayTests
 {
+    private TsavoriteKV<byte[], byte[]> store;
+    private ClientSession<byte[], byte[], byte[], byte[], Empty, MyByteArrayFuncs> session;
+    private IDevice log, objlog;
 
-    [TestFixture]
-    internal class GenericByteArrayTests
+    [SetUp]
+    public void Setup()
     {
-        private TsavoriteKV<byte[], byte[]> store;
-        private ClientSession<byte[], byte[], byte[], byte[], Empty, MyByteArrayFuncs> session;
-        private IDevice log, objlog;
+        TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
+        log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "GenericStringTests.log"), deleteOnClose: true);
+        objlog = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "GenericStringTests.obj.log"), deleteOnClose: true);
 
-        [SetUp]
-        public void Setup()
+        store = new TsavoriteKV<byte[], byte[]>(
+                1L << 20, // size of hash table in #cache lines; 64 bytes per cache line
+                new LogSettings { LogDevice = log, ObjectLogDevice = objlog, MutableFraction = 0.1, MemorySizeBits = 14, PageSizeBits = 9 }, // log device
+                comparer: new ByteArrayEC()
+                );
+
+        session = store.NewSession<byte[], byte[], Empty, MyByteArrayFuncs>(new MyByteArrayFuncs());
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        session?.Dispose();
+        session = null;
+        store?.Dispose();
+        store = null;
+        log?.Dispose();
+        log = null;
+        objlog?.Dispose();
+        objlog = null;
+
+        TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
+    }
+
+    private static byte[] GetByteArray(int i)
+    {
+        return BitConverter.GetBytes(i);
+    }
+
+    [Test]
+    [Category("TsavoriteKV")]
+    [Category("Smoke")]
+    public void ByteArrayBasicTest()
+    {
+        const int totalRecords = 2000;
+        for (int i = 0; i < totalRecords; i++)
         {
-            TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
-            log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "GenericStringTests.log"), deleteOnClose: true);
-            objlog = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "GenericStringTests.obj.log"), deleteOnClose: true);
-
-            store = new TsavoriteKV<byte[], byte[]>(
-                    1L << 20, // size of hash table in #cache lines; 64 bytes per cache line
-                    new LogSettings { LogDevice = log, ObjectLogDevice = objlog, MutableFraction = 0.1, MemorySizeBits = 14, PageSizeBits = 9 }, // log device
-                    comparer: new ByteArrayEC()
-                    );
-
-            session = store.NewSession<byte[], byte[], Empty, MyByteArrayFuncs>(new MyByteArrayFuncs());
+            var _key = GetByteArray(i);
+            var _value = GetByteArray(i);
+            session.Upsert(ref _key, ref _value, Empty.Default, 0);
         }
+        session.CompletePending(true);
 
-        [TearDown]
-        public void TearDown()
+        for (int i = 0; i < totalRecords; i++)
         {
-            session?.Dispose();
-            session = null;
-            store?.Dispose();
-            store = null;
-            log?.Dispose();
-            log = null;
-            objlog?.Dispose();
-            objlog = null;
+            byte[] input = default;
+            byte[] output = default;
+            var key = GetByteArray(i);
+            var value = GetByteArray(i);
 
-            TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
-        }
-
-        private static byte[] GetByteArray(int i)
-        {
-            return BitConverter.GetBytes(i);
-        }
-
-        [Test]
-        [Category("TsavoriteKV")]
-        [Category("Smoke")]
-        public void ByteArrayBasicTest()
-        {
-            const int totalRecords = 2000;
-            for (int i = 0; i < totalRecords; i++)
+            if (session.Read(ref key, ref input, ref output, Empty.Default, 0).IsPending)
             {
-                var _key = GetByteArray(i);
-                var _value = GetByteArray(i);
-                session.Upsert(ref _key, ref _value, Empty.Default, 0);
+                session.CompletePending(true);
             }
-            session.CompletePending(true);
-
-            for (int i = 0; i < totalRecords; i++)
+            else
             {
-                byte[] input = default;
-                byte[] output = default;
-                var key = GetByteArray(i);
-                var value = GetByteArray(i);
-
-                if (session.Read(ref key, ref input, ref output, Empty.Default, 0).IsPending)
-                {
-                    session.CompletePending(true);
-                }
-                else
-                {
-                    Assert.IsTrue(output.SequenceEqual(value));
-                }
-            }
-        }
-
-        class MyByteArrayFuncs : SimpleFunctions<byte[], byte[]>
-        {
-            public override void ReadCompletionCallback(ref byte[] key, ref byte[] input, ref byte[] output, Empty ctx, Status status, RecordMetadata recordMetadata)
-            {
-                Assert.IsTrue(output.SequenceEqual(key));
+                Assert.IsTrue(output.SequenceEqual(value));
             }
         }
     }
 
-    class ByteArrayEC : ITsavoriteEqualityComparer<byte[]>
+    class MyByteArrayFuncs : SimpleFunctions<byte[], byte[]>
     {
-        public bool Equals(ref byte[] k1, ref byte[] k2)
+        public override void ReadCompletionCallback(ref byte[] key, ref byte[] input, ref byte[] output, Empty ctx, Status status, RecordMetadata recordMetadata)
         {
-            return k1.SequenceEqual(k2);
+            Assert.IsTrue(output.SequenceEqual(key));
         }
+    }
+}
 
-        public unsafe long GetHashCode64(ref byte[] k)
+class ByteArrayEC : ITsavoriteEqualityComparer<byte[]>
+{
+    public bool Equals(ref byte[] k1, ref byte[] k2)
+    {
+        return k1.SequenceEqual(k2);
+    }
+
+    public unsafe long GetHashCode64(ref byte[] k)
+    {
+        fixed (byte* b = k)
         {
-            fixed (byte* b = k)
-            {
-                return Utility.HashBytes(b, k.Length);
-            }
+            return Utility.HashBytes(b, k.Length);
         }
     }
 }

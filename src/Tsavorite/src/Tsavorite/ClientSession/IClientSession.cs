@@ -1,21 +1,20 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite
+namespace Tsavorite;
+
+class SessionInfo
 {
-    class SessionInfo
-    {
-        public string sessionName;
-        public bool isActive;
-        public IClientSession session;
-    }
+    public string sessionName;
+    public bool isActive;
+    public IClientSession session;
+}
 
-    internal interface IClientSession
-    {
-        void AtomicSwitch(long version);
+internal interface IClientSession
+{
+    void AtomicSwitch(long version);
 
-        void MergeRevivificationStatsTo(ref RevivificationStats globalStats, bool reset);
+    void MergeRevivificationStatsTo(ref RevivificationStats globalStats, bool reset);
 
-        void ResetRevivificationStats();
-    }
+    void ResetRevivificationStats();
 }

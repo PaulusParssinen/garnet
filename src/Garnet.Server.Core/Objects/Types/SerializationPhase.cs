@@ -1,13 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+enum SerializationPhase : int
 {
-    enum SerializationPhase : int
-    {
-        REST,
-        SERIALIZING,
-        SERIALIZED,
-        DONE
-    }
+    REST,
+    SERIALIZING,
+    SERIALIZED,
+    DONE
 }

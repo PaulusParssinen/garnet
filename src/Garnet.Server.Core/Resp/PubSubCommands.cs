@@ -5,361 +5,360 @@ using System.Diagnostics;
 using Garnet.Common;
 using Tsavorite;
 
-namespace Garnet.Server
+namespace Garnet.Server;
+
+/// <summary>
+/// Server session for RESP protocol - pub/sub commands are in this file
+/// </summary>
+internal sealed unsafe partial class RespServerSession : ServerSessionBase
 {
-    /// <summary>
-    /// Server session for RESP protocol - pub/sub commands are in this file
-    /// </summary>
-    internal sealed unsafe partial class RespServerSession : ServerSessionBase
+    readonly SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker;
+    bool isSubscriptionSession = false;
+    int numActiveChannels = 0;
+
+    /// <inheritdoc />
+    public override unsafe void Publish(ref byte* keyPtr, int keyLength, ref byte* valPtr, int valLength, ref byte* inputPtr, int sid)
     {
-        readonly SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker;
-        bool isSubscriptionSession = false;
-        int numActiveChannels = 0;
+        networkSender.GetResponseObject();
 
-        /// <inheritdoc />
-        public override unsafe void Publish(ref byte* keyPtr, int keyLength, ref byte* valPtr, int valLength, ref byte* inputPtr, int sid)
+        byte* d = networkSender.GetResponseObjectHead();
+        var dend = networkSender.GetResponseObjectTail();
+        var dcurr = d; // reserve space for size
+
+        while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+            SendAndReset();
+
+        while (!RespWriteUtils.WriteBulkString("message"u8, ref dcurr, dend))
+            SendAndReset();
+        while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), keyLength - sizeof(int)), ref dcurr, dend))
+            SendAndReset();
+        while (!RespWriteUtils.WriteBulkString(new Span<byte>(valPtr + sizeof(int), valLength - sizeof(int)), ref dcurr, dend))
+            SendAndReset();
+
+        networkSender.SendResponse((int)(d - networkSender.GetResponseObjectHead()), (int)(dcurr - d));
+    }
+
+    /// <inheritdoc />
+    public override unsafe void PrefixPublish(byte* patternPtr, int patternLength, ref byte* keyPtr, int keyLength, ref byte* valPtr, int valLength, ref byte* inputPtr, int sid)
+    {
+        networkSender.GetResponseObject();
+
+        byte* d = networkSender.GetResponseObjectHead();
+        var dend = networkSender.GetResponseObjectTail();
+        var dcurr = d; // reserve space for size
+
+        RespWriteUtils.WriteArrayLength(4, ref dcurr, dend);
+
+        while (!RespWriteUtils.WriteBulkString("pmessage"u8, ref dcurr, dend))
+            SendAndReset();
+        while (!RespWriteUtils.WriteBulkString(new Span<byte>(patternPtr + sizeof(int), patternLength - sizeof(int)), ref dcurr, dend))
+            SendAndReset();
+        while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), keyLength - sizeof(int)), ref dcurr, dend))
+            SendAndReset();
+        while (!RespWriteUtils.WriteBulkString(new Span<byte>(valPtr + sizeof(int), valLength - sizeof(int)), ref dcurr, dend))
+            SendAndReset();
+
+        networkSender.SendResponse((int)(d - networkSender.GetResponseObjectHead()), (int)(dcurr - d));
+    }
+
+    /// <summary>
+    /// PUBLISH
+    /// </summary>
+    private bool NetworkPUBLISH(byte* ptr)
+    {
+        Debug.Assert(isSubscriptionSession == false);
+        // PUBLISH channel message => [*3\r\n$7\r\nPUBLISH\r\n$]7\r\nchannel\r\n$7\r\message\r\n
+
+        byte* keyPtr = null, valPtr = null;
+        int ksize = 0, vsize = 0;
+
+        if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
+            return false;
+        keyPtr -= sizeof(int);
+
+        if (!RespReadUtils.ReadPtrWithLengthHeader(ref valPtr, ref vsize, ref ptr, recvBufferPtr + bytesRead))
+            return false;
+        valPtr -= sizeof(int);
+
+        if (subscribeBroker == null)
         {
-            networkSender.GetResponseObject();
-
-            byte* d = networkSender.GetResponseObjectHead();
-            var dend = networkSender.GetResponseObjectTail();
-            var dcurr = d; // reserve space for size
-
-            while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+            while (!RespWriteUtils.WriteError("ERR PUBLISH is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
                 SendAndReset();
-
-            while (!RespWriteUtils.WriteBulkString("message"u8, ref dcurr, dend))
-                SendAndReset();
-            while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), keyLength - sizeof(int)), ref dcurr, dend))
-                SendAndReset();
-            while (!RespWriteUtils.WriteBulkString(new Span<byte>(valPtr + sizeof(int), valLength - sizeof(int)), ref dcurr, dend))
-                SendAndReset();
-
-            networkSender.SendResponse((int)(d - networkSender.GetResponseObjectHead()), (int)(dcurr - d));
+            readHead = (int)(ptr - recvBufferPtr);
+            return true;
         }
 
-        /// <inheritdoc />
-        public override unsafe void PrefixPublish(byte* patternPtr, int patternLength, ref byte* keyPtr, int keyLength, ref byte* valPtr, int valLength, ref byte* inputPtr, int sid)
+        *(int*)keyPtr = ksize;
+        *(int*)valPtr = vsize;
+
+        int numClients = subscribeBroker.PublishNow(keyPtr, valPtr, vsize + sizeof(int), true);
+        while (!RespWriteUtils.WriteInteger(numClients, ref dcurr, dend))
+            SendAndReset();
+
+        readHead = (int)(ptr - recvBufferPtr);
+        return true;
+    }
+
+    private bool NetworkSUBSCRIBE(int count, byte* ptr, byte* dend)
+    {
+        // SUBSCRIBE channel1 channel2.. ==> [$9\r\nSUBSCRIBE\r\n$]8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
+
+        bool disabledBroker = subscribeBroker == null;
+        for (int c = 0; c < count; c++)
         {
-            networkSender.GetResponseObject();
-
-            byte* d = networkSender.GetResponseObjectHead();
-            var dend = networkSender.GetResponseObjectTail();
-            var dcurr = d; // reserve space for size
-
-            RespWriteUtils.WriteArrayLength(4, ref dcurr, dend);
-
-            while (!RespWriteUtils.WriteBulkString("pmessage"u8, ref dcurr, dend))
-                SendAndReset();
-            while (!RespWriteUtils.WriteBulkString(new Span<byte>(patternPtr + sizeof(int), patternLength - sizeof(int)), ref dcurr, dend))
-                SendAndReset();
-            while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), keyLength - sizeof(int)), ref dcurr, dend))
-                SendAndReset();
-            while (!RespWriteUtils.WriteBulkString(new Span<byte>(valPtr + sizeof(int), valLength - sizeof(int)), ref dcurr, dend))
-                SendAndReset();
-
-            networkSender.SendResponse((int)(d - networkSender.GetResponseObjectHead()), (int)(dcurr - d));
-        }
-
-        /// <summary>
-        /// PUBLISH
-        /// </summary>
-        private bool NetworkPUBLISH(byte* ptr)
-        {
-            Debug.Assert(isSubscriptionSession == false);
-            // PUBLISH channel message => [*3\r\n$7\r\nPUBLISH\r\n$]7\r\nchannel\r\n$7\r\message\r\n
-
-            byte* keyPtr = null, valPtr = null;
-            int ksize = 0, vsize = 0;
+            byte* keyPtr = null;
+            int ksize = 0;
 
             if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             keyPtr -= sizeof(int);
 
-            if (!RespReadUtils.ReadPtrWithLengthHeader(ref valPtr, ref vsize, ref ptr, recvBufferPtr + bytesRead))
-                return false;
-            valPtr -= sizeof(int);
+            if (disabledBroker)
+                continue;
 
-            if (subscribeBroker == null)
-            {
-                while (!RespWriteUtils.WriteError("ERR PUBLISH is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                    SendAndReset();
-                readHead = (int)(ptr - recvBufferPtr);
-                return true;
-            }
-
-            *(int*)keyPtr = ksize;
-            *(int*)valPtr = vsize;
-
-            int numClients = subscribeBroker.PublishNow(keyPtr, valPtr, vsize + sizeof(int), true);
-            while (!RespWriteUtils.WriteInteger(numClients, ref dcurr, dend))
+            while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
                 SendAndReset();
 
+            while (!RespWriteUtils.WriteBulkString("subscribe"u8, ref dcurr, dend))
+                SendAndReset();
+            while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
+                SendAndReset();
+
+            numActiveChannels++;
+            while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
+                SendAndReset();
+
+            *(int*)keyPtr = ksize;
+            _ = subscribeBroker.Subscribe(ref keyPtr, this);
+            readHead = (int)(ptr - recvBufferPtr);
+        }
+
+        if (disabledBroker)
+        {
+            while (!RespWriteUtils.WriteError("ERR SUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
+                SendAndReset();
             readHead = (int)(ptr - recvBufferPtr);
             return true;
         }
 
-        private bool NetworkSUBSCRIBE(int count, byte* ptr, byte* dend)
+        isSubscriptionSession = true;
+        return true;
+    }
+
+    private bool NetworkPSUBSCRIBE(int count, byte* ptr, byte* dend)
+    {
+        // PSUBSCRIBE channel1 channel2.. ==> [$10\r\nPSUBSCRIBE\r\n$]8\r\nchannel1\r\n$8\r\nchannel2\r\n => PSubscribe to channel1 and channel2
+        Debug.Assert(subscribeBroker != null);
+
+        bool disabledBroker = subscribeBroker == null;
+        for (int c = 0; c < count; c++)
         {
-            // SUBSCRIBE channel1 channel2.. ==> [$9\r\nSUBSCRIBE\r\n$]8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
+            byte* keyPtr = null;
+            int ksize = 0;
 
-            bool disabledBroker = subscribeBroker == null;
-            for (int c = 0; c < count; c++)
-            {
-                byte* keyPtr = null;
-                int ksize = 0;
-
-                if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
-                    return false;
-                keyPtr -= sizeof(int);
-
-                if (disabledBroker)
-                    continue;
-
-                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                    SendAndReset();
-
-                while (!RespWriteUtils.WriteBulkString("subscribe"u8, ref dcurr, dend))
-                    SendAndReset();
-                while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
-                    SendAndReset();
-
-                numActiveChannels++;
-                while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                    SendAndReset();
-
-                *(int*)keyPtr = ksize;
-                _ = subscribeBroker.Subscribe(ref keyPtr, this);
-                readHead = (int)(ptr - recvBufferPtr);
-            }
+            if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
+                return false;
+            keyPtr -= sizeof(int);
 
             if (disabledBroker)
-            {
-                while (!RespWriteUtils.WriteError("ERR SUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                    SendAndReset();
-                readHead = (int)(ptr - recvBufferPtr);
-                return true;
-            }
+                continue;
 
-            isSubscriptionSession = true;
+            while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                SendAndReset();
+
+            while (!RespWriteUtils.WriteBulkString("psubscribe"u8, ref dcurr, dend))
+                SendAndReset();
+            while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
+                SendAndReset();
+
+            numActiveChannels++;
+            while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
+                SendAndReset();
+
+            *(int*)keyPtr = ksize;
+            _ = subscribeBroker.PSubscribe(ref keyPtr, this, true);
+            readHead = (int)(ptr - recvBufferPtr);
+        }
+
+        if (disabledBroker)
+        {
+            while (!RespWriteUtils.WriteError("ERR SUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
+                SendAndReset();
+            readHead = (int)(ptr - recvBufferPtr);
             return true;
         }
 
-        private bool NetworkPSUBSCRIBE(int count, byte* ptr, byte* dend)
+        isSubscriptionSession = true;
+        return true;
+    }
+
+    private bool NetworkUNSUBSCRIBE(int count, byte* ptr, byte* dend)
+    {
+        // UNSUBSCRIBE channel1 channel2.. ==> [$11\r\nUNSUBSCRIBE\r\n]$8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
+        Debug.Assert(subscribeBroker != null);
+
+        if (count == 0)
         {
-            // PSUBSCRIBE channel1 channel2.. ==> [$10\r\nPSUBSCRIBE\r\n$]8\r\nchannel1\r\n$8\r\nchannel2\r\n => PSubscribe to channel1 and channel2
-            Debug.Assert(subscribeBroker != null);
-
-            bool disabledBroker = subscribeBroker == null;
-            for (int c = 0; c < count; c++)
-            {
-                byte* keyPtr = null;
-                int ksize = 0;
-
-                if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
-                    return false;
-                keyPtr -= sizeof(int);
-
-                if (disabledBroker)
-                    continue;
-
-                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                    SendAndReset();
-
-                while (!RespWriteUtils.WriteBulkString("psubscribe"u8, ref dcurr, dend))
-                    SendAndReset();
-                while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
-                    SendAndReset();
-
-                numActiveChannels++;
-                while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                    SendAndReset();
-
-                *(int*)keyPtr = ksize;
-                _ = subscribeBroker.PSubscribe(ref keyPtr, this, true);
-                readHead = (int)(ptr - recvBufferPtr);
-            }
-
-            if (disabledBroker)
-            {
-                while (!RespWriteUtils.WriteError("ERR SUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                    SendAndReset();
-                readHead = (int)(ptr - recvBufferPtr);
-                return true;
-            }
-
-            isSubscriptionSession = true;
-            return true;
-        }
-
-        private bool NetworkUNSUBSCRIBE(int count, byte* ptr, byte* dend)
-        {
-            // UNSUBSCRIBE channel1 channel2.. ==> [$11\r\nUNSUBSCRIBE\r\n]$8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
-            Debug.Assert(subscribeBroker != null);
-
-            if (count == 0)
-            {
-                if (subscribeBroker == null)
-                {
-                    while (!RespWriteUtils.WriteError("ERR UNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                        SendAndReset();
-                    return true;
-                }
-
-                List<byte[]> channels = subscribeBroker.ListAllSubscriptions(this);
-                foreach (var channel in channels)
-                {
-                    while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
-                        SendAndReset();
-
-                    var channelsize = channel.Length - sizeof(int);
-                    fixed (byte* channelPtr = &channel[0])
-                    {
-                        while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))
-                            SendAndReset();
-
-                        byte* delPtr = channelPtr;
-                        if (subscribeBroker.Unsubscribe(delPtr, this))
-                            numActiveChannels--;
-                        while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                            SendAndReset();
-                    }
-                }
-
-                if (channels.Count == 0)
-                {
-                    while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteNull(ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                        SendAndReset();
-                }
-
-                Debug.Assert(numActiveChannels == 0);
-                if (numActiveChannels == 0)
-                    isSubscriptionSession = false;
-
-                return true;
-            }
-
-            for (int c = 0; c < count; c++)
-            {
-                byte* keyPtr = null;
-                int ksize = 0;
-
-                if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
-                    return false;
-                keyPtr -= sizeof(int);
-
-                if (subscribeBroker != null)
-                {
-                    while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
-                        SendAndReset();
-
-                    *(int*)keyPtr = ksize;
-                    if (subscribeBroker.Unsubscribe(keyPtr, this))
-                        numActiveChannels--;
-
-                    while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                        SendAndReset();
-                }
-                readHead = (int)(ptr - recvBufferPtr);
-            }
-
             if (subscribeBroker == null)
             {
                 while (!RespWriteUtils.WriteError("ERR UNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
                     SendAndReset();
-            }
-            return true;
-        }
-
-        private bool NetworkPUNSUBSCRIBE(int count, byte* ptr, byte* dend)
-        {
-            // PUNSUBSCRIBE channel1 channel2.. ==> [$11\r\nPUNSUBSCRIBE\r\n]$8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
-            Debug.Assert(subscribeBroker != null);
-
-            if (count == 0)
-            {
-                if (subscribeBroker == null)
-                {
-                    while (!RespWriteUtils.WriteError("ERR PUNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                        SendAndReset();
-                    return true;
-                }
-
-                List<byte[]> channels = subscribeBroker.ListAllPSubscriptions(this);
-                foreach (var channel in channels)
-                {
-                    while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
-                        SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString("punsubscribe"u8, ref dcurr, dend))
-                        SendAndReset();
-
-                    var channelsize = channel.Length - sizeof(int);
-                    fixed (byte* channelPtr = &channel[0])
-                    {
-                        while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))
-                            SendAndReset();
-
-                        numActiveChannels--;
-                        while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
-                            SendAndReset();
-
-                        byte* delPtr = channelPtr;
-                        subscribeBroker.PUnsubscribe(delPtr, this);
-                    }
-                }
-
-                if (numActiveChannels == 0)
-                    isSubscriptionSession = false;
-
                 return true;
             }
 
-            for (int c = 0; c < count; c++)
+            List<byte[]> channels = subscribeBroker.ListAllSubscriptions(this);
+            foreach (var channel in channels)
             {
-                byte* keyPtr = null;
-                int ksize = 0;
+                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
+                    SendAndReset();
 
-                if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
-                    return false;
-                keyPtr -= sizeof(int);
-
-                if (subscribeBroker != null)
+                var channelsize = channel.Length - sizeof(int);
+                fixed (byte* channelPtr = &channel[0])
                 {
-                    while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))
                         SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString("punsubscribe"u8, ref dcurr, dend))
+
+                    byte* delPtr = channelPtr;
+                    if (subscribeBroker.Unsubscribe(delPtr, this))
+                        numActiveChannels--;
+                    while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
                         SendAndReset();
-                    while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
+                }
+            }
+
+            if (channels.Count == 0)
+            {
+                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteNull(ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
+                    SendAndReset();
+            }
+
+            Debug.Assert(numActiveChannels == 0);
+            if (numActiveChannels == 0)
+                isSubscriptionSession = false;
+
+            return true;
+        }
+
+        for (int c = 0; c < count; c++)
+        {
+            byte* keyPtr = null;
+            int ksize = 0;
+
+            if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
+                return false;
+            keyPtr -= sizeof(int);
+
+            if (subscribeBroker != null)
+            {
+                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
+                    SendAndReset();
+
+                *(int*)keyPtr = ksize;
+                if (subscribeBroker.Unsubscribe(keyPtr, this))
+                    numActiveChannels--;
+
+                while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
+                    SendAndReset();
+            }
+            readHead = (int)(ptr - recvBufferPtr);
+        }
+
+        if (subscribeBroker == null)
+        {
+            while (!RespWriteUtils.WriteError("ERR UNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
+                SendAndReset();
+        }
+        return true;
+    }
+
+    private bool NetworkPUNSUBSCRIBE(int count, byte* ptr, byte* dend)
+    {
+        // PUNSUBSCRIBE channel1 channel2.. ==> [$11\r\nPUNSUBSCRIBE\r\n]$8\r\nchannel1\r\n$8\r\nchannel2\r\n => Subscribe to channel1 and channel2
+        Debug.Assert(subscribeBroker != null);
+
+        if (count == 0)
+        {
+            if (subscribeBroker == null)
+            {
+                while (!RespWriteUtils.WriteError("ERR PUNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
+                    SendAndReset();
+                return true;
+            }
+
+            List<byte[]> channels = subscribeBroker.ListAllPSubscriptions(this);
+            foreach (var channel in channels)
+            {
+                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString("punsubscribe"u8, ref dcurr, dend))
+                    SendAndReset();
+
+                var channelsize = channel.Length - sizeof(int);
+                fixed (byte* channelPtr = &channel[0])
+                {
+                    while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))
                         SendAndReset();
 
                     numActiveChannels--;
                     while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
                         SendAndReset();
 
-                    *(int*)keyPtr = ksize;
-                    subscribeBroker.Unsubscribe(keyPtr, this);
+                    byte* delPtr = channelPtr;
+                    subscribeBroker.PUnsubscribe(delPtr, this);
                 }
-                readHead = (int)(ptr - recvBufferPtr);
             }
 
-            if (subscribeBroker == null)
-            {
-                while (!RespWriteUtils.WriteError("ERR PUNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
-                    SendAndReset();
-            }
+            if (numActiveChannels == 0)
+                isSubscriptionSession = false;
+
             return true;
         }
+
+        for (int c = 0; c < count; c++)
+        {
+            byte* keyPtr = null;
+            int ksize = 0;
+
+            if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
+                return false;
+            keyPtr -= sizeof(int);
+
+            if (subscribeBroker != null)
+            {
+                while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString("punsubscribe"u8, ref dcurr, dend))
+                    SendAndReset();
+                while (!RespWriteUtils.WriteBulkString(new Span<byte>(keyPtr + sizeof(int), ksize), ref dcurr, dend))
+                    SendAndReset();
+
+                numActiveChannels--;
+                while (!RespWriteUtils.WriteInteger(numActiveChannels, ref dcurr, dend))
+                    SendAndReset();
+
+                *(int*)keyPtr = ksize;
+                subscribeBroker.Unsubscribe(keyPtr, this);
+            }
+            readHead = (int)(ptr - recvBufferPtr);
+        }
+
+        if (subscribeBroker == null)
+        {
+            while (!RespWriteUtils.WriteError("ERR PUNSUBSCRIBE is disabled, enable it with --pubsub option."u8, ref dcurr, dend))
+                SendAndReset();
+        }
+        return true;
     }
 }
