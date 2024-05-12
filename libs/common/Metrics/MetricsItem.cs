@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Metrics item (or row), contains metric name and value

@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.common;
-using Garnet.server;
-using Tsavorite.core;
+using Garnet.Common;
+using Garnet.Server;
+using Tsavorite.Core;
 
 namespace Garnet
 {

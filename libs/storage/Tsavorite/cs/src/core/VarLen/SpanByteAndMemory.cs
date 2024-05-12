@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Output that encapsulates sync stack output (via <see cref="core.SpanByte"/>) and async heap output (via IMemoryOwner)

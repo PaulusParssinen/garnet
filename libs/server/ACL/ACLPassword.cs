@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     /// <summary>
     /// Represents an individual ACL Password stored as a cryptographic (SHA-265) hash

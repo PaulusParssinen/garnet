@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Consumes a TsavoriteLog entry without copying 

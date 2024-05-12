@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {

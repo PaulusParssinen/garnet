@@ -7,9 +7,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     [StructLayout(LayoutKind.Explicit, Size = sizeof(long))]
     internal struct FreeRecord

@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     [StructLayout(LayoutKind.Explicit, Size = 14)]
     struct AofHeader

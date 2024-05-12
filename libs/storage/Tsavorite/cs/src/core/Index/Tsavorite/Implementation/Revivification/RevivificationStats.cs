@@ -3,7 +3,7 @@
 
 using System.Text;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Revivification statistics

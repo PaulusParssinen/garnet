@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Resizes an index

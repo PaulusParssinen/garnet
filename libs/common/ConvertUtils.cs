@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Convert data primitives.

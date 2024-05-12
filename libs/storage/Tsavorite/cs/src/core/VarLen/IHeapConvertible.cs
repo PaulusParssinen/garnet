@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Whether type supports converting to heap (e.g., when operation goes pending)

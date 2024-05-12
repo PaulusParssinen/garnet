@@ -6,10 +6,10 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// List - RESP specific operations

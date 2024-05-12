@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Manual epoch control functions. Useful when doing generic operations across diverse <see cref="LockableUnsafeContext{Key, Value, Input, Output, Context, Functions}"/> 

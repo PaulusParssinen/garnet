@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     struct NullTsavoriteSession : ITsavoriteSession
     {

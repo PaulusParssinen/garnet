@@ -7,10 +7,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal enum EventType : byte
     {

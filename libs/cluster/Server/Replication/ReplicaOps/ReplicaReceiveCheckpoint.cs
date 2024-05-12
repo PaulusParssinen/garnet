@@ -7,12 +7,12 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Garnet.client;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class ReplicationManager : IDisposable
     {

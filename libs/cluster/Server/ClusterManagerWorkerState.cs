@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Cluster manager

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Store type to operate on. Garnet keeps data in two stores, main store

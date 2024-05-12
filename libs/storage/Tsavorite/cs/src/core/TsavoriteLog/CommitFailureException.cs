@@ -3,7 +3,7 @@
 
 #pragma warning disable 0162
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Exception thrown when commit fails

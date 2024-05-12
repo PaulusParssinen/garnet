@@ -5,9 +5,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Tracks the size of the main log and read cache. 

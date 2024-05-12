@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Utilities for enums

@@ -7,9 +7,9 @@ using System.Buffers.Text;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Garnet.common.Parsing;
+using Garnet.Common.Parsing;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Utilities for reading RESP protocol messages.

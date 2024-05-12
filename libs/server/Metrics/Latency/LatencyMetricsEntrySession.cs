@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using HdrHistogram;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     struct LatencyMetricsEntrySession
     {

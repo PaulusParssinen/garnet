@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Metrics API

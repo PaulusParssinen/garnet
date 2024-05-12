@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Single writer multiple readers lock

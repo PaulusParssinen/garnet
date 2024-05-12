@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Garnet.server;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Cluster factory

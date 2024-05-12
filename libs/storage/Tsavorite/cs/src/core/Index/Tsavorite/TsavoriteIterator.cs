@@ -5,7 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {

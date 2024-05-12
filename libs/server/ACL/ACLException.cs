@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     /// <summary>
     /// ACL exception base

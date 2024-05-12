@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// A structure carrying metadata about a record in the log.

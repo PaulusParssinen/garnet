@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed partial class StorageSession : IDisposable
     {

@@ -5,7 +5,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Default empty functions base class to make it easy for users to provide their own implementation of IFunctions

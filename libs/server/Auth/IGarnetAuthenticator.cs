@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.server.Auth
+namespace Garnet.Server.Auth
 {
     /// <summary>
     /// Garnet authenticator interface

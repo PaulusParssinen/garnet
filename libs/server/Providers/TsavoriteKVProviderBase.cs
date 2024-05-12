@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Garnet.common;
+using Garnet.Common;
 using Garnet.networking;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Abstract session provider for TsavoriteKV store based on

@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     // Example aliases:
     //   using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions>, BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>>;

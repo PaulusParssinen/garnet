@@ -5,7 +5,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Log subscription extensions

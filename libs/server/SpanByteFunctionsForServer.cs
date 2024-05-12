@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Buffers;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Callback functions using SpanByteAndMemory output, for SpanByte key, value, input

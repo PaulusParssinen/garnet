@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal sealed class TxnKeyEntryComparer : IComparer<TxnKeyEntry>
     {

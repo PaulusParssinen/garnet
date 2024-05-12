@@ -1,9 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../Garnet.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
@@ -13,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.core.csproj" />
+    <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.Core.csproj" />
   </ItemGroup>
 
 </Project>

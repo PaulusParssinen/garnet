@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Flags used by append-only file (AOF/WAL)

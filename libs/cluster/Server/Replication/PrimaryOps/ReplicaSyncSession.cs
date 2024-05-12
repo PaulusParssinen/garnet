@@ -7,12 +7,12 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Garnet.client;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvider clusterProvider, string remoteNodeId, string remote_primary_replid, CheckpointEntry remoteEntry, long replicaAofBeginAddress, long replicaAofTailAddress, ILogger logger = null) : IDisposable
     {

@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     class GarnetInfoMetrics
     {

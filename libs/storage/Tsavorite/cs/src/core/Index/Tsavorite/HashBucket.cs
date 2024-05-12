@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     [StructLayout(LayoutKind.Explicit, Size = Constants.kEntriesPerBucket * 8)]
     internal unsafe struct HashBucket

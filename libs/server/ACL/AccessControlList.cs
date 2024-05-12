@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     /// <summary>
     /// Models the high-level Access Control List (ACL) that defines access and command limitations for Garnet users.

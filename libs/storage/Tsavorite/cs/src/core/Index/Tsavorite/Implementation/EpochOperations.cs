@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {

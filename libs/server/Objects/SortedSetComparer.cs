@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     public sealed class SortedSetComparer : IComparer<(double, byte[])>
     {

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Interface for users to control creation and retrieval of checkpoint-related data

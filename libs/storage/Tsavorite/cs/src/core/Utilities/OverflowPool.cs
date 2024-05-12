@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Fixed size pool of overflow objects

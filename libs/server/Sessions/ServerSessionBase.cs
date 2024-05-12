@@ -3,7 +3,7 @@
 
 using Garnet.networking;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Abstract base class for server session provider

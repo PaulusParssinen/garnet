@@ -3,9 +3,9 @@
 
 using System.Runtime.CompilerServices;
 using System.Threading;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>Hash table entry information for a key</summary>
     internal unsafe struct HashEntryInfo

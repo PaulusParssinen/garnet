@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     class ACLParser
     {

@@ -3,9 +3,9 @@
 
 using System;
 using Garnet.client;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class ReplicationDevice : IDevice
     {
@@ -47,7 +47,7 @@ namespace Garnet.cluster
         public long GetFileSize(int segment)
             => localDevice.GetFileSize(segment);
 
-        public void Initialize(long segmentSize, Tsavorite.core.LightEpoch epoch = null, bool omitSegmentIdFromFilename = false)
+        public void Initialize(long segmentSize, Tsavorite.Core.LightEpoch epoch = null, bool omitSegmentIdFromFilename = false)
             => localDevice.Initialize(segmentSize, epoch, omitSegmentIdFromFilename);
 
         public void ReadAsync(int segmentId, ulong sourceAddress, IntPtr destinationAddress, uint readLength, DeviceIOCompletionCallback callback, object context)

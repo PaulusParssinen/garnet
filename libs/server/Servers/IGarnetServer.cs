@@ -5,7 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using Garnet.networking;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// 

@@ -4,7 +4,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Collection of methods generating hex ids

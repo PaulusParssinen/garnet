@@ -3,9 +3,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Latency metrics emitted from RespServerSession

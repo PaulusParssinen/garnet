@@ -3,9 +3,9 @@
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Callback functions for <see cref="SpanByte"/> Key, Value, Input; <see cref="SpanByteAndMemory"/> Output; and specified <typeparamref name="Context"/>

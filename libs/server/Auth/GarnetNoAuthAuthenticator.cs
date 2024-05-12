@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Garnet.server.Auth
+namespace Garnet.Server.Auth
 {
     class GarnetNoAuthAuthenticator : IGarnetAuthenticator
     {

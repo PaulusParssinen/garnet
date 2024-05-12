@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     [StructLayout(LayoutKind.Explicit)]
     struct AtomicOwner

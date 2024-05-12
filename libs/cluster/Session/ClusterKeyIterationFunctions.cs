@@ -3,11 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using Garnet.common;
-using Garnet.server;
-using Tsavorite.core;
+using Garnet.Common;
+using Garnet.Server;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed unsafe partial class ClusterSession : IClusterSession
     {

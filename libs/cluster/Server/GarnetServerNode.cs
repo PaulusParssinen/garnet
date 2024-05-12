@@ -6,10 +6,10 @@ using System.Net.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Garnet.client;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class GarnetServerNode
     {

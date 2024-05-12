@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     [StructLayout(LayoutKind.Explicit, Size = 3)]
     internal struct ClusterSlotVerificationResult

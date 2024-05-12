@@ -3,10 +3,10 @@
 
 using System;
 using System.Threading;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed unsafe partial class ClusterSession : IClusterSession
     {

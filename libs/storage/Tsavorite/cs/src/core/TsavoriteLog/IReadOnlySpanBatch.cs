@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Interface to provide a batch of ReadOnlySpan[byte] data to Tsavorite

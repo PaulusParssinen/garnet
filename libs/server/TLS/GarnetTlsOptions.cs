@@ -6,10 +6,10 @@ using System.Linq;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server.TLS
+namespace Garnet.Server.TLS
 {
     /// <summary>
     /// A sample Garnet TLS options class provided for default validations.

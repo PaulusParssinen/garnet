@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using Garnet.common;
+using Garnet.Common;
 using HdrHistogram;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Latency metrics emitted from RespServerSession

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Circular buffer

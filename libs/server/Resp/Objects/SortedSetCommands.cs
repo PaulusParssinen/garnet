@@ -3,10 +3,10 @@
 
 using System;
 using System.Globalization;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Sorted set methods with network layer access

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Return status code for Tsavorite operations

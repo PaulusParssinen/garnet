@@ -10,7 +10,7 @@ using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Utility class with helper methods for handling local files

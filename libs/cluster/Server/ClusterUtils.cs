@@ -5,9 +5,9 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal static class ClusterUtils
     {

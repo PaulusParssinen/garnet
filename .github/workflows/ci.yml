@@ -83,7 +83,7 @@ jobs:
         os: [ ubuntu-latest, windows-latest ]
         framework: [ 'net6.0', 'net8.0' ]
         configuration: [ 'Debug', 'Release' ]
-        test: [ 'Garnet.test', 'Garnet.test.cluster' ]
+        test: [ 'Garnet.Tests', 'Garnet.Cluster.Tests' ]
     if: needs.changes.outputs.garnet == 'true'
     steps:
       - name: Check out code

@@ -7,12 +7,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Server session for RESP protocol - cluster commands are in this file

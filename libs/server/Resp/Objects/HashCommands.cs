@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal sealed unsafe partial class RespServerSession : ServerSessionBase
     {

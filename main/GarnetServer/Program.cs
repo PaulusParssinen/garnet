@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 
 namespace Garnet
 {

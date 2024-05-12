@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Garnet.networking;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// TCP network handler

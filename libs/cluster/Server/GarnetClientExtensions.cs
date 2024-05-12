@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Garnet.client;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal static partial class GarnetClientExtensions
     {

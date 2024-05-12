@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Cluster factory

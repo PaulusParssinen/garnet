@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     internal class LightConcurrentStack<T> : IDisposable
         where T : class, IDisposable

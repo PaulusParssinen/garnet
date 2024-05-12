@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Result for records sent to the callback during ScanCursor.

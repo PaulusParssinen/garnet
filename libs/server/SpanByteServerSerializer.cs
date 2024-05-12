@@ -3,9 +3,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Serializer for SpanByte. Used only on server-side.

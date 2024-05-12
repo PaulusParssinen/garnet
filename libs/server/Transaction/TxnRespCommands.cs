@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Server session for RESP protocol - Transaction commands are in this file

@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Garnet.networking;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// TCP network sender

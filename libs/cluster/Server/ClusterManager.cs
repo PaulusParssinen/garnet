@@ -3,13 +3,13 @@
 
 using System;
 using System.Threading;
-using Garnet.common;
-using Garnet.server;
-using Garnet.server.TLS;
+using Garnet.Common;
+using Garnet.Server;
+using Garnet.Server.TLS;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Cluster manager

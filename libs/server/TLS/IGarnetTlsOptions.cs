@@ -3,7 +3,7 @@
 
 using System.Net.Security;
 
-namespace Garnet.server.TLS
+namespace Garnet.Server.TLS
 {
     /// <summary>
     /// Interface to provide Garnet TLS options

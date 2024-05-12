@@ -4,7 +4,7 @@
 using System.IO;
 using System.Text;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class ClusterConfig
     {

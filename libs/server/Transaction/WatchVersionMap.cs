@@ -3,9 +3,9 @@
 
 using System.Diagnostics;
 using System.Threading;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Watch Version Map

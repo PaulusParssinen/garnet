@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Garnet.server.Auth.Aad
+namespace Garnet.Server.Auth.Aad
 {
     /// <summary>
     /// Provides signing tokens from AAD authority for token validation purposes.

@@ -3,8 +3,8 @@
 
 using System;
 using System.Buffers;
-using Garnet.server;
-using Tsavorite.core;
+using Garnet.Server;
+using Tsavorite.Core;
 
 namespace Garnet
 {

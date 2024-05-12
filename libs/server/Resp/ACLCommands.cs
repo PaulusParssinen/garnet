@@ -4,12 +4,12 @@
 using System;
 using System.Diagnostics;
 using System.Text;
-using Garnet.common;
-using Garnet.server.ACL;
-using Garnet.server.Auth;
+using Garnet.Common;
+using Garnet.Server.ACL;
+using Garnet.Server.Auth;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Server session for RESP protocol - ACL Commands

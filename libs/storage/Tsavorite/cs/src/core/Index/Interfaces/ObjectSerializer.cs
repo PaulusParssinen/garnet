@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal static class ObjectSerializer
     {

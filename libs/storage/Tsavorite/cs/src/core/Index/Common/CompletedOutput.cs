@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// A list of <see cref="CompletedOutputIterator{TKey, TValue, TInput, TOutput, TContext}"/> for completed outputs from a pending operation.

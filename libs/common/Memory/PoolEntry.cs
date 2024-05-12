@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Pool entry

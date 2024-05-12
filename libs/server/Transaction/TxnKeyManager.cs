@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed partial class TransactionManager
     {

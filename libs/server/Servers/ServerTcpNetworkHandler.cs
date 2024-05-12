@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 
 using System.Net.Sockets;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal sealed class ServerTcpNetworkHandler : TcpNetworkHandler<GarnetServerTcp>
     {

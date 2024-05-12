@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     /// <summary>
     /// Represents a Garnet user and associated access rights.

@@ -3,9 +3,9 @@
 
 using System.Buffers;
 using System.Diagnostics;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Callback functions for main store

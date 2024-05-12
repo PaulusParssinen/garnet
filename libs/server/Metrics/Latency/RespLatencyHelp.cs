@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Info on what latency commands are supported

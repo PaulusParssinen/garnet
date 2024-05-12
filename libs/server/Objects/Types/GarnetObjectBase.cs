@@ -6,9 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Base class for Garnet heap objects

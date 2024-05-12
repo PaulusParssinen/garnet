@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Garnet.server.TLS
+namespace Garnet.Server.TLS
 {
     /// <summary>
     /// CertificateUtils

@@ -4,7 +4,7 @@
 using System;
 using System.ComponentModel;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// RESP command flags

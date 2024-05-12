@@ -4,9 +4,9 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Serializer for IGarnetObject

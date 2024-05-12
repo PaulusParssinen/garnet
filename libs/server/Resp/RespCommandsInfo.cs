@@ -9,10 +9,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Represents a RESP command's information

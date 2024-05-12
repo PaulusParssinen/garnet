@@ -3,7 +3,7 @@
 
 using Garnet.networking;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Interface to provides server-side session processing logic

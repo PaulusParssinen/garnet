@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Command strings for RESP protocol

@@ -6,9 +6,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     // Allocator for SpanByte, possibly with a Blittable Key or Value.
     internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByte>

@@ -3,12 +3,12 @@
 
 using System;
 using System.IO;
-using Garnet.server.Auth;
-using Garnet.server.TLS;
+using Garnet.Server.Auth;
+using Garnet.Server.TLS;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Options when creating Garnet server

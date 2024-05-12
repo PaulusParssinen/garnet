@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Garnet.common;
-using Garnet.server;
-using Tsavorite.core;
+using Garnet.Common;
+using Garnet.Server;
+using Tsavorite.Core;
 
 namespace Garnet
 {

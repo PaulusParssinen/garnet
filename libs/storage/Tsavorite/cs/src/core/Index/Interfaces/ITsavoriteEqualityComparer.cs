@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Defines methods to support the comparison of Tsavorite keys for equality.

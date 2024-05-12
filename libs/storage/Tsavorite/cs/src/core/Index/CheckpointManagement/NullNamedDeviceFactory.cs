@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Local storage device factory

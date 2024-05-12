@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Extensions

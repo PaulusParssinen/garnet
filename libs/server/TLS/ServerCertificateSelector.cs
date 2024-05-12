@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server.TLS
+namespace Garnet.Server.TLS
 {
     /// <summary>
     /// Ssl certificate selection to handle certificate refresh

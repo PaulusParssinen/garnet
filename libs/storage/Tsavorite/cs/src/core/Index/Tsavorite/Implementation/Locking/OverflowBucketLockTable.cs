@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal struct OverflowBucketLockTable<TKey, TValue> : ILockTable<TKey>
     {

@@ -4,7 +4,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace Garnet.server.ACL
+namespace Garnet.Server.ACL
 {
     /// <summary>
     /// A collection of shared utility methods to operate against secret key material.

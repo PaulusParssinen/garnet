@@ -4,10 +4,10 @@
 using System;
 using System.Buffers.Text;
 using System.Text;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     ///  Set - RESP specific operations

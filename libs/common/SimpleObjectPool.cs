@@ -5,7 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Object pool

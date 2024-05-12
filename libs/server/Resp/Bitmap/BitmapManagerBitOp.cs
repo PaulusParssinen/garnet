@@ -3,10 +3,10 @@
 
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using Garnet.common;
+using Garnet.Common;
 
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     public unsafe partial class BitmapManager
     {

@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Identifies which log regions records will be copied from to <see cref="ReadCopyTo"/>. This specification is

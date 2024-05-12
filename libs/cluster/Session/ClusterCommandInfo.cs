@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Info on what cluster commands is supported

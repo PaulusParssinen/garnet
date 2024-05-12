@@ -4,10 +4,10 @@
 using System;
 using System.Buffers;
 using System.IO;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Custom object abstract base class

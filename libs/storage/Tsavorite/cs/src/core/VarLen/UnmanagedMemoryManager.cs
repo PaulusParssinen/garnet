@@ -4,7 +4,7 @@
 using System;
 using System.Buffers;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// A MemoryManager over a raw pointer

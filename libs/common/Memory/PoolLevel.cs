@@ -3,7 +3,7 @@
 
 using System.Collections.Concurrent;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Pool level

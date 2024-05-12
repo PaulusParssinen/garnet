@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Enconding and decoding methods for Geospatial

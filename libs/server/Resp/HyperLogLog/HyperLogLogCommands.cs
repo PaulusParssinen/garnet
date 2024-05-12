@@ -4,10 +4,10 @@
 //#define HLL_SINGLE_PFADD_ENABLED
 
 using System.Runtime.CompilerServices;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal sealed unsafe partial class RespServerSession : ServerSessionBase
     {

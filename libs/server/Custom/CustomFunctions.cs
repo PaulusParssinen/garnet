@@ -4,9 +4,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Base class for custom function

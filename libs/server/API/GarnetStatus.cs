@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Garnet API call return status

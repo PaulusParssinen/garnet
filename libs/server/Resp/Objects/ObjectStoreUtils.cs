@@ -3,9 +3,9 @@
 
 using System;
 using System.Text;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Server session for RESP protocol - sorted set

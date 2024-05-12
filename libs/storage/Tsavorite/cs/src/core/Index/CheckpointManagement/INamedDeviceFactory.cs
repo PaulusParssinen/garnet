@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Factory for getting IDevice instances for checkpointing

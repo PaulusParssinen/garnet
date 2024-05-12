@@ -3,9 +3,9 @@
 
 using System;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Storage Session - the internal layer that Garnet uses to perform storage operations

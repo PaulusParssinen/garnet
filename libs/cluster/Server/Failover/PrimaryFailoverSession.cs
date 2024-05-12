@@ -4,10 +4,10 @@
 using System;
 using System.Threading.Tasks;
 using Garnet.client;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class FailoverSession : IDisposable
     {

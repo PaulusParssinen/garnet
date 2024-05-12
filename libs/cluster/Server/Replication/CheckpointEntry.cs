@@ -4,9 +4,9 @@
 using System;
 using System.IO;
 using System.Text;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     sealed class CheckpointEntry
     {

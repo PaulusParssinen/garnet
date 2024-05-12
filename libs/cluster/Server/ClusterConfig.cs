@@ -1,14 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-#pragma warning disable IDE0005
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-#pragma warning restore IDE0005
 using System.Runtime.CompilerServices;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Cluster configuration

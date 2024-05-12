@@ -6,11 +6,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Garnet.common;
-using Garnet.server.ACL;
+using Garnet.Common;
+using Garnet.Server.ACL;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Server session for RESP protocol - admin commands are in this file

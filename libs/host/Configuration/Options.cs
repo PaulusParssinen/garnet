@@ -10,12 +10,12 @@ using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using CommandLine;
-using Garnet.server;
-using Garnet.server.Auth;
-using Garnet.server.Auth.Aad;
-using Garnet.server.TLS;
+using Garnet.Server;
+using Garnet.Server.Auth;
+using Garnet.Server.Auth.Aad;
+using Garnet.Server.TLS;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 using Tsavorite.devices;
 
 namespace Garnet
@@ -26,7 +26,7 @@ namespace Garnet
     /// 1. Add a new property and decorate it with an OptionAttribute.
     /// 2. If needed, decorate with a new or existing ValidationAttribute from OptionsValidators.cs
     /// 3. Add a default value for the new property in defaults.conf
-    /// 4. If needed, add a matching property in Garnet.server/Servers/GarnetServerOptions.cs and initialize it in Options.GetServerOptions()
+    /// 4. If needed, add a matching property in Garnet.Server/Servers/GarnetServerOptions.cs and initialize it in Options.GetServerOptions()
     /// 5. If new setting has a matching setting in redis.conf, add the matching setting to RedisOptions.cs
     /// </summary>
     internal sealed class Options

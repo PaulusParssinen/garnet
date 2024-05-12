@@ -7,13 +7,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Garnet.common;
-using Garnet.server.ACL;
-using Garnet.server.Auth;
+using Garnet.Common;
+using Garnet.Server.ACL;
+using Garnet.Server.Auth;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Wrapper for store and store-specific information

@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using Garnet.networking;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// TCP network handler

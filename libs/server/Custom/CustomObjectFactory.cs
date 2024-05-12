@@ -3,7 +3,7 @@
 
 using System.IO;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Base class for creating custom objects

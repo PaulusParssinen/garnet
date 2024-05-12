@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal enum ReadStatus { Pending, Done, Error };
     internal enum FlushStatus { Pending, Done, Error };

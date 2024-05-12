@@ -3,7 +3,7 @@
 
 using HdrHistogram;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     struct LatencyMetricsEntry
     {

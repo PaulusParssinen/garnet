@@ -1,9 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../Garnet.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
@@ -12,9 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\libs\storage\Tsavorite\cs\src\core\Tsavorite.core.csproj" />
+    <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.Core.csproj" />
     <ProjectReference Include="..\client\Garnet.client.csproj" />
-    <ProjectReference Include="..\common\Garnet.common.csproj" />
+    <ProjectReference Include="..\common\Garnet.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

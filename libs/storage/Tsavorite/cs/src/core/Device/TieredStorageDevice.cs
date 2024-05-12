@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// A <see cref="TieredStorageDevice"/> logically composes multiple <see cref="IDevice"/> into a single storage device. It is assumed

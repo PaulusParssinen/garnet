@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal static class TsavoriteEqualityComparer
     {

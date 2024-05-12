@@ -5,11 +5,11 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class ReplicationHistory
     {

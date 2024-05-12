@@ -4,7 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace Garnet.common.Parsing
+namespace Garnet.Common.Parsing
 {
     /// <summary>
     /// Exception wrapper for RESP parsing errors.

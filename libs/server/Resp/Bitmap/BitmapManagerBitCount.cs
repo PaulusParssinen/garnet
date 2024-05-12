@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     public unsafe partial class BitmapManager
     {

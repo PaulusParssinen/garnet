@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     ///  Represents a entry that can be serialized directly onto TsavoriteLog when enqueuing

@@ -4,10 +4,10 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed partial class StorageSession : IDisposable
     {

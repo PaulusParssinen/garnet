@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     unsafe struct IORequestLocalMemory
     {

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Record<Key, Value>

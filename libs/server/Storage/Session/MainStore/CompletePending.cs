@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Diagnostics;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed partial class StorageSession
     {

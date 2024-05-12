@@ -3,9 +3,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// A container per session to store information of watched keys

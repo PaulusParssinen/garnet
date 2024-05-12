@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed unsafe partial class MigrateSession : IDisposable
     {

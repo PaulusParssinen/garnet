@@ -3,9 +3,9 @@
 
 using System;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class ReplicationManager : IDisposable
     {

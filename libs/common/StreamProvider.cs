@@ -7,10 +7,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 using Tsavorite.devices;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     public enum FileLocationType
     {

@@ -5,7 +5,7 @@
 
 using System.Threading;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Result of async page read

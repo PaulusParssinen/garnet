@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key, Value>
     {

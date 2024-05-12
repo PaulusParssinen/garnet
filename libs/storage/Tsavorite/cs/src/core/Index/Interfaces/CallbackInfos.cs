@@ -3,9 +3,9 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// What actions to take following the RMW IFunctions method call, such as cancellation or record expiration.

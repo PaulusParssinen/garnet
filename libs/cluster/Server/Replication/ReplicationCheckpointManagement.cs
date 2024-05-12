@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.server;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class ReplicationManager : IDisposable
     {

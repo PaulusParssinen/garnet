@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed unsafe partial class TransactionManager
     {

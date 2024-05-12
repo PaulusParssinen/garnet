@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Serializer (for class types) based on DataContract

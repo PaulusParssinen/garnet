@@ -4,9 +4,9 @@
 using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Options when creating Garnet server

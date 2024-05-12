@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Types of latency metrics exposed by Garnet server

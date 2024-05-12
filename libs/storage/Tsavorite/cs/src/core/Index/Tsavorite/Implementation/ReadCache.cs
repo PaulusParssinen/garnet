@@ -4,9 +4,9 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     // Partial file for readcache functions
     public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase

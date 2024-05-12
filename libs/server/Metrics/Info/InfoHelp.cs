@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     class InfoHelp
     {

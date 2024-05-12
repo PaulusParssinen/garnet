@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal struct NullGarnetSessionMetrics : IMetrics
     {

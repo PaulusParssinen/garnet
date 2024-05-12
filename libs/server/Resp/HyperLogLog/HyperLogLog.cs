@@ -10,11 +10,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using Garnet.common;
+using Garnet.Common;
 
 #pragma warning disable IDE1006 // Naming Styles
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     ///
     /// Hyperloglog implementation based on 

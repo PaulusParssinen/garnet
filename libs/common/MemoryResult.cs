@@ -4,7 +4,7 @@
 using System;
 using System.Buffers;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Wrapper struct for memory result from shared pool, of particular actual length

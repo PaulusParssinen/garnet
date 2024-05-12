@@ -4,7 +4,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Hash utilities

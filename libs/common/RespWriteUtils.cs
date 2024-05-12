@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Utilities for writing RESP protocol

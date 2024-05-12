@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using Garnet.server.Auth.Aad;
+using Garnet.Server.Auth.Aad;
 
-namespace Garnet.server.Auth
+namespace Garnet.Server.Auth
 {
     /// <summary>
     /// Authentication mode

@@ -9,11 +9,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Garnet.common;
-using Garnet.server.Custom;
-using Tsavorite.core;
+using Garnet.Common;
+using Garnet.Server.Custom;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Server session for RESP protocol - array commands are in this file

@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Garnet.common;
+using Garnet.Common;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     public unsafe partial class BitmapManager
     {

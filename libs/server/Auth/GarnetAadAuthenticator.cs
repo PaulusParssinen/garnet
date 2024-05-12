@@ -7,12 +7,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Garnet.server.Auth.Aad;
+using Garnet.Server.Auth.Aad;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Validators;
 
-namespace Garnet.server.Auth
+namespace Garnet.Server.Auth
 {
     class GarnetAadAuthenticator : IGarnetAuthenticator
     {

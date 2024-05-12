@@ -7,7 +7,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
 namespace Garnet.networking

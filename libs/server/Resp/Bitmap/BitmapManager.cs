@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 #pragma warning disable IDE0054 // Use compound assignment
 #pragma warning disable IDE1006 // Naming Styles
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Bitmap management methods

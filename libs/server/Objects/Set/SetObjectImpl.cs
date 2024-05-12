@@ -5,10 +5,10 @@ using System;
 using System.Buffers;
 using System.Linq;
 using System.Security.Cryptography;
-using Garnet.common;
-using Tsavorite.core;
+using Garnet.Common;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     ///  Set - RESP specific operations

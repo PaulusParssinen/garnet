@@ -5,12 +5,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using Garnet.cluster;
-using Garnet.common;
+using Garnet.Cluster;
+using Garnet.Common;
 using Garnet.networking;
-using Garnet.server;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
 namespace Garnet
 {

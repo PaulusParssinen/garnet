@@ -3,9 +3,9 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using static Tsavorite.core.Utility;
+using static Tsavorite.Core.Utility;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Carries various addresses and accompanying values corresponding to source records for the current InternalXxx or InternalContinuePendingR*

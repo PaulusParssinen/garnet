@@ -4,11 +4,11 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed unsafe partial class ClusterSession : IClusterSession
     {

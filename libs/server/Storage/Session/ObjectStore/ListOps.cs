@@ -3,9 +3,9 @@
 
 using System;
 using System.Linq;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     sealed partial class StorageSession : IDisposable
     {

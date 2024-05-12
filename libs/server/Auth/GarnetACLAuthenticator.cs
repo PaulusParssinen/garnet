@@ -3,10 +3,10 @@
 
 using System;
 using System.Text;
-using Garnet.server.ACL;
+using Garnet.Server.ACL;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.server.Auth
+namespace Garnet.Server.Auth
 {
     class GarnetACLAuthenticator : IGarnetAuthenticator
     {

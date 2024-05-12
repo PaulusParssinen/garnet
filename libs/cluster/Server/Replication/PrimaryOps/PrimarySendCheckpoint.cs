@@ -5,7 +5,7 @@ using System;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed partial class ReplicationManager : IDisposable
     {

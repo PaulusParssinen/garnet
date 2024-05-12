@@ -7,7 +7,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {

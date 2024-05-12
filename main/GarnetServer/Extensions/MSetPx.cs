@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.common;
-using Garnet.server;
+using Garnet.Common;
+using Garnet.Server;
 
 namespace Garnet
 {

@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.server;
+using Garnet.Server;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Checkpoint file type

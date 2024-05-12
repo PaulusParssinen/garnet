@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Custom command manager

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Lightweight iterator for memory page (copied to buffer). GetNext() can be used outside epoch protection and locking,

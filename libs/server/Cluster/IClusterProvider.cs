@@ -2,14 +2,14 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.common;
+using Garnet.Common;
 using Garnet.networking;
-using Garnet.server.ACL;
-using Garnet.server.Auth;
+using Garnet.Server.ACL;
+using Garnet.Server.Auth;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     using BasicGarnetApi = GarnetApi<BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions>, BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>>;
 

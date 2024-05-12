@@ -5,7 +5,7 @@
 
 using System.Threading.Tasks;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Info contained in task associated with commit

@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Garnet.client;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     /// <summary>
     /// Storage provider for AOF tasks
@@ -272,7 +272,7 @@ namespace Garnet.cluster
             }
 
             //Inform that we have logically truncatedUntil
-            Tsavorite.core.Utility.MonotonicUpdate(ref this.TruncatedUntil, TruncatedUntil, out _);
+            Tsavorite.Core.Utility.MonotonicUpdate(ref this.TruncatedUntil, TruncatedUntil, out _);
             //Release lock early
             _lock.WriteUnlock();
 
@@ -315,7 +315,7 @@ namespace Garnet.cluster
         public void UpdateTruncatedUntil(long truncatedUntil)
         {
             _lock.WriteLock();
-            Tsavorite.core.Utility.MonotonicUpdate(ref TruncatedUntil, truncatedUntil, out _);
+            Tsavorite.Core.Utility.MonotonicUpdate(ref TruncatedUntil, truncatedUntil, out _);
             _lock.WriteUnlock();
         }
     }

@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Heap container for <see cref="SpanByte"/> structs

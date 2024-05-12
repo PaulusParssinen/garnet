@@ -6,9 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Garnet.client;
 using Microsoft.Extensions.Logging;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class AofSyncTaskInfo : IBulkLogEntryConsumer, IDisposable
     {

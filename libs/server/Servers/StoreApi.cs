@@ -4,7 +4,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Store API

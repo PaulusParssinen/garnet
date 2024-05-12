@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     internal sealed class SystemMetrics
     {

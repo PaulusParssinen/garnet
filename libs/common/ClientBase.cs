@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using Garnet.networking;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
 
     /// <summary>

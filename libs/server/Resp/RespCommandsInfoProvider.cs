@@ -9,11 +9,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Interface for importing / exporting RESP commands info from different file types

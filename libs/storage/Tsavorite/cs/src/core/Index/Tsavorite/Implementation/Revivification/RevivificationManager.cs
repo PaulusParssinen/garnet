@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal struct RevivificationManager<Key, Value>
     {

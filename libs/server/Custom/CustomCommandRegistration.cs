@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Garnet.server.Custom
+namespace Garnet.Server.Custom
 {
     /// <summary>
     /// Base custom command / transaction registration arguments

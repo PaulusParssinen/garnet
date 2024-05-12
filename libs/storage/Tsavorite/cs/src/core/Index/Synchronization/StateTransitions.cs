@@ -4,7 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal enum ResizeOperationStatus : int { IN_PROGRESS, DONE };
 

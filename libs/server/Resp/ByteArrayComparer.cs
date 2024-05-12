@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Byte array equality comparer

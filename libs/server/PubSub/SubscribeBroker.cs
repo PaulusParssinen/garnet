@@ -6,11 +6,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Garnet.common;
+using Garnet.Common;
 using Garnet.networking;
-using Tsavorite.core;
+using Tsavorite.Core;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Broker used for PUB-SUB to Tsavorite KV store. There is a broker per TsavoriteKV instance.

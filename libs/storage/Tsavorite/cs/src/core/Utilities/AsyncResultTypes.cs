@@ -3,7 +3,7 @@
 
 #define CALLOC
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     internal struct AsyncGetFromDiskResult<TContext>
     {

@@ -3,10 +3,10 @@
 
 using System;
 using System.Security.Cryptography;
-using Garnet.common;
+using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal class GarnetClusterConnectionStore
     {

@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     // Long value layout: [1-bit tentative][15-bit TAG][48-bit address]
     // Physical little endian memory layout: [48-bit address][15-bit TAG][1-bit tentative]

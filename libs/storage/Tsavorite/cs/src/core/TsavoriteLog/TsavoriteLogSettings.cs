@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Delegate for getting memory from user

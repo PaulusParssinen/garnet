@@ -4,7 +4,7 @@
 using System;
 using System.Net.Sockets;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Buffer of SocketAsyncEventArgs and pinned byte array for transport

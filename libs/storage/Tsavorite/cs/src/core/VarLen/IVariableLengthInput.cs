@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.core
+namespace Tsavorite.Core
 {
     /// <summary>
     /// Interface for variable length Inputs to RMW; only implemented for <typeparamref name="TValue"/> of <see cref="SpanByte"/>.

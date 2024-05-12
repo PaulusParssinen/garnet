@@ -1,17 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../Garnet.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\client\Garnet.client.csproj" />
-    <ProjectReference Include="..\common\Garnet.common.csproj" />
-    <ProjectReference Include="..\server\Garnet.server.csproj" />
-    <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.core.csproj" />
+    <ProjectReference Include="..\common\Garnet.Common.csproj" />
+    <ProjectReference Include="..\server\Garnet.Server.csproj" />
+    <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

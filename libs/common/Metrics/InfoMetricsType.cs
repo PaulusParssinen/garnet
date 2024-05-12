@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Text;
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Types of info metrics exposed by Garnet server

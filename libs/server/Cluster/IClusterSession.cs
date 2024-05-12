@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
-using Garnet.server.ACL;
+using Garnet.Server.ACL;
 
-namespace Garnet.server
+namespace Garnet.Server
 {
     /// <summary>
     /// Cluster RESP session

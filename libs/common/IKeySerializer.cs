@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.common
+namespace Garnet.Common
 {
     /// <summary>
     /// Serializer interface for keys, needed for pub-sub

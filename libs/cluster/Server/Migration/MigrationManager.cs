@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.cluster
+namespace Garnet.Cluster
 {
     internal sealed class MigrationManager
     {
