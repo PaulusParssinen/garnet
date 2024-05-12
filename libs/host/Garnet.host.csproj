@@ -14,7 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\server\Garnet.server.csproj" />
     <ProjectReference Include="..\cluster\Garnet.cluster.csproj" />
-    <ProjectReference Include="..\storage\Tsavorite\cs\src\devices\AzureStorageDevice\Tsavorite.devices.AzureStorageDevice.csproj" />
   </ItemGroup>
 
   <ItemGroup>

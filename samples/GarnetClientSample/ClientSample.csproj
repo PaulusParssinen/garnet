@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,11 +10,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\libs\client\Garnet.client.csproj" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
 </Project>
