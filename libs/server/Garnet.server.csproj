@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\storage\Tsavorite\cs\src\core\Tsavorite.Core.csproj" />
-    <ProjectReference Include="..\client\Garnet.client.csproj" />
     <ProjectReference Include="..\common\Garnet.Common.csproj" />
   </ItemGroup>
 
