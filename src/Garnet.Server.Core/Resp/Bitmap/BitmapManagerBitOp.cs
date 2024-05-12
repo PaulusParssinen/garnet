@@ -25,7 +25,7 @@ public unsafe partial class BitmapManager
         switch (bitop)
         {
             case (byte)BitmapOperation.NOT:
-                __bitop_multikey_simdX256_not(dstPtr, dstLen, srcStartPtrs[0], (srcEndPtrs[0] - srcStartPtrs[0]));
+                __bitop_multikey_simdX256_not(dstPtr, dstLen, srcStartPtrs[0], srcEndPtrs[0] - srcStartPtrs[0]);
                 break;
             case (byte)BitmapOperation.AND:
                 __bitop_multikey_simdX256_and(dstPtr, dstLen, srcStartPtrs, srcEndPtrs, srcKeyCount, minSize);
@@ -109,7 +109,7 @@ public unsafe partial class BitmapManager
         srcEnd = srcCurr + (slen - stail);
         while (srcCurr < srcEnd)
         {
-            long d00 = *(long*)(srcCurr);
+            long d00 = *(long*)srcCurr;
             long d01 = *(long*)(srcCurr + 8);
             long d02 = *(long*)(srcCurr + 16);
             long d03 = *(long*)(srcCurr + 24);
@@ -132,7 +132,7 @@ public unsafe partial class BitmapManager
         srcEnd = srcCurr + (slen - stail);
         while (srcCurr < srcEnd)
         {
-            long d00 = *(long*)(srcCurr);
+            long d00 = *(long*)srcCurr;
 
             *(long*)dstCurr = ~d00;
 
@@ -142,13 +142,13 @@ public unsafe partial class BitmapManager
         if (stail == 0) return;
         #endregion
 
-        if (stail >= 7) dstCurr[6] = (byte)(~srcCurr[6]);
-        if (stail >= 6) dstCurr[5] = (byte)(~srcCurr[5]);
-        if (stail >= 5) dstCurr[4] = (byte)(~srcCurr[4]);
-        if (stail >= 4) dstCurr[3] = (byte)(~srcCurr[3]);
-        if (stail >= 3) dstCurr[2] = (byte)(~srcCurr[2]);
-        if (stail >= 2) dstCurr[1] = (byte)(~srcCurr[1]);
-        if (stail >= 1) dstCurr[0] = (byte)(~srcCurr[0]);
+        if (stail >= 7) dstCurr[6] = (byte)~srcCurr[6];
+        if (stail >= 6) dstCurr[5] = (byte)~srcCurr[5];
+        if (stail >= 5) dstCurr[4] = (byte)~srcCurr[4];
+        if (stail >= 4) dstCurr[3] = (byte)~srcCurr[3];
+        if (stail >= 3) dstCurr[2] = (byte)~srcCurr[2];
+        if (stail >= 2) dstCurr[1] = (byte)~srcCurr[1];
+        if (stail >= 1) dstCurr[0] = (byte)~srcCurr[0];
     }
 
     /// <summary>
@@ -246,14 +246,14 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             long d01 = *(long*)(srcStartPtrs[0] + 8);
             long d02 = *(long*)(srcStartPtrs[0] + 16);
             long d03 = *(long*)(srcStartPtrs[0] + 24);
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 &= *(long*)(srcStartPtrs[i]);
+                d00 &= *(long*)srcStartPtrs[i];
                 d01 &= *(long*)(srcStartPtrs[i] + 8);
                 d02 &= *(long*)(srcStartPtrs[i] + 16);
                 d03 &= *(long*)(srcStartPtrs[i] + 24);
@@ -276,11 +276,11 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 &= *(long*)(srcStartPtrs[i]);
+                d00 &= *(long*)srcStartPtrs[i];
                 srcStartPtrs[i] += batchSize;
             }
             *(long*)dstCurr = d00;
@@ -415,14 +415,14 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             long d01 = *(long*)(srcStartPtrs[0] + 8);
             long d02 = *(long*)(srcStartPtrs[0] + 16);
             long d03 = *(long*)(srcStartPtrs[0] + 24);
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 |= *(long*)(srcStartPtrs[i]);
+                d00 |= *(long*)srcStartPtrs[i];
                 d01 |= *(long*)(srcStartPtrs[i] + 8);
                 d02 |= *(long*)(srcStartPtrs[i] + 16);
                 d03 |= *(long*)(srcStartPtrs[i] + 24);
@@ -445,11 +445,11 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 |= *(long*)(srcStartPtrs[i]);
+                d00 |= *(long*)srcStartPtrs[i];
                 srcStartPtrs[i] += batchSize;
             }
             *(long*)dstCurr = d00;
@@ -578,14 +578,14 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             long d01 = *(long*)(srcStartPtrs[0] + 8);
             long d02 = *(long*)(srcStartPtrs[0] + 16);
             long d03 = *(long*)(srcStartPtrs[0] + 24);
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 ^= *(long*)(srcStartPtrs[i]);
+                d00 ^= *(long*)srcStartPtrs[i];
                 d01 ^= *(long*)(srcStartPtrs[i] + 8);
                 d02 ^= *(long*)(srcStartPtrs[i] + 16);
                 d03 ^= *(long*)(srcStartPtrs[i] + 24);
@@ -608,11 +608,11 @@ public unsafe partial class BitmapManager
         dstEnd = dstCurr + (slen - stail);
         while (dstCurr < dstEnd)
         {
-            long d00 = *(long*)(srcStartPtrs[0]);
+            long d00 = *(long*)srcStartPtrs[0];
             srcStartPtrs[0] += batchSize;
             for (int i = 1; i < srcKeyCount; i++)
             {
-                d00 ^= *(long*)(srcStartPtrs[i]);
+                d00 ^= *(long*)srcStartPtrs[i];
                 srcStartPtrs[i] += batchSize;
             }
             *(long*)dstCurr = d00;

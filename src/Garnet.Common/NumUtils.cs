@@ -13,7 +13,7 @@ namespace Garnet.Common;
 /// </summary>
 public static unsafe class NumUtils
 {
-    public const int MaximumFormatInt64Length = 20;   // 19 + sign (i.e. -9223372036854775808)
+    internal const int MaximumFormatInt64Length = 20;   // 19 + sign (i.e. -9223372036854775808)
 
     /// <summary>
     /// Convert long number into sequence of ASCII bytes
@@ -45,7 +45,7 @@ public static unsafe class NumUtils
         byte sign = (byte)(value < 0 ? 1 : 0);
         if (value == long.MinValue)
         {
-            *(long*)(result) = 3618417120593983789L;
+            *(long*)result = 3618417120593983789L;
             *(long*)(result + 8) = 3978706198986109744L;
             *(int*)(result + 8 + 8) = 942684213;
             result += 20;
@@ -92,13 +92,13 @@ public static unsafe class NumUtils
     /// <returns>Result</returns>
     public static long BytesToLong(int length, byte* source)
     {
-        bool fNeg = (*source == '-');
+        bool fNeg = *source == '-';
         byte* beg = fNeg ? source + 1 : source;
         byte* end = source + length;
         long result = 0;
         while (beg < end)
             result = result * 10 + (*beg++ - '0');
-        return fNeg ? -(result) : result;
+        return fNeg ? -result : result;
     }
 
     /// <summary>
@@ -152,13 +152,13 @@ public static unsafe class NumUtils
     /// <param name="source">Source bytes</param>
     public static int BytesToInt(int length, byte* source)
     {
-        bool fNeg = (*source == '-');
+        bool fNeg = *source == '-';
         byte* beg = fNeg ? source + 1 : source;
         byte* end = source + length;
         int result = 0;
         while (beg < end)
             result = result * 10 + (*beg++ - '0');
-        return fNeg ? -(result) : result;
+        return fNeg ? -result : result;
     }
 
     /// <summary>
@@ -321,7 +321,7 @@ public static unsafe class NumUtils
         if (v < 0)
         {
             fNeg = true;
-            v = -(v);
+            v = -v;
         }
 
         if (v < 10) return 1;
@@ -368,7 +368,7 @@ public static unsafe class NumUtils
         // Fill comparer with value byte for comparisons
         //
         // comparer = 0/0/value/value
-        uint comparer = (((uint)value << 8) + (uint)value);
+        uint comparer = ((uint)value << 8) + value;
         // comparer = value/value/value/value
         comparer = (comparer << 16) + comparer;
 
@@ -518,7 +518,7 @@ public static unsafe class NumUtils
     /// </summary>
     public static unsafe bool TryBytesToInt(byte* source, int len, out int result)
     {
-        bool fNeg = (*source == '-');
+        bool fNeg = *source == '-';
         byte* beg = fNeg ? source + 1 : source;
         int start = fNeg ? 1 : 0;
         result = 0;
@@ -530,7 +530,7 @@ public static unsafe class NumUtils
             }
             result = result * 10 + (*beg++ - '0');
         }
-        result = fNeg ? -(result) : result;
+        result = fNeg ? -result : result;
         return true;
     }
 }

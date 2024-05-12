@@ -24,9 +24,9 @@ public sealed partial class TransactionManager
         if (!clusterEnabled) return;
 
         bool readOnly = type == LockType.Shared;
-        if (!clusterSession.CheckSingleKeySlotVerify(key, readOnly, respSession.SessionAsking))
+        if (!_clusterSession.CheckSingleKeySlotVerify(key, readOnly, _respSession.SessionAsking))
         {
-            state = TxnState.Aborted;
+            State = TxnState.Aborted;
             return;
         }
     }
@@ -195,10 +195,10 @@ public sealed partial class TransactionManager
         bool success;
         for (int i = 1; i < arg; i++)
         {
-            respSession.GetCommandAsArgSlice(out success);
+            _respSession.GetCommandAsArgSlice(out success);
             if (!success) return -2;
         }
-        ArgSlice key = respSession.GetCommandAsArgSlice(out success);
+        ArgSlice key = _respSession.GetCommandAsArgSlice(out success);
         if (!success) return -2;
         SaveKeyEntryToLock(key, isObject, type);
         SaveKeyArgSlice(key);
@@ -212,7 +212,7 @@ public sealed partial class TransactionManager
     {
         for (int i = 0; i < inputCount; i++)
         {
-            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = _respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, type);
             SaveKeyArgSlice(key);
@@ -227,9 +227,9 @@ public sealed partial class TransactionManager
     {
         for (int i = 0; i < inputCount; i += 2)
         {
-            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = _respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
-            ArgSlice val = respSession.GetCommandAsArgSlice(out success);
+            ArgSlice val = _respSession.GetCommandAsArgSlice(out success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, type);
             SaveKeyArgSlice(key);
@@ -245,7 +245,7 @@ public sealed partial class TransactionManager
     {
         if (inputCount > 0)
         {
-            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = _respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, LockType.Exclusive);
             SaveKeyArgSlice(key);
@@ -253,7 +253,7 @@ public sealed partial class TransactionManager
 
         for (int i = 1; i < inputCount; i++)
         {
-            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = _respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, LockType.Shared);
             SaveKeyArgSlice(key);

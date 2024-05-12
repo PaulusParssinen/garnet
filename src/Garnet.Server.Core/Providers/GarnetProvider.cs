@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Tsavorite;
 
 namespace Garnet.Server;

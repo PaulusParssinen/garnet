@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Settings for max sizes of types

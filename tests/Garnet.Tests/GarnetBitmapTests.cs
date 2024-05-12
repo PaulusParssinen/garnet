@@ -31,9 +31,9 @@ public class GarnetBitmapTests
 
     private ulong ULongRandom()
     {
-        ulong lsb = (ulong)(r.Next());
-        ulong msb = (ulong)(r.Next()) << 32;
-        return (msb | lsb);
+        ulong lsb = (ulong)r.Next();
+        ulong msb = (ulong)r.Next() << 32;
+        return msb | lsb;
     }
 
     private unsafe long ResponseToLong(byte[] response, int offset)
@@ -282,14 +282,14 @@ public class GarnetBitmapTests
         for (int i = start; i < end + 1; i++)
         {
             byte byteVal = bitmap[i];
-            count += (byteVal & 1);
-            count += ((byteVal & 2) >> 1);
-            count += ((byteVal & 4) >> 2);
-            count += ((byteVal & 8) >> 3);
-            count += ((byteVal & 16) >> 4);
-            count += ((byteVal & 32) >> 5);
-            count += ((byteVal & 64) >> 6);
-            count += ((byteVal & 128) >> 7);
+            count += byteVal & 1;
+            count += (byteVal & 2) >> 1;
+            count += (byteVal & 4) >> 2;
+            count += (byteVal & 8) >> 3;
+            count += (byteVal & 16) >> 4;
+            count += (byteVal & 32) >> 5;
+            count += (byteVal & 64) >> 6;
+            count += (byteVal & 128) >> 7;
         }
         return count;
     }
@@ -1101,7 +1101,7 @@ public class GarnetBitmapTests
                     long indexByte = indexBit >> 3;
                     byte bVal = bitmap[indexByte];
                     byte bit = (byte)((bVal & si[i]) > 0 ? 1 : 0);
-                    long or = (long)((long)bit << bI);
+                    long or = (long)bit << bI;
                     value = value | or;
                     bI--;
                 }
@@ -1133,7 +1133,7 @@ public class GarnetBitmapTests
         {
             byteIndex = offset >> 3;
             bit = 7 - (offset & 0x7);
-            byteval = byteIndex < (ulong)p.Length ? (p[byteIndex]) : (ulong)0;
+            byteval = byteIndex < (ulong)p.Length ? p[byteIndex] : (ulong)0;
             bitval = (byteval >> ((byte)bit)) & 1;
             value = (value << 1) | bitval;
             offset++;
@@ -1182,7 +1182,7 @@ public class GarnetBitmapTests
                 //signed
                 expectedValue = GetValueFromBitmap(ref bitmapData, i, j, true);
                 redisValue = GetFromBitmapRedis(ref bitmapData, (ulong)i, (ulong)j, true);
-                returnedValue = (long)(db.Execute("BITFIELD", (RedisKey)key, "get", "i" + j.ToString(), $"{i}"));
+                returnedValue = (long)db.Execute("BITFIELD", (RedisKey)key, "get", "i" + j.ToString(), $"{i}");
                 Assert.AreEqual(expectedValue, redisValue);
                 Assert.AreEqual(expectedValue, returnedValue);
 
@@ -1191,7 +1191,7 @@ public class GarnetBitmapTests
                 {
                     expectedValue = GetValueFromBitmap(ref bitmapData, i, j, false);
                     redisValue = GetFromBitmapRedis(ref bitmapData, (ulong)i, (ulong)j, false);
-                    returnedValue = ((long)db.Execute("BITFIELD", (RedisKey)key, "GET", "u" + j.ToString(), $"{i}"));
+                    returnedValue = (long)db.Execute("BITFIELD", (RedisKey)key, "GET", "u" + j.ToString(), $"{i}");
                     Assert.AreEqual(expectedValue, redisValue);
                     Assert.AreEqual(expectedValue, returnedValue);
                 }
@@ -1296,19 +1296,19 @@ public class GarnetBitmapTests
             int key = r.Next(0, keyCount);
             byte[] currBitmap = bitmapData[key];
             string sKey = key.ToString();
-            int offset = r.Next(0, (bitmapData.Length << 3));
+            int offset = r.Next(0, bitmapData.Length << 3);
             int bitCount = r.Next(1, 65);
 
             //signed
             expectedValue = GetValueFromBitmap(ref currBitmap, offset, bitCount, true);
-            returnedValue = (long)(db.Execute("BITFIELD", (RedisKey)sKey, "get", "i" + bitCount.ToString(), $"{offset}"));
+            returnedValue = (long)db.Execute("BITFIELD", (RedisKey)sKey, "get", "i" + bitCount.ToString(), $"{offset}");
             Assert.AreEqual(expectedValue, returnedValue);
 
             //unsigned
             if (bitCount < 64)
             {
                 expectedValue = GetValueFromBitmap(ref currBitmap, offset, bitCount, false);
-                returnedValue = ((long)db.Execute("BITFIELD", (RedisKey)sKey, "GET", "u" + bitCount.ToString(), $"{offset}"));
+                returnedValue = (long)db.Execute("BITFIELD", (RedisKey)sKey, "GET", "u" + bitCount.ToString(), $"{offset}");
                 Assert.AreEqual(expectedValue, returnedValue);
             }
         }
@@ -1333,7 +1333,7 @@ public class GarnetBitmapTests
         else
         {
             ulong minVal = 0;
-            ulong maxVal = (1UL << bitCount);
+            ulong maxVal = 1UL << bitCount;
 
             ulong value = ULongRandom();
             value = value >> (64 - bitCount);
@@ -1446,12 +1446,12 @@ public class GarnetBitmapTests
             //expectedReturnVal = RandomIntBitRange(bitCount);
             expectedReturnVal = RandomIntBitRange(bitCount, true);
 
-            expectedOldVal = (long)(db.Execute("BITFIELD", (RedisKey)key, "GET", "i" + bitCount.ToString(), $"{offset}"));
+            expectedOldVal = (long)db.Execute("BITFIELD", (RedisKey)key, "GET", "i" + bitCount.ToString(), $"{offset}");
             setSignedBitfield(ref bitmapData, (ulong)offset, (ulong)bitCount, expectedReturnVal);
-            oldVal = (long)(db.Execute("BITFIELD", (RedisKey)key, "set", "i" + bitCount.ToString(), $"{offset}", expectedReturnVal));
+            oldVal = (long)db.Execute("BITFIELD", (RedisKey)key, "set", "i" + bitCount.ToString(), $"{offset}", expectedReturnVal);
             Assert.AreEqual(expectedOldVal, oldVal);
 
-            returnVal = (long)(db.Execute("BITFIELD", (RedisKey)key, "GET", "i" + bitCount.ToString(), $"{offset}"));
+            returnVal = (long)db.Execute("BITFIELD", (RedisKey)key, "GET", "i" + bitCount.ToString(), $"{offset}");
             Assert.AreEqual(expectedReturnVal, returnVal);
 
             expectedBitmap = db.StringGet(key);
@@ -1500,21 +1500,21 @@ public class GarnetBitmapTests
             int key = r.Next(0, keyCount);
             byte[] currBitmap = bitmapData[key];
             string sKey = key.ToString();
-            int offset = r.Next(0, (bitmapData.Length << 3));
+            int offset = r.Next(0, bitmapData.Length << 3);
             int bitCount = r.Next(1, 65);
 
             setNewValue = RandomIntBitRange(bitCount, true);
 
             //signed
             expectedOldValue = GetValueFromBitmap(ref currBitmap, offset, bitCount, true);
-            returnedOldValue = (long)(db.Execute("BITFIELD", (RedisKey)sKey, "get", "i" + bitCount.ToString(), $"{offset}"));
+            returnedOldValue = (long)db.Execute("BITFIELD", (RedisKey)sKey, "get", "i" + bitCount.ToString(), $"{offset}");
             Assert.AreEqual(expectedOldValue, returnedOldValue);
 
             setSignedBitfield(ref currBitmap, (ulong)offset, (ulong)bitCount, setNewValue);
-            returnedOldValue = (long)(db.Execute("BITFIELD", (RedisKey)sKey, "set", "i" + bitCount.ToString(), $"{offset}", setNewValue));
+            returnedOldValue = (long)db.Execute("BITFIELD", (RedisKey)sKey, "set", "i" + bitCount.ToString(), $"{offset}", setNewValue);
             Assert.AreEqual(expectedOldValue, returnedOldValue);
 
-            returnedValue = (long)(db.Execute("BITFIELD", (RedisKey)sKey, "GET", "i" + bitCount.ToString(), $"{offset}"));
+            returnedValue = (long)db.Execute("BITFIELD", (RedisKey)sKey, "GET", "i" + bitCount.ToString(), $"{offset}");
             Assert.AreEqual(setNewValue, returnedValue);
         }
     }
@@ -1531,7 +1531,7 @@ public class GarnetBitmapTests
         {
             case 0://wrap
                 if ((bitCount < 64 && incrBy > maxAdd) || (value >= 0 && incrBy > 0 && incrBy > maxVal) ||
-                    ((bitCount < 64 && incrBy < maxSub) || (value < 0 && incrBy < 0 && incrBy < maxSub)))
+                    (bitCount < 64 && incrBy < maxSub) || (value < 0 && incrBy < 0 && incrBy < maxSub))
                 {
                     ulong signb = 1UL << (bitCount - 1);
                     ulong opA = (ulong)value;
@@ -1545,18 +1545,18 @@ public class GarnetBitmapTests
                     }
                     return ((long)res, true);
                 }
-                return ((value + incrBy), false);
+                return (value + incrBy, false);
             case 1://sat                                   
                 if ((bitCount < 64 && incrBy > maxAdd) || (value >= 0 && incrBy > 0 && incrBy > maxVal))
                     return (maxVal, true);
                 if ((bitCount < 64 && incrBy < maxSub) || (value < 0 && incrBy < 0 && incrBy < maxSub))
                     return (minVal, true);
-                return ((value + incrBy), false);
+                return (value + incrBy, false);
             case 2://fail // detect overflow/underflow do not do anything else
                 if ((bitCount < 64 && incrBy > maxAdd) || (value >= 0 && incrBy > 0 && incrBy > maxVal) ||
-                    ((bitCount < 64 && incrBy < maxSub) || (value < 0 && incrBy < 0 && incrBy < maxSub)))
+                    (bitCount < 64 && incrBy < maxSub) || (value < 0 && incrBy < 0 && incrBy < maxSub))
                     return (0, true);
-                return ((value + incrBy), false);
+                return (value + incrBy, false);
         }
         return (0, true);
     }
@@ -1566,7 +1566,7 @@ public class GarnetBitmapTests
         long signbit = 1L << (bitCount - 1);
         long mask = bitCount == 64 ? -1 : (signbit - 1);
 
-        long result = (value + incrBy);
+        long result = value + incrBy;
         //if operands are both negative possibility for underflow
         //underflow if sign bit is zero
         bool underflow = (result & signbit) == 0 && value < 0 && incrBy < 0;
@@ -1967,7 +1967,7 @@ public class GarnetBitmapTests
             int key = r.Next(0, keyCount);
             byte[] currBitmap = bitmapData[key];
             string sKey = key.ToString();
-            int offset = r.Next(0, (bitmapData.Length << 3));
+            int offset = r.Next(0, bitmapData.Length << 3);
             int bitCount = r.Next(1, 65);
 
             setNewValue = RandomIntBitRange(bitCount, true);
@@ -1987,9 +1987,9 @@ public class GarnetBitmapTests
 
         bool neg = incrBy < 0 ? true : false;
         //get absolute value of given increment
-        ulong absIncrBy = incrBy < 0 ? (ulong)(~incrBy) + 1UL : (ulong)incrBy;
+        ulong absIncrBy = incrBy < 0 ? (ulong)~incrBy + 1UL : (ulong)incrBy;
         //overflow if absolute increment is larger than diff of maxVal and current value
-        bool overflow = (absIncrBy > maxAdd);
+        bool overflow = absIncrBy > maxAdd;
         //underflow if absolute increment bigger than increment and increment is negative
         bool underflow = (absIncrBy > value) && neg;
 

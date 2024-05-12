@@ -59,7 +59,7 @@ public struct RespInputHeader
     internal byte SubId
     {
         get => (byte)((byte)flags & FlagMask);
-        set => flags = (RespInputFlags)(((byte)flags & ~FlagMask) | (byte)value);
+        set => flags = (RespInputFlags)(((byte)flags & ~FlagMask) | value);
     }
 
     internal SortedSetOperation SortedSetOp

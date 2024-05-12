@@ -127,7 +127,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     public long GetPhysicalAddress(long logicalAddress)
     {
         Debug.Assert(IsBlittable, "GetPhysicalAddress requires the values to be blittable");
-        return (long)pointers[logicalAddress >> PageSizeBits] + (logicalAddress & PageSizeMask) * RecordSize;
+        return pointers[logicalAddress >> PageSizeBits] + (logicalAddress & PageSizeMask) * RecordSize;
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     {
         Debug.Assert(index != InvalidAllocationIndex, "Invalid allocation index");
         if (IsBlittable)
-            return ref Unsafe.AsRef<T>((byte*)(pointers[index >> PageSizeBits]) + (index & PageSizeMask) * RecordSize);
+            return ref Unsafe.AsRef<T>((byte*)pointers[index >> PageSizeBits] + (index & PageSizeMask) * RecordSize);
         else
             return ref values[index >> PageSizeBits][index & PageSizeMask];
     }
@@ -152,7 +152,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     {
         Debug.Assert(index != InvalidAllocationIndex, "Invalid allocation index");
         if (IsBlittable)
-            Unsafe.AsRef<T>((byte*)(pointers[index >> PageSizeBits]) + (index & PageSizeMask) * RecordSize) = value;
+            Unsafe.AsRef<T>((byte*)pointers[index >> PageSizeBits] + (index & PageSizeMask) * RecordSize) = value;
         else
             values[index >> PageSizeBits][index & PageSizeMask] = value;
     }
@@ -342,17 +342,17 @@ public sealed class MallocFixedPageSize<T> : IDisposable
                     epoch.Resume();
                 }
 
-                Buffer.MemoryCopy((void*)pointers[i], result.mem.aligned_pointer, writeSize, writeSize);
+                Buffer.MemoryCopy((void*)pointers[i], result.mem.AlignedPointer, writeSize, writeSize);
                 int j = 0;
                 if (i == 0) j += AllocateChunkSize * RecordSize;
                 for (; j < writeSize; j += sizeof(HashBucket))
                 {
-                    skipReadCache((HashBucket*)(result.mem.aligned_pointer + j));
+                    skipReadCache((HashBucket*)(result.mem.AlignedPointer + j));
                 }
 
                 if (prot) epoch.Suspend();
 
-                device.WriteAsync((IntPtr)result.mem.aligned_pointer, offset + numBytesWritten, writeSize, AsyncFlushCallback, result);
+                device.WriteAsync((IntPtr)result.mem.AlignedPointer, offset + numBytesWritten, writeSize, AsyncFlushCallback, result);
             }
             numBytesWritten += writeSize;
         }
@@ -442,12 +442,12 @@ public sealed class MallocFixedPageSize<T> : IDisposable
         recoveryCountdown = new CountdownWrapper(numLevels, isAsync);
 
         numBytesRead = 0;
-        uint alignedPageSize = (uint)PageSize * (uint)RecordSize;
+        uint alignedPageSize = PageSize * (uint)RecordSize;
         uint lastLevelSize = (uint)recordsCountInLastLevel * (uint)RecordSize;
         for (int i = 0; i < numLevels; i++)
         {
             //read a full page
-            uint length = (uint)PageSize * (uint)RecordSize;
+            uint length = PageSize * (uint)RecordSize;
             OverflowPagesReadAsyncResult result = default;
             device.ReadAsync(offset + numBytesRead, pointers[i], length, AsyncPageReadCallback, result);
             numBytesRead += (i == numCompleteLevels) ? lastLevelSize : alignedPageSize;

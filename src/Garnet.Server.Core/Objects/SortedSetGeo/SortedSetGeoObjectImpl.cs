@@ -67,13 +67,13 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             // Is NX or XX, if not nx then use XX
             if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] byteOptions, ref input_currptr, input + length))
                 return;
-            nx = (byteOptions.Length == 2 && (byteOptions[0] == (int)'N' && byteOptions[1] == (int)'X') || (byteOptions[0] == (int)'n' && byteOptions[1] == (int)'x'));
+            nx = byteOptions.Length == 2 && byteOptions[0] == 'N' && byteOptions[1] == 'X' || (byteOptions[0] == 'n' && byteOptions[1] == 'x');
             if (optsCount == 2)
             {
                 // Read CH option
                 if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byteOptions, ref input_currptr, input + length))
                     return;
-                ch = (byteOptions.Length == 2 && (byteOptions[0] == (int)'C' && byteOptions[1] == (int)'H') || (byteOptions[0] == (int)'c' && byteOptions[1] == (int)'h'));
+                ch = byteOptions.Length == 2 && byteOptions[0] == 'C' && byteOptions[1] == 'H' || (byteOptions[0] == 'c' && byteOptions[1] == 'h');
             }
             count -= optsCount;
         }
@@ -243,7 +243,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
                 var distance = server.GeoHash.Distance(lat, lon, cord2.lat, cord2.lon);
 
-                var distanceValue = (units.Length == 1 && (units[0] == (int)'M' || units[0] == (int)'m')) ?
+                var distanceValue = (units.Length == 1 && (units[0] == 'M' || units[0] == 'm')) ?
                                     distance :
                                     server.GeoHash.ConvertMetersToUnits(distance, units);
 
@@ -514,7 +514,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                         while (!RespWriteUtils.WriteBulkString(item.Member, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                        var distanceValue = (byBoxUnits.Length == 1 && (byBoxUnits[0] == (int)'M' || byBoxUnits[0] == (int)'m')) ? item.Distance
+                        var distanceValue = (byBoxUnits.Length == 1 && (byBoxUnits[0] == 'M' || byBoxUnits[0] == 'm')) ? item.Distance
                                             : server.GeoHash.ConvertMetersToUnits(item.Distance, byBoxUnits);
 
                         while (!RespWriteUtils.WriteAsciiBulkString(distanceValue.ToString(CultureInfo.InvariantCulture), ref curr, end))

@@ -68,20 +68,20 @@ internal sealed unsafe class ReceiveCheckpointHandler
             writeCheckpointBufferPool = new SectorAlignedBufferPool(1, (int)device.SectorSize);
 
         long numBytesToWrite = size;
-        numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToWrite = (numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = writeCheckpointBufferPool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = buffer)
         {
-            Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);
+            Buffer.MemoryCopy(bufferRaw, pbuffer.AlignedPointer, size, size);
         }
 
         if (writeCheckpointSemaphore == null) writeCheckpointSemaphore = new(0);
 
         if (segmentId == -1)
-            device.WriteAsync((IntPtr)pbuffer.aligned_pointer, address, (uint)numBytesToWrite, IOCallback, null);
+            device.WriteAsync((IntPtr)pbuffer.AlignedPointer, address, (uint)numBytesToWrite, IOCallback, null);
         else
-            device.WriteAsync((IntPtr)pbuffer.aligned_pointer, segmentId, address, (uint)numBytesToWrite, IOCallback, null);
+            device.WriteAsync((IntPtr)pbuffer.AlignedPointer, segmentId, address, (uint)numBytesToWrite, IOCallback, null);
         writeCheckpointSemaphore.Wait();
 
         pbuffer.Return();

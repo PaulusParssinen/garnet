@@ -231,7 +231,7 @@ public static class Utility
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Is32Bit(long x)
     {
-        return ((ulong)x < 4294967295ul);
+        return (ulong)x < 4294967295ul;
     }
 
     /// <summary>
@@ -324,7 +324,7 @@ public static class Utility
     public static ulong GetCurrentMilliseconds()
     {
         Debug.Assert(Stopwatch.IsHighResolution, "Expected Stopwatch.IsHighResolution to be true");
-        return (ulong)(((double)Stopwatch.GetTimestamp() / Stopwatch.Frequency) * 1000);
+        return (ulong)((double)Stopwatch.GetTimestamp() / Stopwatch.Frequency * 1000);
     }
 
     internal static string GetHashString(long hash)

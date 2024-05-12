@@ -4,7 +4,7 @@
 
 using NUnit.Framework;
 
-namespace Tsavorite.Tests.recovery.sumstore.cntinue;
+namespace Tsavorite.Tests.Recovery.Sumstore.cntinue;
 
 [TestFixture]
 internal class RecoverContinueTests

@@ -9,19 +9,19 @@ namespace Garnet.Server;
 public unsafe partial class BitmapManager
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetBitFieldSecondaryOp(byte* input) => (*(BitFieldCmdArgs*)(input)).secondaryOpCode;
+    private static byte GetBitFieldSecondaryOp(byte* input) => (*(BitFieldCmdArgs*)input).secondaryOpCode;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetBitFieldType(byte* input) => (*(BitFieldCmdArgs*)(input)).typeInfo;
+    private static byte GetBitFieldType(byte* input) => (*(BitFieldCmdArgs*)input).typeInfo;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static long GetBitFieldOffset(byte* input) => (*(BitFieldCmdArgs*)(input)).offset;
+    private static long GetBitFieldOffset(byte* input) => (*(BitFieldCmdArgs*)input).offset;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static long GetBitFieldValue(byte* input) => (*(BitFieldCmdArgs*)(input)).value;
+    private static long GetBitFieldValue(byte* input) => (*(BitFieldCmdArgs*)input).value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetBitFieldOverflowType(byte* input) => (*(BitFieldCmdArgs*)(input)).overflowType;
+    private static byte GetBitFieldOverflowType(byte* input) => (*(BitFieldCmdArgs*)input).overflowType;
 
     /// <summary>
     /// Check if bitmap is large enough to apply bitfield op.
@@ -98,8 +98,8 @@ public unsafe partial class BitmapManager
         //Simple case value is beyond current length
         if (byteIndexStart >= valLen) return 0;
 
-        byte* vend = (value + valLen);
-        byte* curr = (value + byteIndexStart);
+        byte* vend = value + valLen;
+        byte* curr = value + byteIndexStart;
         byte* cend = (value + byteIndexEnd) < vend ? (value + byteIndexEnd) : vend;
 
         if (curr < cend) buf[7] = *curr++;
@@ -110,7 +110,7 @@ public unsafe partial class BitmapManager
         if (curr < cend) buf[2] = *curr++;
         if (curr < cend) buf[1] = *curr++;
         if (curr < cend) buf[0] = *curr++;
-        long returnValue = (*(long*)buf);
+        long returnValue = *(long*)buf;
 
         //prune leading bits
         int _left = (int)(offset - (byteIndexStart << 3));
@@ -123,11 +123,11 @@ public unsafe partial class BitmapManager
         {
             //extract number of bits skipped because of offset and position them at the tail of the partially constructed 64-bit value
             byte _lsb = (byte)(curr < vend ? (*curr) >> (8 - _left) : 0);
-            returnValue |= (long)_lsb;
+            returnValue |= _lsb;
         }
 
         //shift 64 bit value to construct the given number based of bitCount
-        int _right = (64 - bitCount);
+        int _right = 64 - bitCount;
         returnValue = (typeInfo & (byte)BitFieldSign.SIGNED) > 0 ?
             returnValue >> _right :
             (long)(((ulong)returnValue) >> _right);
@@ -147,8 +147,8 @@ public unsafe partial class BitmapManager
             throw new GarnetException("Setting bitfield failed: Size of bitmap smaller than offset provided.");
 
         #region getValue
-        byte* vend = (value + valLen);
-        byte* curr = (value + byteIndexStart);
+        byte* vend = value + valLen;
+        byte* curr = value + byteIndexStart;
         byte* cend = (value + byteIndexEnd) < vend ? (value + byteIndexEnd) : vend;
 
         if (curr < cend) buf[7] = *curr++;
@@ -159,7 +159,7 @@ public unsafe partial class BitmapManager
         if (curr < cend) buf[2] = *curr++;
         if (curr < cend) buf[1] = *curr++;
         if (curr < cend) buf[0] = *curr++;
-        long oldValue = (*(long*)buf);
+        long oldValue = *(long*)buf;
 
         //prune leading bits
         int _left = (int)(offset - (byteIndexStart << 3));
@@ -172,12 +172,12 @@ public unsafe partial class BitmapManager
         if (bitCount > bitOffset)
         {
             byte _lsb = (byte)(curr < vend ? (*curr) >> (8 - _left) : 0);
-            oldValue |= (long)_lsb;
+            oldValue |= _lsb;
         }
 
         //shift with typeInfo in mind
         bool signed = (typeInfo & (byte)BitFieldSign.SIGNED) > 0;
-        int _right = (64 - bitCount);
+        int _right = 64 - bitCount;
         oldValue = signed ?
             oldValue >> _right :
             (long)(((ulong)oldValue) >> _right);
@@ -225,9 +225,9 @@ public unsafe partial class BitmapManager
             mask = ~(mask << _shf);
         }
 
-        ulong oldV = (*(ulong*)buf);
+        ulong oldV = *(ulong*)buf;
         tmp = (oldV & mask) | tmp;
-        curr = (value + byteIndexStart);
+        curr = value + byteIndexStart;
         if (curr < cend) *curr++ = (byte)((tmp >> 56) & 0xFF);
         if (curr < cend) *curr++ = (byte)((tmp >> 48) & 0xFF);
         if (curr < cend) *curr++ = (byte)((tmp >> 40) & 0xFF);
@@ -253,8 +253,8 @@ public unsafe partial class BitmapManager
             throw new GarnetException("Setting bitfield failed: Size of bitmap smaller than offset provided.");
 
         #region getValue
-        byte* vend = (value + valLen);
-        byte* curr = (value + byteIndexStart);
+        byte* vend = value + valLen;
+        byte* curr = value + byteIndexStart;
         byte* cend = (value + byteIndexEnd) < vend ? (value + byteIndexEnd) : vend;
 
         if (curr < cend) buf[7] = *curr++;
@@ -265,7 +265,7 @@ public unsafe partial class BitmapManager
         if (curr < cend) buf[2] = *curr++;
         if (curr < cend) buf[1] = *curr++;
         if (curr < cend) buf[0] = *curr++;
-        long oldValue = (*(long*)buf);
+        long oldValue = *(long*)buf;
 
         //prune leading bits
         int _left = (int)(offset - (byteIndexStart << 3));
@@ -278,12 +278,12 @@ public unsafe partial class BitmapManager
         if (bitCount > bitOffset)
         {
             byte _lsb = (byte)(curr < vend ? (*curr) >> (8 - _left) : 0);
-            oldValue |= (long)_lsb;
+            oldValue |= _lsb;
         }
 
         //shift with typeInfo in mind
         bool signed = (typeInfo & (byte)BitFieldSign.SIGNED) > 0;
-        int _right = (64 - bitCount);
+        int _right = 64 - bitCount;
         oldValue = signed ?
             oldValue >> _right :
             (long)(((ulong)oldValue) >> _right);
@@ -327,9 +327,9 @@ public unsafe partial class BitmapManager
             mask = ~(mask << _shf);
         }
 
-        ulong oldV = (*(ulong*)buf);
+        ulong oldV = *(ulong*)buf;
         tmp = (oldV & mask) | tmp;
-        curr = (value + byteIndexStart);
+        curr = value + byteIndexStart;
         if (curr < cend) *curr++ = (byte)((tmp >> 56) & 0xFF);
         if (curr < cend) *curr++ = (byte)((tmp >> 48) & 0xFF);
         if (curr < cend) *curr++ = (byte)((tmp >> 40) & 0xFF);
@@ -374,9 +374,9 @@ public unsafe partial class BitmapManager
 
         bool neg = incrBy < 0;
         //get absolute value of given increment
-        ulong absIncrBy = incrBy < 0 ? (ulong)(~incrBy) + 1UL : (ulong)incrBy;
+        ulong absIncrBy = incrBy < 0 ? (ulong)~incrBy + 1UL : (ulong)incrBy;
         //overflow if absolute increment is larger than diff of maxVal and current value
-        bool overflow = (absIncrBy > maxAdd);
+        bool overflow = absIncrBy > maxAdd;
         //underflow if absolute increment bigger than increment and increment is negative
         bool underflow = (absIncrBy > value) && neg;
 
@@ -407,7 +407,7 @@ public unsafe partial class BitmapManager
         long signbit = 1L << (bitCount - 1);
         long mask = bitCount == 64 ? -1 : (signbit - 1);
 
-        long result = (value + incrBy);
+        long result = value + incrBy;
         //if operands are both negative possibility for underflow
         //underflow if sign bit is zero
         bool underflow = (result & signbit) == 0 && value < 0 && incrBy < 0;

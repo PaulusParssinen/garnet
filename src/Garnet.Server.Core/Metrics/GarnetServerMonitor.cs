@@ -49,7 +49,7 @@ internal sealed class GarnetServerMonitor
         monitorTaskDelay = opts.MetricsSamplingFrequency * 1000;
         monitor_iterations = 0;
 
-        instant_metrics_period = monitorTaskDelay > 0 ? Math.Max((1000 / monitorTaskDelay), 1) : 0;
+        instant_metrics_period = monitorTaskDelay > 0 ? Math.Max(1000 / monitorTaskDelay, 1) : 0;
         instant_input_net_bytes = 0;
         instant_output_net_bytes = 0;
         instant_commands_processed = 0;
@@ -86,8 +86,8 @@ internal sealed class GarnetServerMonitor
     public string GetAllLocksets()
     {
         string result = "";
-        IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
-        foreach (networking.IMessageConsumer s in sessions)
+        IEnumerable<Networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+        foreach (Networking.IMessageConsumer s in sessions)
         {
             var session = (RespServerSession)s;
             string lockset = session.txnManager.GetLockset();
@@ -129,8 +129,8 @@ internal sealed class GarnetServerMonitor
     private void UpdateAllMetrics(IGarnetServer server)
     {
         //Accumulate metrics from all active sessions
-        IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
-        foreach (networking.IMessageConsumer s in sessions)
+        IEnumerable<Networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+        foreach (Networking.IMessageConsumer s in sessions)
         {
             var session = (RespServerSession)s;
 
@@ -174,9 +174,9 @@ internal sealed class GarnetServerMonitor
             globalMetrics.GlobalSessionMetrics.Reset();
             globalMetrics.HistorySessionMetrics.Reset();
 
-            var garnetServer = ((GarnetServerBase)server);
-            IEnumerable<networking.IMessageConsumer> sessions = garnetServer.ActiveConsumers();
-            foreach (networking.IMessageConsumer s in sessions)
+            var garnetServer = (GarnetServerBase)server;
+            IEnumerable<Networking.IMessageConsumer> sessions = garnetServer.ActiveConsumers();
+            foreach (Networking.IMessageConsumer s in sessions)
             {
                 var session = (RespServerSession)s;
                 session.GetSessionMetrics.Reset();
@@ -204,8 +204,8 @@ internal sealed class GarnetServerMonitor
                 {
                     logger?.LogInformation($"Resetting server-side stats {eventType}");
 
-                    IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
-                    foreach (networking.IMessageConsumer entry in sessions)
+                    IEnumerable<Networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+                    foreach (Networking.IMessageConsumer entry in sessions)
                         ((RespServerSession)entry).ResetLatencyMetrics(eventType);
 
                     rwLock.WriteLock();
@@ -228,8 +228,8 @@ internal sealed class GarnetServerMonitor
     {
         if (opts.LatencyMonitor)
         {
-            IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
-            foreach (networking.IMessageConsumer entry in sessions)
+            IEnumerable<Networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+            foreach (Networking.IMessageConsumer entry in sessions)
                 ((RespServerSession)entry).ResetAllLatencyMetrics();
         }
     }
@@ -249,7 +249,7 @@ internal sealed class GarnetServerMonitor
 
                 monitor_iterations++;
 
-                var garnetServer = ((GarnetServerBase)server);
+                var garnetServer = (GarnetServerBase)server;
                 globalMetrics.TotalConnectionsReceived = garnetServer.get_conn_recv();
                 globalMetrics.TotalConnectionsDisposed = garnetServer.get_conn_disp();
 

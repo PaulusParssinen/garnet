@@ -195,8 +195,8 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
                     memory = hlog.bufferPool.Get(recordSize);
                     unsafe
                     {
-                        Buffer.MemoryCopy((byte*)currentPhysicalAddress, memory.aligned_pointer, recordSize, recordSize);
-                        currentPhysicalAddress = (long)memory.aligned_pointer;
+                        Buffer.MemoryCopy((byte*)currentPhysicalAddress, memory.AlignedPointer, recordSize, recordSize);
+                        currentPhysicalAddress = (long)memory.AlignedPointer;
                     }
                 }
                 finally
@@ -303,7 +303,7 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
 
         if (result.freeBuffer1 != null)
         {
-            hlog.PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.required_bytes, result.page);
+            hlog.PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.RequiredBytes, result.page);
             result.freeBuffer1.Return();
             result.freeBuffer1 = null;
         }

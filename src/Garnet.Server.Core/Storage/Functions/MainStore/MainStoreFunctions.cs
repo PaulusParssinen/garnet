@@ -10,13 +10,13 @@ namespace Garnet.Server;
 /// </summary>
 public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
 {
-    private readonly FunctionsState functionsState;
+    private readonly FunctionsState _functionsState;
 
     /// <summary>
     /// Constructor
     /// </summary>
     internal MainStoreFunctions(FunctionsState functionsState)
     {
-        this.functionsState = functionsState;
+        _functionsState = functionsState;
     }
 }

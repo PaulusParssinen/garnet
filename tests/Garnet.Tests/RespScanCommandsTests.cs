@@ -40,7 +40,7 @@ public class RespScanCommandsTests
         db.StringSet(new RedisKey("keyTwo"), new RedisValue("valuetwo"));
         db.SortedSetAdd("keyThree", new RedisValue("valuethree"), 1, CommandFlags.None);
         RedisResult actualResponse = db.Execute("DBSIZE");
-        Assert.AreEqual(3, ((ulong)actualResponse));
+        Assert.AreEqual(3, (ulong)actualResponse);
     }
 
     [Test]
@@ -252,12 +252,12 @@ public class RespScanCommandsTests
 
         RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(string.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"he**", ((RedisResult[])actualResponse)[0].ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he\\*\\*"]);
         Assert.AreEqual(2, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(string.Equals(@"he\*\*", (((RedisResult[])actualResponse)[0]).ToString()));
-        Assert.IsTrue(string.Equals(@"he\*\*foo", (((RedisResult[])actualResponse)[1]).ToString()));
+        Assert.IsTrue(string.Equals(@"he\*\*", ((RedisResult[])actualResponse)[0].ToString()));
+        Assert.IsTrue(string.Equals(@"he\*\*foo", ((RedisResult[])actualResponse)[1].ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he**"]);
         Assert.AreEqual(4, ((RedisResult[])actualResponse).Length);
@@ -273,7 +273,7 @@ public class RespScanCommandsTests
 
         RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(string.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"he**", ((RedisResult[])actualResponse)[0].ToString()));
 
         actualResponse = db.Execute("KEYS", [@"he\\*\\*"]);
         Assert.AreEqual(0, ((RedisResult[])actualResponse).Length);
@@ -287,7 +287,7 @@ public class RespScanCommandsTests
 
         actualResponse = db.Execute("KEYS", [@"\\\\bar"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
-        Assert.IsTrue(string.Equals(@"\\bar", (((RedisResult[])actualResponse)[0]).ToString()));
+        Assert.IsTrue(string.Equals(@"\\bar", ((RedisResult[])actualResponse)[0].ToString()));
     }
 
 
@@ -298,7 +298,7 @@ public class RespScanCommandsTests
         IDatabase db = redis.GetDatabase(0);
         RedisResult result = db.Execute("SCAN", "0");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out int cursor);
-        RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 0);
     }
@@ -312,7 +312,7 @@ public class RespScanCommandsTests
         db.StringSet(new RedisKey("hello"), new RedisValue("keyvalueone"));
         db.StringSet(new RedisKey("foo"), new RedisValue("keyvaluetwo"));
         RedisResult result = db.Execute("SCAN", "0", "MATCH", "*o*", "COUNT", "1000");
-        RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.True(keysMatch.Contains("foo") && keysMatch.Contains("hello"));
     }
 
@@ -334,7 +334,7 @@ public class RespScanCommandsTests
         {
             RedisResult result = db.Execute("SCAN", cursor.ToString());
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-            RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+            RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
             recordsReturned += keysMatch.Length;
         } while (cursor != 0);
 
@@ -362,7 +362,7 @@ public class RespScanCommandsTests
         {
             RedisResult result = db.Execute("SCAN", cursor.ToString(), "COUNT", count);
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-            RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+            RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
             recordsReturned += keysMatch.Length;
             count = rnd.Next(1, 20);
         } while (recordsReturned < nKeys);
@@ -385,7 +385,7 @@ public class RespScanCommandsTests
         int cursor = 0;
         RedisResult result = db.Execute("SCAN", cursor.ToString(), "MATCH", "*11*", "COUNT", 1000);
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-        RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 11);
     }
@@ -405,7 +405,7 @@ public class RespScanCommandsTests
         int cursor = 0;
         RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-        RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 100);
     }
@@ -440,14 +440,14 @@ public class RespScanCommandsTests
         int cursor = 0;
         RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-        RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 100);
 
         cursor = 0;
         result = db.Execute("SCAN", cursor.ToString(), "TYPE", "zset");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-        keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 10);
         Assert.IsTrue(keysMatch[0].ToString().Equals("sskey:0", StringComparison.OrdinalIgnoreCase));
@@ -455,7 +455,7 @@ public class RespScanCommandsTests
         cursor = 0;
         result = db.Execute("SCAN", cursor.ToString(), "TYPE", "LIST");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-        keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+        keysMatch = (RedisValue[])((RedisResult[])result!)[1];
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 10);
         Assert.IsTrue(keysMatch[0].ToString().Equals("lkey:0", StringComparison.OrdinalIgnoreCase));
@@ -491,7 +491,7 @@ public class RespScanCommandsTests
         {
             RedisResult result = db.Execute("SCAN", cursor.ToString());
             _ = long.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-            RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+            RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
             recordsReturned += keysMatch.Length;
         } while (cursor != 0);
 
@@ -523,7 +523,7 @@ public class RespScanCommandsTests
         {
             RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "HASH", "MATCH", "hs*");
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-            RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+            RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
             recordsReturned += keysMatch.Length;
         } while (cursor != 0);
 
@@ -535,7 +535,7 @@ public class RespScanCommandsTests
         {
             RedisResult result = db.Execute("SCAN", cursor.ToString(), "type", "hash", "match", "hs*");
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
-            RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
+            RedisValue[] keysMatch = (RedisValue[])((RedisResult[])result!)[1];
             recordsReturned += keysMatch.Length;
         } while (cursor != 0);
 

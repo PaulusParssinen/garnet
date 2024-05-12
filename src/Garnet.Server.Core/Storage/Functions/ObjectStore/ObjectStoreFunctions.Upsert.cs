@@ -21,14 +21,14 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     public void PostSingleWriter(ref byte[] key, ref SpanByte input, ref IGarnetObject src, ref IGarnetObject dst, ref GarnetObjectStoreOutput output, ref UpsertInfo upsertInfo, WriteReason reason)
     {
         if (reason != WriteReason.CopyToTail)
-            functionsState.watchVersionMap.IncrementVersion(upsertInfo.KeyHash);
-        if (reason == WriteReason.Upsert && functionsState.appendOnlyFile != null)
+            _functionsState.WatchVersionMap.IncrementVersion(upsertInfo.KeyHash);
+        if (reason == WriteReason.Upsert && _functionsState.AppendOnlyFile != null)
             WriteLogUpsert(ref key, ref input, ref src, upsertInfo.Version, upsertInfo.SessionID);
 
         if (reason == WriteReason.CopyToReadCache)
-            functionsState.objectStoreSizeTracker?.AddReadCacheTrackedSize(MemoryUtils.CalculateKeyValueSize(key, src));
+            _functionsState.ObjectStoreSizeTracker?.AddReadCacheTrackedSize(MemoryUtils.CalculateKeyValueSize(key, src));
         else
-            functionsState.objectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, src));
+            _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, src));
     }
 
     /// <inheritdoc />
@@ -36,10 +36,10 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     {
         dst = src;
         if (!upsertInfo.RecordInfo.Modified)
-            functionsState.watchVersionMap.IncrementVersion(upsertInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+            _functionsState.WatchVersionMap.IncrementVersion(upsertInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
             WriteLogUpsert(ref key, ref input, ref src, upsertInfo.Version, upsertInfo.SessionID);
-        functionsState.objectStoreSizeTracker?.AddTrackedSize(dst.Size - src.Size);
+        _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(dst.Size - src.Size);
         return true;
     }
 }

@@ -70,7 +70,7 @@ public class RespCommandTests
         {
             if (ignoreCommands.Contains(respCommand)) continue;
 
-            Type arrayCommandEnumType = (respCommand) switch
+            Type arrayCommandEnumType = respCommand switch
             {
                 RespCommand.Set => typeof(SetOperation),
                 RespCommand.Hash => typeof(HashOperation),

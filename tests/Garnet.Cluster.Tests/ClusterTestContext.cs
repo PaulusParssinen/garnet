@@ -236,7 +236,7 @@ internal class ClusterTestContext
         if (randomSeed != -1) clusterTestUtils.InitRandom(randomSeed);
         for (int i = 0; i < kvpairCount; i++)
         {
-            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            string key = orderedKeys ? keyOffset++.ToString() : clusterTestUtils.RandomStr(keyLength);
             int value = r.Next();
 
             //Use slotMap
@@ -266,7 +266,7 @@ internal class ClusterTestContext
         if (randomSeed != -1) clusterTestUtils.InitRandom(randomSeed);
         for (int i = 0; i < kvpairCount; i++)
         {
-            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            string key = orderedKeys ? keyOffset++.ToString() : clusterTestUtils.RandomStr(keyLength);
 
             // Use slotMap
             byte[] keyBytes = Encoding.ASCII.GetBytes(key);
@@ -398,7 +398,7 @@ internal class ClusterTestContext
     {
         for (int i = 0; i < numKeys; i++)
         {
-            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            string key = orderedKeys ? keyOffset++.ToString() : clusterTestUtils.RandomStr(keyLength);
             byte[] keyBytes = Encoding.ASCII.GetBytes(key);
             int value = r.Next();
             ResponseState resp = clusterTestUtils.SetKey(primaryIndex, keyBytes, Encoding.ASCII.GetBytes(value.ToString()), out int _, out string _, out int _, logger: logger);

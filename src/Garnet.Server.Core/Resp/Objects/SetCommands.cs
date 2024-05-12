@@ -11,7 +11,7 @@ namespace Garnet.Server;
 /// <summary>
 ///  Set - RESP specific operations
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Session counter of number of Set entries partially done

@@ -25,7 +25,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         else
         {
             byte objectId = (byte)((byte)type - CustomCommandManager.StartOffset);
-            value = functionsState.customObjectCommands[objectId].factory.Create((byte)type);
+            value = _functionsState.CustomObjectCommands[objectId].factory.Create((byte)type);
         }
         value.Operate(ref input, ref output.spanByteAndMemory, out _);
         return true;
@@ -34,15 +34,15 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// <inheritdoc />
     public void PostInitialUpdater(ref byte[] key, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output, ref RMWInfo rmwInfo)
     {
-        functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+        _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
         {
             var header = (RespInputHeader*)input.ToPointer();
             header->SetExpiredFlag();
             WriteLogRMW(ref key, ref input, ref value, rmwInfo.Version, rmwInfo.SessionID);
         }
 
-        functionsState.objectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, value));
+        _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, value));
     }
 
     /// <inheritdoc />
@@ -51,9 +51,9 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         if (InPlaceUpdaterWorker(ref key, ref input, ref value, ref output, ref rmwInfo, out long sizeChange))
         {
             if (!rmwInfo.RecordInfo.Modified)
-                functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
-            if (functionsState.appendOnlyFile != null) WriteLogRMW(ref key, ref input, ref value, rmwInfo.Version, rmwInfo.SessionID);
-            functionsState.objectStoreSizeTracker?.AddTrackedSize(sizeChange);
+                _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+            if (_functionsState.AppendOnlyFile != null) WriteLogRMW(ref key, ref input, ref value, rmwInfo.Version, rmwInfo.SessionID);
+            _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(sizeChange);
             return true;
         }
         return false;
@@ -75,7 +75,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         {
             case GarnetObjectType.Expire:
                 ExpireOption optionType = (ExpireOption)(*(input.ToPointer() + RespInputHeader.Size));
-                bool expiryExists = (value.Expiration > 0);
+                bool expiryExists = value.Expiration > 0;
                 return EvaluateObjectExpireInPlace(optionType, expiryExists, ref input, ref value, ref output);
             case GarnetObjectType.Persist:
                 if (value.Expiration > 0)
@@ -115,12 +115,12 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         oldValue.CopyUpdate(ref oldValue, ref value, rmwInfo.RecordInfo.IsInNewVersion);
 
         var header = (RespInputHeader*)input.ToPointer();
-        functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+        _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
         switch (header->type)
         {
             case GarnetObjectType.Expire:
                 ExpireOption optionType = (ExpireOption)(*(input.ToPointer() + RespInputHeader.Size));
-                bool expiryExists = (value.Expiration > 0);
+                bool expiryExists = value.Expiration > 0;
                 EvaluateObjectExpireInPlace(optionType, expiryExists, ref input, ref value, ref output);
                 break;
             case GarnetObjectType.Persist:
@@ -137,9 +137,9 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
                 break;
         }
 
-        functionsState.objectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, value));
+        _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(MemoryUtils.CalculateKeyValueSize(key, value));
 
-        if (functionsState.appendOnlyFile != null)
+        if (_functionsState.AppendOnlyFile != null)
             WriteLogRMW(ref key, ref input, ref oldValue, rmwInfo.Version, rmwInfo.SessionID);
     }
 }

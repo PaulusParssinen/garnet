@@ -64,7 +64,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             dst.ConvertToHeap();
         }
 
-        dst.Memory = functionsState.memoryPool.Rent(totalSize);
+        dst.Memory = _functionsState.MemoryPool.Rent(totalSize);
         dst.Length = totalSize;
         fixed (byte* ptr = dst.Memory.Memory.Span)
         {
@@ -96,7 +96,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                 dst.ConvertToHeap();
                 dst.Length = value.Length;
-                dst.Memory = functionsState.memoryPool.Rent(value.Length);
+                dst.Memory = _functionsState.MemoryPool.Rent(value.Length);
                 value.AsReadOnlySpanWithMetadata().CopyTo(dst.Memory.Memory.Span);
                 break;
 
@@ -111,7 +111,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                 dst.ConvertToHeap();
                 dst.Length = value.LengthWithoutMetadata;
-                dst.Memory = functionsState.memoryPool.Rent(value.LengthWithoutMetadata);
+                dst.Memory = _functionsState.MemoryPool.Rent(value.LengthWithoutMetadata);
                 value.AsReadOnlySpan().CopyTo(dst.Memory.Memory.Span);
                 break;
 
@@ -138,7 +138,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 IntPtr bitmap = (IntPtr)value.ToPointer();
                 byte* output = dst.SpanByte.ToPointer();
 
-                *(long*)output = (long)bitmap.ToInt64();
+                *(long*)output = bitmap.ToInt64();
                 *(int*)(output + 8) = value.Length;
 
                 return;
@@ -368,7 +368,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
         catch
         {
-            output.SpanByte.AsSpan()[0] = (byte)OperationError.INVALID_TYPE;
+            output.SpanByte.AsSpan()[0] = (byte)OperationError.InvalidType;
             return true;
         }
 
@@ -409,7 +409,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         }
         catch
         {
-            output.SpanByte.AsSpan()[0] = (byte)OperationError.INVALID_TYPE;
+            output.SpanByte.AsSpan()[0] = (byte)OperationError.InvalidType;
             return;
         }
 
@@ -434,14 +434,14 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             if (!NumUtils.TryBytesToLong(length, source, out val))
             {
                 // Signal value is not a valid number
-                output[0] = (byte)OperationError.INVALID_TYPE;
+                output[0] = (byte)OperationError.InvalidType;
                 return false;
             }
         }
         catch
         {
             // Signal value is not a valid number
-            output[0] = (byte)OperationError.INVALID_TYPE;
+            output[0] = (byte)OperationError.InvalidType;
             return false;
         }
         return true;
@@ -458,7 +458,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
         dst.ConvertToHeap();
         dst.Length = resp.Length;
-        dst.Memory = functionsState.memoryPool.Rent(resp.Length);
+        dst.Memory = _functionsState.MemoryPool.Rent(resp.Length);
         resp.CopyTo(dst.Memory.Memory.Span);
     }
 
@@ -475,7 +475,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         //handle resp buffer overflow here
         dst.ConvertToHeap();
         dst.Length = totalLen;
-        dst.Memory = functionsState.memoryPool.Rent(totalLen);
+        dst.Memory = _functionsState.MemoryPool.Rent(totalLen);
         fixed (byte* ptr = dst.Memory.Memory.Span)
         {
             byte* cc = ptr;
@@ -504,7 +504,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// </summary>
     private void WriteLogUpsert(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
 
         //We need this check because when we ingest records from the primary
         //if the input is zero then input overlaps with value so any update to RespInputHeader->flags
@@ -512,7 +512,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         if (input.Length > 0)
             ((RespInputHeader*)input.ToPointer())->flags |= RespInputFlags.Deterministic;
 
-        functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.StoreUpsert, version = version, sessionID = sessionID }, ref key, ref input, ref value, out _);
+        _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.StoreUpsert, Version = version, SessionId = sessionID }, ref key, ref input, ref value, out _);
     }
 
     /// <summary>
@@ -523,11 +523,11 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// </summary>
     private void WriteLogRMW(ref SpanByte key, ref SpanByte input, ref SpanByte value, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
 
         ((RespInputHeader*)input.ToPointer())->flags |= RespInputFlags.Deterministic;
 
-        functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.StoreRMW, version = version, sessionID = sessionID }, ref key, ref input, out _);
+        _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.StoreRMW, Version = version, SessionId = sessionID }, ref key, ref input, out _);
     }
 
     /// <summary>
@@ -537,8 +537,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// </summary>
     private void WriteLogDelete(ref SpanByte key, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
         SpanByte def = default;
-        functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.StoreDelete, version = version, sessionID = sessionID }, ref key, ref def, out _);
+        _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.StoreDelete, Version = version, SessionId = sessionID }, ref key, ref def, out _);
     }
 }

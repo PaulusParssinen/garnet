@@ -3,16 +3,16 @@
 
 using NUnit.Framework;
 
-namespace Tsavorite.Tests.recovery.sumstore;
+namespace Tsavorite.Tests.Recovery.Sumstore;
 
 [TestFixture]
 internal class DeviceTypeRecoveryTests
 {
-    internal const long numUniqueKeys = (1 << 12);
-    internal const long keySpace = (1L << 14);
-    internal const long numOps = (1L << 17);
-    internal const long completePendingInterval = (1L << 10);
-    internal const long checkpointInterval = (1L << 14);
+    internal const long numUniqueKeys = 1 << 12;
+    internal const long keySpace = 1L << 14;
+    internal const long numOps = 1L << 17;
+    internal const long completePendingInterval = 1L << 10;
+    internal const long checkpointInterval = 1L << 14;
 
     private TsavoriteKV<AdId, NumClicks> store;
     private readonly List<Guid> logTokens = new();

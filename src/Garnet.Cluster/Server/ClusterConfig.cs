@@ -352,7 +352,7 @@ internal sealed partial class ClusterConfig
 
     private static void slotBitmapSetBit(ref byte[] bitmap, int pos)
     {
-        int BYTE = (pos / 8);
+        int BYTE = pos / 8;
         int BIT = pos & 7;
         bitmap[BYTE] |= (byte)(1 << BIT);
     }

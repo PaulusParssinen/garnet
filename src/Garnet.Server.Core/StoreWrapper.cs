@@ -375,9 +375,9 @@ public sealed class StoreWrapper
     {
         AofHeader header = new()
         {
-            opType = isMainStore ? AofEntryType.MainStoreCheckpointCommit : AofEntryType.ObjectStoreCheckpointCommit,
-            version = version,
-            sessionID = -1
+            OpType = isMainStore ? AofEntryType.MainStoreCheckpointCommit : AofEntryType.ObjectStoreCheckpointCommit,
+            Version = version,
+            SessionId = -1
         };
         appendOnlyFile?.Enqueue(header, out _);
     }

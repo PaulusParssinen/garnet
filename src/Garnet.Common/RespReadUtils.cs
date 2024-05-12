@@ -24,7 +24,7 @@ public static unsafe class RespReadUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryReadSign(byte* ptr, out bool negative)
     {
-        negative = (*ptr == '-');
+        negative = *ptr == '-';
         return negative || (*ptr == '+');
     }
 
@@ -508,7 +508,7 @@ public static unsafe class RespReadUtils
         }
 
         // Parse contents (needs to be 1 character)
-        result = (*ptr++ == '1');
+        result = *ptr++ == '1';
 
         // Ensure terminator has been received
         if (*(ushort*)ptr != MemoryMarshal.Read<ushort>("\r\n"u8))

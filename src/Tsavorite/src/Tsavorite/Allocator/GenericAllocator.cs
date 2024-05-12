@@ -284,7 +284,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long SnapToLogicalAddressBoundary(ref long logicalAddress)
     {
-        return logicalAddress = ((logicalAddress - Constants.kFirstValidAddress) / RecordSize) * RecordSize + Constants.kFirstValidAddress;
+        return logicalAddress = (logicalAddress - Constants.kFirstValidAddress) / RecordSize * RecordSize + Constants.kFirstValidAddress;
     }
 
     public override long GetPhysicalAddress(long logicalAddress)
@@ -401,7 +401,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         {
             // We're writing only a subset of the page
             start = (int)(asyncResult.fromAddress - (asyncResult.page << LogPageSizeBits));
-            aligned_start = (start / sectorSize) * sectorSize;
+            aligned_start = start / sectorSize * sectorSize;
             end = (int)(asyncResult.untilAddress - (asyncResult.page << LogPageSizeBits));
         }
 
@@ -439,16 +439,16 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                     {
                         handle = new CountdownEvent(1)
                     };
-                    device.ReadAsync(alignedDestinationAddress + (ulong)aligned_start, (IntPtr)buffer.aligned_pointer + aligned_start,
+                    device.ReadAsync(alignedDestinationAddress + (ulong)aligned_start, (IntPtr)buffer.AlignedPointer + aligned_start,
                         (uint)sectorSize, AsyncReadPageCallback, result);
                     result.handle.Wait();
                 }
                 fixed (RecordInfo* pin = &src[0].info)
                 {
                     // Write all the RecordInfos on one operation. This also includes object pointers, but for valid records we will overwrite those below.
-                    Debug.Assert(buffer.aligned_pointer + numBytesToWrite <= (byte*)Unsafe.AsPointer(ref buffer.buffer[0]) + buffer.buffer.Length);
+                    Debug.Assert(buffer.AlignedPointer + numBytesToWrite <= (byte*)Unsafe.AsPointer(ref buffer.Buffer[0]) + buffer.Buffer.Length);
 
-                    Buffer.MemoryCopy((void*)((long)Unsafe.AsPointer(ref src[0]) + start), buffer.aligned_pointer + start,
+                    Buffer.MemoryCopy((void*)((long)Unsafe.AsPointer(ref src[0]) + start), buffer.AlignedPointer + start,
                         numBytesToWrite - start, numBytesToWrite - start);
                 }
             }
@@ -457,9 +457,9 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                 fixed (RecordInfo* pin = &src[0].info)
                 {
                     // Write all the RecordInfos on one operation. This also includes object pointers, but for valid records we will overwrite those below.
-                    Debug.Assert(buffer.aligned_pointer + numBytesToWrite <= (byte*)Unsafe.AsPointer(ref buffer.buffer[0]) + buffer.buffer.Length);
+                    Debug.Assert(buffer.AlignedPointer + numBytesToWrite <= (byte*)Unsafe.AsPointer(ref buffer.Buffer[0]) + buffer.Buffer.Length);
 
-                    Buffer.MemoryCopy((void*)((long)Unsafe.AsPointer(ref src[0]) + aligned_start), buffer.aligned_pointer + aligned_start,
+                    Buffer.MemoryCopy((void*)((long)Unsafe.AsPointer(ref src[0]) + aligned_start), buffer.AlignedPointer + aligned_start,
                         numBytesToWrite - aligned_start, numBytesToWrite - aligned_start);
                 }
             }
@@ -491,7 +491,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
             for (int i = start / RecordSize; i < end / RecordSize; i++)
             {
-                byte* recordPtr = buffer.aligned_pointer + i * RecordSize;
+                byte* recordPtr = buffer.AlignedPointer + i * RecordSize;
 
                 // Retrieve reference to record struct
                 ref Record<Key, Value> record = ref Unsafe.AsRef<Record<Key, Value>>(recordPtr);
@@ -575,7 +575,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                         _objBuffer = bufferPool.Get(memoryStreamTotalLength);
 
                         fixed (void* src_ = ms.GetBuffer())
-                            Buffer.MemoryCopy(src_, _objBuffer.aligned_pointer, memoryStreamTotalLength, memoryStreamActualLength);
+                            Buffer.MemoryCopy(src_, _objBuffer.AlignedPointer, memoryStreamTotalLength, memoryStreamActualLength);
                     }
 
                     // Each address we calculated above is now an offset to objAddr; convert to the actual address.
@@ -599,7 +599,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                         asyncResult.done = new AutoResetEvent(false);
                         Debug.Assert(memoryStreamTotalLength > 0);
                         objlogDevice.WriteAsync(
-                            (IntPtr)_objBuffer.aligned_pointer,
+                            (IntPtr)_objBuffer.AlignedPointer,
                             (int)(alignedDestinationAddress >> LogSegmentSizeBits),
                             (ulong)_objAddr, (uint)_alignedLength, AsyncFlushPartialObjectLogCallback<TContext>, asyncResult);
 
@@ -617,7 +617,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
                             asyncResult.freeBuffer2 = _objBuffer;
                             objlogDevice.WriteAsync(
-                                (IntPtr)_objBuffer.aligned_pointer,
+                                (IntPtr)_objBuffer.AlignedPointer,
                                 (int)(alignedDestinationAddress >> LogSegmentSizeBits),
                                 (ulong)_objAddr, (uint)_alignedLength, callback, asyncResult);
                         }
@@ -637,7 +637,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             uint alignedNumBytesToWrite = (uint)((numBytesToWrite + (sectorSize - 1)) & ~(sectorSize - 1));
 
             // Finally write the hlog page
-            device.WriteAsync((IntPtr)buffer.aligned_pointer + aligned_start, alignedDestinationAddress + (ulong)aligned_start,
+            device.WriteAsync((IntPtr)buffer.AlignedPointer + aligned_start, alignedDestinationAddress + (ulong)aligned_start,
                 alignedNumBytesToWrite, callback, asyncResult);
         }
         finally
@@ -665,11 +665,11 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         DeviceIOCompletionCallback callback, PageAsyncReadResult<TContext> asyncResult, IDevice device, IDevice objlogDevice)
     {
         asyncResult.freeBuffer1 = bufferPool.Get((int)aligned_read_length);
-        asyncResult.freeBuffer1.required_bytes = (int)aligned_read_length;
+        asyncResult.freeBuffer1.RequiredBytes = (int)aligned_read_length;
 
         if (!(KeyHasObjects() || ValueHasObjects()))
         {
-            device.ReadAsync(alignedSourceAddress, (IntPtr)asyncResult.freeBuffer1.aligned_pointer,
+            device.ReadAsync(alignedSourceAddress, (IntPtr)asyncResult.freeBuffer1.AlignedPointer,
                 aligned_read_length, callback, asyncResult);
             return;
         }
@@ -683,7 +683,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         }
         asyncResult.objlogDevice = objlogDevice;
 
-        device.ReadAsync(alignedSourceAddress, (IntPtr)asyncResult.freeBuffer1.aligned_pointer,
+        device.ReadAsync(alignedSourceAddress, (IntPtr)asyncResult.freeBuffer1.AlignedPointer,
                 aligned_read_length, AsyncReadPageWithObjectsCallback<TContext>, asyncResult);
     }
 
@@ -727,8 +727,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         // Deserialize all objects until untilptr
         if (result.resumePtr < result.untilPtr)
         {
-            MemoryStream ms = new(result.freeBuffer2.buffer);
-            ms.Seek(result.freeBuffer2.offset, SeekOrigin.Begin);
+            MemoryStream ms = new(result.freeBuffer2.Buffer);
+            ms.Seek(result.freeBuffer2.Offset, SeekOrigin.Begin);
             Deserialize(result.freeBuffer1.GetValidPointer(), result.resumePtr, result.untilPtr, src, ms);
             ms.Dispose();
 
@@ -764,7 +764,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         result.objlogDevice.ReadAsync(
             (int)((result.page - result.offset) >> (LogSegmentSizeBits - LogPageSizeBits)),
             (ulong)startptr,
-            (IntPtr)objBuffer.aligned_pointer, (uint)alignedLength, AsyncReadPageWithObjectsCallback<TContext>, result);
+            (IntPtr)objBuffer.AlignedPointer, (uint)alignedLength, AsyncReadPageWithObjectsCallback<TContext>, result);
     }
 
     /// <summary>
@@ -774,15 +774,15 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     protected override void AsyncReadRecordObjectsToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, AsyncIOContext<Key, Value> context, SectorAlignedMemory result = default)
     {
         ulong fileOffset = (ulong)(AlignedPageSizeBytes * (fromLogical >> LogPageSizeBits) + (fromLogical & PageSizeMask));
-        ulong alignedFileOffset = (ulong)(((long)fileOffset / sectorSize) * sectorSize);
+        ulong alignedFileOffset = (ulong)((long)fileOffset / sectorSize * sectorSize);
 
         uint alignedReadLength = (uint)((long)fileOffset + numBytes - (long)alignedFileOffset);
         alignedReadLength = (uint)((alignedReadLength + (sectorSize - 1)) & ~(sectorSize - 1));
 
         SectorAlignedMemory record = bufferPool.Get((int)alignedReadLength);
-        record.valid_offset = (int)(fileOffset - alignedFileOffset);
-        record.available_bytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
-        record.required_bytes = numBytes;
+        record.ValidOffset = (int)(fileOffset - alignedFileOffset);
+        record.AvailableBytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
+        record.RequiredBytes = numBytes;
 
         var asyncResult = default(AsyncGetFromDiskResult<AsyncIOContext<Key, Value>>);
         asyncResult.context = context;
@@ -791,7 +791,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         objectLogDevice.ReadAsync(
             (int)(context.logicalAddress >> LogSegmentSizeBits),
             alignedFileOffset,
-            (IntPtr)asyncResult.context.objBuffer.aligned_pointer,
+            (IntPtr)asyncResult.context.objBuffer.AlignedPointer,
             alignedReadLength,
             callback,
             asyncResult);
@@ -842,7 +842,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
             ulong offsetInFile = (ulong)(AlignedPageSizeBytes * readPage);
             uint readLength = (uint)AlignedPageSizeBytes;
-            long adjustedUntilAddress = (AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask));
+            long adjustedUntilAddress = AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask);
 
             if (adjustedUntilAddress > 0 && ((adjustedUntilAddress - (long)offsetInFile) < PageSize))
             {
@@ -1051,8 +1051,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         }
 
         // Parse the key and value objects
-        MemoryStream ms = new MemoryStream(ctx.objBuffer.buffer);
-        ms.Seek(ctx.objBuffer.offset + ctx.objBuffer.valid_offset, SeekOrigin.Begin);
+        MemoryStream ms = new MemoryStream(ctx.objBuffer.Buffer);
+        ms.Seek(ctx.objBuffer.Offset + ctx.objBuffer.ValidOffset, SeekOrigin.Begin);
 
         if (KeyHasObjects())
         {

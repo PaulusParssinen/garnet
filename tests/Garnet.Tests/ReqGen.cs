@@ -133,7 +133,7 @@ public unsafe class ReqGen
         *curr++ = (byte)'\r';
         *curr++ = (byte)'\n';
 
-        for (int i = 0; i < data.Length; i++) *curr++ = (byte)data[i];
+        for (int i = 0; i < data.Length; i++) *curr++ = data[i];
         *curr++ = (byte)'\r';
         *curr++ = (byte)'\n';
     }

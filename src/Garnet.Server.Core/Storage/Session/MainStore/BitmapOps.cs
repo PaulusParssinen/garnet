@@ -20,7 +20,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(long) + sizeof(byte);
-        byte* input = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* input = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
 
         //initialize the input variable
         byte* pcurr = input;
@@ -36,7 +36,7 @@ internal sealed partial class StorageSession : IDisposable
         pcurr += sizeof(long);
 
         //bit value
-        *(byte*)(pcurr) = bit ? (byte)0x1 : (byte)0x0;
+        *pcurr = bit ? (byte)0x1 : (byte)0x0;
 
         SpanByteAndMemory output = new(null);
         SpanByte keySp = key.SpanByte;
@@ -54,7 +54,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(long);
-        byte* input = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* input = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
 
         //initialize the input variable
         byte* pcurr = input;
@@ -126,10 +126,10 @@ internal sealed partial class StorageSession : IDisposable
 
         //TODO: Reenable transaction
         bool createTransaction = false;
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
             createTransaction = true;
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             txnManager.SaveKeyEntryToLock(keys[0], false, LockType.Exclusive);
             for (int i = 1; i < keys.Length; i++)
                 txnManager.SaveKeyEntryToLock(keys[i], false, LockType.Shared);
@@ -143,7 +143,7 @@ internal sealed partial class StorageSession : IDisposable
         {
             uc.BeginUnsafe();
         readFromScratch:
-            long localHeadAddress = HeadAddress;
+            long localHeadAddress = _headAddress;
             int srcKeyOffset = 0;
 
             for (int i = 1; i < keys.Length; i++)
@@ -161,7 +161,7 @@ internal sealed partial class StorageSession : IDisposable
                     continue;
 
                 byte* outputBitmapPtr = outputBitmap.SpanByte.ToPointer();
-                byte* localSrcBitmapPtr = (byte*)((IntPtr)(*(long*)outputBitmapPtr));
+                byte* localSrcBitmapPtr = (byte*)(IntPtr)(*(long*)outputBitmapPtr);
                 int len = *(int*)(outputBitmapPtr + 8);
 
                 srcBitmapStartPtrs[srcKeyOffset] = localSrcBitmapPtr;
@@ -172,18 +172,18 @@ internal sealed partial class StorageSession : IDisposable
             }
 
             #region performBitop
-            sectorAlignedMemoryBitmap ??= new SectorAlignedMemory(bitmapBufferSize + sectorAlignedMemoryPoolAlignment, sectorAlignedMemoryPoolAlignment);
-            dstBitmapPtr = sectorAlignedMemoryBitmap.GetValidPointer() + sectorAlignedMemoryPoolAlignment;
-            if (maxBitmapLen + sectorAlignedMemoryPoolAlignment > bitmapBufferSize)
+            _sectorAlignedMemoryBitmap ??= new SectorAlignedMemory(bitmapBufferSize + SectorAlignedMemoryPoolAlignment, SectorAlignedMemoryPoolAlignment);
+            dstBitmapPtr = _sectorAlignedMemoryBitmap.GetValidPointer() + SectorAlignedMemoryPoolAlignment;
+            if (maxBitmapLen + SectorAlignedMemoryPoolAlignment > bitmapBufferSize)
             {
                 do
                 {
                     bitmapBufferSize <<= 1;
-                } while (maxBitmapLen + sectorAlignedMemoryPoolAlignment > bitmapBufferSize);
+                } while (maxBitmapLen + SectorAlignedMemoryPoolAlignment > bitmapBufferSize);
 
-                sectorAlignedMemoryBitmap.Dispose();
-                sectorAlignedMemoryBitmap = new SectorAlignedMemory(bitmapBufferSize + sectorAlignedMemoryPoolAlignment, sectorAlignedMemoryPoolAlignment);
-                dstBitmapPtr = sectorAlignedMemoryBitmap.GetValidPointer() + sectorAlignedMemoryPoolAlignment;
+                _sectorAlignedMemoryBitmap.Dispose();
+                _sectorAlignedMemoryBitmap = new SectorAlignedMemory(bitmapBufferSize + SectorAlignedMemoryPoolAlignment, SectorAlignedMemoryPoolAlignment);
+                dstBitmapPtr = _sectorAlignedMemoryBitmap.GetValidPointer() + SectorAlignedMemoryPoolAlignment;
             }
 
             //1. Multi-way bitmap merge
@@ -195,7 +195,7 @@ internal sealed partial class StorageSession : IDisposable
                 SpanByte dstKey = keys[0].SpanByte;
                 byte* valPtr = dstBitmapPtr;
                 valPtr -= sizeof(int);
-                *(int*)valPtr = (int)maxBitmapLen;
+                *(int*)valPtr = maxBitmapLen;
                 status = SET(ref dstKey, ref Unsafe.AsRef<SpanByte>(valPtr), ref uc);
             }
         }
@@ -230,7 +230,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(long) + sizeof(long) + sizeof(byte);
-        byte* input = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* input = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
 
         //initialize the input variable
         byte* pcurr = input;
@@ -240,9 +240,9 @@ internal sealed partial class StorageSession : IDisposable
         (*(RespInputHeader*)pcurr).cmd = RespCommand.BITCOUNT;
         (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
-        *(long*)(pcurr) = start;
+        *(long*)pcurr = start;
         pcurr += sizeof(long);
-        *(long*)(pcurr) = end;
+        *(long*)pcurr = end;
         pcurr += sizeof(long);
         *pcurr = (byte)(useBitInterval ? 1 : 0);
 
@@ -271,7 +271,7 @@ internal sealed partial class StorageSession : IDisposable
          where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
         int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(byte) + sizeof(byte) + sizeof(long) + sizeof(long) + sizeof(byte);
-        byte* input = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* input = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
         result = new();
         SpanByte keySp = key.SpanByte;
 
@@ -279,8 +279,8 @@ internal sealed partial class StorageSession : IDisposable
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
 
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.BITFIELD;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.BITFIELD;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
 
         for (int i = 0; i < commandArguments.Count; i++)
@@ -288,7 +288,7 @@ internal sealed partial class StorageSession : IDisposable
             logger?.LogInformation($"BITFIELD > " +
                 $"[" + $"SECONDARY-OP: {(RespCommand)commandArguments[i].secondaryOpCode}, " +
                 $"SIGN: {((commandArguments[i].typeInfo & (byte)BitFieldSign.SIGNED) > 0 ? BitFieldSign.SIGNED : BitFieldSign.UNSIGNED)}, " +
-                $"BITCOUNT: {(commandArguments[i].typeInfo & 0x7F)}, " +
+                $"BITCOUNT: {commandArguments[i].typeInfo & 0x7F}, " +
                 $"OFFSET: {commandArguments[i].offset}, " +
                 $"VALUE: {commandArguments[i].value}, " +
                 $"OVERFLOW: {(BitFieldOverflow)commandArguments[i].overflowType}]");

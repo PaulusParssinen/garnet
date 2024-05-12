@@ -9,23 +9,23 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - Transaction commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// MULTI
     /// </summary>
     private bool NetworkMULTI()
     {
-        if (txnManager.state != TxnState.None)
+        if (txnManager.State != TxnState.None)
         {
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_NESTED_MULTI, ref dcurr, dend))
                 SendAndReset();
             txnManager.Abort();
             return true;
         }
-        txnManager.txnStartHead = readHead;
-        txnManager.state = TxnState.Started;
-        txnManager.operationCntTxn = 0;
+        txnManager.TxnStartHead = readHead;
+        txnManager.State = TxnState.Started;
+        txnManager.OperationCntTxn = 0;
         //Keep track of ptr for key verification when cluster mode is enabled
         txnManager.saveKeyRecvBufferPtr = recvBufferPtr;
 
@@ -37,14 +37,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     private bool NetworkEXEC()
     {
         // pass over the EXEC in buffer during execution
-        if (txnManager.state == TxnState.Running)
+        if (txnManager.State == TxnState.Running)
         {
             txnManager.Commit();
             return true;
 
         }
         // Abort and reset the transaction 
-        else if (txnManager.state == TxnState.Aborted)
+        else if (txnManager.State == TxnState.Aborted)
         {
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_EXEC_ABORT, ref dcurr, dend))
                 SendAndReset();
@@ -52,17 +52,17 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return true;
         }
         // start running transaction and setting readHead to first operation
-        else if (txnManager.state == TxnState.Started)
+        else if (txnManager.State == TxnState.Started)
         {
             int _origReadHead = readHead;
-            readHead = txnManager.txnStartHead;
+            readHead = txnManager.TxnStartHead;
 
             txnManager.GetKeysForValidation(recvBufferPtr, out ArgSlice[] keys, out int keyCount, out bool readOnly);
             if (NetworkKeyArraySlotVerify(ref keys, readOnly, keyCount))
             {
                 logger?.LogWarning("Failed CheckClusterTxnKeys");
                 txnManager.Reset(false);
-                txnManager.watchContainer.Reset();
+                txnManager.WatchContainer.Reset();
                 readHead = _origReadHead;
                 return true;
             }
@@ -71,7 +71,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             if (startTxn)
             {
-                while (!RespWriteUtils.WriteArrayLength(txnManager.operationCntTxn, ref dcurr, dend))
+                while (!RespWriteUtils.WriteArrayLength(txnManager.OperationCntTxn, ref dcurr, dend))
                     SendAndReset();
             }
             else
@@ -111,10 +111,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // Check if input is valid and abort if necessary
         // NOTE: Negative arity means it's an expected minimum of args. Positive means exact.
         int arity = commandInfo.Arity > 0 ? commandInfo.Arity - 1 : commandInfo.Arity + 1;
-        bool invalidNumArgs = arity > 0 ? count != (arity) : count < -arity;
+        bool invalidNumArgs = arity > 0 ? count != arity : count < -arity;
 
         // Watch not allowed during TXN
-        bool isWatch = (commandInfo.Command == RespCommand.WATCH || commandInfo.Command == RespCommand.WATCHMS || commandInfo.Command == RespCommand.WATCHOS);
+        bool isWatch = commandInfo.Command == RespCommand.WATCH || commandInfo.Command == RespCommand.WATCHMS || commandInfo.Command == RespCommand.WATCHOS;
 
         if (invalidNumArgs || isWatch)
         {
@@ -169,7 +169,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_QUEUED, ref dcurr, dend))
             SendAndReset();
 
-        txnManager.operationCntTxn++;
+        txnManager.OperationCntTxn++;
         return true;
     }
 
@@ -178,7 +178,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// </summary>
     private bool NetworkDISCARD()
     {
-        if (txnManager.state == TxnState.None)
+        if (txnManager.State == TxnState.None)
         {
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_DISCARD_WO_MULTI, ref dcurr, dend))
                 SendAndReset();
@@ -231,9 +231,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// </summary>
     private bool NetworkUNWATCH()
     {
-        if (txnManager.state == TxnState.None)
+        if (txnManager.State == TxnState.None)
         {
-            txnManager.watchContainer.Reset();
+            txnManager.WatchContainer.Reset();
         }
         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
             SendAndReset();

@@ -11,9 +11,9 @@ public enum OperationError : byte
     /// <summary>
     /// Operation on data type succeeded
     /// </summary>
-    SUCCESS,
+    Success,
     /// <summary>
     /// Operation failed due to incompatible type
     /// </summary>
-    INVALID_TYPE
+    InvalidType
 }

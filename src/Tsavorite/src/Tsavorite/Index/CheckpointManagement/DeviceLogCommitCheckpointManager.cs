@@ -434,16 +434,16 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
             bufferPool = new SectorAlignedBufferPool(1, (int)device.SectorSize);
 
         long numBytesToRead = size;
-        numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToRead = (numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToRead);
-        device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
+        device.ReadAsync(address, (IntPtr)pbuffer.AlignedPointer,
             (uint)numBytesToRead, IOCallback, null);
         semaphore.Wait();
 
         buffer = new byte[numBytesToRead];
         fixed (byte* bufferRaw = buffer)
-            Buffer.MemoryCopy(pbuffer.aligned_pointer, bufferRaw, numBytesToRead, numBytesToRead);
+            Buffer.MemoryCopy(pbuffer.AlignedPointer, bufferRaw, numBytesToRead, numBytesToRead);
         pbuffer.Return();
     }
 
@@ -456,15 +456,15 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
             bufferPool = new SectorAlignedBufferPool(1, (int)device.SectorSize);
 
         long numBytesToWrite = size;
-        numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToWrite = (numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = buffer)
         {
-            Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);
+            Buffer.MemoryCopy(bufferRaw, pbuffer.AlignedPointer, size, size);
         }
 
-        device.WriteAsync((IntPtr)pbuffer.aligned_pointer, address, (uint)numBytesToWrite, IOCallback, null);
+        device.WriteAsync((IntPtr)pbuffer.AlignedPointer, address, (uint)numBytesToWrite, IOCallback, null);
         semaphore.Wait();
 
         pbuffer.Return();

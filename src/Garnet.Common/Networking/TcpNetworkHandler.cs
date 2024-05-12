@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Net.Sockets;
-using Garnet.networking;
+using Garnet.Networking;
 using Microsoft.Extensions.Logging;
 
 namespace Garnet.Common;

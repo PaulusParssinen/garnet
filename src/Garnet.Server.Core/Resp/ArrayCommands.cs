@@ -14,7 +14,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - array commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private int opsDone = 0;
     private int keysDeleted = 0;
@@ -391,8 +391,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 args = new RegisterTxnArgs();
             }
-            else if (readPathsOnly || (tokenSpan.SequenceEqual(CmdStrings.SRC) ||
-                                       tokenSpan.SequenceEqual(CmdStrings.src)))
+            else if (readPathsOnly || tokenSpan.SequenceEqual(CmdStrings.SRC) ||
+                                       tokenSpan.SequenceEqual(CmdStrings.src))
             {
                 // If first token is not a cmdType and no other sub-command is previously defined, command is malformed
                 if (classNameToRegisterArgs.Count == 0)

@@ -465,7 +465,7 @@ internal class RevivificationSpanByteTests
             if (value.Length == 0)
             {
                 Assert.AreEqual(expectedUsedValueLength, rmwInfo.UsedValueLength);   // for the length header
-                Assert.AreEqual(SpanByteAllocator.kRecordAlignment, rmwInfo.FullValueLength); // This should be the "added record for Delete" case, so a "default" value
+                Assert.AreEqual(SpanByteAllocator.RecordAlignment, rmwInfo.FullValueLength); // This should be the "added record for Delete" case, so a "default" value
             }
             else
             {
@@ -487,7 +487,7 @@ internal class RevivificationSpanByteTests
             if (newValue.Length == 0)
             {
                 Assert.AreEqual(sizeof(int), rmwInfo.UsedValueLength);   // for the length header
-                Assert.AreEqual(SpanByteAllocator.kRecordAlignment, rmwInfo.FullValueLength); // This should be the "added record for Delete" case, so a "default" value
+                Assert.AreEqual(SpanByteAllocator.RecordAlignment, rmwInfo.FullValueLength); // This should be the "added record for Delete" case, so a "default" value
             }
             else
             {
@@ -588,7 +588,7 @@ internal class RevivificationSpanByteTests
 
     private static int RoundUpSpanByteFullValueLength(int dataLength) => RoundupTotalSizeFullValue(sizeof(int) + dataLength);
 
-    internal static int RoundupTotalSizeFullValue(int length) => (length + SpanByteAllocator.kRecordAlignment - 1) & (~(SpanByteAllocator.kRecordAlignment - 1));
+    internal static int RoundupTotalSizeFullValue(int length) => (length + SpanByteAllocator.RecordAlignment - 1) & (~(SpanByteAllocator.RecordAlignment - 1));
 
     private static int RoundUpSpanByteUsedLength(int dataLength) => RoundUp(SpanByteTotalSize(dataLength), sizeof(int));
 

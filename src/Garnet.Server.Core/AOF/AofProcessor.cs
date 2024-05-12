@@ -4,7 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Microsoft.Extensions.Logging;
 using Tsavorite;
 
@@ -71,8 +71,8 @@ public sealed unsafe partial class AofProcessor
 
         respServerSession = new RespServerSession(null, replayAofStoreWrapper, null);
 
-        session = respServerSession.storageSession.session;
-        objectStoreSession = respServerSession.storageSession.objectStoreSession;
+        session = respServerSession.storageSession.Session;
+        objectStoreSession = respServerSession.storageSession.ObjectStoreSession;
 
         inflightTxns = new Dictionary<int, List<byte[]>>();
         buffer = new byte[BufferSizeUtils.ServerBufferSize(new MaxSizeSettings())];
@@ -151,32 +151,32 @@ public sealed unsafe partial class AofProcessor
     {
         AofHeader header = *(AofHeader*)ptr;
 
-        if (inflightTxns.ContainsKey(header.sessionID))
+        if (inflightTxns.ContainsKey(header.SessionId))
         {
-            switch (header.opType)
+            switch (header.OpType)
             {
                 case AofEntryType.TxnAbort:
-                    inflightTxns[header.sessionID].Clear();
-                    inflightTxns.Remove(header.sessionID);
+                    inflightTxns[header.SessionId].Clear();
+                    inflightTxns.Remove(header.SessionId);
                     break;
                 case AofEntryType.TxnCommit:
-                    ProcessTxn(inflightTxns[header.sessionID]);
-                    inflightTxns[header.sessionID].Clear();
-                    inflightTxns.Remove(header.sessionID);
+                    ProcessTxn(inflightTxns[header.SessionId]);
+                    inflightTxns[header.SessionId].Clear();
+                    inflightTxns.Remove(header.SessionId);
                     break;
                 case AofEntryType.StoredProcedure:
-                    throw new GarnetException($"Unexpected AOF header operation type {header.opType} within transaction");
+                    throw new GarnetException($"Unexpected AOF header operation type {header.OpType} within transaction");
                 default:
-                    inflightTxns[header.sessionID].Add(record ?? new ReadOnlySpan<byte>(ptr, length).ToArray());
+                    inflightTxns[header.SessionId].Add(record ?? new ReadOnlySpan<byte>(ptr, length).ToArray());
                     break;
             }
             return;
         }
 
-        switch (header.opType)
+        switch (header.OpType)
         {
             case AofEntryType.TxnStart:
-                inflightTxns[header.sessionID] = new List<byte[]>();
+                inflightTxns[header.SessionId] = new List<byte[]>();
                 break;
             case AofEntryType.TxnAbort:
             case AofEntryType.TxnCommit:
@@ -187,14 +187,14 @@ public sealed unsafe partial class AofProcessor
             case AofEntryType.MainStoreCheckpointCommit:
                 if (asReplica)
                 {
-                    if (header.version > storeWrapper.store.CurrentVersion)
+                    if (header.Version > storeWrapper.store.CurrentVersion)
                         storeWrapper.TakeCheckpoint(false, StoreType.Main, logger);
                 }
                 break;
             case AofEntryType.ObjectStoreCheckpointCommit:
                 if (asReplica)
                 {
-                    if (header.version > storeWrapper.objectStore.CurrentVersion)
+                    if (header.Version > storeWrapper.objectStore.CurrentVersion)
                         storeWrapper.TakeCheckpoint(false, StoreType.Object, logger);
                 }
                 break;
@@ -224,7 +224,7 @@ public sealed unsafe partial class AofProcessor
         // Skips versions that were part of checkpoint
         if (SkipRecord(header)) return false;
 
-        switch (header.opType)
+        switch (header.OpType)
         {
             case AofEntryType.StoreUpsert:
                 StoreUpsert(session, entryPtr);
@@ -246,10 +246,10 @@ public sealed unsafe partial class AofProcessor
                 break;
             case AofEntryType.StoredProcedure:
                 ref SpanByte input = ref Unsafe.AsRef<SpanByte>(entryPtr + sizeof(AofHeader));
-                respServerSession.RunTransactionProc(header.type, new ArgSlice(ref input), ref output);
+                respServerSession.RunTransactionProc(header.Type, new ArgSlice(ref input), ref output);
                 break;
             default:
-                throw new GarnetException($"Unknown AOF header operation type {header.opType}");
+                throw new GarnetException($"Unknown AOF header operation type {header.OpType}");
         }
         return true;
     }
@@ -324,12 +324,12 @@ public sealed unsafe partial class AofProcessor
     /// </summary>
     private bool SkipRecord(AofHeader header)
     {
-        AofStoreType storeType = ToAofStoreType(header.opType);
+        AofStoreType storeType = ToAofStoreType(header.OpType);
 
         return storeType switch
         {
-            AofStoreType.MainStoreType => header.version <= storeWrapper.store.CurrentVersion - 1,
-            AofStoreType.ObjectStoreType => header.version <= storeWrapper.objectStore.CurrentVersion - 1,
+            AofStoreType.MainStoreType => header.Version <= storeWrapper.store.CurrentVersion - 1,
+            AofStoreType.ObjectStoreType => header.Version <= storeWrapper.objectStore.CurrentVersion - 1,
             AofStoreType.TxnType => false,
             AofStoreType.ReplicationType => false,
             AofStoreType.CheckpointType => false,

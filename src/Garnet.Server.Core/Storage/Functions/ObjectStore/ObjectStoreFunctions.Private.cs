@@ -19,7 +19,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// </summary>
     private void WriteLogUpsert(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
         var header = (RespInputHeader*)input.ToPointer();
         header->flags |= RespInputFlags.Deterministic;
         byte[] valueBytes = GarnetObjectSerializer.Serialize(value);
@@ -29,7 +29,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
             {
                 var keySB = SpanByte.FromPinnedPointer(ptr, key.Length);
                 var valSB = SpanByte.FromPinnedPointer(valPtr, valueBytes.Length);
-                functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.ObjectStoreUpsert, version = version, sessionID = sessionID }, ref keySB, ref input, ref valSB, out _);
+                _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.ObjectStoreUpsert, Version = version, SessionId = sessionID }, ref keySB, ref input, ref valSB, out _);
             }
         }
     }
@@ -42,14 +42,14 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// </summary>
     private void WriteLogRMW(ref byte[] key, ref SpanByte input, ref IGarnetObject value, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
         var header = (RespInputHeader*)input.ToPointer();
         header->flags |= RespInputFlags.Deterministic;
 
         fixed (byte* ptr = key)
         {
             var keySB = SpanByte.FromPinnedPointer(ptr, key.Length);
-            functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.ObjectStoreRMW, version = version, sessionID = sessionID }, ref keySB, ref input, out _);
+            _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.ObjectStoreRMW, Version = version, SessionId = sessionID }, ref keySB, ref input, out _);
         }
     }
 
@@ -60,12 +60,12 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// </summary>
     private void WriteLogDelete(ref byte[] key, long version, int sessionID)
     {
-        if (functionsState.StoredProcMode) return;
+        if (_functionsState.StoredProcMode) return;
         fixed (byte* ptr = key)
         {
             var keySB = SpanByte.FromPinnedPointer(ptr, key.Length);
             SpanByte valSB = default;
-            functionsState.appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.ObjectStoreDelete, version = version, sessionID = sessionID }, ref keySB, ref valSB, out _);
+            _functionsState.AppendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.ObjectStoreDelete, Version = version, SessionId = sessionID }, ref keySB, ref valSB, out _);
         }
     }
 
@@ -90,7 +90,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         {
             byte* cc = ptr;
             *cc++ = (byte)':';
-            NumUtils.LongToBytes(number, (int)integerLen, ref cc);
+            NumUtils.LongToBytes(number, integerLen, ref cc);
             *cc++ = (byte)'\r';
             *cc++ = (byte)'\n';
         }

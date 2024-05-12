@@ -24,7 +24,7 @@ internal class RedisBooleanTypeConverter : TypeConverter
 
     public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
     {
-        if (value != null && (value is not bool && value is not string))
+        if (value != null && value is not bool && value is not string)
             throw new NotSupportedException();
 
         switch (value)

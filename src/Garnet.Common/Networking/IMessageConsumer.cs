@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Interface for consumers of messages (from networks), such as sessions

@@ -4,7 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Header for message batch (Little Endian server)

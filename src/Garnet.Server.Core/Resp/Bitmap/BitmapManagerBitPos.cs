@@ -19,7 +19,7 @@ public unsafe partial class BitmapManager
     {
         Debug.Assert(startBitOffset >= 0 && startBitOffset <= 8);
         Debug.Assert(endBitOffset >= 0 && endBitOffset <= 8);
-        bool bflag = (bSetVal == 0);
+        bool bflag = bSetVal == 0;
         long mask = bflag ? -1 : 0;
 
         int leftBitIndex = 1 << (8 - startBitOffset);
@@ -28,7 +28,7 @@ public unsafe partial class BitmapManager
         // Create extraction mask
         long extract = leftBitIndex - rightBitIndex;
 
-        long payload = (long)(value & extract) << 56;
+        long payload = (value & extract) << 56;
         // Trim leading bits
         payload = payload << startBitOffset;
 
@@ -49,9 +49,9 @@ public unsafe partial class BitmapManager
     /// <param name="offset">Bit offset in bitmap.</param>
     private static long BitPosIndexBitSearch(byte* value, byte bSetVal, long offset = 0)
     {
-        bool bflag = (bSetVal == 0);
+        bool bflag = bSetVal == 0;
         long mask = bflag ? -1 : 0;
-        long startByteOffset = (offset / 8);
+        long startByteOffset = offset / 8;
         int bitOffset = (int)(offset & 7);
 
         long payload = (long)value[startByteOffset] << 56;
@@ -81,7 +81,7 @@ public unsafe partial class BitmapManager
         //1 byte: setVal
         //4 byte: startOffset    // offset are byte indices not bits, therefore int is sufficient because max will be at most offset >> 3
         //4 byte: endOffset            
-        byte bSetVal = *(input);
+        byte bSetVal = *input;
         long startOffset = *(long*)(input + sizeof(byte));
         long endOffset = *(long*)(input + sizeof(byte) + sizeof(long));
         byte offsetType = *(input + sizeof(byte) + sizeof(long) * 2);
@@ -105,8 +105,8 @@ public unsafe partial class BitmapManager
             startOffset = startOffset < 0 ? ProcessNegativeOffset(startOffset, valLen * 8) : startOffset;
             endOffset = endOffset < 0 ? ProcessNegativeOffset(endOffset, valLen * 8) : endOffset;
 
-            long startByte = (startOffset / 8);
-            long endByte = (endOffset / 8);
+            long startByte = startOffset / 8;
+            long endByte = endOffset / 8;
             if (startByte == endByte)
             {
                 // Search only inside single byte for pos
@@ -143,9 +143,9 @@ public unsafe partial class BitmapManager
     private static long BitPosByte(byte* value, byte bSetVal, long startOffset, long endOffset)
     {
         // Mask set to look for 0 or 1 depending on clear/set flag
-        bool bflag = (bSetVal == 0);
+        bool bflag = bSetVal == 0;
         long mask = bflag ? -1 : 0;
-        long len = (endOffset - startOffset) + 1;
+        long len = endOffset - startOffset + 1;
         long remainder = len & 7;
         byte* curr = value + startOffset;
         byte* end = curr + (len - remainder);
@@ -153,12 +153,12 @@ public unsafe partial class BitmapManager
         // Search for first word not matching mask.
         while (curr < end)
         {
-            long v = *(long*)(curr);
+            long v = *(long*)curr;
             if (v != mask) break;
             curr += 8;
         }
 
-        long pos = (((long)(curr - value)) << 3);
+        long pos = curr - value << 3;
 
         long payload = 0;
         // Adjust end so we can retrieve word
@@ -172,7 +172,7 @@ public unsafe partial class BitmapManager
         if (curr + 4 < end) payload |= (long)curr[4] << 24;
         if (curr + 5 < end) payload |= (long)curr[5] << 16;
         if (curr + 6 < end) payload |= (long)curr[6] << 8;
-        if (curr + 7 < end) payload |= (long)curr[7];
+        if (curr + 7 < end) payload |= curr[7];
 
         // Transform to count leading zeros
         payload = (bSetVal == 0) ? ~payload : payload;

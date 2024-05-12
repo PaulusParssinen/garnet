@@ -23,7 +23,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         {
             int valueLength = value.LengthWithoutMetadata;
             (IMemoryOwner<byte> Memory, int Length) outp = (dst.Memory, 0);
-            bool ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
+            bool ret = _functionsState.CustomCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
             Debug.Assert(valueLength <= value.LengthWithoutMetadata);
             dst.Memory = outp.Memory;
             dst.Length = outp.Length;
@@ -53,7 +53,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         {
             int valueLength = value.LengthWithoutMetadata;
             (IMemoryOwner<byte> Memory, int Length) outp = (dst.Memory, 0);
-            bool ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
+            bool ret = _functionsState.CustomCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
             Debug.Assert(valueLength <= value.LengthWithoutMetadata);
             dst.Memory = outp.Memory;
             dst.Length = outp.Length;

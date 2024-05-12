@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Garnet.networking;
+using Garnet.Networking;
 
 namespace Garnet.Common;
 

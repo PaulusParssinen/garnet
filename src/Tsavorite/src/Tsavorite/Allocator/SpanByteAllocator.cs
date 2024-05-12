@@ -4,6 +4,9 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+
+using Tsavorite.Device;
+
 using static Tsavorite.Utility;
 
 namespace Tsavorite;
@@ -11,29 +14,29 @@ namespace Tsavorite;
 // Allocator for SpanByte, possibly with a Blittable Key or Value.
 internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByte>
 {
-    public const int kRecordAlignment = 8; // RecordInfo has a long field, so it should be aligned to 8-bytes
+    public const int RecordAlignment = 8; // RecordInfo has a long field, so it should be aligned to 8-bytes
 
     // Circular buffer definition
-    private readonly byte[][] values;
-    private readonly long[] pointers;
-    private readonly long* nativePointers;
+    private readonly byte[][] _values;
+    private readonly long[] _pointers;
+    private readonly long* _nativePointers;
 
-    private readonly OverflowPool<PageUnit> overflowPagePool;
+    private readonly OverflowPool<PageUnit> _overflowPagePool;
 
     public SpanByteAllocator(LogSettings settings, ITsavoriteEqualityComparer<SpanByte> comparer, Action<long, long> evictCallback = null, LightEpoch epoch = null, Action<CommitInfo> flushCallback = null, ILogger logger = null)
         : base(settings, comparer, evictCallback, epoch, flushCallback, logger)
     {
-        overflowPagePool = new OverflowPool<PageUnit>(4, p => { });
+        _overflowPagePool = new OverflowPool<PageUnit>(4, p => { });
 
         if (BufferSize > 0)
         {
-            values = new byte[BufferSize][];
-            pointers = GC.AllocateArray<long>(BufferSize, true);
-            nativePointers = (long*)Unsafe.AsPointer(ref pointers[0]);
+            _values = new byte[BufferSize][];
+            _pointers = GC.AllocateArray<long>(BufferSize, true);
+            _nativePointers = (long*)Unsafe.AsPointer(ref _pointers[0]);
         }
     }
 
-    internal override int OverflowPageCount => overflowPagePool.Count;
+    internal override int OverflowPageCount => _overflowPagePool.Count;
 
     public override void Reset()
     {
@@ -47,15 +50,15 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     private void ReturnPage(int index)
     {
         Debug.Assert(index < BufferSize);
-        if (values[index] != null)
+        if (_values[index] != null)
         {
-            overflowPagePool.TryAdd(new PageUnit
+            _overflowPagePool.TryAdd(new PageUnit
             {
-                pointer = pointers[index],
-                value = values[index]
+                pointer = _pointers[index],
+                value = _values[index]
             });
-            values[index] = null;
-            pointers[index] = 0;
+            _values[index] = null;
+            _pointers[index] = 0;
             Interlocked.Decrement(ref AllocatedPageCount);
         }
     }
@@ -86,7 +89,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     private long ValueOffset(long physicalAddress) => KeyOffset(physicalAddress) + AlignedKeySize(physicalAddress);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int AlignedKeySize(long physicalAddress) => RoundUp(KeySize(physicalAddress), kRecordAlignment);
+    private int AlignedKeySize(long physicalAddress) => RoundUp(KeySize(physicalAddress), RecordAlignment);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int KeySize(long physicalAddress) => (*(SpanByte*)KeyOffset(physicalAddress)).TotalSize;
@@ -112,15 +115,15 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
             valueLen += *(int*)(ValueOffset(physicalAddress) + RoundUp(valueLen, sizeof(int)));
 
         int size = RecordInfo.GetLength() + AlignedKeySize(physicalAddress) + valueLen;
-        return (size, RoundUp(size, kRecordAlignment));
+        return (size, RoundUp(size, RecordAlignment));
     }
 
     public override (int actualSize, int allocatedSize, int keySize) GetRMWCopyDestinationRecordSize<Input, TsavoriteSession>(ref SpanByte key, ref Input input, ref SpanByte value, ref RecordInfo recordInfo, TsavoriteSession tsavoriteSession)
     {
         // Used by RMW to determine the length of copy destination (taking Input into account), so does not need to get filler length.
         int keySize = key.TotalSize;
-        int size = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWModifiedValueLength(ref value, ref input);
-        return (size, RoundUp(size, kRecordAlignment), keySize);
+        int size = RecordInfo.GetLength() + RoundUp(keySize, RecordAlignment) + tsavoriteSession.GetRMWModifiedValueLength(ref value, ref input);
+        return (size, RoundUp(size, RecordAlignment), keySize);
     }
 
     public override int GetRequiredRecordSize(long physicalAddress, int availableBytes)
@@ -150,26 +153,26 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
         // Now we know the full record length.
         reqBytes = RecordInfo.GetLength() + AlignedKeySize(physicalAddress) + valueLen;
-        reqBytes = RoundUp(reqBytes, kRecordAlignment);
+        reqBytes = RoundUp(reqBytes, RecordAlignment);
         return reqBytes;
     }
 
-    public override int GetAverageRecordSize() => RecordInfo.GetLength() + (RoundUp(FieldInitialLength, kRecordAlignment) * 2);
+    public override int GetAverageRecordSize() => RecordInfo.GetLength() + (RoundUp(FieldInitialLength, RecordAlignment) * 2);
 
     public override int GetFixedRecordSize() => GetAverageRecordSize();
 
     public override (int actualSize, int allocatedSize, int keySize) GetRMWInitialRecordSize<TInput, TsavoriteSession>(ref SpanByte key, ref TInput input, TsavoriteSession tsavoriteSession)
     {
         int keySize = key.TotalSize;
-        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWInitialValueLength(ref input);
-        return (actualSize, RoundUp(actualSize, kRecordAlignment), keySize);
+        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, RecordAlignment) + tsavoriteSession.GetRMWInitialValueLength(ref input);
+        return (actualSize, RoundUp(actualSize, RecordAlignment), keySize);
     }
 
     public override (int actualSize, int allocatedSize, int keySize) GetRecordSize(ref SpanByte key, ref SpanByte value)
     {
         int keySize = key.TotalSize;
-        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + value.TotalSize;
-        return (actualSize, RoundUp(actualSize, kRecordAlignment), keySize);
+        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, RecordAlignment) + value.TotalSize;
+        return (actualSize, RoundUp(actualSize, RecordAlignment), keySize);
     }
 
     public override void SerializeKey(ref SpanByte src, long physicalAddress) => src.CopyTo((byte*)KeyOffset(physicalAddress));
@@ -182,7 +185,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     public override void Dispose()
     {
         base.Dispose();
-        overflowPagePool.Dispose();
+        _overflowPagePool.Dispose();
     }
 
     public override AddressInfo* GetKeyAddressInfo(long physicalAddress)
@@ -204,10 +207,10 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     {
         IncrementAllocatedPageCount();
 
-        if (overflowPagePool.TryGet(out PageUnit item))
+        if (_overflowPagePool.TryGet(out PageUnit item))
         {
-            pointers[index] = item.pointer;
-            values[index] = item.value;
+            _pointers[index] = item.pointer;
+            _values[index] = item.value;
             return;
         }
 
@@ -215,8 +218,8 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
         byte[] tmp = GC.AllocateArray<byte>(adjustedSize, true);
         long p = (long)Unsafe.AsPointer(ref tmp[0]);
-        pointers[index] = (p + (sectorSize - 1)) & ~((long)sectorSize - 1);
-        values[index] = tmp;
+        _pointers[index] = (p + (sectorSize - 1)) & ~((long)sectorSize - 1);
+        _values[index] = tmp;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -227,14 +230,14 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
         // Index of page within the circular buffer
         int pageIndex = (int)((logicalAddress >> LogPageSizeBits) & (BufferSize - 1));
-        return *(nativePointers + pageIndex) + offset;
+        return *(_nativePointers + pageIndex) + offset;
     }
 
-    internal override bool IsAllocated(int pageIndex) => values[pageIndex] != null;
+    internal override bool IsAllocated(int pageIndex) => _values[pageIndex] != null;
 
     protected override void WriteAsync<TContext>(long flushPage, DeviceIOCompletionCallback callback, PageAsyncFlushResult<TContext> asyncResult)
     {
-        WriteAsync((IntPtr)pointers[flushPage % BufferSize],
+        WriteAsync((IntPtr)_pointers[flushPage % BufferSize],
                 (ulong)(AlignedPageSizeBytes * flushPage),
                 (uint)AlignedPageSizeBytes,
                 callback,
@@ -248,7 +251,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
         VerifyCompatibleSectorSize(device);
         int alignedPageSize = (pageSize + (sectorSize - 1)) & ~(sectorSize - 1);
 
-        WriteAsync((IntPtr)pointers[flushPage % BufferSize],
+        WriteAsync((IntPtr)_pointers[flushPage % BufferSize],
                     (ulong)(AlignedPageSizeBytes * (flushPage - startPage)),
                     (uint)alignedPageSize, callback, asyncResult,
                     device);
@@ -266,12 +269,12 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     internal override void ClearPage(long page, int offset)
     {
         if (offset == 0)
-            Array.Clear(values[page % BufferSize], offset, values[page % BufferSize].Length - offset);
+            Array.Clear(_values[page % BufferSize], offset, _values[page % BufferSize].Length - offset);
         else
         {
             // Adjust array offset for cache alignment
-            offset += (int)(pointers[page % BufferSize] - (long)Unsafe.AsPointer(ref values[page % BufferSize][0]));
-            Array.Clear(values[page % BufferSize], offset, values[page % BufferSize].Length - offset);
+            offset += (int)(_pointers[page % BufferSize] - (long)Unsafe.AsPointer(ref _values[page % BufferSize][0]));
+            Array.Clear(_values[page % BufferSize], offset, _values[page % BufferSize].Length - offset);
         }
     }
 
@@ -287,15 +290,15 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     /// </summary>
     internal override void DeleteFromMemory()
     {
-        for (int i = 0; i < values.Length; i++)
-            values[i] = null;
+        for (int i = 0; i < _values.Length; i++)
+            _values[i] = null;
     }
 
     protected override void ReadAsync<TContext>(
         ulong alignedSourceAddress, int destinationPageIndex, uint aligned_read_length,
         DeviceIOCompletionCallback callback, PageAsyncReadResult<TContext> asyncResult, IDevice device, IDevice objlogDevice)
     {
-        device.ReadAsync(alignedSourceAddress, (IntPtr)pointers[destinationPageIndex],
+        device.ReadAsync(alignedSourceAddress, (IntPtr)_pointers[destinationPageIndex],
             aligned_read_length, callback, asyncResult);
     }
 
@@ -416,7 +419,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
             ulong offsetInFile = (ulong)(AlignedPageSizeBytes * readPage);
 
             uint readLength = (uint)AlignedPageSizeBytes;
-            long adjustedUntilAddress = (AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask));
+            long adjustedUntilAddress = AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask);
 
             if (adjustedUntilAddress > 0 && ((adjustedUntilAddress - (long)offsetInFile) < PageSize))
             {

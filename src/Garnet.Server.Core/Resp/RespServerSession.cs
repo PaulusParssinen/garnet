@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Garnet.Common;
 using Garnet.Common.Parsing;
-using Garnet.networking;
+using Garnet.Networking;
 using Garnet.Server.ACL;
 using Garnet.Server.Auth;
 using Microsoft.Extensions.Logging;
@@ -22,7 +22,7 @@ using LockableGarnetApi = GarnetApi<LockableContext<SpanByte, SpanByte, SpanByte
 /// <summary>
 /// RESP server session
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private readonly GarnetSessionMetrics sessionMetrics;
     private readonly GarnetLatencyMetricsSession LatencyMetrics;
@@ -117,8 +117,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // Create storage session and API
         storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
 
-        basicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
-        lockableGarnetApi = new LockableGarnetApi(storageSession, storageSession.lockableContext, storageSession.objectStoreLockableContext);
+        basicGarnetApi = new BasicGarnetApi(storageSession, storageSession.BasicContext, storageSession.ObjectStoreBasicContext);
+        lockableGarnetApi = new LockableGarnetApi(storageSession, storageSession.LockableContext, storageSession.ObjectStoreLockableContext);
 
         this.storeWrapper = storeWrapper;
         this.subscribeBroker = subscribeBroker;
@@ -284,9 +284,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             if (cmd != RespCommand.INVALID)
             {
-                if (txnManager.state != TxnState.None)
+                if (txnManager.State != TxnState.None)
                 {
-                    if (txnManager.state == TxnState.Running)
+                    if (txnManager.State == TxnState.Running)
                     {
                         success = ProcessBasicCommands(cmd, subcmd, count, ptr, ref lockableGarnetApi);
                     }

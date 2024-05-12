@@ -369,12 +369,12 @@ internal abstract partial class AllocatorBase<Key, Value>
             // We are on the first page so must account for BeginAddress.
             if (offset < BeginAddress)
                 return logicalAddress = BeginAddress;
-            recordStartOffset = (int)(((offset - BeginAddress) / recordSize) * recordSize + BeginAddress);
+            recordStartOffset = (int)((offset - BeginAddress) / recordSize * recordSize + BeginAddress);
         }
         else
         {
             // Not the first page, so just find the highest recordStartOffset <= offset.
-            recordStartOffset = (offset / recordSize) * recordSize;
+            recordStartOffset = offset / recordSize * recordSize;
         }
 
         // If there is not enough room for a full record, advance logicalAddress to the next page start.

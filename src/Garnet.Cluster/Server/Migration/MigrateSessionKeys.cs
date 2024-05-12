@@ -40,7 +40,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             *(int*)pcurr = inputSize - sizeof(int);
             pcurr += sizeof(int);
             // 1. Header
-            ((RespInputHeader*)(pcurr))->SetHeader(RespCommandAccessor.MIGRATE, 0);
+            ((RespInputHeader*)pcurr)->SetHeader(RespCommandAccessor.MIGRATE, 0);
 
             byte* bufPtr = buffer.GetValidPointer();
             byte* bufPtrEnd = bufPtr + bufferSize;

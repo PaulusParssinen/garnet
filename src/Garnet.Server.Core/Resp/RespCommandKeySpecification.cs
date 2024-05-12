@@ -475,7 +475,7 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
 
                 switch (typeDiscriminator)
                 {
-                    case (nameof(BeginSearchIndex)):
+                    case nameof(BeginSearchIndex):
                         switch (propertyName)
                         {
                             case nameof(BeginSearchIndex.Index):
@@ -484,7 +484,7 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
                         }
 
                         break;
-                    case (nameof(BeginSearchKeyword)):
+                    case nameof(BeginSearchKeyword):
                         switch (propertyName)
                         {
                             case nameof(BeginSearchKeyword.Keyword):
@@ -496,7 +496,7 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
                         }
 
                         break;
-                    case (nameof(FindKeysRange)):
+                    case nameof(FindKeysRange):
                         switch (propertyName)
                         {
                             case nameof(FindKeysRange.LastKey):
@@ -510,7 +510,7 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
                                 break;
                         }
                         break;
-                    case (nameof(FindKeysKeyNum)):
+                    case nameof(FindKeysKeyNum):
                         switch (propertyName)
                         {
                             case nameof(FindKeysKeyNum.KeyNumIdx):

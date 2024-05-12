@@ -8,7 +8,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
 
     /// <summary>

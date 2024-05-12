@@ -69,7 +69,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -120,7 +120,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 100; i++)
         {
-            values[i] = ($"val-{i + 1}");
+            values[i] = $"val-{i + 1}";
         }
 
         for (int j = 0; j < 25; j++)
@@ -169,7 +169,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -202,7 +202,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -232,7 +232,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -279,8 +279,8 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i += 2)
         {
-            values[i] = ("val_" + i.ToString());
-            values[i + 1] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
+            values[i + 1] = "val_" + i.ToString();
 
         }
         long nAdded = db.ListRightPush(key, values);
@@ -322,7 +322,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -367,7 +367,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
@@ -400,7 +400,7 @@ internal class RespListTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
-            values[i] = ("val_" + i.ToString());
+            values[i] = "val_" + i.ToString();
         }
         long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);

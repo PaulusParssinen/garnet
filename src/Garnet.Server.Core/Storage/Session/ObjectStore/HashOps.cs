@@ -26,7 +26,7 @@ internal sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, field, value);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, field, value);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -56,7 +56,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Hash;
         rmwInput->header.flags = 0;
         rmwInput->header.HashOp = HashOperation.HSET;
@@ -67,11 +67,11 @@ internal sealed partial class StorageSession : IDisposable
         int inputLength = sizeof(ObjectInputHeader);
         foreach ((ArgSlice field, ArgSlice value) pair in elements)
         {
-            ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, pair.field, pair.value);
+            ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, pair.field, pair.value);
             inputLength += tmp.Length;
         }
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         GarnetStatus status = RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
         itemsDoneCount = output.opsDone;
@@ -98,7 +98,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Hash;
         rmwInput->header.flags = 0;
         rmwInput->header.HashOp = HashOperation.HDEL;
@@ -109,11 +109,11 @@ internal sealed partial class StorageSession : IDisposable
         int inputLength = sizeof(ObjectInputHeader);
         foreach (ArgSlice field in fields)
         {
-            ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, field);
+            ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, field);
             inputLength += tmp.Length;
         }
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         GarnetStatus status = RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
         itemsDoneCount = output.opsDone;
@@ -152,7 +152,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in input buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Hash;
         rmwInput->header.flags = 0;
         rmwInput->header.HashOp = fields == default ? HashOperation.HGETALL : HashOperation.HGET;
@@ -166,12 +166,12 @@ internal sealed partial class StorageSession : IDisposable
         {
             foreach (ArgSlice field in fields)
             {
-                ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, field);
+                ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, field);
                 inputLength += tmp.Length;
             }
         }
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
 
         GarnetStatus status = ReadObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);
@@ -194,7 +194,7 @@ internal sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -220,7 +220,7 @@ internal sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -249,7 +249,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in input buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Hash;
         rmwInput->header.flags = 0;
         rmwInput->header.HashOp = HashOperation.HRANDFIELD;
@@ -258,7 +258,7 @@ internal sealed partial class StorageSession : IDisposable
 
         int inputLength = sizeof(ObjectInputHeader);
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
 
@@ -285,7 +285,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in input buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Hash;
         rmwInput->header.flags = 0;
         rmwInput->header.HashOp = HashOperation.HRANDFIELD;
@@ -304,7 +304,7 @@ internal sealed partial class StorageSession : IDisposable
         {
             countArgSlice = new ArgSlice(countPtr, countBytes.Length);
         }
-        ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, countArgSlice);
+        ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, countArgSlice);
         inputLength += tmp.Length;
 
         //write withvalues
@@ -313,10 +313,10 @@ internal sealed partial class StorageSession : IDisposable
         {
             withValuesArgSlice = new ArgSlice(withValuesPtr, withValuesBytes.Length);
         }
-        tmp = scratchBufferManager.FormatScratchAsResp(0, withValuesArgSlice);
+        tmp = ScratchBufferManager.FormatScratchAsResp(0, withValuesArgSlice);
         inputLength += tmp.Length;
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
         GarnetStatus status = ReadObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);
@@ -347,7 +347,7 @@ internal sealed partial class StorageSession : IDisposable
         // Prepare header in input buffer
         // Header + ObjectScanCountLimit
         int inputSize = ObjectInputHeader.Size + sizeof(int);
-        byte* rmwInput = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* rmwInput = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
         ((ObjectInputHeader*)rmwInput)->header.type = GarnetObjectType.Hash;
         ((ObjectInputHeader*)rmwInput)->header.flags = 0;
         ((ObjectInputHeader*)rmwInput)->header.HashOp = HashOperation.HSCAN;
@@ -358,7 +358,7 @@ internal sealed partial class StorageSession : IDisposable
         rmwInput += ObjectInputHeader.Size;
 
         // Object Input Limit
-        (*(int*)rmwInput) = ObjectScanCountLimit;
+        *(int*)rmwInput = ObjectScanCountLimit;
         int inputLength = sizeof(ObjectInputHeader) + sizeof(int);
 
         ArgSlice tmp;
@@ -368,7 +368,7 @@ internal sealed partial class StorageSession : IDisposable
         byte[] matchPatternValue = Encoding.ASCII.GetBytes(match.Trim());
         fixed (byte* matchKeywordPtr = matchKeywordBytes, matchPatterPtr = matchPatternValue)
         {
-            tmp = scratchBufferManager.FormatScratchAsResp(0, new ArgSlice(matchKeywordPtr, matchKeywordBytes.Length),
+            tmp = ScratchBufferManager.FormatScratchAsResp(0, new ArgSlice(matchKeywordPtr, matchKeywordBytes.Length),
                         new ArgSlice(matchPatterPtr, matchPatternValue.Length));
         }
         inputLength += tmp.Length;
@@ -378,12 +378,12 @@ internal sealed partial class StorageSession : IDisposable
         byte[] countBytes = Encoding.ASCII.GetBytes(count.ToString());
         fixed (byte* countPtr = countKeywordBytes, countValuePtr = countBytes)
         {
-            tmp = scratchBufferManager.FormatScratchAsResp(0, new ArgSlice(countPtr, countKeywordBytes.Length),
+            tmp = ScratchBufferManager.FormatScratchAsResp(0, new ArgSlice(countPtr, countKeywordBytes.Length),
                       new ArgSlice(countValuePtr, countBytes.Length));
         }
         inputLength += tmp.Length;
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
         GarnetStatus status = ReadObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);

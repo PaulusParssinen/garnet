@@ -5,7 +5,7 @@ using Garnet.Common;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private bool ProcessInfoCommand(int count)
     {

@@ -16,7 +16,7 @@ public static class GlobUtils
     {
         static byte ToLowerAscii(byte value)
         {
-            if ((uint)(value - 'A') <= (uint)('Z' - 'A')) // Is in [A-Z]
+            if ((uint)(value - 'A') <= 'Z' - 'A') // Is in [A-Z]
                 value = (byte)(value | 0x20);
             return value;
         }

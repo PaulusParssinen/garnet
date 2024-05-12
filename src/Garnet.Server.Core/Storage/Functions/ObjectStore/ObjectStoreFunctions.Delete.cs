@@ -18,8 +18,8 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     public void PostSingleDeleter(ref byte[] key, ref DeleteInfo deleteInfo)
     {
         if (!deleteInfo.RecordInfo.Modified)
-            functionsState.watchVersionMap.IncrementVersion(deleteInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+            _functionsState.WatchVersionMap.IncrementVersion(deleteInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
             WriteLogDelete(ref key, deleteInfo.Version, deleteInfo.SessionID);
     }
 
@@ -27,10 +27,10 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     public bool ConcurrentDeleter(ref byte[] key, ref IGarnetObject value, ref DeleteInfo deleteInfo, ref RecordInfo recordInfo)
     {
         if (!deleteInfo.RecordInfo.Modified)
-            functionsState.watchVersionMap.IncrementVersion(deleteInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+            _functionsState.WatchVersionMap.IncrementVersion(deleteInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
             WriteLogDelete(ref key, deleteInfo.Version, deleteInfo.SessionID);
-        functionsState.objectStoreSizeTracker?.AddTrackedSize(-value.Size);
+        _functionsState.ObjectStoreSizeTracker?.AddTrackedSize(-value.Size);
         return true;
     }
 }

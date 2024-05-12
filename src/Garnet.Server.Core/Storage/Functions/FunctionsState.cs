@@ -11,24 +11,30 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed class FunctionsState
 {
-    public readonly TsavoriteLog appendOnlyFile;
-    public readonly CustomCommand[] customCommands;
-    public readonly CustomObjectCommandWrapper[] customObjectCommands;
-    public readonly WatchVersionMap watchVersionMap;
-    public readonly MemoryPool<byte> memoryPool;
-    public readonly CacheSizeTracker objectStoreSizeTracker;
-    public readonly GarnetObjectSerializer garnetObjectSerializer;
-    public bool StoredProcMode;
+    public TsavoriteLog AppendOnlyFile { get; }
+    public CustomCommand[] CustomCommands { get; }
+    public CustomObjectCommandWrapper[] CustomObjectCommands { get; }
+    public WatchVersionMap WatchVersionMap { get; }
+    public MemoryPool<byte> MemoryPool { get; }
+    public CacheSizeTracker ObjectStoreSizeTracker { get; }
+    public GarnetObjectSerializer GarnetObjectSerializer { get; }
+    public bool StoredProcMode { get; set;  }
 
-    public FunctionsState(TsavoriteLog appendOnlyFile, WatchVersionMap watchVersionMap, CustomCommand[] customCommands, CustomObjectCommandWrapper[] customObjectCommands,
-        MemoryPool<byte> memoryPool, CacheSizeTracker objectStoreSizeTracker, GarnetObjectSerializer garnetObjectSerializer)
+    public FunctionsState(
+        TsavoriteLog appendOnlyFile, 
+        WatchVersionMap watchVersionMap, 
+        CustomCommand[] customCommands, 
+        CustomObjectCommandWrapper[] customObjectCommands,
+        MemoryPool<byte> memoryPool, 
+        CacheSizeTracker objectStoreSizeTracker, 
+        GarnetObjectSerializer garnetObjectSerializer)
     {
-        this.appendOnlyFile = appendOnlyFile;
-        this.watchVersionMap = watchVersionMap;
-        this.customCommands = customCommands;
-        this.customObjectCommands = customObjectCommands;
-        this.memoryPool = memoryPool ?? MemoryPool<byte>.Shared;
-        this.objectStoreSizeTracker = objectStoreSizeTracker;
-        this.garnetObjectSerializer = garnetObjectSerializer;
+        AppendOnlyFile = appendOnlyFile;
+        WatchVersionMap = watchVersionMap;
+        CustomCommands = customCommands;
+        CustomObjectCommands = customObjectCommands;
+        MemoryPool = memoryPool ?? MemoryPool<byte>.Shared;
+        ObjectStoreSizeTracker = objectStoreSizeTracker;
+        GarnetObjectSerializer = garnetObjectSerializer;
     }
 }

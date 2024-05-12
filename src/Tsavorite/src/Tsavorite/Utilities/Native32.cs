@@ -230,7 +230,7 @@ public static unsafe class Native32
         threadIdx = threadIdx % nrOfProcessors;
 
         groupAffinityThread.Mask = (ulong)1L << ((int)(threadIdx % (int)nrOfProcsPerGroup));
-        groupAffinityThread.Group = (uint)(threadIdx / nrOfProcsPerGroup);
+        groupAffinityThread.Group = threadIdx / nrOfProcsPerGroup;
 
         if (SetThreadGroupAffinity(thread, ref groupAffinityThread, ref oldAffinityThread) == 0)
         {
@@ -344,7 +344,7 @@ public static unsafe class Native32
 
     private static uint CTL_CODE(uint deviceType, uint function, uint method, uint access)
     {
-        return (((deviceType) << 16) | ((access) << 14) | ((function) << 2) | (method));
+        return ((deviceType) << 16) | ((access) << 14) | ((function) << 2) | (method);
     }
 
     internal static bool EnableVolumePrivileges(string filename, SafeFileHandle handle)
@@ -373,7 +373,7 @@ public static unsafe class Native32
 
         uint bytes_returned = 0;
         bool result = DeviceIoControl(handle, CTL_CODE(0x9, 63, 0, 0),
-            (void*)&mhi, sizeof(MARK_HANDLE_INFO), IntPtr.Zero,
+            &mhi, sizeof(MARK_HANDLE_INFO), IntPtr.Zero,
             0, ref bytes_returned, IntPtr.Zero);
 
         volume_handle.Close();

@@ -1,13 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Utility for computing buffer size given settings
 /// </summary>
 public static class BufferSizeUtils
-
 {
     private const int MaxBatchSize = 1 << 17;
 

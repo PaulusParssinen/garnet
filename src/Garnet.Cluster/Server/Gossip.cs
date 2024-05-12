@@ -387,7 +387,7 @@ internal sealed partial class ClusterManager : IDisposable
     public void GossipSampleSend()
     {
         int nodeCount = clusterConnectionStore.Count;
-        int fraction = (int)(Math.Ceiling(nodeCount * (GossipSamplePercent / 100.0f)));
+        int fraction = (int)Math.Ceiling(nodeCount * (GossipSamplePercent / 100.0f));
         int count = Math.Max(Math.Min(1, nodeCount), fraction);
 
         long startTime = DateTimeOffset.UtcNow.Ticks;

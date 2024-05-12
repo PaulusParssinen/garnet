@@ -6,7 +6,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Session counter of number of List entries(PUSH,POP etc.) partially done

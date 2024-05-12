@@ -12,7 +12,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - basic commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private bool TryTransactionProc(byte id, byte* ptr, byte* end, CustomTransactionProcedure proc)
     {
@@ -20,7 +20,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         var output = new MemoryResult<byte>(null, 0);
 
         // Run procedure
-        Debug.Assert(txnManager.state == TxnState.None);
+        Debug.Assert(txnManager.State == TxnState.None);
 
         latencyMetrics?.Start(LatencyMetricsType.TX_PROC_LAT);
         var input = new ArgSlice(ptr, (int)(end - ptr));

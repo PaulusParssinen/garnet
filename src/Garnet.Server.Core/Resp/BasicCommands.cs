@@ -12,7 +12,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - basic commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// GET
@@ -824,15 +824,15 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         GarnetStatus status = storageApi.Increment(key, input, ref output);
         OperationError errorFlag = output.Length == NumUtils.MaximumFormatInt64Length + 1
             ? (OperationError)output.Span[0]
-            : OperationError.SUCCESS;
+            : OperationError.Success;
 
         switch (errorFlag)
         {
-            case OperationError.SUCCESS:
+            case OperationError.Success:
                 while (!RespWriteUtils.WriteIntegerFromBytes(outputBuffer.Slice(0, output.Length), ref dcurr, dend))
                     SendAndReset();
                 break;
-            case OperationError.INVALID_TYPE:
+            case OperationError.InvalidType:
                 while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_VALUE_IS_NOT_INTEGER, ref dcurr,
                            dend))
                     SendAndReset();

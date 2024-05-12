@@ -4,7 +4,7 @@
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using Garnet.networking;
+using Garnet.Networking;
 using Microsoft.Extensions.Logging;
 
 namespace Garnet.Common;

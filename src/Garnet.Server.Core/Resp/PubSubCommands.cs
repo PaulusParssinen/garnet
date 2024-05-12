@@ -10,7 +10,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - pub/sub commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private readonly SubscribeBroker<SpanByte, SpanByte, IKeySerializer<SpanByte>> subscribeBroker;
     private bool isSubscriptionSession = false;

@@ -22,8 +22,8 @@ public unsafe partial class BitmapManager
         Debug.Assert(endBitOffset >= 0 && endBitOffset <= 8);
         // Reverse payload to count starting from most significant bit.
         payload = reverse(payload);
-        int leftBitIndex = (1 << startBitOffset);
-        int rightBitIndex = (1 << endBitOffset);
+        int leftBitIndex = 1 << startBitOffset;
+        int rightBitIndex = 1 << endBitOffset;
 
         byte mask = (byte)(rightBitIndex - leftBitIndex);
         return (long)Popcnt.X64.PopCount((ulong)(mask & payload));
@@ -38,8 +38,8 @@ public unsafe partial class BitmapManager
     /// <returns>Long count of bits set at startOffset and endOffset.</returns>
     private static long BitIndexCount(byte* value, long startOffset, long endOffset)
     {
-        long startByte = (startOffset / 8);
-        long endByte = (endOffset / 8);
+        long startByte = startOffset / 8;
+        long endByte = endOffset / 8;
 
         int leftBitIndex = (int)(startOffset & 7);
         int rightBitIndex = (int)((endOffset + 1) & 7);
@@ -61,7 +61,7 @@ public unsafe partial class BitmapManager
     public static long BitCountDriver(byte* input, byte* value, int valLen)
     {
         long count = 0;
-        long startOffset = *(long*)(input);
+        long startOffset = *(long*)input;
         long endOffset = *(long*)(input + sizeof(long));
         byte offsetType = *(input + sizeof(long) * 2);
 
@@ -115,7 +115,7 @@ public unsafe partial class BitmapManager
     {
         ulong count = 0;
         int batchSize = 8 * 4;
-        long len = (end - start) + 1;
+        long len = end - start + 1;
         long tail = len & (batchSize - 1);
         byte* curr = bitmap + start;
         byte* vend = curr + (len - (len & tail));
@@ -123,7 +123,7 @@ public unsafe partial class BitmapManager
         #region popc_4x8
         while (curr < vend)
         {
-            ulong v00 = Popcnt.X64.PopCount(*(ulong*)(curr));
+            ulong v00 = Popcnt.X64.PopCount(*(ulong*)curr);
             ulong v01 = Popcnt.X64.PopCount(*(ulong*)(curr + 8));
             ulong v02 = Popcnt.X64.PopCount(*(ulong*)(curr + 16));
             ulong v03 = Popcnt.X64.PopCount(*(ulong*)(curr + 24));
@@ -141,18 +141,18 @@ public unsafe partial class BitmapManager
         vend = curr + (len - (len & tail));
         while (curr < vend)
         {
-            count += Popcnt.X64.PopCount(*(ulong*)(curr));
+            count += Popcnt.X64.PopCount(*(ulong*)curr);
             curr += batchSize;
         }
 
         ulong tt = 0;
-        if (tail >= 7) tt |= (ulong)(((ulong)curr[6]) << 48);
-        if (tail >= 6) tt |= (ulong)(((ulong)curr[5]) << 40);
-        if (tail >= 5) tt |= (ulong)(((ulong)curr[4]) << 32);
-        if (tail >= 4) tt |= (ulong)(((ulong)curr[3]) << 24);
-        if (tail >= 3) tt |= (ulong)(((ulong)curr[2]) << 16);
-        if (tail >= 2) tt |= (ulong)(((ulong)curr[1]) << 8);
-        if (tail >= 1) tt |= (ulong)(((ulong)curr[0]));
+        if (tail >= 7) tt |= ((ulong)curr[6]) << 48;
+        if (tail >= 6) tt |= ((ulong)curr[5]) << 40;
+        if (tail >= 5) tt |= ((ulong)curr[4]) << 32;
+        if (tail >= 4) tt |= ((ulong)curr[3]) << 24;
+        if (tail >= 3) tt |= ((ulong)curr[2]) << 16;
+        if (tail >= 2) tt |= ((ulong)curr[1]) << 8;
+        if (tail >= 1) tt |= curr[0];
         count += Popcnt.X64.PopCount(tt);
         #endregion
 
@@ -170,14 +170,14 @@ public unsafe partial class BitmapManager
     {
         ulong count = 0;
         int batchSize = 8 * 16;
-        long len = (end - start) + 1;
+        long len = end - start + 1;
         long tail = len & (batchSize - 1);
         byte* curr = bitmap + start;
         byte* vend = curr + (len - (len & tail));
 
         Vector128<byte> lookupCountSIMDx128 = Vector128.Create(
-                (byte)0, /*0*/ (byte)1, /*1*/ (byte)1, /*2*/(byte)2, /*3*/(byte)1, /*4*/ (byte)2, /*5*/ (byte)2, /*6*/ (byte)3, /*7*/
-                (byte)1, /*8*/ (byte)2, /*9*/ (byte)2, /*10*/(byte)3, /*11*/ (byte)2, /*12*/ (byte)3, /*13*/ (byte)3, /*14*/ (byte)4  /*15*/);
+                0, /*0*/ 1, /*1*/ 1, /*2*/2, /*3*/1, /*4*/ 2, /*5*/ 2, /*6*/ 3, /*7*/
+                1, /*8*/ 2, /*9*/ 2, /*10*/3, /*11*/ 2, /*12*/ 3, /*13*/ 3, /*14*/ (byte)4  /*15*/);
 
         Vector128<byte> mskSIMDx128 = Vector128.Create((byte)0x0f);
         Vector128<long> acc = Vector128<long>.Zero;
@@ -261,7 +261,7 @@ public unsafe partial class BitmapManager
         vend = curr + (len - (len & tail));
         while (curr < vend)
         {
-            ulong v00 = Popcnt.X64.PopCount(*(ulong*)(curr));
+            ulong v00 = Popcnt.X64.PopCount(*(ulong*)curr);
             ulong v01 = Popcnt.X64.PopCount(*(ulong*)(curr + 8));
             ulong v02 = Popcnt.X64.PopCount(*(ulong*)(curr + 16));
             ulong v03 = Popcnt.X64.PopCount(*(ulong*)(curr + 24));
@@ -281,20 +281,20 @@ public unsafe partial class BitmapManager
         vend = curr + (len - (len & tail));
         while (curr < vend)
         {
-            ulong v = *(ulong*)(curr);
+            ulong v = *(ulong*)curr;
             count += Popcnt.X64.PopCount(v);
             curr += 8;
         }
         if (tail == 0) return (long)count;
 
         ulong tt = 0;
-        if (tail >= 7) tt |= (ulong)(((ulong)curr[6]) << 48);
-        if (tail >= 6) tt |= (ulong)(((ulong)curr[5]) << 40);
-        if (tail >= 5) tt |= (ulong)(((ulong)curr[4]) << 32);
-        if (tail >= 4) tt |= (ulong)(((ulong)curr[3]) << 24);
-        if (tail >= 3) tt |= (ulong)(((ulong)curr[2]) << 16);
-        if (tail >= 2) tt |= (ulong)(((ulong)curr[1]) << 8);
-        if (tail >= 1) tt |= (ulong)(((ulong)curr[0]));
+        if (tail >= 7) tt |= ((ulong)curr[6]) << 48;
+        if (tail >= 6) tt |= ((ulong)curr[5]) << 40;
+        if (tail >= 5) tt |= ((ulong)curr[4]) << 32;
+        if (tail >= 4) tt |= ((ulong)curr[3]) << 24;
+        if (tail >= 3) tt |= ((ulong)curr[2]) << 16;
+        if (tail >= 2) tt |= ((ulong)curr[1]) << 8;
+        if (tail >= 1) tt |= curr[0];
 
         count += Popcnt.X64.PopCount(tt);
         #endregion
@@ -312,16 +312,16 @@ public unsafe partial class BitmapManager
     {
         ulong count = 0;
         int batchSize = 8 * 32;
-        long len = (end - start) + 1;
+        long len = end - start + 1;
         long tail = len & (batchSize - 1);
         byte* curr = bitmap + start;
         byte* vend = curr + (len - (len & tail));
 
         Vector256<byte> lookupCountSIMDx256 = Vector256.Create(
-                (byte)0, /*0*/ (byte)1, /*1*/ (byte)1, /*2*/(byte)2, /*3*/(byte)1, /*4*/ (byte)2, /*5*/ (byte)2, /*6*/ (byte)3, /*7*/
-                (byte)1, /*8*/ (byte)2, /*9*/ (byte)2, /*10*/(byte)3, /*11*/ (byte)2, /*12*/ (byte)3, /*13*/ (byte)3, /*14*/ (byte)4, /*15*/
-                (byte)0, /*0*/ (byte)1, /*1*/ (byte)1, /*2*/(byte)2, /*3*/(byte)1, /*4*/ (byte)2, /*5*/ (byte)2, /*6*/ (byte)3, /*7*/
-                (byte)1, /*8*/ (byte)2, /*9*/ (byte)2, /*10*/(byte)3, /*11*/ (byte)2, /*12*/ (byte)3, /*13*/ (byte)3, /*14*/ (byte)4  /*15*/);
+                0, /*0*/ 1, /*1*/ 1, /*2*/2, /*3*/1, /*4*/ 2, /*5*/ 2, /*6*/ 3, /*7*/
+                1, /*8*/ 2, /*9*/ 2, /*10*/3, /*11*/ 2, /*12*/ 3, /*13*/ 3, /*14*/ 4, /*15*/
+                0, /*0*/ 1, /*1*/ 1, /*2*/2, /*3*/1, /*4*/ 2, /*5*/ 2, /*6*/ 3, /*7*/
+                1, /*8*/ 2, /*9*/ 2, /*10*/3, /*11*/ 2, /*12*/ 3, /*13*/ 3, /*14*/ (byte)4  /*15*/);
 
         Vector256<byte> mskSIMDx256 = Vector256.Create((byte)0x0f);
         Vector256<long> acc = Vector256<long>.Zero;
@@ -412,7 +412,7 @@ public unsafe partial class BitmapManager
         vend = curr + (len - (len & tail));
         while (curr < vend)
         {
-            ulong v00 = Popcnt.X64.PopCount(*(ulong*)(curr));
+            ulong v00 = Popcnt.X64.PopCount(*(ulong*)curr);
             ulong v01 = Popcnt.X64.PopCount(*(ulong*)(curr + 8));
             ulong v02 = Popcnt.X64.PopCount(*(ulong*)(curr + 16));
             ulong v03 = Popcnt.X64.PopCount(*(ulong*)(curr + 24));
@@ -432,20 +432,20 @@ public unsafe partial class BitmapManager
         vend = curr + (len - (len & tail));
         while (curr < vend)
         {
-            ulong v = *(ulong*)(curr);
+            ulong v = *(ulong*)curr;
             count += Popcnt.X64.PopCount(v);
             curr += 8;
         }
         if (tail == 0) return (long)count;
 
         ulong tt = 0;
-        if (tail >= 7) tt |= (ulong)(((ulong)curr[6]) << 48);
-        if (tail >= 6) tt |= (ulong)(((ulong)curr[5]) << 40);
-        if (tail >= 5) tt |= (ulong)(((ulong)curr[4]) << 32);
-        if (tail >= 4) tt |= (ulong)(((ulong)curr[3]) << 24);
-        if (tail >= 3) tt |= (ulong)(((ulong)curr[2]) << 16);
-        if (tail >= 2) tt |= (ulong)(((ulong)curr[1]) << 8);
-        if (tail >= 1) tt |= (ulong)(((ulong)curr[0]));
+        if (tail >= 7) tt |= ((ulong)curr[6]) << 48;
+        if (tail >= 6) tt |= ((ulong)curr[5]) << 40;
+        if (tail >= 5) tt |= ((ulong)curr[4]) << 32;
+        if (tail >= 4) tt |= ((ulong)curr[3]) << 24;
+        if (tail >= 3) tt |= ((ulong)curr[2]) << 16;
+        if (tail >= 2) tt |= ((ulong)curr[1]) << 8;
+        if (tail >= 1) tt |= curr[0];
 
         count += Popcnt.X64.PopCount(tt);
         #endregion

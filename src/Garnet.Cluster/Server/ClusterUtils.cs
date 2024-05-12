@@ -34,15 +34,15 @@ internal static class ClusterUtils
         size += len.Length;
 
         long numBytesToWrite = size;
-        numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToWrite = (numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = pool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = _buffer)
         {
-            Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);
+            Buffer.MemoryCopy(bufferRaw, pbuffer.AlignedPointer, size, size);
         }
         using var semaphore = new SemaphoreSlim(0);
-        device.WriteAsync((IntPtr)pbuffer.aligned_pointer, address, (uint)numBytesToWrite, logger == null ? IOCallback : logger.IOCallback, semaphore);
+        device.WriteAsync((IntPtr)pbuffer.AlignedPointer, address, (uint)numBytesToWrite, logger == null ? IOCallback : logger.IOCallback, semaphore);
         semaphore.Wait();
 
         pbuffer.Return();
@@ -56,16 +56,16 @@ internal static class ClusterUtils
     {
         using var semaphore = new SemaphoreSlim(0);
         long numBytesToRead = size;
-        numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToRead = (numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = pool.Get((int)numBytesToRead);
-        device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
+        device.ReadAsync(address, (IntPtr)pbuffer.AlignedPointer,
             (uint)numBytesToRead, logger == null ? IOCallback : logger.IOCallback, semaphore);
         semaphore.Wait();
 
         buffer = new byte[numBytesToRead];
         fixed (byte* bufferRaw = buffer)
-            Buffer.MemoryCopy(pbuffer.aligned_pointer, bufferRaw, numBytesToRead, numBytesToRead);
+            Buffer.MemoryCopy(pbuffer.AlignedPointer, bufferRaw, numBytesToRead, numBytesToRead);
         pbuffer.Return();
     }
 

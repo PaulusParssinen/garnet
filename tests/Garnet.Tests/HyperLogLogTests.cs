@@ -257,7 +257,7 @@ public unsafe class HyperLogLogTests
 
     private static unsafe ulong MurmurHash2x64A(byte* bString, int len, uint seed = 0)
     {
-        ulong m = (ulong)0xc6a4a7935bd1e995;
+        ulong m = 0xc6a4a7935bd1e995;
         int r = 47;
         ulong h = seed ^ ((ulong)len * m);
         byte* data = bString;
@@ -266,7 +266,7 @@ public unsafe class HyperLogLogTests
         while (data != end)
         {
             ulong k;
-            k = (ulong)data[0];
+            k = data[0];
             k |= (ulong)data[1] << 8;
             k |= (ulong)data[2] << 16;
             k |= (ulong)data[3] << 24;
@@ -287,24 +287,24 @@ public unsafe class HyperLogLogTests
         int cs = len & 7;
 
         if (cs >= 7)
-            h ^= ((ulong)data[6] << 48);
+            h ^= (ulong)data[6] << 48;
 
         if (cs >= 6)
-            h ^= ((ulong)data[5] << 40);
+            h ^= (ulong)data[5] << 40;
 
         if (cs >= 5)
-            h ^= ((ulong)data[4] << 32);
+            h ^= (ulong)data[4] << 32;
 
         if (cs >= 4)
-            h ^= ((ulong)data[3] << 24);
+            h ^= (ulong)data[3] << 24;
 
         if (cs >= 3)
-            h ^= ((ulong)data[2] << 16);
+            h ^= (ulong)data[2] << 16;
 
-        if (cs >= 2) h ^= ((ulong)data[1] << 8);
+        if (cs >= 2) h ^= (ulong)data[1] << 8;
         if (cs >= 1)
         {
-            h ^= (ulong)data[0];
+            h ^= data[0];
             h *= m;
         }
 
@@ -1002,8 +1002,8 @@ public unsafe class HyperLogLogTests
 
     private static double EstimationError(long estimate, long cardinality)
     {
-        double error = ((double)Math.Abs(cardinality - estimate) / (double)cardinality) * 100;
-        error = (double)(int)(error * 10000) / (double)10000;
+        double error = Math.Abs(cardinality - estimate) / (double)cardinality * 100;
+        error = (int)(error * 10000) / (double)10000;
         return error;
     }
 }

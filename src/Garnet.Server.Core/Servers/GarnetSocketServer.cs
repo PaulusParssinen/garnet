@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Garnet.Server.TLS;
 using Microsoft.Extensions.Logging;
 

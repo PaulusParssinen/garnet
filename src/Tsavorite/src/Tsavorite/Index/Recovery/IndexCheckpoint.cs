@@ -83,7 +83,7 @@ public partial class TsavoriteBase
             }
             else if (totalSize > uint.MaxValue)
             {
-                numChunks = (int)Math.Ceiling((double)totalSize / (long)uint.MaxValue);
+                numChunks = (int)Math.Ceiling((double)totalSize / uint.MaxValue);
                 numChunks = (int)Math.Pow(2, Math.Ceiling(Math.Log(numChunks, 2)));
             }
 
@@ -113,15 +113,15 @@ public partial class TsavoriteBase
                         prot = true;
                         epoch.Resume();
                     }
-                    Buffer.MemoryCopy((void*)chunkStartBucket, result.mem.aligned_pointer, chunkSize, chunkSize);
+                    Buffer.MemoryCopy((void*)chunkStartBucket, result.mem.AlignedPointer, chunkSize, chunkSize);
                     for (int j = 0; j < chunkSize; j += sizeof(HashBucket))
                     {
-                        skipReadCache((HashBucket*)(result.mem.aligned_pointer + j));
+                        skipReadCache((HashBucket*)(result.mem.AlignedPointer + j));
                     }
                     if (prot)
                         epoch.Suspend();
 
-                    device.WriteAsync((IntPtr)result.mem.aligned_pointer, numBytesWritten, chunkSize, AsyncPageFlushCallback, result);
+                    device.WriteAsync((IntPtr)result.mem.AlignedPointer, numBytesWritten, chunkSize, AsyncPageFlushCallback, result);
                 }
                 if (throttleCheckpointFlushDelayMs >= 0)
                 {

@@ -220,8 +220,8 @@ internal class SpanByteTests
         // the value space for the first record, and the length header for the second record. This is the space available for the second record's value.
         int p2value2len = PageSize
                             - 2 * RecordInfo.GetLength()
-                            - 2 * RoundUp(key.TotalSize, SpanByteAllocator.kRecordAlignment)
-                            - RoundUp(value.TotalSize, SpanByteAllocator.kRecordAlignment)
+                            - 2 * RoundUp(key.TotalSize, SpanByteAllocator.RecordAlignment)
+                            - RoundUp(value.TotalSize, SpanByteAllocator.RecordAlignment)
                             - sizeof(int);
         Set(ref keySpan, 3L, ref valueSpan, p2value2len, 3);        // Inserted on page#1
         Assert.AreEqual(PageSize * 2, store.Log.TailAddress, "TailAddress should be at the end of page#2");

@@ -214,7 +214,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
             ushort slot = ClusterTestUtils.HashSlot(newKey);
             Assert.AreEqual(slot, slots[j]);
-            Assert.IsTrue(slotsTokey.ContainsKey((ushort)slot));
+            Assert.IsTrue(slotsTokey.ContainsKey(slot));
 
             if (!data[slot].ContainsKey(newKey))
                 data[slot].Add(newKey, newValue);
@@ -529,14 +529,14 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         _ = context.clusterTestUtils.GetMultiKey(0, keys, out List<byte[]> valuesGet, out _, out _, out _);
         Assert.AreEqual(valuesGet, vals);
 
-        keys[0][1] = (byte)('w');
+        keys[0][1] = (byte)'w';
         resp = context.clusterTestUtils.GetMultiKey(0, keys, out _, out _, out _, out _);
         Assert.AreEqual(resp, "CROSSSLOT");
 
         resp = context.clusterTestUtils.SetMultiKey(0, keys, vals, out _, out _, out _);
         Assert.AreEqual(resp, "CROSSSLOT");
 
-        keys[0][1] = (byte)('a');
+        keys[0][1] = (byte)'a';
         Assert.AreEqual(ClusterTestUtils.HashSlot(keys[0]), ClusterTestUtils.HashSlot(keys[1]));
         resp = context.clusterTestUtils.GetMultiKey(1, keys, out _, out int _slot, out string _address, out int _port);
         Assert.AreEqual(resp, "MOVED");

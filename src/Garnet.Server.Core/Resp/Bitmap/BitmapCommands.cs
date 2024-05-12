@@ -94,7 +94,7 @@ public struct BitFieldCmdArgs
 /// <summary>
 /// Server session for RESP protocol - sorted set
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Sets or clears the bit at offset in the given key.
@@ -151,12 +151,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.SETBIT;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.SETBIT;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
         //2. cmd args
-        *(long*)(pcurr) = NumUtils.BytesToLong(bOffsetSize, bOffsetPtr); pcurr += sizeof(long);
-        *(byte*)(pcurr) = bSetVal;
+        *(long*)pcurr = NumUtils.BytesToLong(bOffsetSize, bOffsetPtr); pcurr += sizeof(long);
+        *pcurr = bSetVal;
         #endregion
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
@@ -211,11 +211,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.GETBIT;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.GETBIT;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
         //2. cmd args
-        *(long*)(pcurr) = NumUtils.BytesToLong(bOffsetSize, bOffsetPtr);
+        *(long*)pcurr = NumUtils.BytesToLong(bOffsetSize, bOffsetPtr);
         #endregion
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
@@ -289,12 +289,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.BITCOUNT;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.BITCOUNT;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
         //2. cmd args
-        *(long*)(pcurr) = startOffset; pcurr += 8;
-        *(long*)(pcurr) = endOffset; pcurr += 8;
+        *(long*)pcurr = startOffset; pcurr += 8;
+        *(long*)pcurr = endOffset; pcurr += 8;
         *pcurr = bitOffsetType;
         #endregion
 
@@ -391,13 +391,13 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.BITPOS;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.BITPOS;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
         //2. cmd args
-        *(byte*)(pcurr) = bSetVal; pcurr++;
-        *(long*)(pcurr) = startOffset; pcurr += 8;
-        *(long*)(pcurr) = endOffset; pcurr += 8;
+        *pcurr = bSetVal; pcurr++;
+        *(long*)pcurr = startOffset; pcurr += 8;
+        *(long*)pcurr = endOffset; pcurr += 8;
         *pcurr = bitOffsetType;
         #endregion
 
@@ -595,8 +595,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.BITFIELD;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.BITFIELD;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
 
         for (int i = 0; i < secondaryCmdCount; i++)
@@ -604,7 +604,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             logger?.LogInformation($"BITFIELD > " +
                 $"[" + $"SECONDARY-OP: {(RespCommand)bitfieldArgs[i].secondaryOpCode}, " +
                 $"SIGN: {((bitfieldArgs[i].typeInfo & (byte)BitFieldSign.SIGNED) > 0 ? BitFieldSign.SIGNED : BitFieldSign.UNSIGNED)}, " +
-                $"BITCOUNT: {(bitfieldArgs[i].typeInfo & 0x7F)}, " +
+                $"BITCOUNT: {bitfieldArgs[i].typeInfo & 0x7F}, " +
                 $"OFFSET: {bitfieldArgs[i].offset}, " +
                 $"VALUE: {bitfieldArgs[i].value}, " +
                 $"OVERFLOW: {(BitFieldOverflow)bitfieldArgs[i].overflowType}]");
@@ -788,8 +788,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.BITFIELD;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.BITFIELD;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
 
         for (int i = 0; i < secondaryCmdCount; i++)
@@ -797,7 +797,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             logger?.LogInformation($"BITFIELD > " +
                 $"[" + $"SECONDARY-OP: {(RespCommand)bitfieldArgs[i].secondaryOpCode}, " +
                 $"SIGN: {((bitfieldArgs[i].typeInfo & (byte)BitFieldSign.SIGNED) > 0 ? BitFieldSign.SIGNED : BitFieldSign.UNSIGNED)}, " +
-                $"BITCOUNT: {(bitfieldArgs[i].typeInfo & 0x7F)}, " +
+                $"BITCOUNT: {bitfieldArgs[i].typeInfo & 0x7F}, " +
                 $"OFFSET: {bitfieldArgs[i].offset}, " +
                 $"VALUE: {bitfieldArgs[i].value}, " +
                 $"OVERFLOW: {(BitFieldOverflow)bitfieldArgs[i].overflowType}]");

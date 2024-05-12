@@ -138,12 +138,12 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
             ulong offsetInFile = (ulong)(AlignedPageSizeBytes * readPage);
 
             uint readLength = (uint)AlignedPageSizeBytes;
-            long adjustedUntilAddress = (AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask));
+            long adjustedUntilAddress = AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask);
 
             if (adjustedUntilAddress > 0 && ((adjustedUntilAddress - (long)offsetInFile) < PageSize))
             {
                 readLength = (uint)(adjustedUntilAddress - (long)offsetInFile);
-                readLength = (uint)(Align(readLength));
+                readLength = (uint)Align(readLength);
             }
 
             if (device != null)
@@ -307,7 +307,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
         long dataStartAddress = tailAddress + HeaderSize;
         maxEntryLength = (int)(pageEndAddress - dataStartAddress);
         int offset = (int)(dataStartAddress & PageSizeMask);
-        physicalAddress = (long)buffer.aligned_pointer + offset;
+        physicalAddress = (long)buffer.AlignedPointer + offset;
     }
 
     /// <summary>
@@ -320,7 +320,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
         if (entryLength > 0)
         {
             int offset = (int)(tailAddress & PageSizeMask);
-            SetBlockHeader(entryLength, type, buffer.aligned_pointer + offset);
+            SetBlockHeader(entryLength, type, buffer.AlignedPointer + offset);
 
             long oldTailAddress = tailAddress;
             tailAddress += HeaderSize + entryLength;
@@ -354,7 +354,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
         var asyncResult = new PageAsyncFlushResult<Empty> { count = 1, freeBuffer1 = buffer };
         long alignedBlockSize = Align(tailAddress - pageStartAddress);
         Interlocked.Increment(ref issuedFlush);
-        deltaLogDevice.WriteAsync((IntPtr)buffer.aligned_pointer + startOffset,
+        deltaLogDevice.WriteAsync((IntPtr)buffer.AlignedPointer + startOffset,
                     (ulong)pageStartAddress,
                     (uint)alignedBlockSize, AsyncFlushPageToDeviceCallback, asyncResult);
         flushedUntilAddress = tailAddress;

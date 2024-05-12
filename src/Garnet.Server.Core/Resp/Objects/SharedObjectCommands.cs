@@ -6,7 +6,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Iterates over the associated items of a key,
@@ -64,30 +64,30 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             byte* pcurr = (byte*)inputPtr;
 
             // ObjectInputHeader
-            (*(ObjectInputHeader*)(pcurr)).header.type = objectType;
-            (*(ObjectInputHeader*)(pcurr)).header.flags = 0;
+            (*(ObjectInputHeader*)pcurr).header.type = objectType;
+            (*(ObjectInputHeader*)pcurr).header.flags = 0;
 
             switch (objectType)
             {
                 case GarnetObjectType.Hash:
-                    (*(ObjectInputHeader*)(pcurr)).header.HashOp = HashOperation.HSCAN;
+                    (*(ObjectInputHeader*)pcurr).header.HashOp = HashOperation.HSCAN;
                     break;
                 case GarnetObjectType.Set:
-                    (*(ObjectInputHeader*)(pcurr)).header.SetOp = SetOperation.SSCAN;
+                    (*(ObjectInputHeader*)pcurr).header.SetOp = SetOperation.SSCAN;
                     break;
                 case GarnetObjectType.SortedSet:
-                    (*(ObjectInputHeader*)(pcurr)).header.SortedSetOp = SortedSetOperation.ZSCAN;
+                    (*(ObjectInputHeader*)pcurr).header.SortedSetOp = SortedSetOperation.ZSCAN;
                     break;
                 case GarnetObjectType.All:
-                    (*(ObjectInputHeader*)(pcurr)).header.cmd = RespCommand.COSCAN;
+                    (*(ObjectInputHeader*)pcurr).header.cmd = RespCommand.COSCAN;
                     break;
             }
 
             // Tokens already processed: 3, command, key and cursor
-            (*(ObjectInputHeader*)(pcurr)).count = count - 2;
+            (*(ObjectInputHeader*)pcurr).count = count - 2;
 
             // Cursor value
-            (*(ObjectInputHeader*)(pcurr)).done = cursorValue;
+            (*(ObjectInputHeader*)pcurr).done = cursorValue;
             pcurr += ObjectInputHeader.Size;
 
             // Object Input Limit

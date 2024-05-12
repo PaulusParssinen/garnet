@@ -3,7 +3,7 @@
 
 using NUnit.Framework;
 using Tsavorite.Device;
-using Tsavorite.Tests.recovery;
+using Tsavorite.Tests.Recovery;
 
 namespace Tsavorite.Tests;
 

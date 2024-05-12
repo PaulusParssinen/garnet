@@ -1376,7 +1376,7 @@ public class RespTests
         resp = (bool)db.Execute($"{command}", args);
         Assert.IsTrue(resp);// XX return true existing expiry
         TimeSpan? time = db.KeyTimeToLive(key);
-        Assert.IsTrue(time.Value.TotalSeconds <= (double)((int)args[1]) && time.Value.TotalSeconds > 0);
+        Assert.IsTrue(time.Value.TotalSeconds <= (int)args[1] && time.Value.TotalSeconds > 0);
 
         args[1] = 1;
         args[2] = "GT";// GT -- Set expiry only when the new expiry is greater than current one
@@ -1406,9 +1406,9 @@ public class RespTests
         time = db.KeyTimeToLive(key);
 
         if (command.Equals("EXPIRE"))
-            Assert.IsTrue(time.Value.TotalSeconds <= (double)((int)args[1]) && time.Value.TotalSeconds > 0);
+            Assert.IsTrue(time.Value.TotalSeconds <= (int)args[1] && time.Value.TotalSeconds > 0);
         else
-            Assert.IsTrue(time.Value.TotalMilliseconds <= (double)((int)args[1]) && time.Value.TotalMilliseconds > 0);
+            Assert.IsTrue(time.Value.TotalMilliseconds <= (int)args[1] && time.Value.TotalMilliseconds > 0);
     }
 
     [Test]

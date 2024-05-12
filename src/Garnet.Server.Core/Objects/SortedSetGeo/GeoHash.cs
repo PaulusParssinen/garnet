@@ -191,17 +191,17 @@ public static class GeoHash
         if (units.Length == 2)
         {
             //KM OR km
-            if ((units[0] == (int)'K' || units[0] == (int)'k') && (units[1] == (int)'M' || units[1] == (int)'m'))
+            if ((units[0] == 'K' || units[0] == 'k') && (units[1] == 'M' || units[1] == 'm'))
             {
                 return value / 0.001;
             }
             // FT OR ft
-            else if ((units[0] == (int)'F' || units[0] == (int)'f') && (units[1] == (int)'T' || units[1] == (int)'t'))
+            else if ((units[0] == 'F' || units[0] == 'f') && (units[1] == 'T' || units[1] == 't'))
             {
                 return value / 3.28084;
             }
             // MI OR mi
-            else if ((units[0] == (int)'M' || units[0] == (int)'m') && (units[1] == (int)'I' || units[1] == (int)'i'))
+            else if ((units[0] == 'M' || units[0] == 'm') && (units[1] == 'I' || units[1] == 'i'))
             {
                 return value / 0.000621371;
             }
@@ -219,17 +219,17 @@ public static class GeoHash
         if (units.Length == 2)
         {
             //KM OR km
-            if ((units[0] == (int)'K' || units[0] == (int)'k') && (units[1] == (int)'M' || units[1] == (int)'m'))
+            if ((units[0] == 'K' || units[0] == 'k') && (units[1] == 'M' || units[1] == 'm'))
             {
                 return value * 0.001;
             }
             //FT OR ft
-            else if ((units[0] == (int)'F' || units[0] == (int)'f') && (units[1] == (int)'T' || units[1] == (int)'t'))
+            else if ((units[0] == 'F' || units[0] == 'f') && (units[1] == 'T' || units[1] == 't'))
             {
                 return value * 3.28084;
             }
             // MI OR mi
-            else if ((units[0] == (int)'M' || units[0] == (int)'m') && (units[1] == (int)'I' || units[1] == (int)'i'))
+            else if ((units[0] == 'M' || units[0] == 'm') && (units[1] == 'I' || units[1] == 'i'))
             {
                 return value * 0.000621371;
             }

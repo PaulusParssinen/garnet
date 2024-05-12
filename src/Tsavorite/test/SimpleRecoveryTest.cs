@@ -4,7 +4,7 @@
 using NUnit.Framework;
 using Tsavorite.Device;
 
-namespace Tsavorite.Tests.recovery.sumstore.simple;
+namespace Tsavorite.Tests.Recovery.Sumstore.Simple;
 
 [TestFixture]
 public class RecoveryTests

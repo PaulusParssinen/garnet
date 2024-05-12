@@ -2519,7 +2519,7 @@ public sealed class TsavoriteLog : IDisposable
             else
             {
                 int requiredBytes = headerSize + length;
-                if (ctx.record.available_bytes >= requiredBytes)
+                if (ctx.record.AvailableBytes >= requiredBytes)
                 {
                     ctx.completedRead.Release();
                 }
@@ -2545,7 +2545,7 @@ public sealed class TsavoriteLog : IDisposable
         }
         else
         {
-            if (ctx.record.available_bytes < headerSize)
+            if (ctx.record.AvailableBytes < headerSize)
             {
                 logger?.LogDebug("No record header present at address: " + ctx.logicalAddress);
                 ctx.record.Return();

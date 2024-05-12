@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using NUnit.Framework;
-using Tsavorite.Tests.recovery.sumstore;
+using Tsavorite.Tests.Recovery.Sumstore;
 
 namespace Tsavorite.Tests.async;
 

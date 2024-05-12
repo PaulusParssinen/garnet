@@ -64,12 +64,12 @@ internal abstract class StreamProviderBase : IStreamProvider
         SectorAlignedMemory buffer = pool.Get((int)bytesToWrite);
         fixed (byte* bufferRaw = data)
         {
-            Buffer.MemoryCopy(bufferRaw, buffer.aligned_pointer, data.Length, data.Length);
+            Buffer.MemoryCopy(bufferRaw, buffer.AlignedPointer, data.Length, data.Length);
         }
 
         // Write to the device and wait for the device to signal the semaphore that the write is complete.
         using var semaphore = new SemaphoreSlim(0);
-        device.WriteAsync((IntPtr)buffer.aligned_pointer, 0, (uint)bytesToWrite, IOCallback, semaphore);
+        device.WriteAsync((IntPtr)buffer.AlignedPointer, 0, (uint)bytesToWrite, IOCallback, semaphore);
         semaphore.Wait();
 
         // Free the sector-aligned buffer
@@ -85,16 +85,16 @@ internal abstract class StreamProviderBase : IStreamProvider
     {
         using var semaphore = new SemaphoreSlim(0);
         long numBytesToRead = size;
-        numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToRead = (numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = pool.Get((int)numBytesToRead);
-        device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
+        device.ReadAsync(address, (IntPtr)pbuffer.AlignedPointer,
             (uint)numBytesToRead, IOCallback, semaphore);
         semaphore.Wait();
 
         buffer = new byte[numBytesToRead];
         fixed (byte* bufferRaw = buffer)
-            Buffer.MemoryCopy(pbuffer.aligned_pointer, bufferRaw, numBytesToRead, numBytesToRead);
+            Buffer.MemoryCopy(pbuffer.AlignedPointer, bufferRaw, numBytesToRead, numBytesToRead);
         pbuffer.Return();
     }
 

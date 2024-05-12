@@ -96,7 +96,7 @@ public class RespSetTests
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 100; i++)
         {
-            values[i] = ($"val-{i + 1}");
+            values[i] = $"val-{i + 1}";
         }
 
         for (int j = 0; j < 25; j++)
@@ -277,7 +277,7 @@ public class RespSetTests
 
         int pageSize = 40;
         IEnumerable<RedisValue> response = db.SetScan(key, "*", pageSize: pageSize, cursor: 0);
-        var cursor = ((IScanningCursor)response);
+        var cursor = (IScanningCursor)response;
         int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;

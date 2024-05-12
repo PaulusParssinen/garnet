@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Garnet.Common;
 using Garnet.Common.Parsing;
-using Garnet.networking;
+using Garnet.Networking;
 using Garnet.Server;
 using Garnet.Server.ACL;
 using Garnet.Server.Auth;
@@ -139,13 +139,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Send(byte* d)
     {
-        // #if DEBUG
-        // logger?.LogTrace("SEND: [{send}]", Encoding.UTF8.GetString(new Span<byte>(d, (int)(dcurr - d))).Replace("\n", "|").Replace("\r", ""));
-        // #endif
-
         if ((int)(dcurr - d) > 0)
         {
-            // Debug.WriteLine("SEND: [" + Encoding.UTF8.GetString(new Span<byte>(d, (int)(dcurr - d))).Replace("\n", "|").Replace("\r", "!") + "]");
             if (clusterProvider.storeWrapper.appendOnlyFile != null && clusterProvider.storeWrapper.serverOptions.WaitForCommit)
             {
                 ValueTask task = clusterProvider.storeWrapper.appendOnlyFile.WaitForCommitAsync();

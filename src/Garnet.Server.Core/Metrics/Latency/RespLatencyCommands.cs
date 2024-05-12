@@ -6,7 +6,7 @@ using Garnet.Common;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private bool ProcessLatencyCommands(ReadOnlySpan<byte> bufSpan, int count)
     {

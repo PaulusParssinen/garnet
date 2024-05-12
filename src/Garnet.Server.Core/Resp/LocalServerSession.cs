@@ -44,7 +44,7 @@ public class LocalServerSession : IDisposable
         // Create storage session and API
         storageSession = new StorageSession(storeWrapper, scratchBufferManager, sessionMetrics, LatencyMetrics, logger);
 
-        BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.basicContext, storageSession.objectStoreBasicContext);
+        BasicGarnetApi = new BasicGarnetApi(storageSession, storageSession.BasicContext, storageSession.ObjectStoreBasicContext);
     }
 
     /// <inheritdoc />

@@ -4,7 +4,7 @@
 using NUnit.Framework;
 using Tsavorite.Device;
 
-namespace Tsavorite.Tests.recovery.objects;
+namespace Tsavorite.Tests.Recovery.objects;
 
 [TestFixture]
 public class ObjectRecoveryTests2

@@ -149,7 +149,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                     return new(SlotVerifiedState.OK, 0);
 
             ushort _slot = NumUtils.HashSlot(keyPtr, ksize);
-            crossSlot |= (_slot != slot);
+            crossSlot |= _slot != slot;
         }
 
         retVal = true;

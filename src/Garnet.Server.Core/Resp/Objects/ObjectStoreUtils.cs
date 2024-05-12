@@ -9,7 +9,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - sorted set
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Reads the n tokens from the current buffer, and returns
@@ -69,18 +69,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// </summary>
     /// <param name="input">The input to parse.</param>
     /// <returns>The parsed OperationDirection, or OperationDirection.Unknown if parsing fails.</returns>
-    public OperationDirection GetOperationDirection(ArgSlice input)
+    public static OperationDirection GetOperationDirection(ArgSlice input)
     {
-        // Optimize for the common case
-        if (input.ReadOnlySpan.SequenceEqual("LEFT"u8))
+        if (Ascii.EqualsIgnoreCase(input.ReadOnlySpan, "LEFT"u8))
             return OperationDirection.Left;
-        if (input.ReadOnlySpan.SequenceEqual("RIGHT"u8))
-            return OperationDirection.Right;
-        // Rare case: try making upper case and retry
-        MakeUpperCase(input.ptr);
-        if (input.ReadOnlySpan.SequenceEqual("LEFT"u8))
-            return OperationDirection.Left;
-        if (input.ReadOnlySpan.SequenceEqual("RIGHT"u8))
+        if (Ascii.EqualsIgnoreCase(input.ReadOnlySpan, "RIGHT"u8))
             return OperationDirection.Right;
         return OperationDirection.Unknown;
     }

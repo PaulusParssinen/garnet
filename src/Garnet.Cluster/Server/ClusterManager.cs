@@ -315,7 +315,7 @@ internal sealed partial class ClusterManager : IDisposable
 
     private static bool slotBitmapGetBit(ref byte[] bitmap, int pos)
     {
-        int BYTE = (pos / 8);
+        int BYTE = pos / 8;
         int BIT = pos & 7;
         return (bitmap[BYTE] & (1 << BIT)) != 0;
     }

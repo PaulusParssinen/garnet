@@ -43,8 +43,8 @@ public unsafe struct AddressInfo
     {
         readonly get
         {
-            int multiplier = (int)((((long)word & kMultiplierMaskInWord) >> (kAddressBits + kSizeBits)) & kMultiplierMaskInInteger);
-            return (multiplier == 0 ? 512 : 1 << 20) * ((((long)word & kSizeMaskInWord) >> kAddressBits) & kSizeMaskInInteger);
+            int multiplier = (int)(((word & kMultiplierMaskInWord) >> (kAddressBits + kSizeBits)) & kMultiplierMaskInInteger);
+            return (multiplier == 0 ? 512 : 1 << 20) * (((word & kSizeMaskInWord) >> kAddressBits) & kSizeMaskInInteger);
         }
         set
         {
@@ -62,7 +62,7 @@ public unsafe struct AddressInfo
                     throw new TsavoriteException("Unsupported object size: " + value);
                 }
             }
-            long _word = (long)word;
+            long _word = word;
             _word &= ~kSizeMaskInWord;
             _word &= ~kMultiplierMaskInWord;
             _word |= (val & kSizeMaskInInteger) << kAddressBits;
@@ -75,13 +75,13 @@ public unsafe struct AddressInfo
     {
         readonly get
         {
-            return (long)word & kAddressMask;
+            return word & kAddressMask;
         }
         set
         {
-            long _word = (long)word;
+            long _word = word;
             _word &= ~kAddressMask;
-            _word |= (value & kAddressMask);
+            _word |= value & kAddressMask;
             word = (IntPtr)_word;
             if (value != Address)
             {

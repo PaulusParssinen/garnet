@@ -26,8 +26,8 @@ internal sealed partial class StorageSession : IDisposable
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFADD;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.PFADD;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
 
         //cmd args
@@ -47,7 +47,7 @@ internal sealed partial class StorageSession : IDisposable
             }
 
             //Invalid HLL Type
-            if (*output == (byte)0xFF)
+            if (*output == 0xFF)
             {
                 pfaddUpdated = 0;
                 break;
@@ -87,14 +87,14 @@ internal sealed partial class StorageSession : IDisposable
             SpanByte srcKey = keys[i].SpanByte;
             GarnetStatus status = GET(ref srcKey, ref input, ref o, ref context);
             //Invalid HLL Type
-            if (*(long*)(o.SpanByte.ToPointer()) == -1)
+            if (*(long*)o.SpanByte.ToPointer() == -1)
             {
                 error = true;
                 return status;
             }
 
             if (status == GarnetStatus.OK)
-                count += *(long*)(o.SpanByte.ToPointer());
+                count += *(long*)o.SpanByte.ToPointer();
         }
 
         return GarnetStatus.OK;
@@ -112,8 +112,8 @@ internal sealed partial class StorageSession : IDisposable
         byte* pcurr = pbCmdInput;
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFCOUNT;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.PFCOUNT;
+        (*(RespInputHeader*)pcurr).flags = 0;
 
         return HyperLogLogLength(keys, ref Unsafe.AsRef<SpanByte>(pbCmdInput), out count, out bool error, ref context);
     }
@@ -131,9 +131,9 @@ internal sealed partial class StorageSession : IDisposable
 
         bool createTransaction = false;
 
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             createTransaction = true;
             txnManager.SaveKeyEntryToLock(keys[0], false, LockType.Exclusive);
             for (int i = 1; i < keys.Length; i++)
@@ -151,8 +151,8 @@ internal sealed partial class StorageSession : IDisposable
             //4 byte length of HLL read for merging
             int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(int);
 
-            sectorAlignedMemoryHll ??= new SectorAlignedMemory(hllBufferSize + sectorAlignedMemoryPoolAlignment, sectorAlignedMemoryPoolAlignment);
-            byte* readBuffer = sectorAlignedMemoryHll.GetValidPointer() + inputSize;
+            _sectorAlignedMemoryHll ??= new SectorAlignedMemory(_hllBufferSize + SectorAlignedMemoryPoolAlignment, SectorAlignedMemoryPoolAlignment);
+            byte* readBuffer = _sectorAlignedMemoryHll.GetValidPointer() + inputSize;
             byte* pbCmdInput = null;
             SpanByte dstKey = keys[0].SpanByte;
             for (int i = 1; i < keys.Length; i++)
@@ -164,10 +164,10 @@ internal sealed partial class StorageSession : IDisposable
                 *(int*)pcurr = RespInputHeader.Size;
                 pcurr += sizeof(int);
                 //1. header
-                (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFMERGE;
-                (*(RespInputHeader*)(pcurr)).flags = 0;
+                (*(RespInputHeader*)pcurr).cmd = RespCommand.PFMERGE;
+                (*(RespInputHeader*)pcurr).flags = 0;
 
-                SpanByteAndMemory mergeBuffer = new SpanByteAndMemory(readBuffer, hllBufferSize);
+                SpanByteAndMemory mergeBuffer = new SpanByteAndMemory(readBuffer, _hllBufferSize);
                 SpanByte srcKey = keys[i].SpanByte;
                 GarnetStatus status = GET(ref srcKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref mergeBuffer, ref lockableContext);
                 //Handle case merging source key does not exist
@@ -185,8 +185,8 @@ internal sealed partial class StorageSession : IDisposable
                 pcurr = pbCmdInput;
                 *(int*)pcurr = inputSize - sizeof(int) + mergeBuffer.Length;
                 pcurr += sizeof(int);
-                (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFMERGE;
-                (*(RespInputHeader*)(pcurr)).flags = 0;
+                (*(RespInputHeader*)pcurr).cmd = RespCommand.PFMERGE;
+                (*(RespInputHeader*)pcurr).flags = 0;
                 pcurr += RespInputHeader.Size;
                 *(int*)pcurr = mergeBuffer.Length;
                 SET_Conditional(ref dstKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref mergeBuffer, ref lockableContext);

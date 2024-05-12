@@ -20,47 +20,20 @@ namespace Tsavorite;
 public sealed unsafe class SectorAlignedMemory
 {
     // Byte #31 is used to denote free (1) or in-use (0) page
-    private const int kFreeBitMask = 1 << 31;
+    private const int FreeBitMask = 1 << 31;
 
-    /// <summary>
-    /// Actual buffer
-    /// </summary>
-    public byte[] buffer;
-
-    /// <summary>
-    /// Handle
-    /// </summary>
-    internal GCHandle handle;
-
-    /// <summary>
-    /// Offset
-    /// </summary>
-    public int offset;
-
-    /// <summary>
-    /// Aligned pointer
-    /// </summary>
-    public byte* aligned_pointer;
-
-    /// <summary>
-    /// Valid offset
-    /// </summary>
-    public int valid_offset;
-
-    /// <summary>
-    /// Required bytes
-    /// </summary>
-    public int required_bytes;
-
-    /// <summary>
-    /// Available bytes
-    /// </summary>
-    public int available_bytes;
-
+    public byte[] Buffer;
+    internal GCHandle Handle;
+    public int Offset;
+    public byte* AlignedPointer;
+    public int ValidOffset;
+    public int RequiredBytes;
+    public int AvailableBytes;
+    
     private int level;
     internal int Level => level
 #if CHECK_FREE
-        & ~kFreeBitMask
+        & ~FreeBitMask
 #endif
         ;
 
@@ -69,20 +42,20 @@ public sealed unsafe class SectorAlignedMemory
 #if CHECK_FREE
     internal bool Free
     {
-        get => (level & kFreeBitMask) != 0;
+        get => (level & FreeBitMask) != 0;
         set
         {
             if (value)
             {
                 if (Free)
                     throw new TsavoriteException("Attempting to return an already-free block");
-                level |= kFreeBitMask;
+                level |= FreeBitMask;
             }
             else
             {
                 if (!Free)
                     throw new TsavoriteException("Attempting to allocate an already-allocated block");
-                level &= ~kFreeBitMask;
+                level &= ~FreeBitMask;
             }
         }
     }
@@ -103,12 +76,12 @@ public sealed unsafe class SectorAlignedMemory
     public SectorAlignedMemory(int numRecords, int sectorSize)
     {
         int recordSize = 1;
-        int requiredSize = sectorSize + (((numRecords) * recordSize + (sectorSize - 1)) & ~(sectorSize - 1));
+        int requiredSize = sectorSize + ((numRecords * recordSize + (sectorSize - 1)) & ~(sectorSize - 1));
 
-        buffer = GC.AllocateArray<byte>(requiredSize, true);
-        long bufferAddr = (long)Unsafe.AsPointer(ref buffer[0]);
-        aligned_pointer = (byte*)((bufferAddr + (sectorSize - 1)) & ~((long)sectorSize - 1));
-        offset = (int)((long)aligned_pointer - bufferAddr);
+        Buffer = GC.AllocateArray<byte>(requiredSize, true);
+        long bufferAddr = (long)Unsafe.AsPointer(ref Buffer[0]);
+        AlignedPointer = (byte*)((bufferAddr + (sectorSize - 1)) & ~((long)sectorSize - 1));
+        Offset = (int)((long)AlignedPointer - bufferAddr);
         // Assume ctor is called for allocation and leave Free unset
     }
 
@@ -117,7 +90,7 @@ public sealed unsafe class SectorAlignedMemory
     /// </summary>
     public void Dispose()
     {
-        buffer = null;
+        Buffer = null;
 #if CHECK_FREE
         Free = true;
 #endif
@@ -138,20 +111,17 @@ public sealed unsafe class SectorAlignedMemory
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte* GetValidPointer()
     {
-        return aligned_pointer + valid_offset;
+        return AlignedPointer + ValidOffset;
     }
 
     /// <summary>
     /// ToString
     /// </summary>
-    public override string ToString()
-    {
-        return string.Format($"{(long)aligned_pointer} {offset} {valid_offset} {required_bytes} {available_bytes}"
+    public override string ToString() => $"{(long)AlignedPointer} {Offset} {ValidOffset} {RequiredBytes} {AvailableBytes}"
 #if CHECK_FREE
             + $" {Free}"
 #endif
-            );
-    }
+    ;
 }
 
 /// <summary>
@@ -210,24 +180,24 @@ public sealed class SectorAlignedBufferPool
 #endif // CHECK_FREE
 
         Debug.Assert(queue[page.Level] != null);
-        page.available_bytes = 0;
-        page.required_bytes = 0;
-        page.valid_offset = 0;
-        Array.Clear(page.buffer, 0, page.buffer.Length);
+        page.AvailableBytes = 0;
+        page.RequiredBytes = 0;
+        page.ValidOffset = 0;
+        Array.Clear(page.Buffer, 0, page.Buffer.Length);
         if (!Disabled)
         {
             if (UnpinOnReturn)
             {
-                page.handle.Free();
-                page.handle = default;
+                page.Handle.Free();
+                page.Handle = default;
             }
             queue[page.Level].Enqueue(page);
         }
         else
         {
             if (UnpinOnReturn)
-                page.handle.Free();
-            page.buffer = null;
+                page.Handle.Free();
+            page.Buffer = null;
         }
     }
 
@@ -248,7 +218,7 @@ public sealed class SectorAlignedBufferPool
         Interlocked.Increment(ref totalGets);
 #endif
 
-        int requiredSize = sectorSize + (((numRecords) * recordSize + (sectorSize - 1)) & ~(sectorSize - 1));
+        int requiredSize = sectorSize + ((numRecords * recordSize + (sectorSize - 1)) & ~(sectorSize - 1));
         int index = Position(requiredSize / sectorSize);
         if (queue[index] == null)
         {
@@ -263,22 +233,22 @@ public sealed class SectorAlignedBufferPool
 #endif // CHECK_FREE
             if (UnpinOnReturn)
             {
-                page.handle = GCHandle.Alloc(page.buffer, GCHandleType.Pinned);
-                page.aligned_pointer = (byte*)(((long)page.handle.AddrOfPinnedObject() + (sectorSize - 1)) & ~((long)sectorSize - 1));
-                page.offset = (int)((long)page.aligned_pointer - (long)page.handle.AddrOfPinnedObject());
+                page.Handle = GCHandle.Alloc(page.Buffer, GCHandleType.Pinned);
+                page.AlignedPointer = (byte*)(((long)page.Handle.AddrOfPinnedObject() + (sectorSize - 1)) & ~((long)sectorSize - 1));
+                page.Offset = (int)((long)page.AlignedPointer - page.Handle.AddrOfPinnedObject());
             }
             return page;
         }
 
         page = new SectorAlignedMemory(level: index)
         {
-            buffer = GC.AllocateArray<byte>(sectorSize * (1 << index), !UnpinOnReturn)
+            Buffer = GC.AllocateArray<byte>(sectorSize * (1 << index), !UnpinOnReturn)
         };
         if (UnpinOnReturn)
-            page.handle = GCHandle.Alloc(page.buffer, GCHandleType.Pinned);
-        long pageAddr = (long)Unsafe.AsPointer(ref page.buffer[0]);
-        page.aligned_pointer = (byte*)((pageAddr + (sectorSize - 1)) & ~((long)sectorSize - 1));
-        page.offset = (int)((long)page.aligned_pointer - pageAddr);
+            page.Handle = GCHandle.Alloc(page.Buffer, GCHandleType.Pinned);
+        long pageAddr = (long)Unsafe.AsPointer(ref page.Buffer[0]);
+        page.AlignedPointer = (byte*)((pageAddr + (sectorSize - 1)) & ~((long)sectorSize - 1));
+        page.Offset = (int)((long)page.AlignedPointer - pageAddr);
         page.pool = this;
         return page;
     }
@@ -296,7 +266,7 @@ public sealed class SectorAlignedBufferPool
         {
             if (queue[i] == null) continue;
             while (queue[i].TryDequeue(out SectorAlignedMemory result))
-                result.buffer = null;
+                result.Buffer = null;
         }
     }
 

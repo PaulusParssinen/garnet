@@ -203,8 +203,8 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
         result.callback = callback;
         NativeOverlapped* ovNative = result.nativeOverlapped;
 
-        ovNative->OffsetLow = unchecked((int)((ulong)sourceAddress & 0xFFFFFFFF));
-        ovNative->OffsetHigh = unchecked((int)(((ulong)sourceAddress >> 32) & 0xFFFFFFFF));
+        ovNative->OffsetLow = unchecked((int)(sourceAddress & 0xFFFFFFFF));
+        ovNative->OffsetHigh = unchecked((int)((sourceAddress >> 32) & 0xFFFFFFFF));
 
         try
         {
@@ -372,7 +372,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
     protected internal static SafeFileHandle CreateHandle(int segmentId, bool disableFileBuffering, bool deleteOnClose, bool preallocateFile, long segmentSize, string fileName, IntPtr ioCompletionPort, bool omitSegmentId = false)
     {
         uint fileAccess = Native32.GENERIC_READ | Native32.GENERIC_WRITE;
-        uint fileShare = unchecked(((uint)FileShare.ReadWrite & ~(uint)FileShare.Inheritable));
+        uint fileShare = unchecked((uint)FileShare.ReadWrite & ~(uint)FileShare.Inheritable);
         uint fileCreation = unchecked((uint)FileMode.OpenOrCreate);
         uint fileFlags = Native32.FILE_FLAG_OVERLAPPED;
 

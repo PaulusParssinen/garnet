@@ -7,12 +7,12 @@ using System.Security.Cryptography.X509Certificates;
 using Garnet.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Network handler
 /// </summary>
-public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : NetworkSenderBase, INetworkHandler
+public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : INetworkHandler, INetworkSender
     where TServerHook : IServerHook
     where TNetworkSender : INetworkSender
 {

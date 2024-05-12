@@ -215,7 +215,7 @@ public class RespHashTests
         Assert.AreEqual(4, result);
         // make sure the new hash object was created
         RedisValue getResult = db.HashGet("user:user2", "Field2");
-        Assert.AreEqual(4, ((int?)getResult));
+        Assert.AreEqual(4, (int?)getResult);
     }
 
     [Test]
@@ -237,7 +237,7 @@ public class RespHashTests
         Assert.AreEqual(4, result);
         // make sure the new hash object was created
         RedisValue getResult = db.HashGet("user:user100", "Field2");
-        Assert.AreEqual(4, ((int?)getResult));
+        Assert.AreEqual(4, (int?)getResult);
     }
 
     [Test]
@@ -334,7 +334,7 @@ public class RespHashTests
 
         int pageSize = 45;
         IEnumerable<HashEntry> response = db.HashScan("userhs", "*", pageSize: pageSize, cursor: 0);
-        var cursor = ((IScanningCursor)response);
+        var cursor = (IScanningCursor)response;
         int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;
@@ -831,7 +831,7 @@ public class RespHashTests
             int startIndexField = s.IndexOf('\n') + 1;
             int endIndexField = s.IndexOf('\n', startIndexField) - 1;
             string fieldValue = s.Substring(startIndexField, endIndexField - startIndexField);
-            int foundInSet = ("heads tails edge").IndexOf(fieldValue, StringComparison.InvariantCultureIgnoreCase);
+            int foundInSet = "heads tails edge".IndexOf(fieldValue, StringComparison.InvariantCultureIgnoreCase);
             Assert.IsTrue(foundInSet >= 0);
         }
 

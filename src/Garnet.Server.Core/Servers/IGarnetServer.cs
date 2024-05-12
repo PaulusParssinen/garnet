@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using Garnet.networking;
+using Garnet.Networking;
 
 namespace Garnet.Server;
 

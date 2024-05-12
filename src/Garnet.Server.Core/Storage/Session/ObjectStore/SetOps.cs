@@ -24,7 +24,7 @@ internal sealed partial class StorageSession : IDisposable
     {
         saddCount = 0;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, member);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, member);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -55,7 +55,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Set;
         rmwInput->header.flags = 0;
         rmwInput->header.SetOp = SetOperation.SADD;
@@ -66,11 +66,11 @@ internal sealed partial class StorageSession : IDisposable
         int inputLength = sizeof(ObjectInputHeader);
         foreach (ArgSlice member in members)
         {
-            ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, member);
+            ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, member);
             inputLength += tmp.Length;
         }
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         GarnetStatus status = RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
         saddCount = output.opsDone;
@@ -88,7 +88,7 @@ internal sealed partial class StorageSession : IDisposable
     {
         sremCount = 0;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, member);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, member);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -120,7 +120,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Prepare header in input buffer
-        var rmwInput = (ObjectInputHeader*)scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
+        var rmwInput = (ObjectInputHeader*)ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size).ptr;
         rmwInput->header.type = GarnetObjectType.Set;
         rmwInput->header.flags = 0;
         rmwInput->header.SetOp = SetOperation.SREM;
@@ -130,11 +130,11 @@ internal sealed partial class StorageSession : IDisposable
         int inputLength = sizeof(ObjectInputHeader);
         foreach (ArgSlice member in members)
         {
-            ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, member);
+            ArgSlice tmp = ScratchBufferManager.FormatScratchAsResp(0, member);
             inputLength += tmp.Length;
         }
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
 
@@ -153,7 +153,7 @@ internal sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
         rmwInput->header.type = GarnetObjectType.Set;
@@ -179,7 +179,7 @@ internal sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = ScratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
         rmwInput->header.type = GarnetObjectType.Set;
@@ -224,7 +224,7 @@ internal sealed partial class StorageSession : IDisposable
             return GarnetStatus.OK;
 
         // Construct input for operation
-        ArgSlice input = scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size);
+        ArgSlice input = ScratchBufferManager.CreateArgSlice(ObjectInputHeader.Size);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -269,7 +269,7 @@ internal sealed partial class StorageSession : IDisposable
 
         // Prepare header in input buffer
         int inputSize = ObjectInputHeader.Size + sizeof(int);
-        byte* rmwInput = scratchBufferManager.CreateArgSlice(inputSize).ptr;
+        byte* rmwInput = ScratchBufferManager.CreateArgSlice(inputSize).ptr;
         ((ObjectInputHeader*)rmwInput)->header.type = GarnetObjectType.Set;
         ((ObjectInputHeader*)rmwInput)->header.flags = 0;
         ((ObjectInputHeader*)rmwInput)->header.SetOp = SetOperation.SSCAN;
@@ -280,7 +280,7 @@ internal sealed partial class StorageSession : IDisposable
         rmwInput += ObjectInputHeader.Size;
 
         // Object Input Limit
-        (*(int*)rmwInput) = ObjectScanCountLimit;
+        *(int*)rmwInput = ObjectScanCountLimit;
         int inputLength = sizeof(ObjectInputHeader) + sizeof(int);
 
         ArgSlice tmp;
@@ -289,7 +289,7 @@ internal sealed partial class StorageSession : IDisposable
         byte[] matchPatternValue = Encoding.ASCII.GetBytes(match.Trim());
         fixed (byte* matchKeywordPtr = CmdStrings.MATCH, matchPatterPtr = matchPatternValue)
         {
-            tmp = scratchBufferManager.FormatScratchAsResp(0, new ArgSlice(matchKeywordPtr, CmdStrings.MATCH.Length),
+            tmp = ScratchBufferManager.FormatScratchAsResp(0, new ArgSlice(matchKeywordPtr, CmdStrings.MATCH.Length),
                         new ArgSlice(matchPatterPtr, matchPatternValue.Length));
         }
         inputLength += tmp.Length;
@@ -303,12 +303,12 @@ internal sealed partial class StorageSession : IDisposable
             byte* countValuePtr2 = countValuePtr;
             NumUtils.IntToBytes(count, lengthCountNumber, ref countValuePtr2);
 
-            tmp = scratchBufferManager.FormatScratchAsResp(0, new ArgSlice(countPtr, CmdStrings.COUNT.Length),
+            tmp = ScratchBufferManager.FormatScratchAsResp(0, new ArgSlice(countPtr, CmdStrings.COUNT.Length),
                       new ArgSlice(countValuePtr, countBytes.Length));
         }
         inputLength += tmp.Length;
 
-        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        ArgSlice input = ScratchBufferManager.GetSliceFromTail(inputLength);
 
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
         GarnetStatus status = ReadObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);
@@ -338,7 +338,7 @@ internal sealed partial class StorageSession : IDisposable
         }
 
         bool createTransaction = false;
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
             createTransaction = true;
             txnManager.SaveKeyEntryToLock(sourceKey, true, LockType.Exclusive);
@@ -386,9 +386,9 @@ internal sealed partial class StorageSession : IDisposable
 
         bool createTransaction = false;
 
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             createTransaction = true;
             foreach (ArgSlice item in keys)
                 txnManager.SaveKeyEntryToLock(item, true, LockType.Shared);
@@ -422,13 +422,13 @@ internal sealed partial class StorageSession : IDisposable
         if (keys.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice destination = scratchBufferManager.CreateArgSlice(key);
+        ArgSlice destination = ScratchBufferManager.CreateArgSlice(key);
 
         bool createTransaction = false;
 
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             createTransaction = true;
             txnManager.SaveKeyEntryToLock(destination, true, LockType.Exclusive);
             foreach (ArgSlice item in keys)
@@ -551,9 +551,9 @@ internal sealed partial class StorageSession : IDisposable
 
         bool createTransaction = false;
 
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             createTransaction = true;
             foreach (ArgSlice item in keys)
                 txnManager.SaveKeyEntryToLock(item, true, LockType.Shared);
@@ -588,13 +588,13 @@ internal sealed partial class StorageSession : IDisposable
         if (keys.Length == 0)
             return GarnetStatus.OK;
 
-        ArgSlice destination = scratchBufferManager.CreateArgSlice(key);
+        ArgSlice destination = ScratchBufferManager.CreateArgSlice(key);
 
         bool createTransaction = false;
 
-        if (txnManager.state != TxnState.Running)
+        if (txnManager.State != TxnState.Running)
         {
-            Debug.Assert(txnManager.state == TxnState.None);
+            Debug.Assert(txnManager.State == TxnState.None);
             createTransaction = true;
             txnManager.SaveKeyEntryToLock(destination, true, LockType.Exclusive);
             foreach (ArgSlice item in keys)

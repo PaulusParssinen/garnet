@@ -13,7 +13,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - ACL Commands
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Processes subcommands for the "ACL" RESP-Command.

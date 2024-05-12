@@ -84,17 +84,17 @@ internal sealed partial class StorageSession : IDisposable
         // Scan main store only for string or default key type
         if ((cursor & IsObjectStoreCursor) == 0 && (typeObject == default || typeObject.SequenceEqual(CmdStrings.STRING) || typeObject.SequenceEqual(CmdStrings.stringt)))
         {
-            session.ScanCursor(ref storeCursor, count, mainStoreDbScanFuncs, validateCursor: cursor != 0 && cursor != lastScanCursor);
+            Session.ScanCursor(ref storeCursor, count, mainStoreDbScanFuncs, validateCursor: cursor != 0 && cursor != lastScanCursor);
             remainingCount -= Keys.Count;
         }
 
         // Scan object store with the type parameter
         // Check the cursor value corresponds to the object store
-        if (objectStoreSession != null && remainingCount > 0 && (typeObject == default || (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))))
+        if (ObjectStoreSession != null && remainingCount > 0 && (typeObject == default || (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))))
         {
             bool validateCursor = storeCursor != 0 && storeCursor != lastScanCursor;
             storeCursor &= ~IsObjectStoreCursor;
-            objectStoreSession.ScanCursor(ref storeCursor, remainingCount, objStoreDbScanFuncs, validateCursor: validateCursor);
+            ObjectStoreSession.ScanCursor(ref storeCursor, remainingCount, objStoreDbScanFuncs, validateCursor: validateCursor);
             if (storeCursor != 0)
                 storeCursor |= IsObjectStoreCursor;
             Keys.AddRange(objStoreKeys);
@@ -109,26 +109,26 @@ internal sealed partial class StorageSession : IDisposable
     /// </summary>
     internal bool IterateMainStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
         where TScanFunctions : IScanIteratorFunctions<SpanByte, SpanByte>
-        => session.Iterate(ref scanFunctions, untilAddress);
+        => Session.Iterate(ref scanFunctions, untilAddress);
 
     /// <summary>
     /// Iterate the contents of the main store (pull based)
     /// </summary>
     internal ITsavoriteScanIterator<SpanByte, SpanByte> IterateMainStore()
-        => session.Iterate();
+        => Session.Iterate();
 
     /// <summary>
     /// Iterate the contents of the object store
     /// </summary>
     internal bool IterateObjectStore<TScanFunctions>(ref TScanFunctions scanFunctions, long untilAddress = -1)
         where TScanFunctions : IScanIteratorFunctions<byte[], IGarnetObject>
-        => objectStoreSession.Iterate(ref scanFunctions, untilAddress);
+        => ObjectStoreSession.Iterate(ref scanFunctions, untilAddress);
 
     /// <summary>
     /// Iterate the contents of the main store (pull based)
     /// </summary>
     internal ITsavoriteScanIterator<byte[], IGarnetObject> IterateObjectStore()
-        => objectStoreSession.Iterate();
+        => ObjectStoreSession.Iterate();
 
     /// <summary>
     ///  Get a list of the keys in the store and object store
@@ -143,13 +143,13 @@ internal sealed partial class StorageSession : IDisposable
 
         mainStoreDbKeysFuncs ??= new();
         mainStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length);
-        session.Iterate(ref mainStoreDbKeysFuncs);
+        Session.Iterate(ref mainStoreDbKeysFuncs);
 
-        if (objectStoreSession != null)
+        if (ObjectStoreSession != null)
         {
             objStoreDbKeysFuncs ??= new();
             objStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length, matchType: null);
-            objectStoreSession.Iterate(ref objStoreDbKeysFuncs);
+            ObjectStoreSession.Iterate(ref objStoreDbKeysFuncs);
         }
 
         return Keys;
@@ -163,14 +163,14 @@ internal sealed partial class StorageSession : IDisposable
         mainStoreDbSizeFuncs ??= new();
         mainStoreDbSizeFuncs.Initialize();
         long cursor = 0;
-        session.ScanCursor(ref cursor, long.MaxValue, mainStoreDbSizeFuncs);
+        Session.ScanCursor(ref cursor, long.MaxValue, mainStoreDbSizeFuncs);
         int count = mainStoreDbSizeFuncs.count;
-        if (objectStoreSession != null)
+        if (ObjectStoreSession != null)
         {
             objectStoreDbSizeFuncs ??= new();
             objectStoreDbSizeFuncs.Initialize();
             cursor = 0;
-            objectStoreSession.ScanCursor(ref cursor, long.MaxValue, objectStoreDbSizeFuncs);
+            ObjectStoreSession.ScanCursor(ref cursor, long.MaxValue, objectStoreDbSizeFuncs);
             count += objectStoreDbSizeFuncs.count;
         }
 

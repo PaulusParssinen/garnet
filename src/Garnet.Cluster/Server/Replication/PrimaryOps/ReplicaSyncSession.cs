@@ -497,13 +497,13 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
         bufferPool ??= new SectorAlignedBufferPool(1, (int)device.SectorSize);
 
         long numBytesToRead = size;
-        numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
+        numBytesToRead = (numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1);
 
         SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToRead);
         if (segmentId == -1)
-            device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer, (uint)numBytesToRead, IOCallback, null);
+            device.ReadAsync(address, (IntPtr)pbuffer.AlignedPointer, (uint)numBytesToRead, IOCallback, null);
         else
-            device.ReadAsync(segmentId, address, (IntPtr)pbuffer.aligned_pointer, (uint)numBytesToRead, IOCallback, null);
+            device.ReadAsync(segmentId, address, (IntPtr)pbuffer.AlignedPointer, (uint)numBytesToRead, IOCallback, null);
         semaphore.Wait();
         return (pbuffer, (int)numBytesToRead);
     }
@@ -523,6 +523,6 @@ internal static unsafe class SectorAlignedMemoryExtensions
 {
     public static Span<byte> GetSlice(this SectorAlignedMemory pbuffer, int length)
     {
-        return new Span<byte>(pbuffer.aligned_pointer, length);
+        return new Span<byte>(pbuffer.AlignedPointer, length);
     }
 }

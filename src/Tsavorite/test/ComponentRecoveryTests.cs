@@ -3,7 +3,7 @@
 
 using NUnit.Framework;
 
-namespace Tsavorite.Tests.recovery;
+namespace Tsavorite.Tests.Recovery;
 
 [TestFixture]
 public class ComponentRecoveryTests

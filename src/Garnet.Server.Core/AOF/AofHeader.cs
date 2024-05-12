@@ -9,11 +9,11 @@ namespace Garnet.Server;
 internal struct AofHeader
 {
     [FieldOffset(0)]
-    public AofEntryType opType;
+    public AofEntryType OpType;
     [FieldOffset(1)]
-    public byte type;
+    public byte Type;
     [FieldOffset(2)]
-    public long version;
+    public long Version;
     [FieldOffset(10)]
-    public int sessionID;
+    public int SessionId;
 }

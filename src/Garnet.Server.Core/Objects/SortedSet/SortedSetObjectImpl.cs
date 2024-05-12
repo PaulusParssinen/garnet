@@ -827,7 +827,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     break;
                 rank++;
             }
-            _output->opsDone = ascending ? rank : (sortedSet.Count - rank) - 1;
+            _output->opsDone = ascending ? rank : sortedSet.Count - rank - 1;
         }
     }
 

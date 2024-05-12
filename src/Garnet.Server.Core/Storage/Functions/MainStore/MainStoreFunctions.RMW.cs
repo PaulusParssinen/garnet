@@ -30,7 +30,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 if (cmd >= CustomCommandManager.StartOffset)
                 {
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
-                    bool ret = functionsState.customCommands[cmd - CustomCommandManager.StartOffset].functions.NeedInitialUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], ref outp);
+                    bool ret = _functionsState.CustomCommands[cmd - CustomCommandManager.StartOffset].functions.NeedInitialUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], ref outp);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;
                     return ret;
@@ -54,7 +54,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 value.UnmarkExtraMetadata();
                 value.ShrinkSerializedLength(HyperLogLog.DefaultHLL.SparseInitialLength(i));
                 HyperLogLog.DefaultHLL.Init(i, v, value.Length);
-                *output.SpanByte.ToPointer() = (byte)1;
+                *output.SpanByte.ToPointer() = 1;
                 break;
 
             case RespCommand.PFMERGE:
@@ -153,7 +153,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    CustomRawStringFunctions functions = _functionsState.CustomCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
                     // compute metadata size for result
                     long expiration = input.ExtraMetadata;
                     int metadataSize = expiration switch
@@ -180,7 +180,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 input.AsReadOnlySpan()[RespInputHeader.Size..].CopyTo(value.AsSpan());
 
                 // Copy value to output
-                CopyTo(ref value, ref output, functionsState.memoryPool);
+                CopyTo(ref value, ref output, _functionsState.MemoryPool);
                 break;
         }
 
@@ -191,8 +191,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public void PostInitialUpdater(ref SpanByte key, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo)
     {
-        functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+        _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
         {
             ((RespInputHeader*)input.ToPointer())->SetExpiredFlag();
             WriteLogRMW(ref key, ref input, ref value, rmwInfo.Version, rmwInfo.SessionID);
@@ -206,8 +206,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         {
             rmwInfo.UsedValueLength = value.TotalSize;
             if (!rmwInfo.RecordInfo.Modified)
-                functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
-            if (functionsState.appendOnlyFile != null)
+                _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+            if (_functionsState.AppendOnlyFile != null)
                 WriteLogRMW(ref key, ref input, ref value, rmwInfo.Version, rmwInfo.SessionID);
             return true;
         }
@@ -285,7 +285,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             case RespCommand.PEXPIRE:
             case RespCommand.EXPIRE:
                 ExpireOption optionType = (ExpireOption)(*(inputPtr + RespInputHeader.Size));
-                bool expiryExists = (value.MetadataSize > 0);
+                bool expiryExists = value.MetadataSize > 0;
                 return EvaluateExpireInPlace(optionType, expiryExists, ref input, ref value, ref output);
 
             case RespCommand.PERSIST:
@@ -363,7 +363,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                 if (!HyperLogLog.DefaultHLL.IsValidHYLL(v, value.Length))
                 {
-                    *output.SpanByte.ToPointer() = (byte)0xFF;
+                    *output.SpanByte.ToPointer() = 0xFF;
                     return true;
                 }
 
@@ -428,7 +428,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    CustomRawStringFunctions functions = _functionsState.CustomCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
                     long expiration = input.ExtraMetadata;
                     if (expiration == -1)
                     {
@@ -498,7 +498,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
-                    bool ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.NeedCopyUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], oldValue.AsReadOnlySpan(), ref outp);
+                    bool ret = _functionsState.CustomCommands[*inputPtr - CustomCommandManager.StartOffset].functions.NeedCopyUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], oldValue.AsReadOnlySpan(), ref outp);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;
                     return ret;
@@ -687,7 +687,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    CustomRawStringFunctions functions = _functionsState.CustomCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
                     long expiration = input.ExtraMetadata;
                     if (expiration == 0)
                     {
@@ -702,7 +702,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
 
-                    bool ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.CopyUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan().Slice(RespInputHeader.Size),
+                    bool ret = _functionsState.CustomCommands[*inputPtr - CustomCommandManager.StartOffset].functions.CopyUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan().Slice(RespInputHeader.Size),
                         oldValue.AsReadOnlySpan(), newValue.AsSpan(), ref outp, ref rmwInfo);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;
@@ -718,8 +718,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public void PostCopyUpdater(ref SpanByte key, ref SpanByte input, ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output, ref RMWInfo rmwInfo)
     {
-        functionsState.watchVersionMap.IncrementVersion(rmwInfo.KeyHash);
-        if (functionsState.appendOnlyFile != null)
+        _functionsState.WatchVersionMap.IncrementVersion(rmwInfo.KeyHash);
+        if (_functionsState.AppendOnlyFile != null)
             WriteLogRMW(ref key, ref input, ref oldValue, rmwInfo.Version, rmwInfo.SessionID);
     }
 }

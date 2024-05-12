@@ -110,7 +110,7 @@ public partial class TsavoriteBase
         int numChunks = 1;
         if (totalSize > uint.MaxValue)
         {
-            numChunks = (int)Math.Ceiling((double)totalSize / (long)uint.MaxValue);
+            numChunks = (int)Math.Ceiling((double)totalSize / uint.MaxValue);
             numChunks = (int)Math.Pow(2, Math.Ceiling(Math.Log(numChunks, 2)));
         }
 

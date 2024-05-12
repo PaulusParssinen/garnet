@@ -1,16 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-//#define HLL_SINGLE_PFADD_ENABLED
-
-#if DEBUG
-#endif
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Garnet.Common;
-
-#pragma warning disable IDE1006 // Naming Styles
 
 namespace Garnet.Server;
 
@@ -33,22 +27,23 @@ internal enum HLL_DTYPE : byte
 /// </summary>
 public unsafe class HyperLogLog
 {
-    private static readonly byte hbit = 64; // number of bits in hash value        
-    private readonly byte pbit; //register offset bits
-    private readonly byte qbit; //leading zero counting bits                           
-    private readonly int mcnt; //register count
+    private static readonly byte HashBits = 64;
 
-    private static readonly byte reg_bits = 6;
-    private static readonly byte reg_bits_msk = (byte)((1 << reg_bits) - 1);
+    private readonly byte RegisterOffsetBits;
+    private readonly byte LeadingZeroCountBits;
+    private readonly int RegisterCount;
+
+    private static readonly byte RegisterBits = 6;
+    private static readonly byte RegisterBitMask = (byte)((1 << RegisterBits) - 1);
     /// Dense and Sparse representations have a 16 byte header (additional 2 bytes for Sparse to store length of RLE).
     /// [HYLL | E | N/U | Cardin]
     /// HYLL: 4 byte magic string
     /// E: 1 byte encoding for sparse/dense representation
     /// N/U: 3 bytes not used
     /// Cardin: 8 bytes (64 bit int) for previously computed cardinality if data has not changed
-    private static readonly byte hll_header_bytes = 16;
+    private static readonly byte HllHeaderBytes = 16;
 
-    private static readonly double alpha = 0.721347520444481703680; /* constant for 0.5/ln(2) */
+    private static readonly double Alpha = 0.721347520444481703680; /* constant for 0.5/ln(2) */
 
     /// <summary>
     /// How many bytes needed for dense representation
@@ -63,12 +58,12 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Maximum number of bytes consumed by the sparse representation
     /// </summary>
-    private readonly int SparseSizeMaxCap = (1 << 12);
+    private readonly int SparseSizeMaxCap = 1 << 12;
 
     /// <summary>
     /// Sparse representation allocation increments
     /// </summary>
-    public readonly int SparseMemorySectorSize = (1 << 7);
+    public readonly int SparseMemorySectorSize = 1 << 7;
 
     /// <summary>
     /// Sparse representation initial zero ranges cnt
@@ -89,12 +84,12 @@ public unsafe class HyperLogLog
     /// <summary>
     /// Return bits used for indexing
     /// </summary>
-    public byte PBit => pbit;
+    public byte PBit => RegisterOffsetBits;
 
     /// <summary>
     /// Return bits used for clz
     /// </summary>
-    public byte QBit => qbit;
+    public byte QBit => LeadingZeroCountBits;
 
     /// <summary>
     /// Default hyperloglog instance
@@ -112,25 +107,25 @@ public unsafe class HyperLogLog
     /// </summary>
     public HyperLogLog(byte pbit)
     {
-        this.pbit = pbit;
-        qbit = (byte)(hbit - pbit);
-        mcnt = 1 << pbit;
-        DenseBytes = hll_header_bytes + ((reg_bits * RegCnt) >> 3);
-        SparseZeroRanges = mcnt >> 7;
-        SparseHeaderSize = hll_header_bytes + 2;
+        RegisterOffsetBits = pbit;
+        LeadingZeroCountBits = (byte)(HashBits - pbit);
+        RegisterCount = 1 << pbit;
+        DenseBytes = HllHeaderBytes + ((RegisterBits * RegCnt) >> 3);
+        SparseZeroRanges = RegisterCount >> 7;
+        SparseHeaderSize = HllHeaderBytes + 2;
         SparseBytes = SparseHeaderSize + SparseZeroRanges + SparseMemorySectorSize;
     }
 
     /// <summary>
     /// Get register count for dense HLL representation
     /// </summary>        
-    public int RegCnt => mcnt;
+    public int RegCnt => RegisterCount;
 
     /// <summary>
     /// Extract register index
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort RegIdx(long hv) => (ushort)(hv & (mcnt - 1));
+    public ushort RegIdx(long hv) => (ushort)(hv & (RegisterCount - 1));
 
     /// <summary>
     /// Count leading zeros
@@ -139,8 +134,8 @@ public unsafe class HyperLogLog
     public byte clz(long hv)
     {
         ulong bits = (ulong)hv;
-        byte lz = (byte)(BitOperations.LeadingZeroCount(bits));
-        return lz >= qbit ? (byte)(qbit + 1) : (byte)(lz + 1);
+        byte lz = (byte)BitOperations.LeadingZeroCount(bits);
+        return lz >= LeadingZeroCountBits ? (byte)(LeadingZeroCountBits + 1) : (byte)(lz + 1);
     }
 
     /// <summary>
@@ -149,14 +144,13 @@ public unsafe class HyperLogLog
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private byte _get_register(byte* reg, ushort idx)
     {
-        int m = (int)idx * (int)reg_bits;
+        int m = idx * RegisterBits;
         ushort _b0 = (ushort)(m >> 3); // find byte zero location
         ushort _lsb = (ushort)(m & 0x7); // find bits in byte zero
 
         byte b0 = (byte)(reg[_b0] >> _lsb); // extract bits from byte zero
         byte b1 = (byte)(reg[_b0 + 1] << (8 - _lsb)); //extract bits from byte one
-        //Console.WriteLine("{0},{1}", reg[_b0], reg[_b0 + 1]);
-        return (byte)((b0 | b1) & reg_bits_msk); //combine bits in byte zero and one
+        return (byte)((b0 | b1) & RegisterBitMask); //combine bits in byte zero and one
     }
 
     /// <summary>
@@ -165,18 +159,18 @@ public unsafe class HyperLogLog
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _set_register(byte* reg, ushort idx, byte val)
     {
-        int m = idx * reg_bits;
+        int m = idx * RegisterBits;
         ushort _b0 = (ushort)(m >> 3); // find byte zero location
         byte _lsb = (byte)(m & 0x7); // find bits in byte zero
         byte _msb = (byte)(8 - _lsb);
 
-        Debug.Assert(_b0 < ((mcnt * reg_bits) / 8));
+        Debug.Assert(_b0 < (RegisterCount * RegisterBits / 8));
 
-        reg[_b0] &= (byte)~(reg_bits_msk << _lsb);//clear bits for lsb
+        reg[_b0] &= (byte)~(RegisterBitMask << _lsb);//clear bits for lsb
         reg[_b0] |= (byte)(val << _lsb);//set new value for lsb
 
-        reg[_b0 + 1] &= (byte)(~(reg_bits_msk >> _msb));// clear bits for msb
-        reg[_b0 + 1] |= (byte)((val >> _msb));//set new value for msb            
+        reg[_b0 + 1] &= (byte)~(RegisterBitMask >> _msb);// clear bits for msb
+        reg[_b0 + 1] |= (byte)(val >> _msb);//set new value for msb            
     }
 
     /// <summary>
@@ -195,11 +189,11 @@ public unsafe class HyperLogLog
     /// Check if tag is correctly set.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsHYLL(byte* ptr) => *(int*)(ptr + 4) == (int)0x48594C4C;
+    private bool IsHYLL(byte* ptr) => *(int*)(ptr + 4) == 0x48594C4C;
 
     private bool IsValidHLLLength(byte* ptr, int length)
     {
-        return (IsSparse(ptr) && SparseInitialLength(1) <= length || length <= SparseSizeMaxCap) ||
+        return IsSparse(ptr) && SparseInitialLength(1) <= length || length <= SparseSizeMaxCap ||
             (IsDense(ptr) && length == DenseBytes);
     }
 
@@ -207,7 +201,7 @@ public unsafe class HyperLogLog
     /// Set prefix HYLL (HYperLogLog)
     /// </summary>     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetPrefix(byte* ptr) => *(long*)ptr = (long)0x48594C4C00000000;
+    public void SetPrefix(byte* ptr) => *(long*)ptr = 0x48594C4C00000000;
 
     /// <summary>
     /// Extract data structure type from header
@@ -237,26 +231,26 @@ public unsafe class HyperLogLog
     /// Invalidate cached cardinality estimate
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetCard(byte* ptr, long card) => *((long*)(ptr + 8)) = card;
+    public void SetCard(byte* ptr, long card) => *(long*)(ptr + 8) = card;
 
     /// <summary>
     /// Get cached cardinality estimate
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetCard(byte* ptr) => *((long*)(ptr + 8));
+    public long GetCard(byte* ptr) => *(long*)(ptr + 8);
 
     /// <summary>
     /// Check if previously calculated cardinality has been invalidated by previous update
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsValidCard(byte* ptr) => (GetCard(ptr) >= 0);
+    private bool IsValidCard(byte* ptr) => GetCard(ptr) >= 0;
 
     /// <summary>
     /// Initialize HLL data structure
     /// </summary>
     public void Init(byte* input, byte* value, int vlen)
     {
-        int count = *(int*)(input);
+        int count = *(int*)input;
         if (vlen != DenseBytes)//Sparse representation
         {
             InitSparse(value);
@@ -280,7 +274,7 @@ public unsafe class HyperLogLog
 
         ushort ranges = (ushort)SparseZeroRanges;
         SetSparseRLESize(ptr, ranges); //Initial bytes for zero representation//
-        byte* regs = ptr + hll_header_bytes + 2;
+        byte* regs = ptr + HllHeaderBytes + 2;
 
         //initialize to represent small zero
         for (int i = 0; i < ranges; i++) regs[i] = 0xFF;
@@ -303,7 +297,7 @@ public unsafe class HyperLogLog
     /// </summary>
     public int SparseInitialLength(byte* input)
     {
-        int count = *(int*)(input);//get count of elements in sequence
+        int count = *(int*)input;//get count of elements in sequence
         return SparseInitialLength(count);
     }
 
@@ -343,7 +337,7 @@ public unsafe class HyperLogLog
     /// </summary>        
     public int UpdateGrow(byte* input, byte* value)
     {
-        int count = *(int*)(input);
+        int count = *(int*)input;
         if (IsSparse(value))
         {
             //calculate additional sparse needed and check if we are allowed to grow to that size based of the max-cap-size
@@ -364,10 +358,10 @@ public unsafe class HyperLogLog
     {
         byte dstType = GetType(dstHLL);
         byte srcType = GetType(srcHLL);
-        if (dstType == (byte)HLL_DTYPE.HLL_SPARSE && srcType == (byte)(HLL_DTYPE.HLL_SPARSE))
+        if (dstType == (byte)HLL_DTYPE.HLL_SPARSE && srcType == (byte)HLL_DTYPE.HLL_SPARSE)
         {
             int srcNonZeroBytes = SparseCountNonZero(srcHLL) * SparseMaxBytesPerInsert;
-            int pageCount = (((srcNonZeroBytes - 1) / SparseMemorySectorSize) + 1);//Get an extra allocation for future growth
+            int pageCount = ((srcNonZeroBytes - 1) / SparseMemorySectorSize) + 1;//Get an extra allocation for future growth
             int sparseBlobBytes = SparseCurrentSizeInBytes(dstHLL) + pageCount * SparseMemorySectorSize;
             return sparseBlobBytes < SparseSizeMaxCap ? sparseBlobBytes : DenseBytes;
         }
@@ -400,7 +394,7 @@ public unsafe class HyperLogLog
     public bool CopyUpdate(byte* input, byte* oldValue, byte* newValue, int newValueLen)
     {
         bool fUpdated = false;
-        int count = *(int*)(input);
+        int count = *(int*)input;
         //Only reach this point if old-blob is of sparse type
         if (IsSparse(oldValue))
         {
@@ -451,9 +445,9 @@ public unsafe class HyperLogLog
     public bool DenseToDense(byte* srcDenseBlob, byte* dstDenseBlob)
     {
         bool fUpdated = false;
-        byte* srcRegs = srcDenseBlob + hll_header_bytes;
-        byte* dstRegs = dstDenseBlob + hll_header_bytes;
-        for (ushort idx = 0; idx < mcnt; idx++)
+        byte* srcRegs = srcDenseBlob + HllHeaderBytes;
+        byte* dstRegs = dstDenseBlob + HllHeaderBytes;
+        for (ushort idx = 0; idx < RegisterCount; idx++)
         {
             byte srcLZ = _get_register(srcRegs, idx);
             byte dstLZ = _get_register(dstRegs, idx);
@@ -472,7 +466,7 @@ public unsafe class HyperLogLog
     /// </summary>
     public bool Update(byte* input, byte* value, int valueLen, ref bool updated)
     {
-        int count = *(int*)(input);
+        int count = *(int*)input;
 
         if (IsDense(value))// if blob layout is dense
         {
@@ -514,8 +508,8 @@ public unsafe class HyperLogLog
         ushort idx = RegIdx(hv);
         byte cntlz = clz(hv);
 
-        Debug.Assert(idx < mcnt);
-        Debug.Assert(cntlz < qbit + 1);
+        Debug.Assert(idx < RegisterCount);
+        Debug.Assert(cntlz < LeadingZeroCountBits + 1);
 
         return UpdateDenseRegister(ptr, idx, cntlz);
     }
@@ -523,7 +517,7 @@ public unsafe class HyperLogLog
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool UpdateDenseRegister(byte* ptr, ushort idx, byte cntlz)
     {
-        byte* regs = ptr + hll_header_bytes;
+        byte* regs = ptr + HllHeaderBytes;
         if (cntlz > _get_register(regs, idx))
         {
             SetCard(ptr, long.MinValue);//invalidate previously calculated cardinality                
@@ -534,16 +528,16 @@ public unsafe class HyperLogLog
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetSparseRLESize(byte* ptr, ushort size) => *(ushort*)(ptr + hll_header_bytes) = size;
+    private void SetSparseRLESize(byte* ptr, ushort size) => *(ushort*)(ptr + HllHeaderBytes) = size;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort GetSparseRLESize(byte* ptr) => *(ushort*)(ptr + hll_header_bytes);
+    private ushort GetSparseRLESize(byte* ptr) => *(ushort*)(ptr + HllHeaderBytes);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsZeroRange(byte* p) => (((*p) & 0x80) != 0); // 1xxx xxxx
+    private bool IsZeroRange(byte* p) => ((*p) & 0x80) != 0; // 1xxx xxxx
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ZeroRangeLen(byte* p) => (((*p) & 0x7F) + 1); // 1xxx xxxx 
+    private int ZeroRangeLen(byte* p) => ((*p) & 0x7F) + 1; // 1xxx xxxx 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ZeroRangeSet(byte* p, byte len) => *p = (byte)((len - 1) | 0x80); // 1xxx xxxx                
@@ -693,7 +687,7 @@ public unsafe class HyperLogLog
             z -= Math.Pow(1 - x, 2) * y;
         } while (_z != z);
 
-        return z / (double)3;
+        return z / 3;
     }
 
     private static double cSigma(double x)
@@ -728,15 +722,7 @@ public unsafe class HyperLogLog
         int clen = 0;//length covered by opcode
         int offset = 0;//offset within sequence
 
-        for (int i = 0; i < 64; i++) rhisto[i] = 0;
-        //rhisto[0] = 0; rhisto[1] = 0; rhisto[2] = 0; rhisto[3] = 0; rhisto[4] = 0; rhisto[5] = 0; rhisto[6] = 0; rhisto[7] = 0;
-        //rhisto[8] = 0; rhisto[9] = 0; rhisto[10] = 0; rhisto[10] = 0; rhisto[11] = 0; rhisto[12] = 0; rhisto[13] = 0; rhisto[14] = 0;
-        //rhisto[16] = 0; rhisto[17] = 0; rhisto[18] = 0; rhisto[19] = 0; rhisto[20] = 0; rhisto[21] = 0; rhisto[22] = 0; rhisto[23] = 0;
-        //rhisto[24] = 0; rhisto[25] = 0; rhisto[26] = 0; rhisto[27] = 0; rhisto[28] = 0; rhisto[29] = 0; rhisto[30] = 0; rhisto[31] = 0;
-        //rhisto[32] = 0; rhisto[33] = 0; rhisto[34] = 0; rhisto[35] = 0; rhisto[36] = 0; rhisto[37] = 0; rhisto[38] = 0; rhisto[38] = 0;
-        //rhisto[40] = 0; rhisto[41] = 0; rhisto[42] = 0; rhisto[43] = 0; rhisto[44] = 0; rhisto[45] = 0; rhisto[46] = 0; rhisto[47] = 0;
-        //rhisto[48] = 0; rhisto[49] = 0; rhisto[50] = 0; rhisto[51] = 0; rhisto[52] = 0; rhisto[53] = 0; rhisto[54] = 0; rhisto[55] = 0;
-        //rhisto[56] = 0; rhisto[57] = 0; rhisto[58] = 0; rhisto[59] = 0; rhisto[60] = 0; rhisto[61] = 0; rhisto[62] = 0; rhisto[63] = 0;            
+        for (int i = 0; i < 64; i++) rhisto[i] = 0;      
 
         while (curr != end)
         {
@@ -756,15 +742,15 @@ public unsafe class HyperLogLog
         //for (int i = 0; i < 64; i++) Console.WriteLine("{0} = {1}", i, rhisto[i]);
 
         double E;//estimate            
-        double z = mcnt * cTau((mcnt - rhisto[qbit + 1]) / (double)mcnt);
+        double z = RegisterCount * cTau((RegisterCount - rhisto[LeadingZeroCountBits + 1]) / (double)RegisterCount);
 
-        for (int j = qbit; j >= 1; --j)
+        for (int j = LeadingZeroCountBits; j >= 1; --j)
         {
             z += rhisto[j];
             z *= 0.5;
         }
-        z += mcnt * cSigma(rhisto[0] / (double)mcnt);
-        E = alpha * mcnt * mcnt / z;
+        z += RegisterCount * cSigma(rhisto[0] / (double)RegisterCount);
+        E = Alpha * RegisterCount * RegisterCount / z;
 
         return (long)Math.Round(E);
     }
@@ -775,7 +761,7 @@ public unsafe class HyperLogLog
     private long CountDenseNCEstimator(byte* ptr)
     {
         int* rhisto = stackalloc int[64];
-        byte* regs = ptr + hll_header_bytes;
+        byte* regs = ptr + HllHeaderBytes;
 
         for (int i = 0; i < 64; i++) rhisto[i] = 0;
 
@@ -784,7 +770,7 @@ public unsafe class HyperLogLog
             byte r00, r01, r02, r03, r04, r05, r06, r07;
             byte r08, r09, r10, r11, r12, r13, r14, r15;
 
-            int end = mcnt >> 4; // this.mcnt / 16
+            int end = RegisterCount >> 4; // this.mcnt / 16
             //unpack 6-bit registers
             for (int j = 0; j < end; j++)
             {
@@ -820,15 +806,15 @@ public unsafe class HyperLogLog
         //for (int i = 0; i < 64; i++) Console.WriteLine("{0} = {1}", i, rhisto[i]);
 
         double E;//estimate            
-        double z = mcnt * cTau((mcnt - rhisto[qbit + 1]) / (double)mcnt);
+        double z = RegisterCount * cTau((RegisterCount - rhisto[LeadingZeroCountBits + 1]) / (double)RegisterCount);
 
-        for (int j = qbit; j >= 1; --j)
+        for (int j = LeadingZeroCountBits; j >= 1; --j)
         {
             z += rhisto[j];
             z *= 0.5;
         }
-        z += mcnt * cSigma(rhisto[0] / (double)mcnt);
-        E = alpha * mcnt * mcnt / z;
+        z += RegisterCount * cSigma(rhisto[0] / (double)RegisterCount);
+        E = Alpha * RegisterCount * RegisterCount / z;
 
         return (long)Math.Round(E);
     }
@@ -959,9 +945,9 @@ public unsafe class HyperLogLog
     private int DenseCountNonZero(byte* ptr)
     {
         int cnt = 0;
-        byte* regs = ptr + hll_header_bytes;
+        byte* regs = ptr + HllHeaderBytes;
 
-        for (int idx = 0; idx < mcnt; idx++)
+        for (int idx = 0; idx < RegisterCount; idx++)
         {
             byte lz = _get_register(regs, (ushort)idx);
             cnt += lz == 0 ? 1 : 0;
@@ -992,200 +978,4 @@ public unsafe class HyperLogLog
 
         return cnt;
     }
-
-#if DEBUG
-    private void DumpSparseRawBytes(byte* ptr)
-    {
-        Console.WriteLine("[0x00000000x0]");
-        int usedBytesInBlob = GetSparseRLESize(ptr) + SparseHeaderSize;
-        int len = usedBytesInBlob >> 3;
-        byte* t = ptr;
-        int count = 1;
-
-        for (int i = 0; i < len; i++)
-        {
-            byte v = *t;
-
-            Console.Write(count.ToString("D3") + ": ");
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++; v = *t;
-
-            Console.WriteLine("");
-            count++;
-        }
-
-        Console.Write(count.ToString("D3") + ": ");
-        int tail = usedBytesInBlob & 7;
-        for (int i = tail - 1; i >= 0; i--)
-        {
-            byte v = *t;
-            Console.Write("0x" + v.ToString("X2") + " "); t++;
-        }
-        Console.WriteLine("");
-
-    }
-
-    /// <summary>
-    /// Dump HLL structure raw bytes
-    /// </summary>
-    public void DumpRawBytes(byte* ptr)
-    {
-        byte dType = GetType(ptr);
-        switch ((HLL_DTYPE)dType)
-        {
-            case HLL_DTYPE.HLL_SPARSE:
-                DumpSparseRawBytes(ptr);
-                break;
-            case HLL_DTYPE.HLL_DENSE:
-                throw new GarnetException("Unimplemented...");
-                //break;
-        }
-    }
-
-    /// <summary>
-    /// Used for debugging to compare dense and sparse HLL
-    /// </summary>
-    public void CompareSparseToDense(byte* denseHLL, byte* sparseHLL)
-    {
-        Dictionary<int, int> denseRegs = new();
-        byte* regs = denseHLL + hll_header_bytes;
-
-        for (uint i = 0; i < mcnt; i++)
-        {
-            ushort idx = (ushort)i;
-            byte lz = _get_register(regs, idx);
-            if (lz != 0)
-                denseRegs.Add(idx, lz);
-        }
-
-        ushort rleSize = GetSparseRLESize(sparseHLL);
-        byte* curr = sparseHLL + SparseHeaderSize; // start of sparse representation
-        byte* end = curr + rleSize; // end of sparse representation
-        int offset = 0; // offset within sequence
-
-        while (curr != end)
-        {
-            bool iszero = IsZeroRange(curr);
-            int clen = iszero ? ZeroRangeLen(curr) : 1; // length covered by opcode
-
-            if (!iszero)
-            {
-                int val = GetNonZero(curr);
-                if (!denseRegs.ContainsKey(offset))
-                {
-                    Console.WriteLine("FAILED: Nonzero not contained: {0} = {1}", offset, val);
-                    Environment.Exit(1);
-                }
-
-                if (denseRegs[offset] != val)
-                {
-                    Console.WriteLine("FAILED: Nonzero wrong nonzero value: {0} = {1}", offset, val);
-                    Environment.Exit(1);
-                }
-            }
-            offset += clen;
-            curr++;
-        }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public void DumpRegs(byte* ptr)
-    {
-        byte dType = GetType(ptr);
-        switch ((HLL_DTYPE)dType)
-        {
-            case HLL_DTYPE.HLL_SPARSE:
-                DumpSparseRegs(ptr);
-                break;
-            case HLL_DTYPE.HLL_DENSE:
-                DumpDenseRegs(ptr);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Dump dense reg contents to console
-    /// </summary>
-    public void DumpDenseRegs(byte* denseHLL)
-    {
-        Console.WriteLine("-------[Dumping Dense Reg Content]-------");
-        byte* regs = denseHLL + hll_header_bytes;
-        for (uint i = 0; i < mcnt; i++)
-        {
-            ushort idx = (ushort)i;
-            byte lz = _get_register(regs, idx);
-            if (lz != 0)
-                Console.WriteLine("{0} = {1}", idx, _get_register(regs, idx));
-        }
-    }
-
-    /// <summary>
-    /// Dump sparse reg contents to console
-    /// </summary>
-    public void DumpSparseRegs(byte* sparseHLL, Dictionary<int, int> data = null)
-    {
-        if (data == null) Console.WriteLine("-------[Dumping Sparse Reg Content]-------");
-        ushort rleSize = GetSparseRLESize(sparseHLL);
-
-        byte* curr = sparseHLL + SparseHeaderSize; // start of sparse representation
-        byte* end = curr + rleSize; // end of sparse representation
-        int offset = 0; // offset within sequence
-
-        int nonzeroCount = 0;
-        while (curr != end)
-        {
-            bool iszero = IsZeroRange(curr);
-            int clen = iszero ? ZeroRangeLen(curr) : 1; // length covered by opcode
-
-            if (data == null)
-            {
-                if (iszero)
-                {
-                    //Console.WriteLine("ZeroRange: {0}-{1}", offset, offset + clen);
-                }
-                else
-                {
-                    Console.WriteLine("{0} = {1}", offset, GetNonZero(curr));
-                }
-            }
-            else
-            {
-                if (!iszero)
-                {
-                    int val = GetNonZero(curr);
-                    if (!data.ContainsKey(offset))
-                    {
-                        Console.WriteLine("FAILED: Nonzero not contained: {0} = {1}", offset, val);
-                        Environment.Exit(1);
-                    }
-
-                    if ((data[offset] + 1) != val)
-                    {
-                        Console.WriteLine("FAILED: Nonzero wrong nonzero value: {0} = {1}", offset, val);
-                        Environment.Exit(1);
-                    }
-
-                    nonzeroCount++;
-                }
-            }
-
-            offset += clen;
-            curr++;
-        }
-
-        if (data != null && data.Keys.Count != nonzeroCount)
-        {
-            Console.WriteLine("FAILED: nonzeroCount differs {0},{1}", data.Keys.Count, nonzeroCount);
-            Environment.Exit(1);
-        }
-    }
-#endif
 }

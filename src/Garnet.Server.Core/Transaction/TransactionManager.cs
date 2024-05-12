@@ -20,58 +20,62 @@ public sealed unsafe partial class TransactionManager
     /// <summary>
     /// Session for main store
     /// </summary>
-    private readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
+    private readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> _session;
 
     /// <summary>
     /// Lockable context for main store
     /// </summary>
-    private readonly LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext;
+    private readonly LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> _lockableContext;
 
     /// <summary>
     /// Session for object store
     /// </summary>
-    private readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession;
+    private readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> _objectStoreSession;
 
     /// <summary>
     /// Lockable context for object store
     /// </summary>
-    private readonly LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreLockableContext;
+    private readonly LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> _objectStoreLockableContext;
 
     // Not readonly to avoid defensive copy
-    private GarnetWatchApi<BasicGarnetApi> garnetTxPrepareApi;
+    private GarnetWatchApi<BasicGarnetApi> _garnetTxPrepareApi;
 
     // Cluster session
-    private IClusterSession clusterSession;
+    private IClusterSession _clusterSession;
 
     // Not readonly to avoid defensive copy
-    private LockableGarnetApi garnetTxMainApi;
+    private LockableGarnetApi _garnetTxMainApi;
 
     // Not readonly to avoid defensive copy
-    private BasicGarnetApi garnetTxFinalizeApi;
+    private BasicGarnetApi _garnetTxFinalizeApi;
 
-    private readonly RespServerSession respSession;
-    private readonly FunctionsState functionsState;
-    internal readonly ScratchBufferManager scratchBufferManager;
-    private readonly TsavoriteLog appendOnlyFile;
-    internal readonly WatchedKeysContainer watchContainer;
-    internal int txnStartHead;
-    internal int operationCntTxn;
+    private readonly RespServerSession _respSession;
+    private readonly FunctionsState _functionsState;
+    private readonly TsavoriteLog _appendOnlyFile;
+    
+    internal readonly ScratchBufferManager ScratchBufferManager;
+    internal readonly WatchedKeysContainer WatchContainer;
+    
+    internal int TxnStartHead;
+    internal int OperationCntTxn;
 
     /// <summary>
     /// State
     /// </summary>
-    public TxnState state;
-    private const int initialSliceBufferSize = 1 << 10;
-    private const int initialKeyBufferSize = 1 << 10;
-    private StoreType transactionStoreType;
-    private readonly ILogger logger;
+    public TxnState State;
+    
+    private const int InitialSliceBufferSize = 1 << 10;
+    private const int InitialKeyBufferSize = 1 << 10;
+    private StoreType _transactionStoreType;
+    
+    private readonly ILogger _logger;
 
     internal LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> LockableContext
-        => lockableContext;
+        => _lockableContext;
     internal LockableUnsafeContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> LockableUnsafeContext
-        => session.LockableUnsafeContext;
+        => _session.LockableUnsafeContext;
     internal LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> ObjectStoreLockableContext
-        => objectStoreLockableContext;
+        => _objectStoreLockableContext;
 
     /// <summary>
     /// Array to keep pointer keys in keyBuffer
@@ -85,31 +89,31 @@ public sealed unsafe partial class TransactionManager
         bool clusterEnabled,
         ILogger logger = null)
     {
-        session = storageSession.session;
-        lockableContext = session.LockableContext;
+        _session = storageSession.Session;
+        _lockableContext = _session.LockableContext;
 
-        objectStoreSession = storageSession.objectStoreSession;
-        if (objectStoreSession != null)
-            objectStoreLockableContext = objectStoreSession.LockableContext;
+        _objectStoreSession = storageSession.ObjectStoreSession;
+        if (_objectStoreSession != null)
+            _objectStoreLockableContext = _objectStoreSession.LockableContext;
 
-        functionsState = storageSession.functionsState;
-        appendOnlyFile = functionsState.appendOnlyFile;
-        this.logger = logger;
+        _functionsState = storageSession.FunctionsState;
+        _appendOnlyFile = _functionsState.AppendOnlyFile;
+        _logger = logger;
 
-        this.respSession = respSession;
-        clusterSession = respSession.clusterSession;
+        _respSession = respSession;
+        _clusterSession = respSession.clusterSession;
 
-        watchContainer = new WatchedKeysContainer(initialSliceBufferSize, functionsState.watchVersionMap);
-        keyEntries = new TxnKeyEntries(initialSliceBufferSize, lockableContext, objectStoreLockableContext);
-        this.scratchBufferManager = scratchBufferManager;
+        WatchContainer = new WatchedKeysContainer(InitialSliceBufferSize, _functionsState.WatchVersionMap);
+        keyEntries = new TxnKeyEntries(InitialSliceBufferSize, _lockableContext, _objectStoreLockableContext);
+        ScratchBufferManager = scratchBufferManager;
 
-        garnetTxMainApi = respSession.lockableGarnetApi;
-        garnetTxPrepareApi = new GarnetWatchApi<BasicGarnetApi>(respSession.basicGarnetApi);
-        garnetTxFinalizeApi = respSession.basicGarnetApi;
+        _garnetTxMainApi = respSession.lockableGarnetApi;
+        _garnetTxPrepareApi = new GarnetWatchApi<BasicGarnetApi>(respSession.basicGarnetApi);
+        _garnetTxFinalizeApi = respSession.basicGarnetApi;
 
         this.clusterEnabled = clusterEnabled;
         if (clusterEnabled)
-            keys = new ArgSlice[initialKeyBufferSize];
+            keys = new ArgSlice[InitialKeyBufferSize];
 
         Reset(false);
     }
@@ -121,21 +125,21 @@ public sealed unsafe partial class TransactionManager
             keyEntries.UnlockAllKeys();
 
             // Release context
-            if (transactionStoreType == StoreType.Main || transactionStoreType == StoreType.All)
-                lockableContext.EndLockable();
-            if (transactionStoreType == StoreType.Object || transactionStoreType == StoreType.All)
+            if (_transactionStoreType == StoreType.Main || _transactionStoreType == StoreType.All)
+                _lockableContext.EndLockable();
+            if (_transactionStoreType == StoreType.Object || _transactionStoreType == StoreType.All)
             {
-                if (objectStoreSession == null)
+                if (_objectStoreSession == null)
                     throw new Exception("Trying to perform object store transaction with object store disabled");
 
-                objectStoreLockableContext.EndLockable();
+                _objectStoreLockableContext.EndLockable();
             }
         }
-        txnStartHead = 0;
-        operationCntTxn = 0;
-        state = TxnState.None;
-        transactionStoreType = 0;
-        functionsState.StoredProcMode = false;
+        TxnStartHead = 0;
+        OperationCntTxn = 0;
+        State = TxnState.None;
+        _transactionStoreType = 0;
+        _functionsState.StoredProcMode = false;
 
         // Reset cluster variables used for slot verification
         saveKeyRecvBufferPtr = null;
@@ -145,19 +149,19 @@ public sealed unsafe partial class TransactionManager
     internal bool RunTransactionProc(byte id, ArgSlice input, CustomTransactionProcedure proc, ref MemoryResult<byte> output)
     {
         bool running = false;
-        scratchBufferManager.Reset();
+        ScratchBufferManager.Reset();
         try
         {
-            functionsState.StoredProcMode = true;
+            _functionsState.StoredProcMode = true;
             // Prepare phase
-            if (!proc.Prepare(garnetTxPrepareApi, input))
+            if (!proc.Prepare(_garnetTxPrepareApi, input))
             {
                 Reset(running);
                 return false;
             }
 
             // Start the TransactionManager
-            if (!Run(fail_fast_on_lock: proc.FailFastOnKeyLockFailure, lock_timeout: proc.KeyLockTimeout))
+            if (!Run(failFastOnLock: proc.FailFastOnKeyLockFailure, lockTimeout: proc.KeyLockTimeout))
             {
                 Reset(running);
                 return false;
@@ -166,7 +170,7 @@ public sealed unsafe partial class TransactionManager
             running = true;
 
             // Run main procedure on locked data
-            proc.Main(garnetTxMainApi, input, ref output);
+            proc.Main(_garnetTxMainApi, input, ref output);
 
             // Log the transaction to AOF
             Log(id, input);
@@ -184,12 +188,12 @@ public sealed unsafe partial class TransactionManager
             try
             {
                 // Run finalize procedure at the end
-                proc.Finalize(garnetTxFinalizeApi, input, ref output);
+                proc.Finalize(_garnetTxFinalizeApi, input, ref output);
             }
             catch { }
 
             // Reset scratch buffer for next txn invocation
-            scratchBufferManager.Reset();
+            ScratchBufferManager.Reset();
         }
 
 
@@ -199,53 +203,53 @@ public sealed unsafe partial class TransactionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool IsSkippingOperations()
     {
-        return state == TxnState.Started || state == TxnState.Aborted;
+        return State == TxnState.Started || State == TxnState.Aborted;
     }
 
     internal void Abort()
     {
-        state = TxnState.Aborted;
+        State = TxnState.Aborted;
     }
 
     internal void Log(byte id, ArgSlice input)
     {
-        Debug.Assert(functionsState.StoredProcMode);
+        Debug.Assert(_functionsState.StoredProcMode);
         SpanByte sb = new SpanByte(input.Length, (nint)input.ptr);
-        appendOnlyFile?.Enqueue(new AofHeader { opType = AofEntryType.StoredProcedure, type = id, version = session.Version, sessionID = session.ID }, ref sb, out _);
+        _appendOnlyFile?.Enqueue(new AofHeader { OpType = AofEntryType.StoredProcedure, Type = id, Version = _session.Version, SessionId = _session.ID }, ref sb, out _);
     }
 
     internal void Commit(bool internal_txn = false)
     {
-        if (appendOnlyFile != null && !functionsState.StoredProcMode)
+        if (_appendOnlyFile != null && !_functionsState.StoredProcMode)
         {
-            appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.TxnCommit, version = session.Version, sessionID = session.ID }, out _);
+            _appendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.TxnCommit, Version = _session.Version, SessionId = _session.ID }, out _);
         }
         if (!internal_txn)
-            watchContainer.Reset();
+            WatchContainer.Reset();
         Reset(true);
     }
 
     internal void Watch(ArgSlice key, StoreType type)
     {
         UpdateTransactionStoreType(type);
-        watchContainer.AddWatch(key, type);
+        WatchContainer.AddWatch(key, type);
 
         if (type == StoreType.Main || type == StoreType.All)
-            session.ResetModified(key.SpanByte);
+            _session.ResetModified(key.SpanByte);
         if (type == StoreType.Object || type == StoreType.All)
-            objectStoreSession?.ResetModified(key.ToArray());
+            _objectStoreSession?.ResetModified(key.ToArray());
     }
 
     private void UpdateTransactionStoreType(StoreType type)
     {
-        if (transactionStoreType != StoreType.All)
+        if (_transactionStoreType != StoreType.All)
         {
-            if (transactionStoreType == 0)
-                transactionStoreType = type;
+            if (_transactionStoreType == 0)
+                _transactionStoreType = type;
             else
             {
-                if (transactionStoreType != type)
-                    transactionStoreType = StoreType.All;
+                if (_transactionStoreType != type)
+                    _transactionStoreType = StoreType.All;
             }
         }
     }
@@ -255,35 +259,35 @@ public sealed unsafe partial class TransactionManager
     internal void GetKeysForValidation(byte* recvBufferPtr, out ArgSlice[] keys, out int keyCount, out bool readOnly)
     {
         UpdateRecvBufferPtr(recvBufferPtr);
-        watchContainer.SaveKeysToKeyList(this);
+        WatchContainer.SaveKeysToKeyList(this);
         keys = this.keys;
         keyCount = this.keyCount;
         readOnly = keyEntries.IsReadOnly;
     }
 
-    internal bool Run(bool internal_txn = false, bool fail_fast_on_lock = false, TimeSpan lock_timeout = default)
+    internal bool Run(bool internalTxn = false, bool failFastOnLock = false, TimeSpan lockTimeout = default)
     {
         // Save watch keys to lock list
-        if (!internal_txn)
-            watchContainer.SaveKeysToLock(this);
+        if (!internalTxn)
+            WatchContainer.SaveKeysToLock(this);
 
         // Acquire lock sessions
-        if (transactionStoreType == StoreType.All || transactionStoreType == StoreType.Main)
+        if (_transactionStoreType == StoreType.All || _transactionStoreType == StoreType.Main)
         {
-            lockableContext.BeginLockable();
+            _lockableContext.BeginLockable();
         }
-        if (transactionStoreType == StoreType.All || transactionStoreType == StoreType.Object)
+        if (_transactionStoreType == StoreType.All || _transactionStoreType == StoreType.Object)
         {
-            if (objectStoreSession == null)
+            if (_objectStoreSession == null)
                 throw new Exception("Trying to perform object store transaction with object store disabled");
 
-            objectStoreLockableContext.BeginLockable();
+            _objectStoreLockableContext.BeginLockable();
         }
 
         bool lockSuccess;
-        if (fail_fast_on_lock)
+        if (failFastOnLock)
         {
-            lockSuccess = keyEntries.TryLockAllKeys(lock_timeout);
+            lockSuccess = keyEntries.TryLockAllKeys(lockTimeout);
         }
         else
         {
@@ -292,24 +296,24 @@ public sealed unsafe partial class TransactionManager
         }
 
         if (!lockSuccess ||
-            (!internal_txn && !watchContainer.ValidateWatchVersion()))
+            (!internalTxn && !WatchContainer.ValidateWatchVersion()))
         {
             if (!lockSuccess)
             {
-                logger?.LogError("Transaction failed to acquire all the locks on keys to proceed.");
+                _logger?.LogError("Transaction failed to acquire all the locks on keys to proceed.");
             }
             Reset(true);
-            if (!internal_txn)
-                watchContainer.Reset();
+            if (!internalTxn)
+                WatchContainer.Reset();
             return false;
         }
 
-        if (appendOnlyFile != null && !functionsState.StoredProcMode)
+        if (_appendOnlyFile != null && !_functionsState.StoredProcMode)
         {
-            appendOnlyFile.Enqueue(new AofHeader { opType = AofEntryType.TxnStart, version = session.Version, sessionID = session.ID }, out _);
+            _appendOnlyFile.Enqueue(new AofHeader { OpType = AofEntryType.TxnStart, Version = _session.Version, SessionId = _session.ID }, out _);
         }
 
-        state = TxnState.Running;
+        State = TxnState.Running;
         return true;
     }
 }

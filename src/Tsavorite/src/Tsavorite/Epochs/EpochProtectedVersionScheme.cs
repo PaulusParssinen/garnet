@@ -44,7 +44,7 @@ public struct VersionSchemeState
         set
         {
             Word &= ~kPhaseMaskInWord;
-            Word |= (((long)value) & kPhaseMaskInInteger) << kPhaseShiftInWord;
+            Word |= (value & kPhaseMaskInInteger) << kPhaseShiftInWord;
         }
     }
     /// <returns>whether EPVS is in intermediate state now (transitioning between two states)</returns>

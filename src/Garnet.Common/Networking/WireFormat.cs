@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 /// <summary>
 /// Wire format for a session, you can add custom session types on the server and client side

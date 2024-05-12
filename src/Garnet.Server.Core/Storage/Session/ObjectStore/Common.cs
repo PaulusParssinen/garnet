@@ -180,7 +180,7 @@ internal sealed partial class StorageSession : IDisposable
 
         Debug.Assert(_output.spanByteAndMemory.IsSpanByte);
 
-        if (status.Found && (!status.Record.Created && !status.Record.CopyUpdated && !status.Record.InPlaceUpdated))
+        if (status.Found && !status.Record.Created && !status.Record.CopyUpdated && !status.Record.InPlaceUpdated)
             return GarnetStatus.OK;
 
         return GarnetStatus.NOTFOUND;

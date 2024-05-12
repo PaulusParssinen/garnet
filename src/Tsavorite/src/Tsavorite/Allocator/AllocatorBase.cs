@@ -571,11 +571,11 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         if (asyncResult.partial)
         {
             // Write only required bytes within the page
-            int aligned_start = (int)((asyncResult.fromAddress - (asyncResult.page << LogPageSizeBits)));
-            aligned_start = (aligned_start / sectorSize) * sectorSize;
+            int aligned_start = (int)(asyncResult.fromAddress - (asyncResult.page << LogPageSizeBits));
+            aligned_start = aligned_start / sectorSize * sectorSize;
 
-            int aligned_end = (int)((asyncResult.untilAddress - (asyncResult.page << LogPageSizeBits)));
-            aligned_end = ((aligned_end + (sectorSize - 1)) & ~(sectorSize - 1));
+            int aligned_end = (int)(asyncResult.untilAddress - (asyncResult.page << LogPageSizeBits));
+            aligned_end = (aligned_end + (sectorSize - 1)) & ~(sectorSize - 1);
 
             numBytesToWrite = (uint)(aligned_end - aligned_start);
             device.WriteAsync(alignedSourceAddress + aligned_start, alignedDestinationAddress + (ulong)aligned_start, numBytesToWrite, callback, asyncResult);
@@ -704,7 +704,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             if (rcs.MemorySizeBits < LogSettings.kMinMemorySizeBits || rcs.MemorySizeBits > LogSettings.kMaxMemorySizeBits)
                 throw new TsavoriteException($"{nameof(rcs.MemorySizeBits)} must be between {LogSettings.kMinMemorySizeBits} and {LogSettings.kMaxMemorySizeBits}");
             if (rcs.SecondChanceFraction < 0.0 || rcs.SecondChanceFraction > 1.0)
-                throw new TsavoriteException($"{(rcs.SecondChanceFraction)} must be >= 0.0 and <= 1.0");
+                throw new TsavoriteException($"{rcs.SecondChanceFraction} must be >= 0.0 and <= 1.0");
         }
 
         this.logger = logger;
@@ -1631,21 +1631,21 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     internal unsafe void AsyncReadRecordToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, ref AsyncIOContext<Key, Value> context)
     {
         ulong fileOffset = (ulong)(AlignedPageSizeBytes * (fromLogical >> LogPageSizeBits) + (fromLogical & PageSizeMask));
-        ulong alignedFileOffset = (ulong)(((long)fileOffset / sectorSize) * sectorSize);
+        ulong alignedFileOffset = (ulong)((long)fileOffset / sectorSize * sectorSize);
 
         uint alignedReadLength = (uint)((long)fileOffset + numBytes - (long)alignedFileOffset);
         alignedReadLength = (uint)((alignedReadLength + (sectorSize - 1)) & ~(sectorSize - 1));
 
         SectorAlignedMemory record = bufferPool.Get((int)alignedReadLength);
-        record.valid_offset = (int)(fileOffset - alignedFileOffset);
-        record.available_bytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
-        record.required_bytes = numBytes;
+        record.ValidOffset = (int)(fileOffset - alignedFileOffset);
+        record.AvailableBytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
+        record.RequiredBytes = numBytes;
 
         var asyncResult = default(AsyncGetFromDiskResult<AsyncIOContext<Key, Value>>);
         asyncResult.context = context;
         asyncResult.context.record = record;
         device.ReadAsync(alignedFileOffset,
-                    (IntPtr)asyncResult.context.record.aligned_pointer,
+                    (IntPtr)asyncResult.context.record.AlignedPointer,
                     alignedReadLength,
                     callback,
                     asyncResult);
@@ -1657,18 +1657,18 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     internal unsafe void AsyncReadRecordToMemory(long fromLogical, int numBytes, DeviceIOCompletionCallback callback, ref SimpleReadContext context)
     {
         ulong fileOffset = (ulong)(AlignedPageSizeBytes * (fromLogical >> LogPageSizeBits) + (fromLogical & PageSizeMask));
-        ulong alignedFileOffset = (ulong)(((long)fileOffset / sectorSize) * sectorSize);
+        ulong alignedFileOffset = (ulong)((long)fileOffset / sectorSize * sectorSize);
 
         uint alignedReadLength = (uint)((long)fileOffset + numBytes - (long)alignedFileOffset);
         alignedReadLength = (uint)((alignedReadLength + (sectorSize - 1)) & ~(sectorSize - 1));
 
         context.record = bufferPool.Get((int)alignedReadLength);
-        context.record.valid_offset = (int)(fileOffset - alignedFileOffset);
-        context.record.available_bytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
-        context.record.required_bytes = numBytes;
+        context.record.ValidOffset = (int)(fileOffset - alignedFileOffset);
+        context.record.AvailableBytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
+        context.record.RequiredBytes = numBytes;
 
         device.ReadAsync(alignedFileOffset,
-                    (IntPtr)context.record.aligned_pointer,
+                    (IntPtr)context.record.AlignedPointer,
                     alignedReadLength,
                     callback,
                     context);
@@ -1940,8 +1940,8 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         try
         {
             byte* record = ctx.record.GetValidPointer();
-            int requiredBytes = GetRequiredRecordSize((long)record, ctx.record.available_bytes);
-            if (ctx.record.available_bytes >= requiredBytes)
+            int requiredBytes = GetRequiredRecordSize((long)record, ctx.record.AvailableBytes);
+            if (ctx.record.AvailableBytes >= requiredBytes)
             {
                 Debug.Assert(!GetInfoFromBytePointer(record).Invalid, "Invalid records should not be in the hash chain for pending IO");
 

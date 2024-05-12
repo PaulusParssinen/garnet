@@ -439,7 +439,7 @@ internal static class TestUtils
             configOptions.Ssl = true;
             configOptions.SslHost = "GarnetTest";
             configOptions.SslClientAuthenticationOptions = (host) =>
-            (
+            
                 new SslClientAuthenticationOptions
                 {
                     ClientCertificates = certificates ?? [new X509Certificate2(certFile, certPassword)],
@@ -447,7 +447,7 @@ internal static class TestUtils
                     AllowRenegotiation = false,
                     RemoteCertificateValidationCallback = ValidateServerCertificate,
                 }
-            );
+            ;
         }
         return configOptions;
     }

@@ -6,15 +6,15 @@ using Microsoft.Win32.SafeHandles;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
-namespace Tsavorite.Tests.recovery.sumstore;
+namespace Tsavorite.Tests.Recovery.Sumstore;
 
 [TestFixture]
 internal class SharedDirectoryTests
 {
-    private const long numUniqueKeys = (1 << 5);
-    private const long keySpace = (1L << 5);
-    private const long numOps = (1L << 10);
-    private const long completePendingInterval = (1L << 10);
+    private const long numUniqueKeys = 1 << 5;
+    private const long keySpace = 1L << 5;
+    private const long numOps = 1L << 10;
+    private const long completePendingInterval = 1L << 10;
     private string sharedLogDirectory;
     private TsavoriteTestInstance original;
     private TsavoriteTestInstance clone;

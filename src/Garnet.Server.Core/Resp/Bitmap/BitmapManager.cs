@@ -37,7 +37,7 @@ public unsafe partial class BitmapManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Length(byte* input)
     {
-        long offset = *(long*)(input);
+        long offset = *(long*)input;
         return LengthInBytes(offset);
     }
 
@@ -57,8 +57,8 @@ public unsafe partial class BitmapManager
     public static byte UpdateBitmap(byte* input, byte* value)
     {
         byte oldVal = 0;
-        long offset = *(long*)(input);
-        byte set = *(byte*)(input + sizeof(long));
+        long offset = *(long*)input;
+        byte set = *(input + sizeof(long));
 
         int byteIndex = Index(offset);
         int bitIndex = 7 - (int)(offset & 7);
@@ -76,7 +76,7 @@ public unsafe partial class BitmapManager
     /// </summary>
     public static byte GetBit(byte* input, byte* value, int valLen)
     {
-        long offset = *(long*)(input);
+        long offset = *(long*)input;
         int byteIndex = Index(offset);
         byte oldVal = 0;
 

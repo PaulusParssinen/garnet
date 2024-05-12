@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using Tsavorite.Device;
+
 namespace Tsavorite;
 
 /// <summary>

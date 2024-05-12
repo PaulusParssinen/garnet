@@ -58,8 +58,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 int length = *(int*)i;//[hll allocated size = 4 byte] + [hll data structure]
                 return sizeof(int) + length;
             case RespCommand.SETRANGE:
-                int offset = *((int*)(inputPtr + RespInputHeader.Size));
-                int newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
+                int offset = *(int*)(inputPtr + RespInputHeader.Size);
+                int newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 return sizeof(int) + newValueSize + offset + input.MetadataSize;
 
             case RespCommand.APPEND:
@@ -88,7 +88,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (cmd >= 200)
                 {
-                    CustomRawStringFunctions functions = functionsState.customCommands[cmd - 200].functions;
+                    CustomRawStringFunctions functions = _functionsState.CustomCommands[cmd - 200].functions;
                     // Compute metadata size for result
                     int metadataSize = input.ExtraMetadata switch
                     {
@@ -174,8 +174,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                     return sizeof(int) + t.Length + input.MetadataSize;
 
                 case RespCommand.SETRANGE:
-                    int offset = *((int*)(inputPtr + RespInputHeader.Size));
-                    int newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
+                    int offset = *(int*)(inputPtr + RespInputHeader.Size);
+                    int newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
 
                     if (newValueSize + offset > t.LengthWithoutMetadata)
                         return sizeof(int) + newValueSize + offset + t.MetadataSize;
@@ -186,13 +186,13 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                     break;
 
                 case RespCommand.APPEND:
-                    int valueLength = *((int*)(inputPtr + RespInputHeader.Size));
+                    int valueLength = *(int*)(inputPtr + RespInputHeader.Size);
                     return sizeof(int) + t.Length + valueLength;
 
                 default:
                     if (cmd >= 200)
                     {
-                        CustomRawStringFunctions functions = functionsState.customCommands[cmd - 200].functions;
+                        CustomRawStringFunctions functions = _functionsState.CustomCommands[cmd - 200].functions;
                         // compute metadata for result
                         int metadataSize = input.ExtraMetadata switch
                         {

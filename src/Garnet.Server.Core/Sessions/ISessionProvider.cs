@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Garnet.networking;
+using Garnet.Networking;
 
 namespace Garnet.Server;
 
@@ -18,9 +18,4 @@ public interface ISessionProvider
     /// <param name="networkSender">Socket connection</param>
     /// <returns>Server session</returns>
     IMessageConsumer GetSession(WireFormat wireFormat, INetworkSender networkSender);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    MaxSizeSettings GetMaxSizeSettings { get; }
 }

@@ -63,10 +63,10 @@ internal sealed class CircularBuffer<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsFull() => (((tail + 1) & DefaultCapacity) == head);
+    public bool IsFull() => ((tail + 1) & DefaultCapacity) == head;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsEmpty() => (head == tail);
+    public bool IsEmpty() => head == tail;
 
     public IEnumerable<T> Iterate()
     {
@@ -186,7 +186,7 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
     /// <summary>
     /// Is empty
     /// </summary>
-    public bool IsEmpty() => (head.Value.IsEmpty() && (head == tail));
+    public bool IsEmpty() => head.Value.IsEmpty() && (head == tail);
 
     private IEnumerable<T> Iterate()
     {

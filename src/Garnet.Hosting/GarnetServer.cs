@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using Garnet.Cluster;
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Garnet.Server;
 using Microsoft.Extensions.Logging;
 using Tsavorite;
@@ -262,7 +262,7 @@ public class GarnetServer : IDisposable
         }
 
 
-        logger?.LogTrace("TLS is {tlsEnabled}", (opts.TlsOptions == null ? "disabled" : "enabled"));
+        logger?.LogTrace("TLS is {tlsEnabled}", opts.TlsOptions == null ? "disabled" : "enabled");
 
 
         // Create Garnet TCP server if none was provided.

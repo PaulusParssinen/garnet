@@ -4,7 +4,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Microsoft.Extensions.Logging;
 
 namespace Garnet.Server;

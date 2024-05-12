@@ -1189,7 +1189,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
         if (result.freeBuffer1 != null)
         {
-            PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.required_bytes, result.page);
+            PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.RequiredBytes, result.page);
             result.freeBuffer1.Return();
         }
         int pageIndex = GetPageIndexForPage(result.page);

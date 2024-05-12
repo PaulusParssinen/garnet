@@ -17,54 +17,54 @@ public enum RespCommand : byte
     NONE = 0x0,
 
     // Read-only commands
-    GET = (0x40 | 0x0),
-    GETRANGE = (0x40 | 0x1),
-    MGET = (0x40 | 0x2),
-    GETBIT = (0x40 | 0x3),
-    BITCOUNT = (0x40 | 0x4),
-    BITPOS = (0x40 | 0x5),
-    BITFIELD_RO = (0x40 | 0x6),
-    PFCOUNT = (0x40 | 0x7),
-    EXISTS = (0x40 | 0x8),
-    TTL = (0x40 | 0x9),
-    PTTL = (0x40 | 0x10),
+    GET = 0x40 | 0x0,
+    GETRANGE = 0x40 | 0x1,
+    MGET = 0x40 | 0x2,
+    GETBIT = 0x40 | 0x3,
+    BITCOUNT = 0x40 | 0x4,
+    BITPOS = 0x40 | 0x5,
+    BITFIELD_RO = 0x40 | 0x6,
+    PFCOUNT = 0x40 | 0x7,
+    EXISTS = 0x40 | 0x8,
+    TTL = 0x40 | 0x9,
+    PTTL = 0x40 | 0x10,
     STRLEN = 0x26,
     COSCAN = 0x27,
 
     // Upsert or RMW commands
-    SET = (0x80 | 0x0),
-    MSET = (0x80 | 0x1),
-    PSETEX = (0x80 | 0x2),
-    SETEX = (0x80 | 0x3),
-    SETEXNX = (0x80 | 0x4),
-    SETEXXX = (0x80 | 0x5),
-    SETKEEPTTL = (0x80 | 0x6),
-    SETKEEPTTLXX = (0x80 | 0x7),
-    SETBIT = (0x80 | 0x8),
-    BITOP = (0x80 | 0x9),
-    BITFIELD = (0x80 | 0xA),
-    PFADD = (0x80 | 0xB),
-    PFMERGE = (0x80 | 0xC),
-    INCR = (0x80 | 0xD),
-    INCRBY = (0x80 | 0xE),
-    DECR = (0x80 | 0xF),
-    DECRBY = (0x80 | 0x10),
-    RENAME = (0x80 | 0x11),
-    PERSIST = (0x80 | 0x12),
-    EXPIRE = (0x80 | 0x13),
-    DEL = (0x80 | 0x14),
-    PEXPIRE = (0x80 | 0x15),
-    SETRANGE = (0x80 | 0x16),
-    GETDEL = (0x80 | 0x17),
-    MSETNX = (0x80 | 0x18),
-    APPEND = (0x80 | 0x19),
+    SET = 0x80 | 0x0,
+    MSET = 0x80 | 0x1,
+    PSETEX = 0x80 | 0x2,
+    SETEX = 0x80 | 0x3,
+    SETEXNX = 0x80 | 0x4,
+    SETEXXX = 0x80 | 0x5,
+    SETKEEPTTL = 0x80 | 0x6,
+    SETKEEPTTLXX = 0x80 | 0x7,
+    SETBIT = 0x80 | 0x8,
+    BITOP = 0x80 | 0x9,
+    BITFIELD = 0x80 | 0xA,
+    PFADD = 0x80 | 0xB,
+    PFMERGE = 0x80 | 0xC,
+    INCR = 0x80 | 0xD,
+    INCRBY = 0x80 | 0xE,
+    DECR = 0x80 | 0xF,
+    DECRBY = 0x80 | 0x10,
+    RENAME = 0x80 | 0x11,
+    PERSIST = 0x80 | 0x12,
+    EXPIRE = 0x80 | 0x13,
+    DEL = 0x80 | 0x14,
+    PEXPIRE = 0x80 | 0x15,
+    SETRANGE = 0x80 | 0x16,
+    GETDEL = 0x80 | 0x17,
+    MSETNX = 0x80 | 0x18,
+    APPEND = 0x80 | 0x19,
 
     // Object store commands
-    SortedSet = (0xC0 | 0x0),
-    List = (0xC0 | 0x1),
-    Hash = (0xC0 | 0x2),
-    Set = (0xC0 | 0x3),
-    All = (0xC0 | 0x26),
+    SortedSet = 0xC0 | 0x0,
+    List = 0xC0 | 0x1,
+    Hash = 0xC0 | 0x2,
+    Set = 0xC0 | 0x3,
+    All = 0xC0 | 0x26,
 
     // Admin commands
     PING = 0x1,
@@ -142,7 +142,7 @@ internal enum RespCommandOption : byte
 /// <summary>
 /// Server session for RESP protocol - command definitions and fast parsing
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Fast-parses command type for inline RESP commands, starting at the current read head in the receive buffer
@@ -158,7 +158,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (bytesRead - readHead >= 6)
         {
-            if ((*(ushort*)(ptr + 4) == MemoryMarshal.Read<ushort>("\r\n"u8)))
+            if (*(ushort*)(ptr + 4) == MemoryMarshal.Read<ushort>("\r\n"u8))
             {
                 // Optimistically increase read head
                 readHead += 6;
@@ -737,74 +737,74 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                             switch ((ushort)ptr[4])
                             {
                                 case 'G':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("GEOHASH\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("GEOHASH\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.GEOHASH);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("GEODIST\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("GEODIST\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.GEODIST);
                                     }
                                     break;
 
                                 case 'H':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HGETALL\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HGETALL\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.Hash, (byte)HashOperation.HGETALL);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HEXISTS\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HEXISTS\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.Hash, (byte)HashOperation.HEXISTS);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HINCRBY\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HINCRBY\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.Hash, (byte)HashOperation.HINCRBY);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HSTRLEN\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("HSTRLEN\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.Hash, (byte)HashOperation.HSTRLEN);
                                     }
                                     break;
 
                                 case 'L':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("LINSERT\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("LINSERT\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.List, (byte)ListOperation.LINSERT);
                                     }
                                     break;
 
                                 case 'M':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("MONITOR\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("MONITOR\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.MONITOR, 0);
                                     }
                                     break;
 
                                 case 'P':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("PFCOUNT\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("PFCOUNT\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.PFCOUNT, 0);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("PFMERGE\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("PFMERGE\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.PFMERGE, 0);
                                     }
                                     break;
 
                                 case 'Z':
-                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZPOPMIN\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZPOPMIN\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.ZPOPMIN);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZPOPMAX\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZPOPMAX\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.ZPOPMAX);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZINCRBY\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZINCRBY\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.ZINCRBY);
                                     }
-                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZMSCORE\r"u8) && *(byte*)(ptr + 12) == '\n')
+                                    else if (*(ulong*)(ptr + 4) == MemoryMarshal.Read<ulong>("ZMSCORE\r"u8) && *(ptr + 12) == '\n')
                                     {
                                         return (RespCommand.SortedSet, (byte)SortedSetOperation.ZMSCORE);
                                     }

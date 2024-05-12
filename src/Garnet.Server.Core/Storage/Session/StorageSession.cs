@@ -11,37 +11,40 @@ namespace Garnet.Server;
 /// </summary>
 internal sealed partial class StorageSession : IDisposable
 {
-    private int bitmapBufferSize = 1 << 15;
-    private SectorAlignedMemory sectorAlignedMemoryBitmap;
-    private readonly long HeadAddress;
+    private int bitmapBufferSize = 1 << 15; //TODO: ??
+
+    private SectorAlignedMemory _sectorAlignedMemoryBitmap;
+    private readonly long _headAddress;
 
     /// <summary>
     /// Session for main store
     /// </summary>
-    public readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session;
+    public readonly ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> Session;
 
-    public BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> basicContext;
-    public LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext;
-    private SectorAlignedMemory sectorAlignedMemoryHll;
-    private readonly int hllBufferSize = HyperLogLog.DefaultHLL.DenseBytes;
-    private readonly int sectorAlignedMemoryPoolAlignment = 32;
+    public BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> BasicContext { get; }
+    public LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> LockableContext { get; }
+
+    private SectorAlignedMemory _sectorAlignedMemoryHll;
+    private readonly int _hllBufferSize = HyperLogLog.DefaultHLL.DenseBytes;
+    
+    private const int SectorAlignedMemoryPoolAlignment = 32;
 
     /// <summary>
     /// Session for object store
     /// </summary>
-    public readonly ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreSession;
+    public ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> ObjectStoreSession { get; }
 
-    public BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreBasicContext;
-    public LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreLockableContext;
+    public BasicContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> ObjectStoreBasicContext { get; }
+    public LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> ObjectStoreLockableContext { get; }
 
-    public readonly ScratchBufferManager scratchBufferManager;
-    public readonly FunctionsState functionsState;
+    public ScratchBufferManager ScratchBufferManager { get; }
+    public FunctionsState FunctionsState { get; }
 
     public TransactionManager txnManager;
     private readonly ILogger logger;
 
-    public int SessionID => session.ID;
-    public int ObjectStoreSessionID => objectStoreSession.ID;
+    public int SessionID => Session.ID;
+    public int ObjectStoreSessionID => ObjectStoreSession.ID;
 
     public readonly int ObjectScanCountLimit;
 
@@ -52,34 +55,34 @@ internal sealed partial class StorageSession : IDisposable
     {
         this.sessionMetrics = sessionMetrics;
         this.LatencyMetrics = LatencyMetrics;
-        this.scratchBufferManager = scratchBufferManager;
+        this.ScratchBufferManager = scratchBufferManager;
         this.logger = logger;
 
-        functionsState = storeWrapper.CreateFunctionsState();
+        FunctionsState = storeWrapper.CreateFunctionsState();
 
-        var functions = new MainStoreFunctions(functionsState);
-        session = storeWrapper.store.NewSession<SpanByte, SpanByteAndMemory, long, MainStoreFunctions>(functions);
+        var functions = new MainStoreFunctions(FunctionsState);
+        Session = storeWrapper.store.NewSession<SpanByte, SpanByteAndMemory, long, MainStoreFunctions>(functions);
 
-        var objstorefunctions = new ObjectStoreFunctions(functionsState);
-        objectStoreSession = storeWrapper.objectStore?.NewSession<SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>(objstorefunctions);
+        var objstorefunctions = new ObjectStoreFunctions(FunctionsState);
+        ObjectStoreSession = storeWrapper.objectStore?.NewSession<SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions>(objstorefunctions);
 
-        basicContext = session.BasicContext;
-        lockableContext = session.LockableContext;
-        if (objectStoreSession != null)
+        BasicContext = Session.BasicContext;
+        LockableContext = Session.LockableContext;
+        if (ObjectStoreSession != null)
         {
-            objectStoreBasicContext = objectStoreSession.BasicContext;
-            objectStoreLockableContext = objectStoreSession.LockableContext;
+            ObjectStoreBasicContext = ObjectStoreSession.BasicContext;
+            ObjectStoreLockableContext = ObjectStoreSession.LockableContext;
         }
 
-        HeadAddress = storeWrapper.store.Log.HeadAddress;
+        _headAddress = storeWrapper.store.Log.HeadAddress;
         ObjectScanCountLimit = storeWrapper.serverOptions.ObjectScanCountLimit;
     }
 
     public void Dispose()
     {
-        sectorAlignedMemoryBitmap?.Dispose();
-        session.Dispose();
-        objectStoreSession?.Dispose();
-        sectorAlignedMemoryHll?.Dispose();
+        _sectorAlignedMemoryBitmap?.Dispose();
+        Session.Dispose();
+        ObjectStoreSession?.Dispose();
+        _sectorAlignedMemoryHll?.Dispose();
     }
 }

@@ -12,7 +12,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Server session for RESP protocol - admin commands are in this file
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     private bool ProcessAdminCommands<TGarnetApi>(RespCommand command, ReadOnlySpan<byte> bufSpan, int count, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
@@ -465,7 +465,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         {
             return ProcessACLCommands(bufSpan, count);
         }
-        else if ((command == RespCommand.REGISTERCS))
+        else if (command == RespCommand.REGISTERCS)
         {
             return NetworkREGISTERCS(count, recvBufferPtr + readHead, storeWrapper.customCommandManager);
         }

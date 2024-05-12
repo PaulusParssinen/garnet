@@ -39,7 +39,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         else
                         {
                             // Someone else continued this session
-                            cp = ((string)null, new CommitPoint { UntilSerialNo = -1 });
+                            cp = (null, new CommitPoint { UntilSerialNo = -1 });
                             Debug.WriteLine("Session already continued by another thread!");
                         }
 

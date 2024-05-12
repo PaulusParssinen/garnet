@@ -657,7 +657,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             if (result.freeBuffer1 != null)
             {
                 if (errorCode == 0)
-                    allocator.PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.required_bytes, result.page);
+                    allocator.PopulatePage(result.freeBuffer1.GetValidPointer(), result.freeBuffer1.RequiredBytes, result.page);
                 result.freeBuffer1.Return();
                 result.freeBuffer1 = null;
             }

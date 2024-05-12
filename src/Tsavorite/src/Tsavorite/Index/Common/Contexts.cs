@@ -840,8 +840,8 @@ internal struct IndexRecoveryInfo
     {
         logger?.LogInformation("******** Index Checkpoint Info for {token} ********", token);
         logger?.LogInformation("Table Size: {table_size}", table_size);
-        logger?.LogInformation("Main Table Size (in GB): {num_ht_bytes}", ((double)num_ht_bytes) / 1000.0 / 1000.0 / 1000.0);
-        logger?.LogInformation("Overflow Table Size (in GB): {num_ofb_bytes}", ((double)num_ofb_bytes) / 1000.0 / 1000.0 / 1000.0);
+        logger?.LogInformation("Main Table Size (in GB): {num_ht_bytes}", num_ht_bytes / 1000.0 / 1000.0 / 1000.0);
+        logger?.LogInformation("Overflow Table Size (in GB): {num_ofb_bytes}", num_ofb_bytes / 1000.0 / 1000.0 / 1000.0);
         logger?.LogInformation("Num Buckets: {num_buckets}", num_buckets);
         logger?.LogInformation("Start Logical Address: {startLogicalAddress}", startLogicalAddress);
         logger?.LogInformation("Final Logical Address: {finalLogicalAddress}", finalLogicalAddress);

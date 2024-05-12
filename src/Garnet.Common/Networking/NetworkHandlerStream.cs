@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Garnet.networking;
+namespace Garnet.Networking;
 
 public abstract partial class NetworkHandler<TServerHook, TNetworkSender>
     where TServerHook : IServerHook

@@ -607,7 +607,7 @@ public class RespSortedSetTests
 
         int pageSize = 45;
         IEnumerable<SortedSetEntry> response = db.SortedSetScan(keySS, "*", pageSize: pageSize, cursor: 0);
-        var cursor = ((IScanningCursor)response);
+        var cursor = (IScanningCursor)response;
         int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;
@@ -1385,7 +1385,7 @@ public class RespSortedSetTests
         int startIndexField = s.IndexOf('\n') + 1;
         int endIndexField = s.IndexOf('\n', startIndexField) - 1;
         string memberValue = s.Substring(startIndexField, endIndexField - startIndexField);
-        int foundInSet = ("uno due tre quattro cinque six sept huit nough dis").IndexOf(memberValue, StringComparison.InvariantCultureIgnoreCase);
+        int foundInSet = "uno due tre quattro cinque six sept huit nough dis".IndexOf(memberValue, StringComparison.InvariantCultureIgnoreCase);
         Assert.IsTrue(foundInSet >= 0);
 
         // ZRANDMEMBER count

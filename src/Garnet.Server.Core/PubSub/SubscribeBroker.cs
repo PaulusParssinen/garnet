@@ -3,7 +3,7 @@
 
 using System.Collections.Concurrent;
 using Garnet.Common;
-using Garnet.networking;
+using Garnet.Networking;
 using Tsavorite;
 
 namespace Garnet.Server;
@@ -16,8 +16,8 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     where KeyValueSerializer : IKeySerializer<Key>
 {
     private int sid = 0;
-    private ConcurrentDictionary<byte[], ConcurrentDictionary<int, ServerSessionBase>> subscriptions;
-    private ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)> prefixSubscriptions;
+    private ConcurrentDictionary<byte[], ConcurrentDictionary<int, RespServerSession>> subscriptions;
+    private ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, RespServerSession>)> prefixSubscriptions;
     private AsyncQueue<(byte[], byte[])> publishQueue;
     private readonly IKeySerializer<Key> keySerializer;
     private readonly TsavoriteLog log;
@@ -55,7 +55,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             foreach (byte[] subscribedkey in subscriptions.Keys)
             {
                 fixed (byte* keyPtr = &subscribedkey[0])
-                    Unsubscribe(keyPtr, (ServerSessionBase)session);
+                    Unsubscribe(keyPtr, (RespServerSession)session);
             }
         }
 
@@ -64,7 +64,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             foreach (byte[] subscribedkey in prefixSubscriptions.Keys)
             {
                 fixed (byte* keyPtr = &subscribedkey[0])
-                    PUnsubscribe(keyPtr, (ServerSessionBase)session);
+                    PUnsubscribe(keyPtr, (RespServerSession)session);
             }
         }
     }
@@ -79,10 +79,10 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
 
             if (subscriptions != null)
             {
-                bool foundSubscription = subscriptions.TryGetValue(key, out ConcurrentDictionary<int, ServerSessionBase> subscriptionServerSessionDict);
+                bool foundSubscription = subscriptions.TryGetValue(key, out ConcurrentDictionary<int, RespServerSession> subscriptionServerSessionDict);
                 if (foundSubscription)
                 {
-                    foreach (KeyValuePair<int, ServerSessionBase> sub in subscriptionServerSessionDict)
+                    foreach (KeyValuePair<int, RespServerSession> sub in subscriptionServerSessionDict)
                     {
                         byte* keyBytePtr = ptr;
                         byte* nullBytePtr = null;
@@ -95,7 +95,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
 
             if (prefixSubscriptions != null)
             {
-                foreach (KeyValuePair<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)> kvp in prefixSubscriptions)
+                foreach (KeyValuePair<byte[], (bool, ConcurrentDictionary<int, RespServerSession>)> kvp in prefixSubscriptions)
                 {
                     fixed (byte* subscribedPrefixPtr = &kvp.Key[0])
                     {
@@ -106,7 +106,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
                             ref keySerializer.ReadKeyByRef(ref subPrefixPtr), kvp.Value.Item1);
                         if (match)
                         {
-                            foreach (KeyValuePair<int, ServerSessionBase> sub in kvp.Value.Item2)
+                            foreach (KeyValuePair<int, RespServerSession> sub in kvp.Value.Item2)
                             {
                                 byte* keyBytePtr = ptr;
                                 byte* nullBytePtr = null;
@@ -199,7 +199,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Key to subscribe to</param>
     /// <param name="session">Server session</param>
-    public unsafe int Subscribe(ref byte* key, ServerSessionBase session)
+    public unsafe int Subscribe(ref byte* key, RespServerSession session)
     {
         byte* start = key;
         keySerializer.ReadKeyByRef(ref key);
@@ -207,8 +207,8 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
         if (Interlocked.CompareExchange(ref publishQueue, new AsyncQueue<(byte[], byte[])>(), null) == null)
         {
             done.Reset();
-            subscriptions = new ConcurrentDictionary<byte[], ConcurrentDictionary<int, ServerSessionBase>>(ByteArrayComparer.Instance);
-            prefixSubscriptions = new ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)>(ByteArrayComparer.Instance);
+            subscriptions = new ConcurrentDictionary<byte[], ConcurrentDictionary<int, RespServerSession>>(ByteArrayComparer.Instance);
+            prefixSubscriptions = new ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, RespServerSession>)>(ByteArrayComparer.Instance);
             Task.Run(() => Start(cts.Token));
         }
         else
@@ -216,8 +216,8 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             while (prefixSubscriptions == null) Thread.Yield();
         }
         byte[] subscriptionKey = new Span<byte>(start, (int)(key - start)).ToArray();
-        subscriptions.TryAdd(subscriptionKey, new ConcurrentDictionary<int, ServerSessionBase>());
-        if (subscriptions.TryGetValue(subscriptionKey, out ConcurrentDictionary<int, ServerSessionBase> val))
+        subscriptions.TryAdd(subscriptionKey, new ConcurrentDictionary<int, RespServerSession>());
+        if (subscriptions.TryGetValue(subscriptionKey, out ConcurrentDictionary<int, RespServerSession> val))
             val.TryAdd(id, session);
         return id;
     }
@@ -228,7 +228,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <param name="prefix">prefix to subscribe to</param>
     /// <param name="session">Server session</param>
     /// <param name="ascii">is key ascii?</param>
-    public unsafe int PSubscribe(ref byte* prefix, ServerSessionBase session, bool ascii = false)
+    public unsafe int PSubscribe(ref byte* prefix, RespServerSession session, bool ascii = false)
     {
         byte* start = prefix;
         keySerializer.ReadKeyByRef(ref prefix);
@@ -236,8 +236,8 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
         if (Interlocked.CompareExchange(ref publishQueue, new AsyncQueue<(byte[], byte[])>(), null) == null)
         {
             done.Reset();
-            subscriptions = new ConcurrentDictionary<byte[], ConcurrentDictionary<int, ServerSessionBase>>(ByteArrayComparer.Instance);
-            prefixSubscriptions = new ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)>(ByteArrayComparer.Instance);
+            subscriptions = new ConcurrentDictionary<byte[], ConcurrentDictionary<int, RespServerSession>>(ByteArrayComparer.Instance);
+            prefixSubscriptions = new ConcurrentDictionary<byte[], (bool, ConcurrentDictionary<int, RespServerSession>)>(ByteArrayComparer.Instance);
             Task.Run(() => Start(cts.Token));
         }
         else
@@ -245,8 +245,8 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
             while (prefixSubscriptions == null) Thread.Yield();
         }
         byte[] subscriptionPrefix = new Span<byte>(start, (int)(prefix - start)).ToArray();
-        prefixSubscriptions.TryAdd(subscriptionPrefix, (ascii, new ConcurrentDictionary<int, ServerSessionBase>()));
-        if (prefixSubscriptions.TryGetValue(subscriptionPrefix, out (bool, ConcurrentDictionary<int, ServerSessionBase>) val))
+        prefixSubscriptions.TryAdd(subscriptionPrefix, (ascii, new ConcurrentDictionary<int, RespServerSession>()));
+        if (prefixSubscriptions.TryGetValue(subscriptionPrefix, out (bool, ConcurrentDictionary<int, RespServerSession>) val))
             val.Item2.TryAdd(id, session);
         return id;
     }
@@ -256,18 +256,18 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Key to subscribe to</param>
     /// <param name="session">Server session</param>
-    public unsafe bool Unsubscribe(byte* key, ServerSessionBase session)
+    public unsafe bool Unsubscribe(byte* key, RespServerSession session)
     {
         bool ret = false;
         byte* start = key;
         keySerializer.ReadKeyByRef(ref key);
         byte[] subscriptionKey = new Span<byte>(start, (int)(key - start)).ToArray();
         if (subscriptions == null) return ret;
-        if (subscriptions.TryGetValue(subscriptionKey, out ConcurrentDictionary<int, ServerSessionBase> subscriptionDict))
+        if (subscriptions.TryGetValue(subscriptionKey, out ConcurrentDictionary<int, RespServerSession> subscriptionDict))
         {
             foreach (int sid in subscriptionDict.Keys)
             {
-                if (subscriptionDict.TryGetValue(sid, out ServerSessionBase _session))
+                if (subscriptionDict.TryGetValue(sid, out RespServerSession _session))
                 {
                     if (_session == session)
                     {
@@ -286,7 +286,7 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// </summary>
     /// <param name="key">Pattern to subscribe to</param>
     /// <param name="session">Server session</param>
-    public unsafe void PUnsubscribe(byte* key, ServerSessionBase session)
+    public unsafe void PUnsubscribe(byte* key, RespServerSession session)
     {
         byte* start = key;
         keySerializer.ReadKeyByRef(ref key);
@@ -294,11 +294,11 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
         if (prefixSubscriptions == null) return;
         if (prefixSubscriptions.ContainsKey(subscriptionKey))
         {
-            if (prefixSubscriptions.TryGetValue(subscriptionKey, out (bool, ConcurrentDictionary<int, ServerSessionBase>) subscriptionDict))
+            if (prefixSubscriptions.TryGetValue(subscriptionKey, out (bool, ConcurrentDictionary<int, RespServerSession>) subscriptionDict))
             {
                 foreach (int sid in subscriptionDict.Item2.Keys)
                 {
-                    if (subscriptionDict.Item2.TryGetValue(sid, out ServerSessionBase _session))
+                    if (subscriptionDict.Item2.TryGetValue(sid, out RespServerSession _session))
                     {
                         if (_session == session)
                         {
@@ -315,12 +315,12 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <summary>
     /// List all subscriptions made by a session
     /// </summary>
-    public unsafe List<byte[]> ListAllSubscriptions(ServerSessionBase session)
+    public unsafe List<byte[]> ListAllSubscriptions(RespServerSession session)
     {
         List<byte[]> sessionSubscriptions = new();
         if (subscriptions != null)
         {
-            foreach (KeyValuePair<byte[], ConcurrentDictionary<int, ServerSessionBase>> subscription in subscriptions)
+            foreach (KeyValuePair<byte[], ConcurrentDictionary<int, RespServerSession>> subscription in subscriptions)
             {
                 if (subscription.Value.Values.Contains(session))
                     sessionSubscriptions.Add(subscription.Key);
@@ -332,10 +332,10 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
     /// <summary>
     /// List all pattern subscriptions made by a session
     /// </summary>
-    public unsafe List<byte[]> ListAllPSubscriptions(ServerSessionBase session)
+    public unsafe List<byte[]> ListAllPSubscriptions(RespServerSession session)
     {
         List<byte[]> sessionPSubscriptions = new();
-        foreach (KeyValuePair<byte[], (bool, ConcurrentDictionary<int, ServerSessionBase>)> psubscription in prefixSubscriptions)
+        foreach (KeyValuePair<byte[], (bool, ConcurrentDictionary<int, RespServerSession>)> psubscription in prefixSubscriptions)
         {
             if (psubscription.Value.Item2.Values.Contains(session))
                 sessionPSubscriptions.Add(psubscription.Key);
@@ -376,12 +376,12 @@ public sealed class SubscribeBroker<Key, Value, KeyValueSerializer> : IDisposabl
         byte* start = key;
         ref Key k = ref keySerializer.ReadKeyByRef(ref key);
         // TODO: this needs to be a single atomic enqueue
-        byte[] logEntryBytes = new byte[(key - start) + valueLength + sizeof(bool)];
+        byte[] logEntryBytes = new byte[key - start + valueLength + sizeof(bool)];
         fixed (byte* logEntryBytePtr = &logEntryBytes[0])
         {
             byte* dst = logEntryBytePtr;
-            Buffer.MemoryCopy(start, dst, (key - start), (key - start));
-            dst += (key - start);
+            Buffer.MemoryCopy(start, dst, key - start, key - start);
+            dst += key - start;
             Buffer.MemoryCopy(value, dst, valueLength, valueLength);
             dst += valueLength;
             byte* asciiPtr = (byte*)&ascii;

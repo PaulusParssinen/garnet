@@ -182,7 +182,7 @@ internal class ShardedStorageDevice : StorageDeviceBase
         // Starts off in one, in order to prevent some issued writes calling the callback before all parallel writes are issued.
         var countdown = new CountdownEvent(1);
         long currentWriteStart = (long)destinationAddress;
-        long writeEnd = currentWriteStart + (long)numBytesToWrite;
+        long writeEnd = currentWriteStart + numBytesToWrite;
         uint aggregateErrorCode = 0;
         while (currentWriteStart < writeEnd)
         {

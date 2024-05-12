@@ -3,9 +3,9 @@
 
 using NUnit.Framework;
 using Tsavorite.Device;
-using Tsavorite.Tests.recovery.sumstore;
+using Tsavorite.Tests.Recovery.Sumstore;
 
-namespace Tsavorite.Tests.recovery;
+namespace Tsavorite.Tests.Recovery;
 
 public enum DeviceMode
 {

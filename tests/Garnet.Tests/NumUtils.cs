@@ -155,11 +155,11 @@ internal static class NumUtils
 
     public static unsafe long BytesToLong(byte* source)
     {
-        bool fNeg = (*source == '-');
+        bool fNeg = *source == '-';
         byte* beg = fNeg ? source + 1 : source;
         long result = 0;
         while (*beg != '\r')
             result = result * 10 + (*beg++ - '0');
-        return fNeg ? -(result) : result;
+        return fNeg ? -result : result;
     }
 }

@@ -95,7 +95,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     public bool NetworkSingleKeySlotVerify(ArgSlice keySlice, bool readOnly, byte SessionAsking, ref byte* dcurr, ref byte* dend)
     {
         // If cluster is not enabled or a transaction is running skip slot check
-        if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
+        if (!clusterProvider.serverOptions.EnableCluster || txnManager.State == TxnState.Running) return false;
 
         ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
         ClusterSlotVerificationResult vres = readOnly ? SingleKeyReadSlotVerify(config, keySlice, SessionAsking) : SingleKeyReadWriteSlotVerify(config, keySlice, SessionAsking);
@@ -115,7 +115,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     {
         retVal = false;
         // If cluster is not enabled or a transaction is running skip slot check
-        if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
+        if (!clusterProvider.serverOptions.EnableCluster || txnManager.State == TxnState.Running) return false;
 
         ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
         ClusterSlotVerificationResult vres = KeyArraySlotVerify(config, keyCount, ref ptr, endPtr, readOnly: readOnly, interleavedKeys: interleavedKeys, SessionAsking, out retVal);
@@ -135,7 +135,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     public bool NetworkKeyArraySlotVerify(ref ArgSlice[] keys, bool readOnly, byte SessionAsking, ref byte* dcurr, ref byte* dend, int count = -1)
     {
         // If cluster is not enabled or a transaction is running skip slot check
-        if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
+        if (!clusterProvider.serverOptions.EnableCluster || txnManager.State == TxnState.Running) return false;
 
         ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
         ClusterSlotVerificationResult vres = KeyArraySlotVerify(config, ref keys, readOnly, SessionAsking, count);

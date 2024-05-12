@@ -10,7 +10,7 @@ namespace Garnet.Server;
 /// <summary>
 /// Sorted set methods with network layer access
 /// </summary>
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Session counter of number of ZADD entries partially done

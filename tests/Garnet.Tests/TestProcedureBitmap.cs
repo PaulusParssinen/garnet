@@ -131,10 +131,10 @@ internal sealed class TestProcedureBitmap : CustomTransactionProcedure
         api.SET(bitmapA, data);
         var listCommands = new List<BitFieldCmdArgs>();
 
-        var bitFieldArguments = new BitFieldCmdArgs((byte)RespCommand.GET, ((byte)BitFieldSign.UNSIGNED | 8), 0, 0, (byte)BitFieldOverflow.WRAP);
+        var bitFieldArguments = new BitFieldCmdArgs((byte)RespCommand.GET, (byte)BitFieldSign.UNSIGNED | 8, 0, 0, (byte)BitFieldOverflow.WRAP);
         listCommands.Add(bitFieldArguments);
 
-        bitFieldArguments = new BitFieldCmdArgs((byte)RespCommand.INCRBY, ((byte)BitFieldSign.UNSIGNED | 4), 4, 1, (byte)BitFieldOverflow.WRAP);
+        bitFieldArguments = new BitFieldCmdArgs((byte)RespCommand.INCRBY, (byte)BitFieldSign.UNSIGNED | 4, 4, 1, (byte)BitFieldOverflow.WRAP);
         listCommands.Add(bitFieldArguments);
 
         api.StringBitField(bitmapA, listCommands, out List<long?> resultBitField);

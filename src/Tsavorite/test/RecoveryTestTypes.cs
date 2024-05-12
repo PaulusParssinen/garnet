@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-namespace Tsavorite.Tests.recovery.sumstore;
+namespace Tsavorite.Tests.Recovery.Sumstore;
 
 public struct AdId : ITsavoriteEqualityComparer<AdId>
 {

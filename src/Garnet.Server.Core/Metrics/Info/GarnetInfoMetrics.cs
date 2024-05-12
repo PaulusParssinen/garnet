@@ -60,7 +60,7 @@ internal class GarnetInfoMetrics
     {
         long main_store_index_size = storeWrapper.store.IndexSize * 64;
         long main_store_log_memory_size = storeWrapper.store.Log.MemorySizeBytes;
-        long main_store_read_cache_size = (storeWrapper.store.ReadCache != null ? storeWrapper.store.ReadCache.MemorySizeBytes : 0);
+        long main_store_read_cache_size = storeWrapper.store.ReadCache != null ? storeWrapper.store.ReadCache.MemorySizeBytes : 0;
         long total_main_store_size = main_store_index_size + main_store_log_memory_size + main_store_read_cache_size;
 
         long object_store_index_size = -1L;
@@ -73,7 +73,7 @@ internal class GarnetInfoMetrics
         {
             object_store_index_size = storeWrapper.objectStore.IndexSize * 64;
             object_store_log_memory_references_size = storeWrapper.objectStore.Log.MemorySizeBytes;
-            object_store_read_cache_size = (storeWrapper.objectStore.ReadCache != null ? storeWrapper.objectStore.ReadCache.MemorySizeBytes : 0);
+            object_store_read_cache_size = storeWrapper.objectStore.ReadCache != null ? storeWrapper.objectStore.ReadCache.MemorySizeBytes : 0;
             total_object_store_size = object_store_index_size + object_store_log_memory_references_size + object_store_read_cache_size;
         }
 
@@ -146,8 +146,8 @@ internal class GarnetInfoMetrics
         bool clusterEnabled = storeWrapper.serverOptions.EnableCluster;
         bool metricsDisabled = storeWrapper.monitor == null;
         GarnetServerMetrics globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
-        double tt = metricsDisabled ? 0 : (double)(globalMetrics.GlobalSessionMetrics.get_total_found() + globalMetrics.GlobalSessionMetrics.get_total_notfound());
-        double garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? (double)globalMetrics.GlobalSessionMetrics.get_total_found() / tt : 0) * 100;
+        double tt = metricsDisabled ? 0 : globalMetrics.GlobalSessionMetrics.get_total_found() + globalMetrics.GlobalSessionMetrics.get_total_notfound();
+        double garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? globalMetrics.GlobalSessionMetrics.get_total_found() / tt : 0) * 100;
         statsInfo =
             [
                 new("total_connections_active", metricsDisabled ? "0" : globalMetrics.TotalConnectionsReceived.ToString()),

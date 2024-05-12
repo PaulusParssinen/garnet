@@ -6,7 +6,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Adds the specified geospatial items (longitude, latitude, name) to the specified key.

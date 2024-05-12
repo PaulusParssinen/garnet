@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
+using Tsavorite.Device;
+
 namespace Tsavorite;
 
 internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key, Value>
@@ -385,7 +387,7 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
             ulong offsetInFile = (ulong)(AlignedPageSizeBytes * readPage);
 
             uint readLength = (uint)AlignedPageSizeBytes;
-            long adjustedUntilAddress = (AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask));
+            long adjustedUntilAddress = AlignedPageSizeBytes * (untilAddress >> LogPageSizeBits) + (untilAddress & PageSizeMask);
 
             if (adjustedUntilAddress > 0 && ((adjustedUntilAddress - (long)offsetInFile) < PageSize))
             {

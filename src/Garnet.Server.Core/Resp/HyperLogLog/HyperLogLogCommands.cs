@@ -9,7 +9,7 @@ using Tsavorite;
 
 namespace Garnet.Server;
 
-internal sealed unsafe partial class RespServerSession : ServerSessionBase
+internal sealed unsafe partial class RespServerSession
 {
     /// <summary>
     /// Adds one element to the HyperLogLog data structure stored at the variable name specified.
@@ -46,8 +46,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
         //1. header
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFADD;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.PFADD;
+        (*(RespInputHeader*)pcurr).flags = 0;
         pcurr += RespInputHeader.Size;
         //2. cmd args
         *(int*)pcurr = 1; pcurr += sizeof(int);
@@ -63,7 +63,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             GarnetStatus status = storageApi.HyperLogLogAdd(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
             //Invalid HLL Type
-            if (*output == (byte)0xFF)
+            if (*output == 0xFF)
             {
                 while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_WRONG_TYPE_HLL, ref dcurr, dend))
                     SendAndReset();
@@ -119,8 +119,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         byte* pcurr = pbCmdInput;
         *(int*)pcurr = inputSize - sizeof(int);
         pcurr += sizeof(int);
-        (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFCOUNT;
-        (*(RespInputHeader*)(pcurr)).flags = 0;
+        (*(RespInputHeader*)pcurr).cmd = RespCommand.PFCOUNT;
+        (*(RespInputHeader*)pcurr).flags = 0;
 
         GarnetStatus status = storageApi.HyperLogLogLength(keys, ref Unsafe.AsRef<SpanByte>(pbCmdInput), out long cardinality, out bool error);
         if (error)

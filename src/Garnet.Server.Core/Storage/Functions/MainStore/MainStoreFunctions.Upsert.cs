@@ -17,10 +17,11 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public void PostSingleWriter(ref SpanByte key, ref SpanByte input, ref SpanByte src, ref SpanByte dst, ref SpanByteAndMemory output, ref UpsertInfo upsertInfo, WriteReason reason)
     {
-        functionsState.watchVersionMap.IncrementVersion(upsertInfo.KeyHash);
-        if (reason == WriteReason.Upsert && functionsState.appendOnlyFile != null)
+        _functionsState.WatchVersionMap.IncrementVersion(upsertInfo.KeyHash);
+        if (reason == WriteReason.Upsert && _functionsState.AppendOnlyFile != null)
             WriteLogUpsert(ref key, ref input, ref src, upsertInfo.Version, upsertInfo.SessionID);
     }
+
 
     /// <inheritdoc />
     public bool ConcurrentWriter(ref SpanByte key, ref SpanByte input, ref SpanByte src, ref SpanByte dst, ref SpanByteAndMemory output, ref UpsertInfo upsertInfo, ref RecordInfo recordInfo)
@@ -28,8 +29,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         if (ConcurrentWriterWorker(ref src, ref dst, ref upsertInfo, ref recordInfo))
         {
             if (!upsertInfo.RecordInfo.Modified)
-                functionsState.watchVersionMap.IncrementVersion(upsertInfo.KeyHash);
-            if (functionsState.appendOnlyFile != null)
+                _functionsState.WatchVersionMap.IncrementVersion(upsertInfo.KeyHash);
+            if (_functionsState.AppendOnlyFile != null)
                 WriteLogUpsert(ref key, ref input, ref src, upsertInfo.Version, upsertInfo.SessionID);
             return true;
         }

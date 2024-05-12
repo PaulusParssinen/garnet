@@ -72,7 +72,7 @@ public class User
         {
             oldCategories = _categories;
         }
-        while (oldCategories != Interlocked.CompareExchange(ref _categories, oldCategories & ~((uint)category), oldCategories));
+        while (oldCategories != Interlocked.CompareExchange(ref _categories, oldCategories & ~(uint)category, oldCategories));
     }
 
     /// <summary>

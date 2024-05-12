@@ -286,7 +286,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
         #endregion
 
-        logger?.LogDebug("MIGRATE COPY:{copyOption} REPLACE:{replaceOption} OpType:{opType}", copyOption, replaceOption, (keysWithSize != null ? "KEYS" : "SLOTS"));
+        logger?.LogDebug("MIGRATE COPY:{copyOption} REPLACE:{replaceOption} OpType:{opType}", copyOption, replaceOption, keysWithSize != null ? "KEYS" : "SLOTS");
 
         #region scheduleMigration
         if (!clusterProvider.migrationManager.TryAddMigrationTask(

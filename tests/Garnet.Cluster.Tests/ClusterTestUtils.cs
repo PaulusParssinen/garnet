@@ -401,7 +401,7 @@ public partial class ClusterTestUtils
                 WaitUntilNodeIdIsKnown(j, replicaId, logger);
 
                 IPEndPoint primaryEndpoint = endpoints[i];
-                string resp = (string)ClusterReplicate(primaryEndpoint, primaryId, logger: logger);
+                string resp = ClusterReplicate(primaryEndpoint, primaryId, logger: logger);
                 {
                     string msg = "";
                     for (int k = 0; k < endpoints.Length; k++)
@@ -1540,7 +1540,7 @@ public unsafe partial class ClusterTestUtils
 
     public string AddDelSlots(int nodeIndex, List<int> slots, bool addslot, ILogger logger = null)
     {
-        var endPoint = ((IPEndPoint)endpoints[nodeIndex]);
+        var endPoint = (IPEndPoint)endpoints[nodeIndex];
         IServer server = redis.GetServer(endPoint);
         var objects = slots.Select(x => (object)x).ToList();
         objects.Insert(0, addslot ? "addslots" : "delslots");
@@ -1713,7 +1713,7 @@ public unsafe partial class ClusterTestUtils
         {
             for (int i = 0; i < endpoints.Count; i++)
             {
-                var endPoint = ((IPEndPoint)endpoints[i]);
+                var endPoint = (IPEndPoint)endpoints[i];
                 IServer server = redis.GetServer(endPoint);
                 RedisResult resp = server.Execute("PING");
                 while (((string)resp) != "PONG")
@@ -1758,14 +1758,14 @@ public unsafe partial class ClusterTestUtils
                     string address = (string)nodeInfo[0];
                     int port = (int)nodeInfo[1];
                     string nodeid = (string)nodeInfo[2];
-                    var hostNameInfo = ((RedisResult[])nodeInfo[3]);
+                    var hostNameInfo = (RedisResult[])nodeInfo[3];
                     string hostname = (string)hostNameInfo[1];
 
                     slotItem.nnInfo[i - 2].address = address;
                     slotItem.nnInfo[i - 2].port = port;
                     slotItem.nnInfo[i - 2].nodeid = nodeid;
                     slotItem.nnInfo[i - 2].hostname = hostname;
-                    slotItem.nnInfo[i - 2].isPrimary = (i == 2);
+                    slotItem.nnInfo[i - 2].isPrimary = i == 2;
                 }
                 slotItems.Add(slotItem);
             }
@@ -2021,14 +2021,14 @@ public unsafe partial class ClusterTestUtils
         {
             if (expiry == -1)
             {
-                ICollection<object> args = new List<object>() { (object)key, (object)value };
+                ICollection<object> args = new List<object>() { key, value };
                 string resp = (string)server.Execute("set", args, CommandFlags.NoRedirect);
                 Assert.AreEqual("OK", resp);
                 return ResponseState.OK;
             }
             else
             {
-                ICollection<object> args = new List<object>() { (object)key, (object)expiry, (object)value };
+                ICollection<object> args = new List<object>() { key, expiry, value };
                 string resp = (string)server.Execute("setex", args, CommandFlags.NoRedirect);
                 Assert.AreEqual("OK", resp);
                 return ResponseState.OK;
@@ -2087,7 +2087,7 @@ public unsafe partial class ClusterTestUtils
             server.Execute("ASKING");
         try
         {
-            ICollection<object> args = new List<object>() { (object)key };
+            ICollection<object> args = new List<object>() { key };
             result = (string)server.Execute("get", args, CommandFlags.NoRedirect);
             slot = HashSlot(key);
             responseState = ResponseState.OK;
