@@ -38,7 +38,7 @@ internal class GenericLogScanTests
         DeleteDirectory(TestUtils.MethodTestDir, wait: true);
 
         comparer = null;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is HashModulo mod && mod == HashModulo.Hundred)
             {
@@ -98,10 +98,10 @@ internal class GenericLogScanTests
                   concurrencyControlMode: scanIteratorType == ScanIteratorType.Pull ? ConcurrencyControlMode.None : ConcurrencyControlMode.LockTable
                   );
 
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
-        using var s = store.Log.Subscribe(new LogObserver());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using IDisposable s = store.Log.Subscribe(new LogObserver());
 
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         for (int i = 0; i < totalRecords; i++)
         {
             var _key = new MyKey { key = i };
@@ -120,8 +120,8 @@ internal class GenericLogScanTests
 
             if (scanIteratorType == ScanIteratorType.Pull)
             {
-                using var iter = store.Log.Scan(start, store.Log.TailAddress, sbm);
-                while (iter.GetNext(out var recordInfo))
+                using ITsavoriteScanIterator<MyKey, MyValue> iter = store.Log.Scan(start, store.Log.TailAddress, sbm);
+                while (iter.GetNext(out RecordInfo recordInfo))
                     scanIteratorFunctions.SingleReader(ref iter.GetKey(), ref iter.GetValue(), default, default, out _);
             }
             else
@@ -171,7 +171,7 @@ internal class GenericLogScanTests
                   serializerSettings: new SerializerSettings<MyKey, MyValue> { keySerializer = () => new MyKeySerializer(), valueSerializer = () => new MyValueSerializer() },
                   concurrencyControlMode: ConcurrencyControlMode.None);
 
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         const int numRecords = 200;
         const int numTailRecords = 10;
@@ -189,11 +189,11 @@ internal class GenericLogScanTests
             session.Upsert(ref key, ref value, Empty.Default, 0);
         }
 
-        using var iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
+        using ITsavoriteScanIterator<MyKey, MyValue> iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
 
         for (int i = 0; i < 100; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             Assert.AreEqual(i, iter.GetKey().key);
             Assert.AreEqual(i, iter.GetValue().value);
         }
@@ -202,10 +202,10 @@ internal class GenericLogScanTests
 
         for (int i = 0; i < numTailRecords; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             if (i == 0)
                 Assert.AreEqual(store.Log.BeginAddress, iter.CurrentAddress);
-            var expectedKey = numRecords - numTailRecords + i;
+            int expectedKey = numRecords - numTailRecords + i;
             Assert.AreEqual(expectedKey, iter.GetKey().key);
             Assert.AreEqual(expectedKey, iter.GetValue().value);
         }
@@ -231,7 +231,7 @@ internal class GenericLogScanTests
     {
         const int PageSizeBits = 9;
         const long PageSize = 1L << PageSizeBits;
-        var recordSize = GenericAllocator<MyKey, MyValue>.RecordSize;
+        int recordSize = GenericAllocator<MyKey, MyValue>.RecordSize;
 
         log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "test.log"));
         objlog = Devices.CreateLogDevice(Path.Join(MethodTestDir, "test.obj.log"));
@@ -240,7 +240,7 @@ internal class GenericLogScanTests
                   serializerSettings: new SerializerSettings<MyKey, MyValue> { keySerializer = () => new MyKeySerializer(), valueSerializer = () => new MyValueSerializer() },
                   concurrencyControlMode: ConcurrencyControlMode.None, comparer: comparer);
 
-        using var session = store.NewSession<MyInput, MyOutput, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, ScanFunctions> session = store.NewSession<MyInput, MyOutput, Empty, ScanFunctions>(new ScanFunctions());
 
         for (int i = 0; i < totalRecords; i++)
         {
@@ -252,13 +252,13 @@ internal class GenericLogScanTests
         var scanCursorFuncs = new ScanCursorFuncs();
 
         // Normal operations
-        var endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
-        var counts = new long[] { 10, 100, long.MaxValue };
+        long[] endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
+        long[] counts = new long[] { 10, 100, long.MaxValue };
 
         long cursor = 0;
-        for (var iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
+        for (int iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
         {
-            for (var iCount = 0; iCount < counts.Length; ++iCount)
+            for (int iCount = 0; iCount < counts.Length; ++iCount)
             {
                 scanCursorFuncs.Initialize(verifyKeys: true);
                 while (session.ScanCursor(ref cursor, counts[iCount], scanCursorFuncs, endAddresses[iAddr]))
@@ -305,7 +305,7 @@ internal class GenericLogScanTests
         MyInput input = new();
         MyOutput output = new();
         ReadOptions readOptions = default;
-        var readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
+        Status readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(readStatus.Found, $"Could not read at HeadAddress; {readStatus}");
 
         scanCursorFuncs.Initialize(verifyKeys);
@@ -331,7 +331,7 @@ internal class GenericLogScanTests
                   serializerSettings: new SerializerSettings<MyKey, MyValue> { keySerializer = () => new MyKeySerializer(), valueSerializer = () => new MyValueSerializer() },
                   concurrencyControlMode: ConcurrencyControlMode.None, comparer: comparer);
 
-        using var session = store.NewSession<MyInput, MyOutput, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, ScanFunctions> session = store.NewSession<MyInput, MyOutput, Empty, ScanFunctions>(new ScanFunctions());
 
         for (int i = 0; i < totalRecords; i++)
         {

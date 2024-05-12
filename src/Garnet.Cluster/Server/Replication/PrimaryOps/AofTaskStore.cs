@@ -66,20 +66,20 @@ internal sealed class AofTaskStore : IDisposable
         List<(string, string)> replicaInfo = new List<(string, string)>();
 
         _lock.ReadLock();
-        var current = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
         try
         {
             if (_disposed) return replicaInfo;
 
             for (int i = 0; i < numTasks; i++)
             {
-                var cr = tasks[i];
-                var replicaId = cr.remoteNodeId;
-                var (address, port) = current.GetWorkerAddressFromNodeId(replicaId);
-                var state = cr.garnetClient.IsConnected ? "online" : "offline";
+                AofSyncTaskInfo cr = tasks[i];
+                string replicaId = cr.remoteNodeId;
+                (string address, int port) = current.GetWorkerAddressFromNodeId(replicaId);
+                string state = cr.garnetClient.IsConnected ? "online" : "offline";
                 long offset = cr.previousAddress;
                 long lag = offset - PrimaryReplicationOffset;
-                var count = replicaInfo.Count;
+                int count = replicaInfo.Count;
                 replicaInfo.Add(($"slave{count}", $"ip={address},port={port},state={state},offset={offset},lag={lag}"));
             }
         }
@@ -98,7 +98,7 @@ internal sealed class AofTaskStore : IDisposable
             _disposed = true;
             for (int i = 0; i < numTasks; i++)
             {
-                var task = tasks[i];
+                AofSyncTaskInfo task = tasks[i];
                 task.Dispose();
             }
             numTasks = 0;
@@ -116,8 +116,8 @@ internal sealed class AofTaskStore : IDisposable
 
         if (startAddress == 0) startAddress = ReplicationManager.kFirstValidAofAddress;
         bool success = false;
-        var current = clusterProvider.clusterManager.CurrentConfig;
-        var (address, port) = current.GetWorkerAddressFromNodeId(remoteNodeId);
+        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+        (string address, int port) = current.GetWorkerAddressFromNodeId(remoteNodeId);
 
         // Create AofSyncTask
         try
@@ -160,7 +160,7 @@ internal sealed class AofTaskStore : IDisposable
             // Iterate array of existing tasks and update associated task if it already exists
             for (int i = 0; i < numTasks; i++)
             {
-                var t = tasks[i];
+                AofSyncTaskInfo t = tasks[i];
                 Debug.Assert(t != null);
                 if (t.remoteNodeId == remoteNodeId)
                 {
@@ -176,7 +176,7 @@ internal sealed class AofTaskStore : IDisposable
             {
                 if (numTasks == tasks.Length)
                 {
-                    var old_tasks = tasks;
+                    AofSyncTaskInfo[] old_tasks = tasks;
                     var _tasks = new AofSyncTaskInfo[tasks.Length * 2];
                     Array.Copy(tasks, _tasks, tasks.Length);
                     tasks = _tasks;
@@ -215,7 +215,7 @@ internal sealed class AofTaskStore : IDisposable
 
             for (int i = 0; i < numTasks; i++)
             {
-                var t = tasks[i];
+                AofSyncTaskInfo t = tasks[i];
                 Debug.Assert(t != null);
                 if (t == aofSyncTask)
                 {
@@ -297,7 +297,7 @@ internal sealed class AofTaskStore : IDisposable
 
             for (int i = 0; i < numTasks; i++)
             {
-                var t = tasks[i];
+                AofSyncTaskInfo t = tasks[i];
                 count += t.garnetClient.IsConnected ? 1 : 0;
             }
         }

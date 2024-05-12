@@ -43,7 +43,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
             while (true)
             {
-                if (!FindTagAndTryTransientSLock<Input, Output, Context, TsavoriteSession>(tsavoriteSession, ref key, ref stackCtx, out var status))
+                if (!FindTagAndTryTransientSLock<Input, Output, Context, TsavoriteSession>(tsavoriteSession, ref key, ref stackCtx, out OperationStatus status))
                 {
                     if (HandleImmediateRetryStatus(status, tsavoriteSession, ref pendingContext))
                         continue;
@@ -57,11 +57,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 try
                 {
                     // During the pending operation, a record for the key may have been added to the log or readcache.
-                    ref var value = ref hlog.GetContextRecordValue(ref request);
+                    ref Value value = ref hlog.GetContextRecordValue(ref request);
                     bool found, needsRevivCheck = TracebackNeedsRevivCheck(ref stackCtx);
                     if (needsRevivCheck)
                     {
-                        var minAddress = pendingContext.InitialLatestLogicalAddress < hlog.HeadAddress ? hlog.HeadAddress : pendingContext.InitialLatestLogicalAddress + 1;
+                        long minAddress = pendingContext.InitialLatestLogicalAddress < hlog.HeadAddress ? hlog.HeadAddress : pendingContext.InitialLatestLogicalAddress + 1;
                         found = TryFindRecordForRead(ref key, ref stackCtx, minAddress, out status);
                         if (!found && status != OperationStatus.SUCCESS)
                         {
@@ -187,8 +187,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         SpinWaitUntilClosed(request.logicalAddress);
 
         byte* recordPointer = request.record.GetValidPointer();
-        var requestRecordInfo = hlog.GetInfoFromBytePointer(recordPointer); // Not ref, as we don't want to write into request.record
-        ref var srcRecordInfo = ref requestRecordInfo;
+        RecordInfo requestRecordInfo = hlog.GetInfoFromBytePointer(recordPointer); // Not ref, as we don't want to write into request.record
+        ref RecordInfo srcRecordInfo = ref requestRecordInfo;
         srcRecordInfo.ClearBitsForDiskImages();
 
         OperationStatus status;
@@ -285,7 +285,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         OperationStackContext<Key, Value> stackCtx = new(comparer.GetHashCode64(ref key));
 
         // See if the record was added above the highest address we checked before issuing the IO.
-        var minAddress = pendingContext.InitialLatestLogicalAddress + 1;
+        long minAddress = pendingContext.InitialLatestLogicalAddress + 1;
         OperationStatus internalStatus;
         do
         {

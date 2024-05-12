@@ -106,7 +106,7 @@ public class RecoveryTests
         AdInput inputArg = default;
         Output output = default;
 
-        var session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         for (int key = 0; key < numOps; key++)
         {
             value.numClicks = key;
@@ -129,16 +129,16 @@ public class RecoveryTests
         else
             Assert.Null(store2.RecoveredCommitCookie);
 
-        var session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         Assert.AreEqual(2, session2.ID);
 
         for (int key = 0; key < numOps; key++)
         {
-            var status = session2.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, 0);
+            Status status = session2.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                session2.CompletePendingWithOutputs(out var outputs, wait: true);
+                session2.CompletePendingWithOutputs(out CompletedOutputIterator<AdId, NumClicks, AdInput, Output, Empty> outputs, wait: true);
                 Assert.IsTrue(outputs.Next());
                 output = outputs.Current.Output;
                 Assert.IsFalse(outputs.Next());
@@ -173,7 +173,7 @@ public class RecoveryTests
         AdInput inputArg = default;
         Output output = default;
 
-        var session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         for (int key = 0; key < numOps; key++)
         {
             value.numClicks = key;
@@ -188,10 +188,10 @@ public class RecoveryTests
         else
             store2.Recover(token);
 
-        var session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         for (int key = 0; key < numOps; key++)
         {
-            var status = session2.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, 0);
+            Status status = session2.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, 0);
 
             if (status.IsPending)
                 session2.CompletePending(true);
@@ -222,8 +222,8 @@ public class RecoveryTests
 
         NumClicks value;
 
-        var session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
-        var address = 0L;
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        long address = 0L;
         for (int key = 0; key < numOps; key++)
         {
             value.numClicks = key;
@@ -271,7 +271,7 @@ public class RecoveryTests
         AdSimpleFunctions functions1 = new(1);
         AdSimpleFunctions functions2 = new(2);
 
-        var session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions1);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions1);
         for (int key = 0; key < numOps; key++)
         {
             value.numClicks = key;
@@ -289,11 +289,11 @@ public class RecoveryTests
 
         store2.Recover(token);
 
-        var session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions2);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions2);
 
         // Just need one operation here to verify readInfo/upsertInfo in the functions
-        var lastKey = inputArray.Length - 1;
-        var status = session2.Read(ref inputArray[lastKey], ref inputArg, ref output, Empty.Default, 0);
+        int lastKey = inputArray.Length - 1;
+        Status status = session2.Read(ref inputArray[lastKey], ref inputArg, ref output, Empty.Default, 0);
         Assert.IsFalse(status.IsPending, status.ToString());
 
         value.numClicks = lastKey;

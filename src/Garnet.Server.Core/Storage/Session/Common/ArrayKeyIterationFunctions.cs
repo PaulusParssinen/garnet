@@ -95,7 +95,7 @@ sealed partial class StorageSession : IDisposable
         // Check the cursor value corresponds to the object store
         if (objectStoreSession != null && remainingCount > 0 && (typeObject == default || (!typeObject.SequenceEqual(CmdStrings.STRING) && !typeObject.SequenceEqual(CmdStrings.stringt))))
         {
-            var validateCursor = storeCursor != 0 && storeCursor != lastScanCursor;
+            bool validateCursor = storeCursor != 0 && storeCursor != lastScanCursor;
             storeCursor &= ~IsObjectStoreCursor;
             objectStoreSession.ScanCursor(ref storeCursor, remainingCount, objStoreDbScanFuncs, validateCursor: validateCursor);
             if (storeCursor != 0)
@@ -151,7 +151,7 @@ sealed partial class StorageSession : IDisposable
         Keys ??= new();
         Keys.Clear();
 
-        var allKeys = *pattern.ptr == '*' && pattern.Length == 1;
+        bool allKeys = *pattern.ptr == '*' && pattern.Length == 1;
 
         mainStoreDbKeysFuncs ??= new();
         mainStoreDbKeysFuncs.Initialize(Keys, allKeys ? null : pattern.ptr, pattern.Length);

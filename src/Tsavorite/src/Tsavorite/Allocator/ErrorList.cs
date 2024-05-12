@@ -20,8 +20,8 @@ internal sealed class ErrorList
         lock (errorList)
         {
             var result = new CommitInfo { FromAddress = long.MaxValue };
-            var index = -1;
-            for (var i = 0; i < errorList.Count; i++)
+            int index = -1;
+            for (int i = 0; i < errorList.Count; i++)
             {
                 if (errorList[i].FromAddress < result.FromAddress)
                 {

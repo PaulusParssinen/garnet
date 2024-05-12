@@ -110,13 +110,13 @@ class InputOutputParameterTests
         {
             for (int key = 0; key < NumRecs; ++key)
             {
-                var tailAddress = store.Log.TailAddress;
+                long tailAddress = store.Log.TailAddress;
                 RecordMetadata recordMetadata;
                 if (isAsync)
                 {
                     if (useRMW)
                     {
-                        var r = await session.RMWAsync(ref key, ref input);
+                        TsavoriteKV<int, int>.RmwAsyncResult<int, int, Empty> r = await session.RMWAsync(ref key, ref input);
                         if ((key & 0x1) == 0)
                         {
                             while (r.Status.IsPending)
@@ -132,7 +132,7 @@ class InputOutputParameterTests
                     }
                     else
                     {
-                        var r = await session.UpsertAsync(ref key, ref input, ref key);
+                        TsavoriteKV<int, int>.UpsertAsyncResult<int, int, Empty> r = await session.UpsertAsync(ref key, ref input, ref key);
                         if ((key & 0x1) == 0)
                         {
                             while (r.Status.IsPending)

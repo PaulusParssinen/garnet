@@ -94,7 +94,7 @@ internal sealed partial class ReplicationManager : IDisposable
         else
         {
             logger?.LogInformation("Initiating foreground checkpoint retrieval");
-            var resp = InitiateReplicaSync().GetAwaiter().GetResult();
+            string resp = InitiateReplicaSync().GetAwaiter().GetResult();
             if (resp != null)
             {
                 errorMessage = Encoding.ASCII.GetBytes(resp);
@@ -116,13 +116,13 @@ internal sealed partial class ReplicationManager : IDisposable
         //
         //2. replica waits for retrieval to complete before moving forward to recovery
         //      retrieval completion coordinated by remoteCheckpointRetrievalCompleted
-        var current = clusterProvider.clusterManager.CurrentConfig;
-        var (address, port) = current.GetLocalNodePrimaryAddress();
+        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+        (string address, int port) = current.GetLocalNodePrimaryAddress();
         GarnetClientSession gcs = null;
 
         if (address == null || port == -1)
         {
-            var errorMsg = Encoding.ASCII.GetString(CmdStrings.RESP_ERR_GENERIC_NOT_ASSIGNED_PRIMARY_ERROR);
+            string errorMsg = Encoding.ASCII.GetString(CmdStrings.RESP_ERR_GENERIC_NOT_ASSIGNED_PRIMARY_ERROR);
             logger?.LogError("{msg}", errorMsg);
             return errorMsg;
         }
@@ -133,7 +133,7 @@ internal sealed partial class ReplicationManager : IDisposable
             recvCheckpointHandler = new ReceiveCheckpointHandler(clusterProvider, logger);
             gcs.Connect();
 
-            var nodeId = current.LocalNodeId;
+            string nodeId = current.LocalNodeId;
             cEntry = GetLatestCheckpointEntryFromDisk();
 
             storeWrapper.RecoverAOF();
@@ -176,7 +176,7 @@ internal sealed partial class ReplicationManager : IDisposable
     public void ProcessCheckpointMetadata(Guid fileToken, CheckpointFileType fileType, byte[] checkpointMetadata)
     {
         UpdateLastPrimarySyncTime();
-        var ckptManager = fileType switch
+        ReplicationLogCheckpointManager ckptManager = fileType switch
         {
             CheckpointFileType.STORE_SNAPSHOT or
             CheckpointFileType.STORE_INDEX => clusterProvider.GetReplicationLogCheckpointManager(StoreType.Main),
@@ -202,12 +202,12 @@ internal sealed partial class ReplicationManager : IDisposable
 
     private IDevice GetStoreHLogDevice()
     {
-        var opts = clusterProvider.serverOptions;
+        GarnetServerOptions opts = clusterProvider.serverOptions;
         if (opts.EnableStorageTier)
         {
-            var LogDir = opts.LogDir;
+            string LogDir = opts.LogDir;
             if (LogDir is null or "") LogDir = Directory.GetCurrentDirectory();
-            var logFactory = opts.GetInitializedDeviceFactory(LogDir);
+            INamedDeviceFactory logFactory = opts.GetInitializedDeviceFactory(LogDir);
             return logFactory.Get(new FileDescriptor("Store", "hlog"));
         }
         return null;
@@ -215,12 +215,12 @@ internal sealed partial class ReplicationManager : IDisposable
 
     private IDevice GetObjectStoreHLogDevice(bool obj)
     {
-        var opts = clusterProvider.serverOptions;
+        GarnetServerOptions opts = clusterProvider.serverOptions;
         if (opts.EnableStorageTier)
         {
-            var LogDir = opts.LogDir;
+            string LogDir = opts.LogDir;
             if (LogDir is null or "") LogDir = Directory.GetCurrentDirectory();
-            var logFactory = opts.GetInitializedDeviceFactory(LogDir);
+            INamedDeviceFactory logFactory = opts.GetInitializedDeviceFactory(LogDir);
             return obj ? logFactory.Get(new FileDescriptor("ObjectStore", "hlog.obj")) : logFactory.Get(new FileDescriptor("ObjectStore", "hlog"));
         }
         return null;

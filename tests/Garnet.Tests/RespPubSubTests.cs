@@ -31,8 +31,8 @@ class RespPubSubTests
     {
         using var subRedis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var sub = subRedis.GetSubscriber();
-        var db = redis.GetDatabase(0);
+        ISubscriber sub = subRedis.GetSubscriber();
+        IDatabase db = redis.GetDatabase(0);
 
         ManualResetEvent evt = new(false);
 
@@ -49,7 +49,7 @@ class RespPubSubTests
         while (true)
         {
             db.Publish("messages", "published message");
-            var ret = evt.WaitOne(TimeSpan.FromSeconds(1));
+            bool ret = evt.WaitOne(TimeSpan.FromSeconds(1));
             if (ret) break;
             repeat--;
             Assert.IsTrue(repeat != 0, "Timeout waiting for subsciption receive");
@@ -62,8 +62,8 @@ class RespPubSubTests
     {
         using var subRedis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var sub = subRedis.GetSubscriber();
-        var db = redis.GetDatabase(0);
+        ISubscriber sub = subRedis.GetSubscriber();
+        IDatabase db = redis.GetDatabase(0);
 
         string glob = "com.messages.*";
         string actual = "com.messages.testmessage";
@@ -87,7 +87,7 @@ class RespPubSubTests
         while (true)
         {
             db.Publish(actual, value);
-            var ret = evt.WaitOne(TimeSpan.FromSeconds(1));
+            bool ret = evt.WaitOne(TimeSpan.FromSeconds(1));
             if (ret) break;
             repeat--;
             Assert.IsTrue(repeat != 0, "Timeout waiting for subsciption receive");

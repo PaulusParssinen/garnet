@@ -21,7 +21,7 @@ sealed class ReadWriteTxn : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        api.GET(GetNextArg(input, ref offset), out var key1);
+        api.GET(GetNextArg(input, ref offset), out ArgSlice key1);
         if (key1.ReadOnlySpan.SequenceEqual("wrong_string"u8))
             return false;
         AddKey(GetNextArg(input, ref offset), LockType.Exclusive, false);
@@ -32,11 +32,11 @@ sealed class ReadWriteTxn : CustomTransactionProcedure
     public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var key1 = GetNextArg(input, ref offset);
-        var key2 = GetNextArg(input, ref offset);
-        var key3 = GetNextArg(input, ref offset);
+        ArgSlice key1 = GetNextArg(input, ref offset);
+        ArgSlice key2 = GetNextArg(input, ref offset);
+        ArgSlice key3 = GetNextArg(input, ref offset);
 
-        var status = api.GET(key1, out var result);
+        GarnetStatus status = api.GET(key1, out ArgSlice result);
         if (status == GarnetStatus.OK)
         {
             api.SET(key2, result);

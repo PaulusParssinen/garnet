@@ -167,7 +167,7 @@ class CancellationTests
         int key = NumRecs;
 
         functions.cancelLocation = CancelLocation.NeedInitialUpdate;
-        var status = session.RMW(key, key * NumRecs * 10);
+        Status status = session.RMW(key, key * NumRecs * 10);
         Assert.IsTrue(status.IsCanceled);
         Assert.AreEqual(CancelLocation.NeedInitialUpdate, functions.lastFunc);
 
@@ -191,7 +191,7 @@ class CancellationTests
             for (int lap = 0; lap < 2; ++lap)
             {
                 functions.cancelLocation = CancelLocation.NeedCopyUpdate;
-                var status = session.RMW(key, key * NumRecs * 10);
+                Status status = session.RMW(key, key * NumRecs * 10);
                 Assert.IsTrue(status.IsCanceled);
                 Assert.AreEqual(CancelLocation.NeedCopyUpdate, functions.lastFunc);
 
@@ -221,7 +221,7 @@ class CancellationTests
 
         // Note: ExpirationTests tests the combination of CancelOperation and DeleteRecord
         functions.cancelLocation = CancelLocation.InPlaceUpdater;
-        var status = session.RMW(key, key * NumRecs * 10);
+        Status status = session.RMW(key, key * NumRecs * 10);
         Assert.IsTrue(status.IsCanceled);
         Assert.AreEqual(CancelLocation.InPlaceUpdater, functions.lastFunc);
     }
@@ -236,7 +236,7 @@ class CancellationTests
         int key = NumRecs + 1;
 
         functions.cancelLocation = CancelLocation.SingleWriter;
-        var status = session.Upsert(key, key * NumRecs * 10);
+        Status status = session.Upsert(key, key * NumRecs * 10);
         Assert.IsTrue(status.IsCanceled);
         Assert.AreEqual(CancelLocation.SingleWriter, functions.lastFunc);
     }
@@ -251,7 +251,7 @@ class CancellationTests
         int key = NumRecs / 2;
 
         functions.cancelLocation = CancelLocation.ConcurrentWriter;
-        var status = session.Upsert(key, key * NumRecs * 10);
+        Status status = session.Upsert(key, key * NumRecs * 10);
         Assert.IsTrue(status.IsCanceled);
         Assert.AreEqual(CancelLocation.ConcurrentWriter, functions.lastFunc);
     }

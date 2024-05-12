@@ -188,7 +188,7 @@ public class User
         }
 
         // Categories
-        var highestFlag = Enum.GetValues(typeof(CommandCategory.Flag)).Cast<int>().Max();
+        int highestFlag = Enum.GetValues(typeof(CommandCategory.Flag)).Cast<int>().Max();
 
         for (int i = 0; i <= highestFlag; i++)
         {

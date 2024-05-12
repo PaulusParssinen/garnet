@@ -10,7 +10,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus RMW_ObjectStore<TObjectContext>(ref byte[] key, ref SpanByte input, ref GarnetObjectStoreOutput output, ref TObjectContext objectStoreContext)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var status = objectStoreContext.RMW(ref key, ref input, ref output);
+        Status status = objectStoreContext.RMW(ref key, ref input, ref output);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref output, ref objectStoreContext);
@@ -24,7 +24,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus Read_ObjectStore<TObjectContext>(ref byte[] key, ref SpanByte input, ref GarnetObjectStoreOutput output, ref TObjectContext objectStoreContext)
     where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var status = objectStoreContext.Read(ref key, ref input, ref output);
+        Status status = objectStoreContext.Read(ref key, ref input, ref output);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref output, ref objectStoreContext);

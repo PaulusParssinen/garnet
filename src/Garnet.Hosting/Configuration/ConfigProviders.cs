@@ -79,7 +79,7 @@ internal class GarnetConfigProvider : IConfigProvider
 
     public bool TryImportOptions(string path, IStreamProvider streamProvider, Options options, ILogger logger)
     {
-        using var stream = streamProvider.Read(path);
+        using Stream stream = streamProvider.Read(path);
         using var streamReader = new StreamReader(stream);
 
         try
@@ -118,7 +118,7 @@ internal class GarnetConfigProvider : IConfigProvider
             return false;
         }
 
-        var data = Encoding.ASCII.GetBytes(jsonSettings);
+        byte[] data = Encoding.ASCII.GetBytes(jsonSettings);
         streamProvider.Write(path, data);
 
         return true;
@@ -145,9 +145,9 @@ internal class RedisConfigProvider : IConfigProvider
 
     public bool TryImportOptions(string path, IStreamProvider streamProvider, Options options, ILogger logger)
     {
-        using var stream = streamProvider.Read(path);
+        using Stream stream = streamProvider.Read(path);
         using var streamReader = new StreamReader(stream);
-        var redisOptions = RedisConfigSerializer.Deserialize(streamReader, logger);
+        RedisOptions redisOptions = RedisConfigSerializer.Deserialize(streamReader, logger);
         return RedisConfigSerializer.TryPopulateOptions(redisOptions, options);
     }
 

@@ -33,7 +33,7 @@ internal sealed class CountdownWrapper
     internal void Wait() => syncEvent.Wait();
     internal async ValueTask WaitAsync(CancellationToken cancellationToken)
     {
-        using var reg = cancellationToken.Register(() => asyncTcs.TrySetCanceled());
+        using CancellationTokenRegistration reg = cancellationToken.Register(() => asyncTcs.TrySetCanceled());
         await asyncTcs.Task.ConfigureAwait(false);
     }
 
@@ -223,7 +223,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
             // If index 0, then allocate space for next level.
             if (index == 0)
             {
-                var tmp = GC.AllocateArray<T>(PageSize + SectorSize, pinned: IsBlittable);
+                T[] tmp = GC.AllocateArray<T>(PageSize + SectorSize, pinned: IsBlittable);
                 if (IsBlittable)
                     pointers[1] = (IntPtr)(((long)Unsafe.AsPointer(ref tmp[0]) + (SectorSize - 1)) & ~(SectorSize - 1));
 
@@ -236,7 +236,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
         }
 
         // See if write cache contains corresponding array.
-        var cache = writeCacheLevel;
+        int cache = writeCacheLevel;
         T[] array;
 
         if (cache != -1)
@@ -271,7 +271,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
             // Allocate for next page
             int newBaseAddr = baseAddr + 1;
 
-            var tmp = GC.AllocateArray<T>(PageSize + SectorSize, pinned: IsBlittable);
+            T[] tmp = GC.AllocateArray<T>(PageSize + SectorSize, pinned: IsBlittable);
             if (IsBlittable)
                 pointers[newBaseAddr] = (IntPtr)(((long)Unsafe.AsPointer(ref tmp[0]) + (SectorSize - 1)) & ~(SectorSize - 1));
 
@@ -304,7 +304,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
     /// <returns></returns>
     public async ValueTask IsCheckpointCompletedAsync(CancellationToken token = default)
     {
-        var s = checkpointSemaphore;
+        SemaphoreSlim s = checkpointSemaphore;
         await s.WaitAsync(token).ConfigureAwait(false);
         s.Release();
     }
@@ -383,7 +383,7 @@ public sealed class MallocFixedPageSize<T> : IDisposable
             logger?.LogError($"AsyncFlushCallback error: {errorCode}");
         }
 
-        var mem = ((OverflowPagesFlushAsyncResult)context).mem;
+        SectorAlignedMemory mem = ((OverflowPagesFlushAsyncResult)context).mem;
         mem?.Dispose();
 
         if (Interlocked.Decrement(ref checkpointCallbackCount) == 0)

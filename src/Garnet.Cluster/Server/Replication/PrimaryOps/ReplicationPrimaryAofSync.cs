@@ -54,7 +54,7 @@ internal sealed partial class ReplicationManager : IDisposable
 
         // TODO: why do we need to verify this?
         // No guarantee at call time that provided nodeId is of a trusted node because of gossip propagation delay
-        var (address, port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(nodeid);
+        (string address, int port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(nodeid);
         if (address == null)
         {
             aofTaskStore.TryRemove(aofSyncTaskInfo);
@@ -63,7 +63,7 @@ internal sealed partial class ReplicationManager : IDisposable
             return false;
         }
 
-        var tailAddress = storeWrapper.appendOnlyFile.TailAddress;
+        long tailAddress = storeWrapper.appendOnlyFile.TailAddress;
         // Check if requested AOF address goes beyond the maximum available AOF address of this primary
         if (startAddress > storeWrapper.appendOnlyFile.TailAddress)
         {

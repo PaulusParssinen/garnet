@@ -59,16 +59,16 @@ class GarnetInfoMetrics
 
     private void PopulateMemoryInfo(StoreWrapper storeWrapper)
     {
-        var main_store_index_size = storeWrapper.store.IndexSize * 64;
-        var main_store_log_memory_size = storeWrapper.store.Log.MemorySizeBytes;
-        var main_store_read_cache_size = (storeWrapper.store.ReadCache != null ? storeWrapper.store.ReadCache.MemorySizeBytes : 0);
-        var total_main_store_size = main_store_index_size + main_store_log_memory_size + main_store_read_cache_size;
+        long main_store_index_size = storeWrapper.store.IndexSize * 64;
+        long main_store_log_memory_size = storeWrapper.store.Log.MemorySizeBytes;
+        long main_store_read_cache_size = (storeWrapper.store.ReadCache != null ? storeWrapper.store.ReadCache.MemorySizeBytes : 0);
+        long total_main_store_size = main_store_index_size + main_store_log_memory_size + main_store_read_cache_size;
 
-        var object_store_index_size = -1L;
-        var object_store_log_memory_references_size = -1L;
-        var object_store_read_cache_size = -1L;
-        var total_object_store_size = -1L;
-        var disableObj = storeWrapper.serverOptions.DisableObjects;
+        long object_store_index_size = -1L;
+        long object_store_log_memory_references_size = -1L;
+        long object_store_read_cache_size = -1L;
+        long total_object_store_size = -1L;
+        bool disableObj = storeWrapper.serverOptions.DisableObjects;
 
         if (!disableObj)
         {
@@ -144,11 +144,11 @@ class GarnetInfoMetrics
 
     private void PopulateStatsInfo(StoreWrapper storeWrapper)
     {
-        var clusterEnabled = storeWrapper.serverOptions.EnableCluster;
-        var metricsDisabled = storeWrapper.monitor == null;
-        var globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
-        var tt = metricsDisabled ? 0 : (double)(globalMetrics.globalSessionMetrics.get_total_found() + globalMetrics.globalSessionMetrics.get_total_notfound());
-        var garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? (double)globalMetrics.globalSessionMetrics.get_total_found() / tt : 0) * 100;
+        bool clusterEnabled = storeWrapper.serverOptions.EnableCluster;
+        bool metricsDisabled = storeWrapper.monitor == null;
+        GarnetServerMetrics globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
+        double tt = metricsDisabled ? 0 : (double)(globalMetrics.globalSessionMetrics.get_total_found() + globalMetrics.globalSessionMetrics.get_total_notfound());
+        double garnet_hit_rate = metricsDisabled ? 0 : (tt > 0 ? (double)globalMetrics.globalSessionMetrics.get_total_found() / tt : 0) * 100;
         statsInfo =
             [
                 new("total_connections_active", metricsDisabled ? "0" : globalMetrics.total_connections_received.ToString()),
@@ -171,7 +171,7 @@ class GarnetInfoMetrics
 
         if (clusterEnabled)
         {
-            var gossipStats = storeWrapper.clusterProvider.GetGossipStats(metricsDisabled);
+            MetricsItem[] gossipStats = storeWrapper.clusterProvider.GetGossipStats(metricsDisabled);
             var tmp = new MetricsItem[statsInfo.Length + gossipStats.Length];
             Array.Copy(statsInfo, 0, tmp, 0, statsInfo.Length);
             Array.Copy(gossipStats, 0, tmp, statsInfo.Length, gossipStats.Length);
@@ -245,8 +245,8 @@ class GarnetInfoMetrics
 
     private void PopulateClientsInfo(StoreWrapper storeWrapper)
     {
-        var metricsDisabled = storeWrapper.monitor == null;
-        var globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
+        bool metricsDisabled = storeWrapper.monitor == null;
+        GarnetServerMetrics globalMetrics = metricsDisabled ? default : storeWrapper.monitor.GlobalMetrics;
         clientsInfo = [new("connected_clients", metricsDisabled ? "0" : (globalMetrics.total_connections_received - globalMetrics.total_connections_disposed).ToString())];
     }
 
@@ -281,7 +281,7 @@ class GarnetInfoMetrics
     {
         if (info == null)
             return "";
-        var section = $"# {GetSectionHeader(infoType)}\r\n";
+        string section = $"# {GetSectionHeader(infoType)}\r\n";
 
         // For some metrics we have a multi-string in the value and no name, so don't print a stray leading ':'.
         if (string.IsNullOrEmpty(info[0].Name))
@@ -291,7 +291,7 @@ class GarnetInfoMetrics
         }
         else
         {
-            for (var i = 0; i < info.Length; i++)
+            for (int i = 0; i < info.Length; i++)
                 section += $"{info[i].Name}:{info[i].Value}\r\n";
         }
         return section;
@@ -354,10 +354,10 @@ class GarnetInfoMetrics
 
     public string GetRespInfo(InfoMetricsType[] sections, StoreWrapper storeWrapper)
     {
-        var response = "";
-        for (var i = 0; i < sections.Length; i++)
+        string response = "";
+        for (int i = 0; i < sections.Length; i++)
         {
-            var section = sections[i];
+            InfoMetricsType section = sections[i];
             response += GetRespInfo(section, storeWrapper);
             response += sections.Length - 1 == i ? "" : "\r\n";
         }
@@ -423,10 +423,10 @@ class GarnetInfoMetrics
 
     public IEnumerable<(InfoMetricsType, MetricsItem[])> GetInfoMetrics(InfoMetricsType[] sections, StoreWrapper storeWrapper)
     {
-        for (var i = 0; i < sections.Length; i++)
+        for (int i = 0; i < sections.Length; i++)
         {
-            var infoType = sections[i];
-            var infoItems = GetMetricInternal(infoType, storeWrapper);
+            InfoMetricsType infoType = sections[i];
+            MetricsItem[] infoItems = GetMetricInternal(infoType, storeWrapper);
             if (infoItems != null)
                 yield return (infoType, infoItems);
         }

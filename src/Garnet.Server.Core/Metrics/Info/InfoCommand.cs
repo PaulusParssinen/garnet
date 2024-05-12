@@ -16,11 +16,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         string invalidSection = null;
         if (count > 0)
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             sections = new HashSet<InfoMetricsType>();
             for (int i = 0; i < count; i++)
             {
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var section, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string section, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 section = section.ToUpper();
@@ -85,7 +85,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         List<string> sectionsHelp = InfoHelp.GetInfoTypeHelpMessage();
         while (!RespWriteUtils.WriteArrayLength(sectionsHelp.Count, ref dcurr, dend))
             SendAndReset();
-        foreach (var sectionInfo in sectionsHelp)
+        foreach (string sectionInfo in sectionsHelp)
         {
             while (!RespWriteUtils.WriteAsciiBulkString(sectionInfo, ref dcurr, dend))
                 SendAndReset();

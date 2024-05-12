@@ -176,7 +176,7 @@ public class TsavoriteLogSettings : IDisposable
     /// <inheritdoc />
     public override string ToString()
     {
-        var retStr = $"log memory: {Utility.PrettySize(MemorySize)}; log page: {Utility.PrettySize(PageSize)}; log segment: {Utility.PrettySize(SegmentSize)}";
+        string retStr = $"log memory: {Utility.PrettySize(MemorySize)}; log page: {Utility.PrettySize(PageSize)}; log segment: {Utility.PrettySize(SegmentSize)}";
         retStr += $"; log device: {(LogDevice == null ? "null" : LogDevice.GetType().Name)}";
         retStr += $"; mutable fraction: {MutableFraction}; fast commit mode: {(FastCommitMode ? "yes" : "no")}";
         retStr += $"; read only mode: {(ReadOnlyMode ? "yes" : "no")}";

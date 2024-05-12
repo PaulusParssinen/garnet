@@ -23,7 +23,7 @@ internal class GenericIterationTests
     private void InternalSetup(ScanIteratorType scanIteratorType, bool largeMemory)
     {
         // Default ConcurrencyControlMode for this iterator type.
-        var concurrencyControlMode = scanIteratorType == ScanIteratorType.Pull ? ConcurrencyControlMode.None : ConcurrencyControlMode.LockTable;
+        ConcurrencyControlMode concurrencyControlMode = scanIteratorType == ScanIteratorType.Pull ? ConcurrencyControlMode.None : ConcurrencyControlMode.LockTable;
         InternalSetup(concurrencyControlMode, largeMemory);
     }
 
@@ -95,8 +95,8 @@ internal class GenericIterationTests
 
             if (scanIteratorType == ScanIteratorType.Pull)
             {
-                using var iter = session.Iterate();
-                while (iter.GetNext(out var recordInfo))
+                using ITsavoriteScanIterator<MyKey, MyValue> iter = session.Iterate();
+                while (iter.GetNext(out RecordInfo recordInfo))
                     scanIteratorFunctions.SingleReader(ref iter.GetKey(), ref iter.GetValue(), default, default, out _);
             }
             else
@@ -167,7 +167,7 @@ internal class GenericIterationTests
         GenericPushIterationTestFunctions scanIteratorFunctions = new();
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void scanAndVerify(int stopAt, bool useScan)
         {
@@ -200,11 +200,11 @@ internal class GenericIterationTests
         InternalSetup(concurrencyControlMode, largeMemory: true);
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void LocalScan(int i)
         {
-            using var session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
+            using ClientSession<MyKey, MyValue, MyInput, MyOutput, int, MyFunctionsDelete> session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
             GenericPushIterationTestFunctions scanIteratorFunctions = new();
 
             if (scanMode == ScanMode.Scan)
@@ -216,7 +216,7 @@ internal class GenericIterationTests
 
         void LocalUpdate(int tid)
         {
-            using var session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
+            using ClientSession<MyKey, MyValue, MyInput, MyOutput, int, MyFunctionsDelete> session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
             for (int i = 0; i < totalRecords; i++)
             {
                 var key1 = new MyKey { key = i };
@@ -235,10 +235,10 @@ internal class GenericIterationTests
         }
 
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
-        var numThreads = scanThreads + updateThreads;
+        int numThreads = scanThreads + updateThreads;
         for (int t = 0; t < numThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (t < scanThreads)
                 tasks.Add(Task.Factory.StartNew(() => LocalScan(tid)));
             else

@@ -34,8 +34,8 @@ struct TxnKeyEntry : ILockableKey
     public override string ToString()
     {
         // The debugger often can't call the Globalization NegativeSign property so ToString() would just display the class name
-        var keyHashSign = keyHash < 0 ? "-" : string.Empty;
-        var absKeyHash = this.keyHash >= 0 ? this.keyHash : -this.keyHash;
+        string keyHashSign = keyHash < 0 ? "-" : string.Empty;
+        long absKeyHash = this.keyHash >= 0 ? this.keyHash : -this.keyHash;
         return $"{keyHashSign}{absKeyHash}:{(isObject ? "obj" : "raw")}:{(lockType == LockType.None ? "-" : (lockType == LockType.Shared ? "s" : "x"))}";
     }
 }
@@ -79,14 +79,14 @@ internal sealed class TxnKeyEntries
     }
     public void AddKey(ArgSlice keyArgSlice, bool isObject, LockType type)
     {
-        var keyHash = !isObject
+        long keyHash = !isObject
             ? comparer.lockableContext.GetKeyHash(keyArgSlice.SpanByte)
             : comparer.objectStoreLockableContext.GetKeyHash(keyArgSlice.ToArray());
 
         // Grow the buffer if needed
         if (keyCount >= keys.Length)
         {
-            var oldKeys = keys;
+            TxnKeyEntry[] oldKeys = keys;
             keys = new TxnKeyEntry[keys.Length * 2];
             Array.Copy(oldKeys, keys, oldKeys.Length);
         }
@@ -183,10 +183,10 @@ internal sealed class TxnKeyEntries
     {
         StringBuilder sb = new();
 
-        var delimiter = string.Empty;
+        string delimiter = string.Empty;
         for (int ii = 0; ii < keyCount; ii++)
         {
-            ref var entry = ref keys[ii];
+            ref TxnKeyEntry entry = ref keys[ii];
             sb.Append(delimiter);
             sb.Append(entry.ToString());
         }

@@ -38,14 +38,14 @@ sealed partial class StorageSession : IDisposable
 
         //Iterate through all inputs and add them to the scratch buffer in RESP format
         int inputLength = sizeof(ObjectInputHeader);
-        foreach (var item in elements)
+        foreach (ArgSlice item in elements)
         {
-            var tmp = scratchBufferManager.FormatScratchAsResp(0, item);
+            ArgSlice tmp = scratchBufferManager.FormatScratchAsResp(0, item);
             inputLength += tmp.Length;
         }
 
-        var input = scratchBufferManager.GetSliceFromTail(inputLength);
-        RMWObjectStoreOperation(key.ToArray(), input, out var output, ref objectStoreContext);
+        ArgSlice input = scratchBufferManager.GetSliceFromTail(inputLength);
+        RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
 
         itemsDoneCount = output.countDone;
         return GarnetStatus.OK;
@@ -69,7 +69,7 @@ sealed partial class StorageSession : IDisposable
     {
         itemsDoneCount = 0;
 
-        var input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, element);
+        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, element);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -79,7 +79,7 @@ sealed partial class StorageSession : IDisposable
         rmwInput->count = 1;
         rmwInput->done = 0;
 
-        var status = RMWObjectStoreOperation(key.ToArray(), element, out var output, ref objectStoreContext);
+        GarnetStatus status = RMWObjectStoreOperation(key.ToArray(), element, out ObjectOutputHeader output, ref objectStoreContext);
         itemsDoneCount = output.countDone;
 
         return status;
@@ -98,7 +98,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus ListPop<TObjectContext>(ArgSlice key, ListOperation lop, ref TObjectContext objectStoreContext, out ArgSlice element)
        where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var status = ListPop(key, 1, lop, ref objectStoreContext, out var elements);
+        GarnetStatus status = ListPop(key, 1, lop, ref objectStoreContext, out ArgSlice[] elements);
         element = elements.FirstOrDefault();
         return status;
     }
@@ -117,11 +117,11 @@ sealed partial class StorageSession : IDisposable
     public unsafe GarnetStatus ListPop<TObjectContext>(ArgSlice key, int count, ListOperation lop, ref TObjectContext objectStoreContext, out ArgSlice[] elements)
              where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _key = key.ToArray();
+        byte[] _key = key.ToArray();
         SpanByte _keyAsSpan = key.SpanByte;
 
         // Construct input for operation
-        var input = scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size);
+        ArgSlice input = scratchBufferManager.CreateArgSlice(ObjectInputHeader.Size);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -133,12 +133,12 @@ sealed partial class StorageSession : IDisposable
 
         var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(null) };
 
-        var status = RMWObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);
+        GarnetStatus status = RMWObjectStoreOperationWithOutput(key.ToArray(), input, ref objectStoreContext, ref outputFooter);
 
         //process output
         elements = default;
         if (status == GarnetStatus.OK)
-            elements = ProcessRespArrayOutput(outputFooter, out var error);
+            elements = ProcessRespArrayOutput(outputFooter, out string error);
 
         return GarnetStatus.OK;
     }
@@ -159,7 +159,7 @@ sealed partial class StorageSession : IDisposable
         if (key.Length == 0)
             return GarnetStatus.OK;
 
-        var input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -169,7 +169,7 @@ sealed partial class StorageSession : IDisposable
         rmwInput->count = count;
         rmwInput->done = 0;
 
-        var status = ReadObjectStoreOperation(key.ToArray(), input, out var output, ref objectStoreContext);
+        GarnetStatus status = ReadObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
 
         count = output.countDone;
         return status;
@@ -188,7 +188,7 @@ sealed partial class StorageSession : IDisposable
     public bool ListMove(ArgSlice sourceKey, ArgSlice destinationKey, OperationDirection sourceDirection, OperationDirection destinationDirection, out byte[] element)
     {
         element = default;
-        var objectLockableContext = txnManager.ObjectStoreLockableContext;
+        LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectLockableContext = txnManager.ObjectStoreLockableContext;
 
         //If source and destination are the same, the operation is equivalent to removing the last element from the list
         //and pushing it as first element of the list, so it can be considered as a list rotation command.
@@ -203,12 +203,12 @@ sealed partial class StorageSession : IDisposable
             txnManager.Run(true);
         }
 
-        var objectStoreLockableContext = txnManager.ObjectStoreLockableContext;
+        LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectStoreLockableContext = txnManager.ObjectStoreLockableContext;
 
         try
         {
             // get the source key
-            var statusOp = GET(sourceKey.ToArray(), out var sourceList, ref objectLockableContext);
+            GarnetStatus statusOp = GET(sourceKey.ToArray(), out GarnetObjectStoreOutput sourceList, ref objectLockableContext);
 
             if (statusOp == GarnetStatus.NOTFOUND || ((ListObject)sourceList.garnetObject).LnkList.Count == 0)
             {
@@ -239,8 +239,8 @@ sealed partial class StorageSession : IDisposable
                 if (!sameKey)
                 {
                     // read destination key
-                    var _destinationKey = destinationKey.ToArray();
-                    statusOp = GET(_destinationKey, out var destinationList, ref objectStoreLockableContext);
+                    byte[] _destinationKey = destinationKey.ToArray();
+                    statusOp = GET(_destinationKey, out GarnetObjectStoreOutput destinationList, ref objectStoreLockableContext);
 
                     if (statusOp == GarnetStatus.NOTFOUND)
                     {
@@ -295,7 +295,7 @@ sealed partial class StorageSession : IDisposable
     public unsafe bool ListTrim<TObjectContext>(ArgSlice key, int start, int stop, ref TObjectContext objectStoreContext)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
+        ArgSlice input = scratchBufferManager.FormatScratchAsResp(ObjectInputHeader.Size, key);
 
         // Prepare header in input buffer
         var rmwInput = (ObjectInputHeader*)input.ptr;
@@ -305,7 +305,7 @@ sealed partial class StorageSession : IDisposable
         rmwInput->count = start;
         rmwInput->done = stop;
 
-        var status = RMWObjectStoreOperation(key.ToArray(), input, out var output, ref objectStoreContext);
+        GarnetStatus status = RMWObjectStoreOperation(key.ToArray(), input, out ObjectOutputHeader output, ref objectStoreContext);
 
         return status == GarnetStatus.OK;
     }

@@ -53,13 +53,13 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// </summary>
     protected static unsafe void WriteSimpleString(ref (IMemoryOwner<byte>, int) output, string simpleString)
     {
-        var bytes = System.Text.Encoding.ASCII.GetBytes(simpleString);
+        byte[] bytes = System.Text.Encoding.ASCII.GetBytes(simpleString);
         // Get space for simple string
         int len = 1 + bytes.Length + 2;
         output.Item1 = MemoryPool.Rent(len);
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteSimpleString(bytes, ref curr, ptr + len);
         }
         output.Item2 = len;
@@ -76,7 +76,7 @@ public abstract class CustomObjectBase : GarnetObjectBase
         output.Item2 = len;
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteBulkString(bulkString, ref curr, ptr + len);
         }
     }
@@ -92,7 +92,7 @@ public abstract class CustomObjectBase : GarnetObjectBase
         output.Item2 = len;
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteNull(ref curr, ptr + len);
         }
     }
@@ -102,13 +102,13 @@ public abstract class CustomObjectBase : GarnetObjectBase
     /// </summary>
     protected static unsafe void WriteError(ref (IMemoryOwner<byte>, int) output, string errorMessage)
     {
-        var bytes = System.Text.Encoding.ASCII.GetBytes(errorMessage);
+        byte[] bytes = System.Text.Encoding.ASCII.GetBytes(errorMessage);
         // Get space for error
         int len = 1 + bytes.Length + 2;
         output.Item1 = MemoryPool.Rent(len);
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteError(bytes, ref curr, ptr + len);
         }
         output.Item2 = len;
@@ -188,9 +188,9 @@ public abstract class CustomObjectBase : GarnetObjectBase
             // Scan Command
             case RespCommand.COSCAN:
                 fixed (byte* _input = input.AsSpan())
-                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out var cursorInput, out var pattern, out var patternLength, out int limitCount, out int bytesDone))
+                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out int cursorInput, out byte* pattern, out int patternLength, out int limitCount, out int bytesDone))
                     {
-                        Scan(cursorInput, out var items, out var cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
+                        Scan(cursorInput, out List<byte[]> items, out long cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
                         ObjectUtils.WriteScanOutput(items, cursorOutput, ref output, bytesDone);
                     }
                 break;

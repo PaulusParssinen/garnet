@@ -17,8 +17,8 @@ sealed partial class StorageSession
     static void CompletePendingForSession<TContext>(ref Status status, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        context.CompletePendingWithOutputs(out var completedOutputs, wait: true);
-        var more = completedOutputs.Next();
+        context.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long> completedOutputs, wait: true);
+        bool more = completedOutputs.Next();
         Debug.Assert(more);
         status = completedOutputs.Current.Status;
         output = completedOutputs.Current.Output;

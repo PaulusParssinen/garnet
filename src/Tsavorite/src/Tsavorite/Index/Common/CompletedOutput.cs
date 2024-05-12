@@ -126,11 +126,11 @@ public struct CompletedOutput<TKey, TValue, TInput, TOutput, TContext>
 
     internal void Dispose()
     {
-        var tempKeyContainer = keyContainer;
+        IHeapContainer<TKey> tempKeyContainer = keyContainer;
         keyContainer = default;
         tempKeyContainer?.Dispose();
 
-        var tempInputContainer = inputContainer;
+        IHeapContainer<TInput> tempInputContainer = inputContainer;
         inputContainer = default;
         tempInputContainer?.Dispose();
 

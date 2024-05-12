@@ -31,7 +31,7 @@ public class RespTlsTests
     public void TlsSingleSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(disablePubSub: true, useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefg";
         db.StringSet("mykey", origValue);
@@ -73,17 +73,17 @@ public class RespTlsTests
     public void TlsMultiSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(disablePubSub: true, useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const int length = 15000;
         KeyValuePair<RedisKey, RedisValue>[] input = new KeyValuePair<RedisKey, RedisValue>[length];
         for (int i = 0; i < length; i++)
             input[i] = new KeyValuePair<RedisKey, RedisValue>(i.ToString(), i.ToString());
 
-        var result = db.StringSet(input);
+        bool result = db.StringSet(input);
         Assert.IsTrue(result);
 
-        var value = db.StringGet(input.Select(e => e.Key).ToArray());
+        RedisValue[] value = db.StringGet(input.Select(e => e.Key).ToArray());
         Assert.AreEqual(length, value.Length);
 
         for (int i = 0; i < length; i++)
@@ -94,18 +94,18 @@ public class RespTlsTests
     public void TlsLargeSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(disablePubSub: true, useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const int length = (1 << 19) + 100;
-        var value = new byte[length];
+        byte[] value = new byte[length];
 
         for (int i = 0; i < length; i++)
             value[i] = (byte)((byte)'a' + ((byte)i % 26));
 
-        var result = db.StringSet("mykey", value);
+        bool result = db.StringSet("mykey", value);
         Assert.IsTrue(result);
 
-        var retvalue = (byte[])db.StringGet("mykey");
+        byte[] retvalue = (byte[])db.StringGet("mykey");
 
         Assert.IsTrue(new ReadOnlySpan<byte>(value).SequenceEqual(new ReadOnlySpan<byte>(retvalue)));
     }
@@ -114,7 +114,7 @@ public class RespTlsTests
     public void TlsSetExpiry()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue, TimeSpan.FromSeconds(1));
@@ -131,7 +131,7 @@ public class RespTlsTests
     public void TlsSetExpiryNx()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue, TimeSpan.FromSeconds(3), When.NotExists, CommandFlags.None);
@@ -148,12 +148,12 @@ public class RespTlsTests
     public void TlsSetXx()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         string origValue = "abcdefghij";
 
-        var result = db.StringSet(key, origValue, null, When.Exists, CommandFlags.None);
+        bool result = db.StringSet(key, origValue, null, When.Exists, CommandFlags.None);
         Assert.IsFalse(result);
 
         string retValue = db.StringGet(key);
@@ -178,11 +178,11 @@ public class RespTlsTests
     public void TlsSetExpiryIncr()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = -100000;
-        var strKey = "key1";
+        int nVal = -100000;
+        string strKey = "key1";
         db.StringSet(strKey, nVal, TimeSpan.FromSeconds(1));
 
         long n = db.StringIncrement(strKey);
@@ -208,12 +208,12 @@ public class RespTlsTests
     public void TlsLockTakeRelease()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "lock-key";
         string value = "lock-value";
 
-        var success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
+        bool success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
         Assert.IsTrue(success);
 
         success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
@@ -248,7 +248,7 @@ public class RespTlsTests
     public void TlsSingleDecr(string strKey, int nVal)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
         db.StringSet(strKey, nVal);
@@ -265,9 +265,9 @@ public class RespTlsTests
     public void TlsSingleDecrBy(long nVal, long nDecr)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         // Key storing integer val
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
         long n = db.StringDecrement(strKey, nDecr);
 
@@ -279,10 +279,10 @@ public class RespTlsTests
     public void TlsSingleIncrNoKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringIncrement(strKey);
 
         int retVal = Convert.ToInt32(db.StringGet(strKey));
@@ -294,14 +294,14 @@ public class RespTlsTests
     public void TlsSingleDelete()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
         db.KeyDelete(strKey);
-        var retVal = Convert.ToBoolean(db.StringGet(strKey));
+        bool retVal = Convert.ToBoolean(db.StringGet(strKey));
         Assert.AreEqual(retVal, false);
     }
 
@@ -309,11 +309,11 @@ public class RespTlsTests
     public void TlsSingleExists()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
 
         bool fExists = db.KeyExists("key1", CommandFlags.None);
@@ -327,7 +327,7 @@ public class RespTlsTests
     public void TlsSingleRename()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "test1";
         db.StringSet("key1", origValue);
@@ -342,8 +342,8 @@ public class RespTlsTests
     public void TlsCanSelectCommand()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(useTLS: true));
-        var db = redis.GetDatabase(0);
-        var reply = db.Execute("SELECT", "0");
+        IDatabase db = redis.GetDatabase(0);
+        RedisResult reply = db.Execute("SELECT", "0");
         Assert.IsTrue(reply.ToString() == "OK");
         Assert.Throws<RedisServerException>(() => db.Execute("SELECT", "1"));
 
@@ -356,7 +356,7 @@ public class RespTlsTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(useTLS: true, countResponseLength: true);
 
-        var expectedResponse = "-ERR invalid database index.\r\n+PONG\r\n";
+        string expectedResponse = "-ERR invalid database index.\r\n+PONG\r\n";
         var response = lightClientRequest.Execute("SELECT 1", "PING", expectedResponse.Length);
         Assert.AreEqual(expectedResponse, response);
     }
@@ -370,7 +370,7 @@ public class RespTlsTests
         // SETEX
         using var lightClientRequest = TestUtils.CreateRequest(useTLS: true, countResponseLength: true);
 
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute("SETEX mykey 1 abcdefghij", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -445,7 +445,7 @@ public class RespTlsTests
         }
 
         // MSET
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute($"MSET{sb}", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 

@@ -441,21 +441,21 @@ internal sealed class Options
         foreach (PropertyInfo prop in typeof(Options).GetProperties())
         {
             // Ignore if property is not decorated with the OptionsAttribute or the ValidationAttribute
-            var validationAttr = prop.GetCustomAttributes(typeof(ValidationAttribute)).FirstOrDefault();
+            Attribute validationAttr = prop.GetCustomAttributes(typeof(ValidationAttribute)).FirstOrDefault();
             if (!Attribute.IsDefined(prop, typeof(OptionAttribute)) || validationAttr == null)
                 continue;
 
             // Get value to validate and set validation context
-            var value = prop.GetValue(this, null);
+            object value = prop.GetValue(this, null);
             var validationContext = new ValidationContext(this) { MemberName = prop.Name };
 
             // Validate the current value
             var validationResults = new List<ValidationResult>();
-            var isValueValid = Validator.TryValidateProperty(value, validationContext, validationResults);
+            bool isValueValid = Validator.TryValidateProperty(value, validationContext, validationResults);
 
             // Append results 
             isValid = isValid && isValueValid;
-            foreach (var validationResult in validationResults)
+            foreach (ValidationResult validationResult in validationResults)
             {
                 invalidOptions.AddRange(validationResult.MemberNames);
                 logger?.LogError(validationResult.ErrorMessage);
@@ -467,24 +467,24 @@ internal sealed class Options
 
     public GarnetServerOptions GetServerOptions(ILogger logger = null)
     {
-        var useAzureStorage = UseAzureStorage.GetValueOrDefault();
-        var enableStorageTier = EnableStorageTier.GetValueOrDefault();
-        var enableRevivification = EnableRevivification.GetValueOrDefault();
+        bool useAzureStorage = UseAzureStorage.GetValueOrDefault();
+        bool enableStorageTier = EnableStorageTier.GetValueOrDefault();
+        bool enableRevivification = EnableRevivification.GetValueOrDefault();
 
         if (useAzureStorage && string.IsNullOrEmpty(AzureStorageConnectionString))
             throw new Exception("Cannot enable use-azure-storage without supplying storage-string.");
 
-        var logDir = LogDir;
+        string logDir = LogDir;
         if (!useAzureStorage && enableStorageTier) logDir = new DirectoryInfo(string.IsNullOrEmpty(logDir) ? "." : logDir).FullName;
-        var checkpointDir = CheckpointDir;
+        string checkpointDir = CheckpointDir;
         if (!useAzureStorage) checkpointDir = new DirectoryInfo(string.IsNullOrEmpty(checkpointDir) ? "." : checkpointDir).FullName;
 
-        var address = !string.IsNullOrEmpty(this.Address) && this.Address.Equals("localhost", StringComparison.CurrentCultureIgnoreCase)
+        string address = !string.IsNullOrEmpty(this.Address) && this.Address.Equals("localhost", StringComparison.CurrentCultureIgnoreCase)
             ? IPAddress.Loopback.ToString()
             : this.Address;
 
-        var revivBinRecordSizes = this.RevivBinRecordSizes?.ToArray();
-        var revivBinRecordCounts = this.RevivBinRecordCounts?.ToArray();
+        int[] revivBinRecordSizes = this.RevivBinRecordSizes?.ToArray();
+        int[] revivBinRecordCounts = this.RevivBinRecordCounts?.ToArray();
         bool hasRecordSizes = revivBinRecordSizes?.Length > 0, hasRecordCounts = revivBinRecordCounts?.Length > 0;
         bool useRevivBinsPowerOf2 = enableRevivification; // may be overridden
 

@@ -26,7 +26,7 @@ internal sealed class GarnetLatencyMetricsSession
     private void Init()
     {
         metrics = new LatencyMetricsEntrySession[defaultLatencyTypes.Length];
-        foreach (var cmd in defaultLatencyTypes)
+        foreach (LatencyMetricsType cmd in defaultLatencyTypes)
             metrics[(int)cmd] = new LatencyMetricsEntrySession();
     }
 
@@ -63,7 +63,7 @@ internal sealed class GarnetLatencyMetricsSession
 
     public void ResetAll()
     {
-        foreach (var cmd in defaultLatencyTypes)
+        foreach (LatencyMetricsType cmd in defaultLatencyTypes)
             Reset(cmd);
     }
 

@@ -45,7 +45,7 @@ public class DeviceTests
         using var device = new NativeStorageDevice(Path.Join(TestUtils.MethodTestDir, "test.log"), true); // Devices.CreateLogDevice(path, deleteOnClose: true)
 
         WriteInto(device, 0, entry, entryLength);
-        ReadInto(device, 0, out var readEntry, entryLength);
+        ReadInto(device, 0, out byte[] readEntry, entryLength);
 
         Assert.IsTrue(readEntry.SequenceEqual(entry));
     }
@@ -56,15 +56,15 @@ public class DeviceTests
         int size = 1 << 16;
         int sector_size = 512;
 
-        var rbuffer = GC.AllocateArray<byte>(size + sector_size, true);
+        byte[] rbuffer = GC.AllocateArray<byte>(size + sector_size, true);
         new Span<byte>(rbuffer).Clear();
         IntPtr ralignedBufferPtr = (IntPtr)(((long)Unsafe.AsPointer(ref rbuffer[0]) + (sector_size - 1)) & ~(sector_size - 1));
 
-        var buffers = new byte[50][];
+        byte[][] buffers = new byte[50][];
         for (int i = 0; i < 50; i++)
         {
             buffers[i] = GC.AllocateArray<byte>(size + sector_size, true);
-            var buffer = buffers[i];
+            byte[] buffer = buffers[i];
             IntPtr alignedBufferPtr = (IntPtr)(((long)Unsafe.AsPointer(ref buffer[0]) + (sector_size - 1)) & ~(sector_size - 1));
 
             using var device = new NativeStorageDevice(Path.Join(TestUtils.MethodTestDir, "test.log"), true);
@@ -90,7 +90,7 @@ public class DeviceTests
         long numBytesToWrite = size;
         numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = bufferPool.Get((int)numBytesToWrite);
+        SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = buffer)
         {
             Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);
@@ -107,7 +107,7 @@ public class DeviceTests
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = bufferPool.Get((int)numBytesToRead);
+        SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToRead);
         device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
             (uint)numBytesToRead, IOCallback, null);
         semaphore.Wait();

@@ -21,7 +21,7 @@ internal class RedisConfigSerializer
         {
             // Initialize Redis key to RedisOptions property mapping
             var keyToProperty = new Dictionary<string, PropertyInfo>();
-            foreach (var prop in GetProperties())
+            foreach (PropertyInfo prop in GetProperties())
             {
                 var attr = (RedisOptionAttribute)prop.GetCustomAttributes(typeof(RedisOptionAttribute), false)
                     .First();
@@ -68,42 +68,42 @@ internal class RedisConfigSerializer
                 continue;
 
             // Expected line format: keyword argument1 argument2 ... argumentN
-            var sepIdx = line.IndexOf(' ');
+            int sepIdx = line.IndexOf(' ');
             if (sepIdx == -1)
                 throw new RedisSerializationException(
                     $"Unable to deserialize {nameof(RedisOptions)} object. Line {lineCount} not in expected format (keyword argument1 argument2 ... argumentN).");
 
             // Ignore key when no matching property found 
-            var key = line.Substring(0, sepIdx);
+            string key = line.Substring(0, sepIdx);
             if (!KeyToProperty.Value.ContainsKey(key))
             {
                 logger?.LogWarning($"Redis configuration option not supported: {key}.");
                 continue;
             }
 
-            var value = line.Substring(sepIdx + 1);
+            string value = line.Substring(sepIdx + 1);
 
             // Get matching property & the underlying option type (T in Option<T>)
-            var prop = KeyToProperty.Value[key];
-            var optType = prop.PropertyType.GenericTypeArguments.First();
+            PropertyInfo prop = KeyToProperty.Value[key];
+            Type optType = prop.PropertyType.GenericTypeArguments.First();
 
             // Try to deserialize the value
-            if (!TryChangeType(value, typeof(string), optType, out var newVal))
+            if (!TryChangeType(value, typeof(string), optType, out object newVal))
             {
                 // If unsuccessful and if underlying option type is an array, try to deserialize array by elements
                 if (optType.IsArray)
                 {
                     // Split the values in the serialized array
-                    var values = value.Split(' ');
+                    string[] values = value.Split(' ');
 
                     // Instantiate a new array
-                    var elemType = optType.GetElementType();
+                    Type elemType = optType.GetElementType();
                     newVal = Array.CreateInstance(elemType, values.Length);
 
                     // Try deserializing and setting array elements
-                    for (var i = 0; i < values.Length; i++)
+                    for (int i = 0; i < values.Length; i++)
                     {
-                        if (!TryChangeType(values[i], typeof(string), elemType, out var elem))
+                        if (!TryChangeType(values[i], typeof(string), elemType, out object elem))
                             throw new RedisSerializationException(
                                 $"Unable to deserialize {nameof(RedisOptions)} object. Unable to convert object of type {typeof(string)} to object of type {elemType}. (Line: {lineCount}; Key: {key}; Property: {prop.Name}).");
 
@@ -119,10 +119,10 @@ internal class RedisConfigSerializer
             }
 
             // Create a new Option<T> object
-            var newOpt = Activator.CreateInstance(prop.PropertyType);
+            object newOpt = Activator.CreateInstance(prop.PropertyType);
 
             // Set the underlying option value
-            var valueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
+            PropertyInfo valueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
             valueProp.SetValue(newOpt, newVal);
 
             // Set the options property to the new option object
@@ -147,19 +147,19 @@ internal class RedisConfigSerializer
     public static string Serialize(RedisOptions options)
     {
         var sb = new StringBuilder();
-        var properties = GetProperties();
-        foreach (var prop in properties)
+        IEnumerable<PropertyInfo> properties = GetProperties();
+        foreach (PropertyInfo prop in properties)
         {
             // Get underlying value & underlying value type for current option property
-            var valueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
-            var value = valueProp?.GetValue(options, null);
-            var valueType = prop.PropertyType.GenericTypeArguments.First();
+            PropertyInfo valueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
+            object value = valueProp?.GetValue(options, null);
+            Type valueType = prop.PropertyType.GenericTypeArguments.First();
 
             // Get matching attribute
             var attr = (RedisOptionAttribute)prop.GetCustomAttributes(typeof(RedisOptionAttribute), false).First();
 
             // Try to serialize value
-            if (!TryChangeType(value, valueType, typeof(string), out var serializedValue))
+            if (!TryChangeType(value, valueType, typeof(string), out object serializedValue))
                 serializedValue = valueType.IsArray ? string.Join(' ', (IEnumerable)value) : value?.ToString();
 
             // Write to string in Redis config format
@@ -177,17 +177,17 @@ internal class RedisConfigSerializer
     /// <returns>True if succeeded</returns>
     public static bool TryPopulateOptions(RedisOptions redisOptions, Options options)
     {
-        foreach (var prop in GetProperties())
+        foreach (PropertyInfo prop in GetProperties())
         {
             // Get source option value
-            var srcOpt = prop.GetValue(redisOptions);
+            object srcOpt = prop.GetValue(redisOptions);
 
             // Ignore if source option is not set
             if (srcOpt == null) continue;
 
             // Get matching Options property defined by RedisOptionAttribute decorating RedisOption property
             var redisOptionAttr = (RedisOptionAttribute)prop.GetCustomAttributes(typeof(RedisOptionAttribute), false).First();
-            var dstProp = typeof(Options).GetProperty(redisOptionAttr.GarnetOptionName);
+            PropertyInfo dstProp = typeof(Options).GetProperty(redisOptionAttr.GarnetOptionName);
 
             // Check if destination property exists
             if (dstProp == null)
@@ -195,12 +195,12 @@ internal class RedisConfigSerializer
                     $"Unable to find property in {typeof(Options)} named {redisOptionAttr.GarnetOptionName} that matches {typeof(Options)} property {prop.Name}");
 
             // Get source option underlying value & type
-            var srcOptValueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
-            var srcOptValueType = prop.PropertyType.GenericTypeArguments.First();
-            var srcOptValue = srcOptValueProp.GetValue(srcOpt);
+            PropertyInfo srcOptValueProp = prop.PropertyType.GetProperty(nameof(Option<object>.Value));
+            Type srcOptValueType = prop.PropertyType.GenericTypeArguments.First();
+            object srcOptValue = srcOptValueProp.GetValue(srcOpt);
 
             // Get destination property type
-            var dstPropType = dstProp.PropertyType;
+            Type dstPropType = dstProp.PropertyType;
 
             // Try to convert source option to destination option
             object dstValue = null;
@@ -208,8 +208,8 @@ internal class RedisConfigSerializer
             // If custom transformer specified in RedisOptionAttribute, try to invoke transformer
             if (redisOptionAttr.GarnetCustomTransformer != null)
             {
-                var parameters = new[] { srcOptValue, null, null };
-                var result = (bool?)typeof(RedisConfigSerializer).GetMethod(nameof(TryApplyTransform), BindingFlags.NonPublic | BindingFlags.Static)
+                object[] parameters = new[] { srcOptValue, null, null };
+                bool? result = (bool?)typeof(RedisConfigSerializer).GetMethod(nameof(TryApplyTransform), BindingFlags.NonPublic | BindingFlags.Static)
                     ?.MakeGenericMethod(srcOptValueType, dstPropType, redisOptionAttr.GarnetCustomTransformer)
                     .Invoke(null, parameters);
                 dstValue = parameters[1];
@@ -265,10 +265,10 @@ internal class RedisConfigSerializer
         }
 
         // Instantiate transformer
-        var transformer = Activator.CreateInstance<TTransformer>();
-        var parameters = new object[] { input, null, null };
+        TTransformer transformer = Activator.CreateInstance<TTransformer>();
+        object[] parameters = new object[] { input, null, null };
         // Invoke Transform method
-        var result = (bool?)typeof(TTransformer)
+        bool? result = (bool?)typeof(TTransformer)
             .GetMethod(nameof(IGarnetCustomTransformer<object, object>.Transform))
             ?.Invoke(transformer, parameters);
 
@@ -291,7 +291,7 @@ internal class RedisConfigSerializer
         dst = default;
 
         // If TDst type has a converter from TSrc, use the converter to deserialize.
-        var converter = TypeDescriptor.GetConverter(dstType);
+        TypeConverter converter = TypeDescriptor.GetConverter(dstType);
         if (converter.CanConvertFrom(srcType))
         {
             dst = converter.ConvertFrom(src);

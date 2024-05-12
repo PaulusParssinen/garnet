@@ -135,7 +135,7 @@ internal class TryEnqueueTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {

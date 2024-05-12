@@ -33,7 +33,7 @@ public unsafe class HyperLogLogTests
     public void SimpleHyperLogLogAddCount()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string[] data = ["a", "b", "c", "d", "e", "f"];
         string key = "hllKey";
@@ -61,13 +61,13 @@ public unsafe class HyperLogLogTests
     public static void SimpleHyperLogLogArrayAddCount()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         RedisValue[] x = ["h", "e", "l", "l", "o"];
         RedisValue[] y = ["w", "o", "r", "l", "d"];
 
         string keyX = "x";
-        var ret = db.HyperLogLogAdd(keyX, x);
+        bool ret = db.HyperLogLogAdd(keyX, x);
         Assert.IsTrue(ret);
 
         ret = db.HyperLogLogAdd(keyX, y);
@@ -82,7 +82,7 @@ public unsafe class HyperLogLogTests
     public void SimpleHyperLogLogMerge()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         RedisValue[] x = ["h", "e", "l", "l", "o"];
         RedisValue[] y = ["w", "o", "r", "l", "d"];
@@ -99,7 +99,7 @@ public unsafe class HyperLogLogTests
         long keyYCount = db.HyperLogLogLength(keyY);
         Assert.AreEqual(keyYCount, 5);
 
-        var res = db.Execute("PFMERGE", keyW, keyX);
+        RedisResult res = db.Execute("PFMERGE", keyW, keyX);
         long keyWCount = db.HyperLogLogLength(keyW);
         Assert.AreEqual(keyWCount, 4);
 
@@ -112,7 +112,7 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogSimpleInvalidHLLTypeTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         RedisValue[] x = ["h", "e", "l", "l", "o"];
         RedisValue[] y = ["w", "o", "r", "l", "d"];
@@ -319,7 +319,7 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogUpdateReturnTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int insertCount = 128;
         string key = "HyperLogLogUpdateSparseTest";
@@ -377,7 +377,7 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogMultiValueUpdateReturnTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int insertCount = 128;
         string key = "HyperLogLogMultiValueUpdateReturnTest";
@@ -446,7 +446,7 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogMultiCountTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         RedisValue[] dataA = ["h", "e", "l", "l", "o"];
         RedisValue[] dataB = ["w", "o", "r", "l", "d"];
@@ -511,12 +511,12 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogTestPFADDV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int smallSeq = 1 << 5;
         int largeSeq = 1 << 10;
 
-        var keyA = System.Text.Encoding.ASCII.GetBytes("HyperLogLogTestPFADDA");//sparse
-        var keyB = System.Text.Encoding.ASCII.GetBytes("HyperLogLogTestPFADDB");//sparse            
+        byte[] keyA = System.Text.Encoding.ASCII.GetBytes("HyperLogLogTestPFADDA");//sparse
+        byte[] keyB = System.Text.Encoding.ASCII.GetBytes("HyperLogLogTestPFADDB");//sparse            
 
         HashSet<long> setA = [];
         HashSet<long> setB = [];
@@ -577,7 +577,7 @@ public unsafe class HyperLogLogTests
         server.Start();
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int keyCount = sparse ? 32 : 4;
         int smallSeq = seqSize;
 
@@ -615,10 +615,10 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogTestPFADD_DuplicatesV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int smallSeq = 1 << 10;
         int largeSeq = 1 << 15;
-        var keyA = System.Text.Encoding.ASCII.GetBytes("keyA");//sparse
+        byte[] keyA = System.Text.Encoding.ASCII.GetBytes("keyA");//sparse
         HashSet<long> setA = [];
         List<long> largeInput = [];
 
@@ -641,13 +641,13 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogTestPFMERGE_SparseToSparseV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int smallSeq = 1 << 5;
         int largeSeq = 1 << 8;
 
-        var keyA = System.Text.Encoding.ASCII.GetBytes("SSkeyA");//sparse
-        var keyB = System.Text.Encoding.ASCII.GetBytes("SSkeyB");//sparse
+        byte[] keyA = System.Text.Encoding.ASCII.GetBytes("SSkeyA");//sparse
+        byte[] keyB = System.Text.Encoding.ASCII.GetBytes("SSkeyB");//sparse
         HashSet<long> setA = [];
         HashSet<long> setB = [];
         long estimate = 0;
@@ -690,7 +690,7 @@ public unsafe class HyperLogLogTests
         server.Start();
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int keyCount = 64;
         int smallSeq = 32;
 
@@ -741,14 +741,14 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogTestPFMERGE_SparseToDenseV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int smallSeq = 1 << 5;
         int largeSeq = 1 << 12;
 
-        var keyA = System.Text.Encoding.ASCII.GetBytes("SDkeyA");//sparse
-        var keyB = System.Text.Encoding.ASCII.GetBytes("SDkeyB");//dense
-        var keyC = System.Text.Encoding.ASCII.GetBytes("SDkeyC");//dense
+        byte[] keyA = System.Text.Encoding.ASCII.GetBytes("SDkeyA");//sparse
+        byte[] keyB = System.Text.Encoding.ASCII.GetBytes("SDkeyB");//dense
+        byte[] keyC = System.Text.Encoding.ASCII.GetBytes("SDkeyC");//dense
         HashSet<long> setA = [];
         HashSet<long> setB = [];
         HashSet<long> setC = [];
@@ -799,7 +799,7 @@ public unsafe class HyperLogLogTests
         server.Start();
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int keyCount = 4;
         int smallSeq = 32;
         int largeSeq = 1 << 13;
@@ -852,14 +852,14 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogTestPFMERGE_DenseToDenseV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int smallSeq = 1 << 13;
         int largeSeq = 1 << 13;
 
-        var keyA = System.Text.Encoding.ASCII.GetBytes("DDkeyA");//dense
-        var keyB = System.Text.Encoding.ASCII.GetBytes("DDkeyB");//dense
-        var keyC = System.Text.Encoding.ASCII.GetBytes("DDkeyC");//dense
+        byte[] keyA = System.Text.Encoding.ASCII.GetBytes("DDkeyA");//dense
+        byte[] keyB = System.Text.Encoding.ASCII.GetBytes("DDkeyB");//dense
+        byte[] keyC = System.Text.Encoding.ASCII.GetBytes("DDkeyC");//dense
         HashSet<long> setA = [];
         HashSet<long> setB = [];
         HashSet<long> setC = [];
@@ -909,7 +909,7 @@ public unsafe class HyperLogLogTests
         server.Start();
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int keyCount = 4;
         int largeSeq = 1 << 13;
 
@@ -960,7 +960,7 @@ public unsafe class HyperLogLogTests
     public void HyperLogLogPFMerge_MultiHLLMergeV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int smallSeq = 1 << 10;
         int largeSeq = 1 << 14;
         int hllCount = 10;
@@ -994,9 +994,9 @@ public unsafe class HyperLogLogTests
     {
         server.Register.NewTransactionProc("HLLPROC", 8, () => new TestProcedureHLL());
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var result = db.Execute("HLLPROC", "hll", "a", "b", "c", "d", "e", "f", "g");
+        RedisResult result = db.Execute("HLLPROC", "hll", "a", "b", "c", "d", "e", "f", "g");
         Assert.AreEqual("SUCCESS", (string)result);
     }
 

@@ -27,11 +27,11 @@ internal unsafe struct ConcurrentCounter
     /// <summary>Initializes a new instance of the <see cref="ConcurrentCounter"/> struct.</summary>
     public ConcurrentCounter()
     {
-        var size = partitionCount * Constants.kCacheLineBytes; // sizeof(Counter);
+        int size = partitionCount * Constants.kCacheLineBytes; // sizeof(Counter);
 
         // Allocate partitions array with an extra partition rounded up to cache line size.
         // This allows using the partition array starting from an address aligned to cache line size.
-        var alignedSize = Utility.RoundUp(size + Constants.kCacheLineBytes, Constants.kCacheLineBytes);
+        int alignedSize = Utility.RoundUp(size + Constants.kCacheLineBytes, Constants.kCacheLineBytes);
         partitions = GC.AllocateArray<Counter>(alignedSize / Constants.kCacheLineBytes, true); // sizeof(Counter));
         long partitionsAlignedPtr = Utility.RoundUp((long)Unsafe.AsPointer(ref partitions[0]), Constants.kCacheLineBytes);
         partitionsPtr = (Counter*)partitionsAlignedPtr;
@@ -43,7 +43,7 @@ internal unsafe struct ConcurrentCounter
     {
         if (incrValue == 0) return;
 
-        var partition = Environment.CurrentManagedThreadId % partitionCount;
+        int partition = Environment.CurrentManagedThreadId % partitionCount;
         Interlocked.Add(ref partitionsPtr[partition].value, incrValue);
     }
 

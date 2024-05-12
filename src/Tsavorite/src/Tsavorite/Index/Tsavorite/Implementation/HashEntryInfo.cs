@@ -104,17 +104,17 @@ internal unsafe struct HashEntryInfo
 
     public override string ToString()
     {
-        var hashStr = GetHashString(hash);
+        string hashStr = GetHashString(hash);
 
         if (bucket == null)
             return $"hash {hashStr} <no bucket>";
 
-        var isRC = "(rc)";
-        var addrRC = IsReadCache ? isRC : string.Empty;
-        var currAddrRC = IsCurrentReadCache ? isRC : string.Empty;
-        var isNotCurr = Address == CurrentAddress ? string.Empty : "*";
+        string isRC = "(rc)";
+        string addrRC = IsReadCache ? isRC : string.Empty;
+        string currAddrRC = IsCurrentReadCache ? isRC : string.Empty;
+        string isNotCurr = Address == CurrentAddress ? string.Empty : "*";
 
-        var result = $"addr {AbsoluteAddress}{addrRC}, currAddr {AbsoluteCurrentAddress}{currAddrRC}{isNotCurr}, hash {hashStr}, tag {tag}, slot {slot},";
+        string result = $"addr {AbsoluteAddress}{addrRC}, currAddr {AbsoluteCurrentAddress}{currAddrRC}{isNotCurr}, hash {hashStr}, tag {tag}, slot {slot},";
         result += $" Bkt1 [index {bucketIndex}, {HashBucket.ToString(firstBucket)}]";
         return result;
     }

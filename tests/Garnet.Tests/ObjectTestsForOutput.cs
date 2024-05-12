@@ -41,7 +41,7 @@ public class ObjectTestsForOutput
         c.Connect();
 
         string key = "mykey";
-        var valueStr = await CreateKeyOfSize(size, key);
+        string valueStr = await CreateKeyOfSize(size, key);
 
         string zaddResult = await c.ExecuteAsync("ZADD", "cities", "100000", "Delhi", "850000", "Mumbai", "700000", "Hyderabad", "800000", "Kolkata");
         Assert.AreEqual("4", zaddResult);
@@ -89,7 +89,7 @@ public class ObjectTestsForOutput
         c.Connect();
 
         string key = "mykey";
-        var valueStr = await CreateKeyOfSize(size, key);
+        string valueStr = await CreateKeyOfSize(size, key);
 
         string zaddResult = await c.ExecuteAsync("ZADD", "cities", "100000", "Delhi", "850000", "Mumbai", "700000", "Hyderabad", "800000", "Kolkata");
         Assert.AreEqual("4", zaddResult);
@@ -133,7 +133,7 @@ public class ObjectTestsForOutput
         using var c = TestUtils.GetGarnetClientSession();
         c.Connect();
 
-        var valueStr = await CreateKeyOfSize(size, "mykey");
+        string valueStr = await CreateKeyOfSize(size, "mykey");
 
         string zaddResult = await c.ExecuteAsync("HSET", "myhash", "field1", "field1value", "field2", "field2value", "field3", "field3value", "field4", "field4value");
         Assert.AreEqual("4", zaddResult);
@@ -173,7 +173,7 @@ public class ObjectTestsForOutput
         using var c = TestUtils.GetGarnetClientSession();
         c.Connect();
 
-        var valueStr = await CreateKeyOfSize(size, "mykey");
+        string valueStr = await CreateKeyOfSize(size, "mykey");
 
         string zaddResult = await c.ExecuteAsync("HSET", "myhash", "field1", "field1value", "field2", "field2value", "field3", "field3value", "field4", "field4value");
         Assert.AreEqual("4", zaddResult);
@@ -230,12 +230,12 @@ public class ObjectTestsForOutput
         c.Connect();
 
         int length = size;
-        var value = new byte[length];
+        byte[] value = new byte[length];
 
         for (int i = 0; i < length; i++)
             value[i] = (byte)((byte)'a' + ((byte)i % 26));
 
-        var valueStr = Encoding.ASCII.GetString(value);
+        string valueStr = Encoding.ASCII.GetString(value);
 
         string setResult = await c.ExecuteAsync("SET", "mykey", valueStr);
         Assert.AreEqual("OK", setResult);
@@ -267,9 +267,9 @@ public class ObjectTestsForOutput
         c.Connect();
 
         string key = "mykey";
-        var valueStr = await CreateKeyOfSize(size, key);
+        string valueStr = await CreateKeyOfSize(size, key);
 
-        var expectedResponse = "5";
+        string expectedResponse = "5";
         var actualValue = await c.ExecuteAsync("RPUSH", "mylist", "heads", "obverse", "tails", "reverse", "edge");
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -321,9 +321,9 @@ public class ObjectTestsForOutput
         using var c = TestUtils.GetGarnetClientSession();
         c.Connect();
         string key = "mykey";
-        var valueStr = await CreateKeyOfSize(size, key);
+        string valueStr = await CreateKeyOfSize(size, key);
 
-        var expectedResponse = "5";
+        string expectedResponse = "5";
         var actualValue = await c.ExecuteAsync("SADD", "myset", "heads", "obverse", "tails", "reverse", "edge");
         Assert.AreEqual(expectedResponse, actualValue);
 
@@ -374,7 +374,7 @@ public class ObjectTestsForOutput
         using var c = TestUtils.GetGarnetClientSession();
         c.Connect();
         string key = "mykey";
-        var valueStr = await CreateKeyOfSize(size, key);
+        string valueStr = await CreateKeyOfSize(size, key);
 
         var t1 = c.ExecuteAsyncBatch("GET", "mykey"); // feed partial batch without flushing
         var t2 = c.ExecuteAsync("GET", "mykey");
@@ -393,12 +393,12 @@ public class ObjectTestsForOutput
         c.Connect();
 
         int length = size;
-        var value = new byte[length];
+        byte[] value = new byte[length];
 
         for (int i = 0; i < length; i++)
             value[i] = (byte)((byte)'a' + ((byte)i % 26));
 
-        var valueStr = Encoding.ASCII.GetString(value);
+        string valueStr = Encoding.ASCII.GetString(value);
 
         string setResult = await c.ExecuteAsync("SET", name, valueStr);
         Assert.AreEqual("OK", setResult);

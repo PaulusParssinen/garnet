@@ -363,7 +363,7 @@ public class GarnetServerOptions : ServerOptions
         };
         logger?.LogInformation($"[Store] Using page size of {PrettySize((long)Math.Pow(2, logSettings.PageSizeBits))}");
 
-        logSettings.MemorySizeBits = MemorySizeBits(MemorySize, PageSize, out var storeEmptyPageCount);
+        logSettings.MemorySizeBits = MemorySizeBits(MemorySize, PageSize, out int storeEmptyPageCount);
         logSettings.MinEmptyPageCount = storeEmptyPageCount;
 
         long effectiveSize = (1L << logSettings.MemorySizeBits) - storeEmptyPageCount * (1L << logSettings.PageSizeBits);
@@ -437,9 +437,9 @@ public class GarnetServerOptions : ServerOptions
                 FreeRecordBins = new RevivificationBin[RevivBinRecordSizes.Length],
                 RevivifiableFraction = RevivifiableFraction
             };
-            for (var ii = 0; ii < RevivBinRecordSizes.Length; ++ii)
+            for (int ii = 0; ii < RevivBinRecordSizes.Length; ++ii)
             {
-                var recordCount = RevivBinRecordCounts?.Length switch
+                int recordCount = RevivBinRecordCounts?.Length switch
                 {
                     0 => RevivificationBin.DefaultRecordsPerBin,
                     1 => RevivBinRecordCounts[0],
@@ -501,7 +501,7 @@ public class GarnetServerOptions : ServerOptions
         logger?.LogInformation($"[Object Store] Using page size of {PrettySize((long)Math.Pow(2, objLogSettings.PageSizeBits))}");
         logger?.LogInformation($"[Object Store] Each page can hold ~{(long)(Math.Pow(2, objLogSettings.PageSizeBits) / 24)} key-value pairs of objects");
 
-        objLogSettings.MemorySizeBits = MemorySizeBits(ObjectStoreLogMemorySize, ObjectStorePageSize, out var objectStoreEmptyPageCount);
+        objLogSettings.MemorySizeBits = MemorySizeBits(ObjectStoreLogMemorySize, ObjectStorePageSize, out int objectStoreEmptyPageCount);
         objLogSettings.MinEmptyPageCount = objectStoreEmptyPageCount;
 
         long effectiveSize = (1L << objLogSettings.MemorySizeBits) - objectStoreEmptyPageCount * (1L << objLogSettings.PageSizeBits);
@@ -605,7 +605,7 @@ public class GarnetServerOptions : ServerOptions
     /// <returns></returns>
     public INamedDeviceFactory GetInitializedDeviceFactory(string baseName)
     {
-        var deviceFactory = GetDeviceFactory();
+        INamedDeviceFactory deviceFactory = GetDeviceFactory();
         deviceFactory.Initialize(baseName);
         return deviceFactory;
     }

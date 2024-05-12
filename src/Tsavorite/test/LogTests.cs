@@ -172,7 +172,7 @@ internal class TsavoriteLogTestBase
         // Enter in some entries then wait on this separate thread
         await log.EnqueueAsync(entry);
         await log.EnqueueAsync(entry);
-        var commitTask = await log.CommitAsync(null, token: token);
+        Task<LinkedCommitInfo> commitTask = await log.CommitAsync(null, token: token);
         await log.EnqueueAsync(entry);
         await log.CommitAsync(commitTask, token: token);
     }
@@ -208,8 +208,8 @@ internal class TsavoriteLogGeneralTests : TsavoriteLogTestBase
         log.Commit(true);
 
         // If endAddress > log.TailAddress then GetAsyncEnumerable() will wait until more entries are added.
-        var endAddress = IsAsync(iteratorType) ? log.TailAddress : long.MaxValue;
-        using var iter = log.Scan(0, endAddress);
+        long endAddress = IsAsync(iteratorType) ? log.TailAddress : long.MaxValue;
+        using TsavoriteLogScanIterator iter = log.Scan(0, endAddress);
         var counter = new Counter(log);
         switch (iteratorType)
         {
@@ -251,7 +251,7 @@ internal class TsavoriteLogGeneralTests : TsavoriteLogTestBase
     [Category("TsavoriteLog")]
     public async ValueTask TsavoriteLogTest2([Values] LogChecksumType logChecksum)
     {
-        var iteratorType = IteratorType.Sync;
+        IteratorType iteratorType = IteratorType.Sync;
 
         device = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "Tsavoritelog.log"), deleteOnClose: true);
         var logSettings = new TsavoriteLogSettings
@@ -274,8 +274,8 @@ internal class TsavoriteLogGeneralTests : TsavoriteLogTestBase
         log.Commit(true);
 
         // If endAddress > log.TailAddress then GetAsyncEnumerable() will wait until more entries are added.
-        var endAddress = IsAsync(iteratorType) ? log.TailAddress : long.MaxValue;
-        using var iter = log.Scan(0, endAddress);
+        long endAddress = IsAsync(iteratorType) ? log.TailAddress : long.MaxValue;
+        using TsavoriteLogScanIterator iter = log.Scan(0, endAddress);
         var counter = new Counter(log);
         switch (iteratorType)
         {
@@ -351,7 +351,7 @@ internal class TsavoriteLogGeneralTests : TsavoriteLogTestBase
 
         log.Commit(true);
 
-        using var iter = log.Scan(0, long.MaxValue);
+        using TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue);
         var counter = new Counter(log);
         var consumer = new TestConsumer(counter, entry);
 
@@ -383,7 +383,7 @@ internal class TsavoriteLogGeneralTests : TsavoriteLogTestBase
         log.Commit(true);
         log.CompleteLog(true);
 
-        using var iter = log.Scan(0, long.MaxValue);
+        using TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue);
         var counter = new Counter(log);
         var consumer = new TestConsumer(counter, entry);
         await iter.ConsumeAllAsync(consumer);
@@ -417,18 +417,18 @@ internal class TsavoriteLogEnqueueTests : TsavoriteLogTestBase
         byte[] data1 = new byte[dataLength];
         for (int i = 0; i < dataLength; i++) data1[i] = (byte)i;
 
-        using (var iter = log.Scan(0, long.MaxValue, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
         {
-            var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+            IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
                 ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
                 : default;
-            var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+            IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
                 ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
                 : default;
             int i = 0;
             while (i++ < 500)
             {
-                var waitingReader = iter.WaitAsync();
+                ValueTask<bool> waitingReader = iter.WaitAsync();
                 Assert.IsTrue(!waitingReader.IsCompleted);
 
                 while (!log.TryEnqueue(data1, out _)) ;
@@ -437,7 +437,7 @@ internal class TsavoriteLogEnqueueTests : TsavoriteLogTestBase
                 // Ensure we don't find new entry in iterator
                 while (waitingReader.IsCompleted)
                 {
-                    var _next = iter.GetNext(out _, out _, out _);
+                    bool _next = iter.GetNext(out _, out _, out _);
                     Assert.IsFalse(_next);
                     waitingReader = iter.WaitAsync();
                 }
@@ -477,15 +477,15 @@ internal class TsavoriteLogEnqueueTests : TsavoriteLogTestBase
         byte[] data1 = new byte[dataLength];
         for (int i = 0; i < dataLength; i++) data1[i] = (byte)i;
 
-        using var iter = log.Scan(0, long.MaxValue, scanBufferingMode: ScanBufferingMode.SinglePageBuffering);
-        var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+        using TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, scanBufferingMode: ScanBufferingMode.SinglePageBuffering);
+        IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
             ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
             : default;
-        var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+        IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
             ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
             : default;
 
-        var appendResult = log.TryEnqueue(data1, out _);
+        bool appendResult = log.TryEnqueue(data1, out _);
         Assert.IsTrue(appendResult);
         await log.CommitAsync();
         await iter.WaitAsync();
@@ -506,7 +506,7 @@ internal class TsavoriteLogEnqueueTests : TsavoriteLogTestBase
             case IteratorType.AsyncByteVector:
                 {
                     // No more hole
-                    var moveNextTask = asyncByteVectorIter.MoveNextAsync();
+                    ValueTask<bool> moveNextTask = asyncByteVectorIter.MoveNextAsync();
 
                     // Now the data is available.
                     Assert.IsTrue(await moveNextTask);
@@ -515,7 +515,7 @@ internal class TsavoriteLogEnqueueTests : TsavoriteLogTestBase
             case IteratorType.AsyncMemoryOwner:
                 {
                     // No more hole
-                    var moveNextTask = asyncMemoryOwnerIter.MoveNextAsync();
+                    ValueTask<bool> moveNextTask = asyncMemoryOwnerIter.MoveNextAsync();
 
                     // Now the data is available, and must be disposed.
                     Assert.IsTrue(await moveNextTask);
@@ -572,11 +572,11 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
         Assert.AreEqual(log.TailAddress, log.CommittedUntilAddress);
         Assert.AreEqual(log.BeginAddress, log.CommittedBeginAddress);
 
-        using var iter = log.Scan(0, long.MaxValue);
-        var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+        using TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue);
+        IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
             ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
             : default;
-        var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+        IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
             ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
             : default;
 
@@ -686,11 +686,11 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
 
         Assert.Less(log.CommittedUntilAddress, log.SafeTailAddress);
 
-        using var iter = log.Scan(0, long.MaxValue, scanUncommitted: true);
-        var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+        using TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, scanUncommitted: true);
+        IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
             ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
             : default;
-        var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+        IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
             ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
             : default;
 
@@ -759,12 +759,12 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
 
         Assert.Less(log.CommittedUntilAddress, log.SafeTailAddress);
 
-        using (var iter = log.Scan(0, long.MaxValue, scanUncommitted: true))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, scanUncommitted: true))
         {
-            var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+            IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
                 ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
                 : default;
-            var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+            IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
                 ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
                 : default;
 
@@ -842,7 +842,7 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -900,7 +900,7 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
 
         // Read the log to make sure all entries are put in
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -959,12 +959,12 @@ internal class TsavoriteLogTruncateTests : TsavoriteLogTestBase
         Assert.AreEqual(log.TailAddress, log.SafeTailAddress);
         Assert.Less(log.CommittedUntilAddress, log.SafeTailAddress);
 
-        using (var iter = log.Scan(0, long.MaxValue, scanUncommitted: true))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, scanUncommitted: true))
         {
-            var asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
+            IAsyncEnumerator<(byte[] entry, int entryLength, long currentAddress, long nextAddress)> asyncByteVectorIter = iteratorType == IteratorType.AsyncByteVector
                 ? iter.GetAsyncEnumerable().GetAsyncEnumerator()
                 : default;
-            var asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
+            IAsyncEnumerator<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> asyncMemoryOwnerIter = iteratorType == IteratorType.AsyncMemoryOwner
                 ? iter.GetAsyncEnumerable(MemoryPool<byte>.Shared).GetAsyncEnumerator()
                 : default;
 
@@ -1022,7 +1022,7 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
     [Category("Smoke")]
     public void TsavoriteLogSimpleCommitCookieTest([Values] bool fastCommit)
     {
-        var cookie = new byte[100];
+        byte[] cookie = new byte[100];
         new Random().NextBytes(cookie);
 
         device = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "SimpleCommitCookie" + fastCommit + ".log"), deleteOnClose: true);
@@ -1074,9 +1074,9 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie1 = new byte[100];
+        byte[] cookie1 = new byte[100];
         new Random().NextBytes(cookie1);
-        var commitSuccessful = log.CommitStrongly(out var commit1Addr, out _, true, cookie1, 1);
+        bool commitSuccessful = log.CommitStrongly(out long commit1Addr, out _, true, cookie1, 1);
         Assert.IsTrue(commitSuccessful);
 
         for (int i = 0; i < numEntries; i++)
@@ -1084,9 +1084,9 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie2 = new byte[100];
+        byte[] cookie2 = new byte[100];
         new Random().NextBytes(cookie2);
-        commitSuccessful = log.CommitStrongly(out var commit2Addr, out _, true, cookie2, 2);
+        commitSuccessful = log.CommitStrongly(out long commit2Addr, out _, true, cookie2, 2);
         Assert.IsTrue(commitSuccessful);
 
         for (int i = 0; i < numEntries; i++)
@@ -1094,9 +1094,9 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie6 = new byte[100];
+        byte[] cookie6 = new byte[100];
         new Random().NextBytes(cookie6);
-        commitSuccessful = log.CommitStrongly(out var commit6Addr, out _, true, cookie6, 6);
+        commitSuccessful = log.CommitStrongly(out long commit6Addr, out _, true, cookie6, 6);
         Assert.IsTrue(commitSuccessful);
 
         var recoveredLog = new TsavoriteLog(logSettings);
@@ -1152,10 +1152,10 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
 
 
 
-        var nextAddress = 0L;
-        using (var iter = log.Scan(0, long.MaxValue, "TEST"))
+        long nextAddress = 0L;
+        using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, "TEST"))
         {
-            var count = 0;
+            int count = 0;
             while (iter.GetNext(out _, out _, out _, out nextAddress)) count++;
             log.Commit(true);
             Assert.AreEqual(numEntries, count);
@@ -1173,7 +1173,7 @@ internal class TsavoriteLogCustomCommitTests : TsavoriteLogTestBase
         log.Commit(true);
         log.CompleteLog(true);
 
-        using (var iter = log.Scan(nextAddress, long.MaxValue, "TEST"))
+        using (TsavoriteLogScanIterator iter = log.Scan(nextAddress, long.MaxValue, "TEST"))
         {
             var counter = new Counter(log);
             var consumer = new TsavoriteLogGeneralTests.TestConsumer(counter, entry);

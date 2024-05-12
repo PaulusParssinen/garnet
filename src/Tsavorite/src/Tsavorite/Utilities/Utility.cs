@@ -352,8 +352,8 @@ public static class Utility
     internal static string GetHashString(long hash)
     {
         // The debugger often can't call the Globalization NegativeSign property so ToString() would just display the class name
-        var hashSign = hash < 0 ? "-" : string.Empty;
-        var absHash = hash >= 0 ? hash : -hash;
+        string hashSign = hash < 0 ? "-" : string.Empty;
+        long absHash = hash >= 0 ? hash : -hash;
         return $"{hashSign}{absHash}";
     }
 

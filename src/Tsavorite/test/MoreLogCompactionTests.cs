@@ -37,10 +37,10 @@ internal class MoreLogCompactionTests
 
     public void DeleteCompactLookup([Values] CompactionType compactionType)
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         long compactUntil = 0;
 
         for (int i = 0; i < totalRecords; i++)
@@ -57,15 +57,15 @@ internal class MoreLogCompactionTests
 
         Assert.AreEqual(compactUntil, store.Log.BeginAddress);
 
-        using var session2 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session2 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         // Verify records by reading
         for (int i = 0; i < totalRecords; i++)
         {
-            (var status, var output) = session2.Read(i);
+            (Status status, long output) = session2.Read(i);
             if (status.IsPending)
             {
-                session2.CompletePendingWithOutputs(out var completedOutputs, true);
+                session2.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, true);
                 Assert.IsTrue(completedOutputs.Next());
                 (status, output) = (completedOutputs.Current.Status, completedOutputs.Current.Output);
                 Assert.IsFalse(completedOutputs.Next());

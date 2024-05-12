@@ -36,7 +36,7 @@ internal class SessionTests
     [Category("Smoke")]
     public void SessionTest1()
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
         InputStruct input = default;
         OutputStruct output = default;
 
@@ -44,11 +44,11 @@ internal class SessionTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
 
@@ -61,8 +61,8 @@ internal class SessionTests
     [Category("TsavoriteKV")]
     public void SessionTest2()
     {
-        using var session1 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
-        using var session2 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session1 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session2 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
         InputStruct input = default;
         OutputStruct output = default;
 
@@ -74,11 +74,11 @@ internal class SessionTests
         session1.Upsert(ref key1, ref value1, Empty.Default, 0);
         session2.Upsert(ref key2, ref value2, Empty.Default, 0);
 
-        var status = session1.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session1.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
         if (status.IsPending)
         {
-            session1.CompletePendingWithOutputs(out var outputs, wait: true);
+            session1.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
 
@@ -90,7 +90,7 @@ internal class SessionTests
 
         if (status.IsPending)
         {
-            session2.CompletePendingWithOutputs(out var outputs, wait: true);
+            session2.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
 
@@ -103,7 +103,7 @@ internal class SessionTests
     [Category("TsavoriteKV")]
     public void SessionTest3()
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
         Task.CompletedTask.ContinueWith((t) =>
         {
             InputStruct input = default;
@@ -113,11 +113,11 @@ internal class SessionTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             session.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
 
@@ -131,9 +131,9 @@ internal class SessionTests
     [Category("TsavoriteKV")]
     public void SessionTest4()
     {
-        using var session1 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
-        using var session2 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
-        var t1 = Task.CompletedTask.ContinueWith((t) =>
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session1 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session2 = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        Task t1 = Task.CompletedTask.ContinueWith((t) =>
         {
             InputStruct input = default;
             OutputStruct output = default;
@@ -142,11 +142,11 @@ internal class SessionTests
             var value1 = new ValueStruct { vfield1 = 24, vfield2 = 25 };
 
             session1.Upsert(ref key1, ref value1, Empty.Default, 0);
-            var status = session1.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session1.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                session1.CompletePendingWithOutputs(out var outputs, wait: true);
+                session1.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
 
@@ -155,7 +155,7 @@ internal class SessionTests
             Assert.AreEqual(value1.vfield2, output.value.vfield2);
         });
 
-        var t2 = Task.CompletedTask.ContinueWith((t) =>
+        Task t2 = Task.CompletedTask.ContinueWith((t) =>
         {
             InputStruct input = default;
             OutputStruct output = default;
@@ -165,11 +165,11 @@ internal class SessionTests
 
             session2.Upsert(ref key2, ref value2, Empty.Default, 0);
 
-            var status = session2.Read(ref key2, ref input, ref output, Empty.Default, 0);
+            Status status = session2.Read(ref key2, ref input, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                session2.CompletePendingWithOutputs(out var outputs, wait: true);
+                session2.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
 
@@ -186,7 +186,7 @@ internal class SessionTests
     [Category("TsavoriteKV")]
     public void SessionTest5()
     {
-        var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
         InputStruct input = default;
         OutputStruct output = default;
@@ -195,11 +195,11 @@ internal class SessionTests
         var value1 = new ValueStruct { vfield1 = 26, vfield2 = 27 };
 
         session.Upsert(ref key1, ref value1, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
 
@@ -220,7 +220,7 @@ internal class SessionTests
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
         Assert.IsTrue(status.Found);
@@ -229,7 +229,7 @@ internal class SessionTests
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
 

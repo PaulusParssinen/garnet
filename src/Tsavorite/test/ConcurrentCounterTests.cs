@@ -43,7 +43,7 @@ public class ConcurrentCounterTests
         counter.Increment(7);
 
         // Act
-        var total = counter.Total;
+        long total = counter.Total;
 
         // Assert
         Assert.AreEqual(10, total);
@@ -78,7 +78,7 @@ public class ConcurrentCounterTests
     public void IncrementndTotal_WithMultipleThreads_ReturnsCorrectValue()
     {
         // Arrange
-        var numThreads = 10;
+        int numThreads = 10;
         var counter = new ConcurrentCounter();
         var threads = new System.Threading.Thread[numThreads];
         for (int i = 0; i < threads.Length; i++)
@@ -93,11 +93,11 @@ public class ConcurrentCounterTests
         }
 
         // Act
-        foreach (var thread in threads)
+        foreach (Thread thread in threads)
         {
             thread.Start();
         }
-        foreach (var thread in threads)
+        foreach (Thread thread in threads)
         {
             thread.Join();
         }

@@ -100,7 +100,7 @@ public class SimpleFunctions<Key, Value, Context> : FunctionsBase<Key, Value, Va
 
     public override bool SingleWriter(ref Key key, ref Value input, ref Value src, ref Value dst, ref Value output, ref UpsertInfo upsertInfo, WriteReason reason, ref RecordInfo recordInfo)
     {
-        var result = base.SingleWriter(ref key, ref input, ref src, ref dst, ref output, ref upsertInfo, reason, ref recordInfo);
+        bool result = base.SingleWriter(ref key, ref input, ref src, ref dst, ref output, ref upsertInfo, reason, ref recordInfo);
         if (result)
             output = dst;
         return result;
@@ -108,7 +108,7 @@ public class SimpleFunctions<Key, Value, Context> : FunctionsBase<Key, Value, Va
 
     public override bool ConcurrentWriter(ref Key key, ref Value input, ref Value src, ref Value dst, ref Value output, ref UpsertInfo upsertInfo, ref RecordInfo recordInfo)
     {
-        var result = base.ConcurrentWriter(ref key, ref input, ref src, ref dst, ref output, ref upsertInfo, ref recordInfo);
+        bool result = base.ConcurrentWriter(ref key, ref input, ref src, ref dst, ref output, ref upsertInfo, ref recordInfo);
         if (result)
             output = dst;
         return result;

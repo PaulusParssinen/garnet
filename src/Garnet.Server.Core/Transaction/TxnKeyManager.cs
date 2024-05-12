@@ -203,7 +203,7 @@ sealed partial class TransactionManager
             respSession.GetCommandAsArgSlice(out success);
             if (!success) return -2;
         }
-        var key = respSession.GetCommandAsArgSlice(out success);
+        ArgSlice key = respSession.GetCommandAsArgSlice(out success);
         if (!success) return -2;
         SaveKeyEntryToLock(key, isObject, type);
         SaveKeyArgSlice(key);
@@ -217,7 +217,7 @@ sealed partial class TransactionManager
     {
         for (int i = 0; i < inputCount; i++)
         {
-            var key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, type);
             SaveKeyArgSlice(key);
@@ -232,9 +232,9 @@ sealed partial class TransactionManager
     {
         for (int i = 0; i < inputCount; i += 2)
         {
-            var key = respSession.GetCommandAsArgSlice(out bool success);
+            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
-            var val = respSession.GetCommandAsArgSlice(out success);
+            ArgSlice val = respSession.GetCommandAsArgSlice(out success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, type);
             SaveKeyArgSlice(key);
@@ -250,15 +250,15 @@ sealed partial class TransactionManager
     {
         if (inputCount > 0)
         {
-            var key = respSession.GetCommandAsArgSlice(out var success);
+            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, LockType.Exclusive);
             SaveKeyArgSlice(key);
         }
 
-        for (var i = 1; i < inputCount; i++)
+        for (int i = 1; i < inputCount; i++)
         {
-            var key = respSession.GetCommandAsArgSlice(out var success);
+            ArgSlice key = respSession.GetCommandAsArgSlice(out bool success);
             if (!success) return -2;
             SaveKeyEntryToLock(key, isObject, LockType.Shared);
             SaveKeyArgSlice(key);

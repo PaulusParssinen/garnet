@@ -72,7 +72,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
     public override ref SpanByte GetAndInitializeValue(long physicalAddress, long endAddress)
     {
-        var src = (byte*)ValueOffset(physicalAddress);
+        byte* src = (byte*)ValueOffset(physicalAddress);
 
         // Initialize the SpanByte to the length of the entire value space, less the length of the int size prefix.
         *(int*)src = (int)((byte*)endAddress - src) - sizeof(int);
@@ -100,33 +100,33 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
 
     public override (int actualSize, int allocatedSize) GetRecordSize(long physicalAddress)
     {
-        ref var recordInfo = ref GetInfo(physicalAddress);
+        ref RecordInfo recordInfo = ref GetInfo(physicalAddress);
         if (recordInfo.IsNull())
         {
-            var l = RecordInfo.GetLength();
+            int l = RecordInfo.GetLength();
             return (l, l);
         }
 
-        var valueLen = ValueSize(physicalAddress);
+        int valueLen = ValueSize(physicalAddress);
         if (recordInfo.Filler)  // Get the extraValueLength
             valueLen += *(int*)(ValueOffset(physicalAddress) + RoundUp(valueLen, sizeof(int)));
 
-        var size = RecordInfo.GetLength() + AlignedKeySize(physicalAddress) + valueLen;
+        int size = RecordInfo.GetLength() + AlignedKeySize(physicalAddress) + valueLen;
         return (size, RoundUp(size, kRecordAlignment));
     }
 
     public override (int actualSize, int allocatedSize, int keySize) GetRMWCopyDestinationRecordSize<Input, TsavoriteSession>(ref SpanByte key, ref Input input, ref SpanByte value, ref RecordInfo recordInfo, TsavoriteSession tsavoriteSession)
     {
         // Used by RMW to determine the length of copy destination (taking Input into account), so does not need to get filler length.
-        var keySize = key.TotalSize;
-        var size = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWModifiedValueLength(ref value, ref input);
+        int keySize = key.TotalSize;
+        int size = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWModifiedValueLength(ref value, ref input);
         return (size, RoundUp(size, kRecordAlignment), keySize);
     }
 
     public override int GetRequiredRecordSize(long physicalAddress, int availableBytes)
     {
         // We need at least [average record size]...
-        var reqBytes = GetAverageRecordSize();
+        int reqBytes = GetAverageRecordSize();
         if (availableBytes < reqBytes)
             return reqBytes;
 
@@ -136,12 +136,12 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
             return reqBytes;
 
         // We need at least [RecordInfo size] + [actual key size] + [actual value size]
-        var recordInfo = GetInfo(physicalAddress);
-        var valueLen = ValueSize(physicalAddress);
+        RecordInfo recordInfo = GetInfo(physicalAddress);
+        int valueLen = ValueSize(physicalAddress);
         if (recordInfo.Filler)
         {
             // We have a filler, so the valueLen we have now is the usedValueLength; we need to offset to where the extraValueLength is and read that int
-            var alignedUsedValueLength = RoundUp(valueLen, sizeof(int));
+            int alignedUsedValueLength = RoundUp(valueLen, sizeof(int));
             reqBytes = RecordInfo.GetLength() + AlignedKeySize(physicalAddress) + alignedUsedValueLength + sizeof(int);
             if (availableBytes < reqBytes)
                 return reqBytes;
@@ -161,14 +161,14 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     public override (int actualSize, int allocatedSize, int keySize) GetRMWInitialRecordSize<TInput, TsavoriteSession>(ref SpanByte key, ref TInput input, TsavoriteSession tsavoriteSession)
     {
         int keySize = key.TotalSize;
-        var actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWInitialValueLength(ref input);
+        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + tsavoriteSession.GetRMWInitialValueLength(ref input);
         return (actualSize, RoundUp(actualSize, kRecordAlignment), keySize);
     }
 
     public override (int actualSize, int allocatedSize, int keySize) GetRecordSize(ref SpanByte key, ref SpanByte value)
     {
         int keySize = key.TotalSize;
-        var actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + value.TotalSize;
+        int actualSize = RecordInfo.GetLength() + RoundUp(keySize, kRecordAlignment) + value.TotalSize;
         return (actualSize, RoundUp(actualSize, kRecordAlignment), keySize);
     }
 
@@ -205,14 +205,14 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
     {
         IncrementAllocatedPageCount();
 
-        if (overflowPagePool.TryGet(out var item))
+        if (overflowPagePool.TryGet(out PageUnit item))
         {
             pointers[index] = item.pointer;
             values[index] = item.value;
             return;
         }
 
-        var adjustedSize = PageSize + 2 * sectorSize;
+        int adjustedSize = PageSize + 2 * sectorSize;
 
         byte[] tmp = GC.AllocateArray<byte>(adjustedSize, true);
         long p = (long)Unsafe.AsPointer(ref tmp[0]);
@@ -247,7 +247,7 @@ internal sealed unsafe class SpanByteAllocator : AllocatorBase<SpanByte, SpanByt
         PageAsyncFlushResult<TContext> asyncResult, IDevice device, IDevice objectLogDevice, long[] localSegmentOffsets, long fuzzyStartLogicalAddress)
     {
         VerifyCompatibleSectorSize(device);
-        var alignedPageSize = (pageSize + (sectorSize - 1)) & ~(sectorSize - 1);
+        int alignedPageSize = (pageSize + (sectorSize - 1)) & ~(sectorSize - 1);
 
         WriteAsync((IntPtr)pointers[flushPage % BufferSize],
                     (ulong)(AlignedPageSizeBytes * (flushPage - startPage)),

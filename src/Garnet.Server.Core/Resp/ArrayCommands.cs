@@ -56,7 +56,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             *(int*)keyPtr = ksize;
 
             var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-            var status = storageApi.GET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o);
+            GarnetStatus status = storageApi.GET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o);
 
             switch (status)
             {
@@ -127,7 +127,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Store index in context, since completions are not in order
             ctx = c;
 
-            var status = storageApi.GET_WithPending(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o, ctx, out bool isPending);
+            GarnetStatus status = storageApi.GET_WithPending(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o, ctx, out bool isPending);
 
             *(int*)keyPtr = save;
 
@@ -186,8 +186,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Write the outputs to network buffer
             for (int i = firstPending; i < opsDone; i++)
             {
-                var status = outputArr[i].Item1;
-                var output = outputArr[i].Item2;
+                GarnetStatus status = outputArr[i].Item1;
+                SpanByteAndMemory output = outputArr[i].Item2;
                 if (status == GarnetStatus.OK)
                 {
                     if (!output.IsSpanByte)
@@ -229,7 +229,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         errorMessage = default;
         var classInstances = new Dictionary<string, object>();
         // Get all binary file paths from inputs binary paths
-        if (!FileUtils.TryGetFiles(binaryPaths, out var files, out _, [".dll", ".exe"],
+        if (!FileUtils.TryGetFiles(binaryPaths, out IEnumerable<string> files, out _, [".dll", ".exe"],
                 SearchOption.AllDirectories))
         {
             errorMessage = CmdStrings.RESP_ERR_GENERIC_GETTING_BINARY_FILES;
@@ -237,7 +237,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
 
         // Check that all binary files are contained in allowed binary paths
-        var binaryFiles = files.ToArray();
+        string[] binaryFiles = files.ToArray();
         if (binaryFiles.Any(f =>
                 storeWrapper.serverOptions.ExtensionBinPaths.All(p => !FileUtils.IsFileInDirectory(f, p))))
         {
@@ -246,20 +246,20 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
 
         // Get all assemblies from binary files
-        if (!FileUtils.TryLoadAssemblies(binaryFiles, out var assemblies, out _))
+        if (!FileUtils.TryLoadAssemblies(binaryFiles, out IEnumerable<System.Reflection.Assembly> assemblies, out _))
         {
             errorMessage = CmdStrings.RESP_ERR_GENERIC_LOADING_ASSEMBLIES;
             return false;
         }
 
-        var loadedAssemblies = assemblies.ToArray();
+        System.Reflection.Assembly[] loadedAssemblies = assemblies.ToArray();
 
         // If necessary, check that all assemblies are digitally signed
         if (!storeWrapper.serverOptions.ExtensionAllowUnsignedAssemblies)
         {
-            foreach (var loadedAssembly in loadedAssemblies)
+            foreach (System.Reflection.Assembly loadedAssembly in loadedAssemblies)
             {
-                var publicKey = loadedAssembly.GetName().GetPublicKey();
+                byte[] publicKey = loadedAssembly.GetName().GetPublicKey();
                 if (publicKey == null || publicKey.Length == 0)
                 {
                     errorMessage = CmdStrings.RESP_ERR_GENERIC_ASSEMBLY_NOT_SIGNED;
@@ -268,18 +268,18 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
         }
 
-        foreach (var c in classNameToRegisterArgs.Keys)
+        foreach (string c in classNameToRegisterArgs.Keys)
         {
             classInstances.TryAdd(c, null);
         }
 
         // Get types from loaded assemblies
-        var loadedTypes = loadedAssemblies
+        Type[] loadedTypes = loadedAssemblies
             .SelectMany(a => a.GetTypes())
             .Where(t => classInstances.ContainsKey(t.Name)).ToArray();
 
         // Check that all types implement one of the supported custom command base classes
-        var supportedCustomCommandTypes = RegisterCustomCommandProviderBase.SupportedCustomCommandBaseTypesLazy.Value;
+        Type[] supportedCustomCommandTypes = RegisterCustomCommandProviderBase.SupportedCustomCommandBaseTypesLazy.Value;
         if (loadedTypes.Any(t => !supportedCustomCommandTypes.Any(st => st.IsAssignableFrom(t))))
         {
             errorMessage = CmdStrings.RESP_ERR_GENERIC_REGISTERCS_UNSUPPORTED_CLASS;
@@ -294,9 +294,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
 
         // Instantiate types
-        foreach (var type in loadedTypes)
+        foreach (Type type in loadedTypes)
         {
-            var instance = Activator.CreateInstance(type);
+            object instance = Activator.CreateInstance(type);
             classInstances[type.Name] = instance;
         }
 
@@ -309,11 +309,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         // Register each command / transaction using its specified class instance
         var registerApis = new List<IRegisterCustomCommandProvider>();
-        foreach (var classNameToArgs in classNameToRegisterArgs)
+        foreach (KeyValuePair<string, List<RegisterArgsBase>> classNameToArgs in classNameToRegisterArgs)
         {
-            foreach (var args in classNameToArgs.Value)
+            foreach (RegisterArgsBase args in classNameToArgs.Value)
             {
-                var registerApi =
+                IRegisterCustomCommandProvider registerApi =
                     RegisterCustomCommandProviderFactory.GetRegisterCustomCommandProvider(classInstances[classNameToArgs.Key], args);
 
                 if (registerApi == null)
@@ -326,7 +326,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
         }
 
-        foreach (var registerApi in registerApis)
+        foreach (IRegisterCustomCommandProvider registerApi in registerApis)
         {
             registerApi.Register(customCommandManager);
         }
@@ -343,8 +343,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// </summary>
     private bool NetworkREGISTERCS(int count, byte* ptr, CustomCommandManager customCommandManager)
     {
-        var leftTokens = count;
-        var readPathsOnly = false;
+        int leftTokens = count;
+        bool readPathsOnly = false;
 
         var binaryPaths = new HashSet<string>();
 
@@ -404,7 +404,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 // Read only binary paths from this point forth
                 if (readPathsOnly)
                 {
-                    var path = Encoding.ASCII.GetString(firstTokenPtr, firstTokenSize);
+                    string path = Encoding.ASCII.GetString(firstTokenPtr, firstTokenSize);
                     binaryPaths.Add(path);
                 }
 
@@ -417,7 +417,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 // Check optional parameters for previous sub-command
                 if (args is RegisterCmdArgs cmdArgs)
                 {
-                    var expTicks = NumUtils.BytesToLong(tokenSpan);
+                    long expTicks = NumUtils.BytesToLong(tokenSpan);
                     cmdArgs.ExpirationTicks = expTicks;
                     continue;
                 }
@@ -429,19 +429,19 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             // Start reading the sub-command arguments
             // Read custom command name
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var name, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string name, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             leftTokens--;
             args.Name = name;
 
             // Read custom command number of parameters
-            if (!RespReadUtils.ReadIntWithLengthHeader(out var numParams, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadIntWithLengthHeader(out int numParams, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             leftTokens--;
             args.NumParams = numParams;
 
             // Read custom command class name
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var className, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string className, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             leftTokens--;
 
@@ -516,7 +516,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             int saveV = *(int*)valPtr;
             *(int*)valPtr = vsize;
 
-            var status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
+            GarnetStatus status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
             Debug.Assert(status == GarnetStatus.OK);
 
             *(int*)keyPtr = saveK;
@@ -578,7 +578,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             ((RespInputHeader*)(valPtr + sizeof(int)))->cmd = RespCommand.SETEXNX;
             ((RespInputHeader*)(valPtr + sizeof(int)))->flags = 0;
 
-            var status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
+            GarnetStatus status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
 
             // Status tells us whether an old image was found during RMW or not
             // For a "set if not exists", NOTFOUND means that the operation succeeded
@@ -632,7 +632,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             int save = *(int*)keyPtr;
             *(int*)keyPtr = ksize;
 
-            var status = storageApi.DELETE(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All);
+            GarnetStatus status = storageApi.DELETE(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All);
 
             // Restore ptr data
             *(int*)keyPtr = save;
@@ -659,7 +659,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     private bool NetworkSELECT(byte* ptr)
     {
         // Read index
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var result, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string result, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         readHead = (int)(ptr - recvBufferPtr);
@@ -708,7 +708,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var patternAS = new ArgSlice(pattern, psize);
 
-        var keys = storageApi.GetDbKeys(patternAS);
+        List<byte[]> keys = storageApi.GetDbKeys(patternAS);
 
         if (keys.Count > 0)
         {
@@ -717,7 +717,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 SendAndReset();
 
             // Write the keys matching the pattern
-            foreach (var item in keys)
+            foreach (byte[] item in keys)
             {
                 while (!RespWriteUtils.WriteBulkString(item, ref dcurr, dend))
                     SendAndReset();
@@ -741,7 +741,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return AbortWithWrongNumberOfArguments("SCAN", count);
 
         // Scan cursor [MATCH pattern] [COUNT count] [TYPE type]
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var cursorParameterByte, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] cursorParameterByte, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         int leftTokens = count - 1;
@@ -749,7 +749,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         int psize = 1;
         byte* pattern = stackalloc byte[psize];
         *pattern = (byte)'*';
-        var allKeys = true;
+        bool allKeys = true;
 
         long countValue = 10;
 
@@ -774,9 +774,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
             else if (parameterSB.SequenceEqual(CmdStrings.COUNT) || parameterSB.SequenceEqual(CmdStrings.count))
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var countParameterValue, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] countParameterValue, ref ptr, recvBufferPtr + bytesRead))
                     return false;
-                _ = Utf8Parser.TryParse(countParameterValue, out countValue, out var countBytesConsumed, default) &&
+                _ = Utf8Parser.TryParse(countParameterValue, out countValue, out int countBytesConsumed, default) &&
                     countBytesConsumed == countParameterValue.Length;
                 leftTokens--;
             }
@@ -789,12 +789,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             leftTokens--;
         }
 
-        _ = Utf8Parser.TryParse(cursorParameterByte, out long cursorFromInput, out var cursorBytesConsumed, default) &&
+        _ = Utf8Parser.TryParse(cursorParameterByte, out long cursorFromInput, out int cursorBytesConsumed, default) &&
             cursorBytesConsumed == cursorParameterByte.Length;
 
         var patternAS = new ArgSlice(pattern, psize);
 
-        storageApi.DbScan(patternAS, allKeys, cursorFromInput, out var cursor, out var keys, typeParameterValue != default ? long.MaxValue : countValue, typeParameterValue);
+        storageApi.DbScan(patternAS, allKeys, cursorFromInput, out long cursor, out List<byte[]> keys, typeParameterValue != default ? long.MaxValue : countValue, typeParameterValue);
 
         // Prepare values for output
         if (keys.Count == 0)
@@ -837,7 +837,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref kSize, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
-        var status = storageApi.GetKeyType(new(keyPtr, kSize), out string typeName);
+        GarnetStatus status = storageApi.GetKeyType(new(keyPtr, kSize), out string typeName);
 
         if (status == GarnetStatus.OK)
         {
@@ -861,7 +861,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return AbortWithWrongNumberOfArguments("MODULE", count);
 
         // MODULE nameofmodule
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var nameofmodule, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] nameofmodule, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         // TODO: pending implementation for module support.

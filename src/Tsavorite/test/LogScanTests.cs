@@ -108,7 +108,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -140,9 +140,9 @@ internal class LogScanTests
         // Indirectly used in other tests, but good to have the basic test here for completeness
 
         // Read the log - Look for the flag so know each entry is unique
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
-            var next = iter.GetNext(out byte[] result, out _, out _);
+            bool next = iter.GetNext(out byte[] result, out _, out _);
             Assert.IsTrue(next);
 
             // Verify result
@@ -164,7 +164,7 @@ internal class LogScanTests
 
             // WaitAsync should not complete, as we are at end of iteration
             var tcs = new CancellationTokenSource();
-            var task = iter.WaitAsync(tcs.Token);
+            ValueTask<bool> task = iter.WaitAsync(tcs.Token);
             Assert.IsFalse(task.IsCompleted);
             tcs.Cancel();
             try
@@ -206,7 +206,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         var consumer = new TestConsumer();
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.TryConsumeNext(consumer)) { }
         }
@@ -229,7 +229,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000, name: null, recover: true, scanBufferingMode: ScanBufferingMode.DoublePageBuffering, scanUncommitted: false))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000, name: null, recover: true, scanBufferingMode: ScanBufferingMode.DoublePageBuffering, scanUncommitted: false))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -261,7 +261,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000, name: "TestScan", recover: true))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000, name: "TestScan", recover: true))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -293,7 +293,7 @@ internal class LogScanTests
 
         // Read the log 
         int currentEntry = 9;   // since starting at specified address of 1000, need to set current entry as 9 so verification starts at proper spot
-        using (var iter = log.Scan(1000, 100_000_000, recover: false))
+        using (TsavoriteLogScanIterator iter = log.Scan(1000, 100_000_000, recover: false))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -325,7 +325,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.DoublePageBuffering))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.DoublePageBuffering))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -355,7 +355,7 @@ internal class LogScanTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000, scanBufferingMode: ScanBufferingMode.SinglePageBuffering))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -386,7 +386,7 @@ internal class LogScanTests
         // Setting scanUnCommitted to true is actual test here.
         // Read the log - Look for the flag so know each entry is unique and still reads uncommitted
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000, scanUncommitted: true))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000, scanUncommitted: true))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {

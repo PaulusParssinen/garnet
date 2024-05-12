@@ -16,7 +16,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public bool NeedInitialUpdate(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref RMWInfo rmwInfo)
     {
-        var cmd = input.AsSpan()[0];
+        byte cmd = input.AsSpan()[0];
         switch ((RespCommand)cmd)
         {
             case RespCommand.SETKEEPTTLXX:
@@ -30,7 +30,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 if (cmd >= CustomCommandManager.StartOffset)
                 {
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
-                    var ret = functionsState.customCommands[cmd - CustomCommandManager.StartOffset].functions.NeedInitialUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], ref outp);
+                    bool ret = functionsState.customCommands[cmd - CustomCommandManager.StartOffset].functions.NeedInitialUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], ref outp);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;
                     return ret;
@@ -42,7 +42,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public bool InitialUpdater(ref SpanByte key, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
-        var inputPtr = input.ToPointer();
+        byte* inputPtr = input.ToPointer();
         rmwInfo.ClearExtraValueLength(ref recordInfo, ref value, value.TotalSize);
 
         switch ((RespCommand)(*inputPtr))
@@ -115,8 +115,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 break;
 
             case RespCommand.SETRANGE:
-                var offset = *(int*)(inputPtr + RespInputHeader.Size);
-                var newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
+                int offset = *(int*)(inputPtr + RespInputHeader.Size);
+                int newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 var newValuePtr = new Span<byte>((byte*)*(long*)(inputPtr + RespInputHeader.Size + sizeof(int) * 2), newValueSize);
                 newValuePtr.CopyTo(value.AsSpan().Slice(offset));
 
@@ -125,8 +125,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
             case RespCommand.APPEND:
                 // Copy value to be appended to the newly allocated value buffer
-                var appendSize = *(int*)(inputPtr + RespInputHeader.Size);
-                var appendPtr = *(long*)(inputPtr + RespInputHeader.Size + sizeof(int));
+                int appendSize = *(int*)(inputPtr + RespInputHeader.Size);
+                long appendPtr = *(long*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 var appendSpan = new Span<byte>((byte*)appendPtr, appendSize);
                 appendSpan.CopyTo(value.AsSpan());
 
@@ -136,7 +136,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 value.UnmarkExtraMetadata();
                 // Check if input contains a valid number
                 length = input.LengthWithoutMetadata - RespInputHeader.Size;
-                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out var incrBy))
+                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out long incrBy))
                     return false;
                 CopyUpdateNumber(incrBy, ref value, ref output);
                 break;
@@ -144,7 +144,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 value.UnmarkExtraMetadata();
                 // Check if input contains a valid number
                 length = input.LengthWithoutMetadata - RespInputHeader.Size;
-                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out var decrBy))
+                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out long decrBy))
                     return false;
                 CopyUpdateNumber(-decrBy, ref value, ref output);
                 break;
@@ -153,7 +153,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    var functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
                     // compute metadata size for result
                     long expiration = input.ExtraMetadata;
                     int metadataSize = expiration switch
@@ -216,7 +216,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
     private bool InPlaceUpdaterWorker(ref SpanByte key, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
-        var inputPtr = input.ToPointer();
+        byte* inputPtr = input.ToPointer();
 
         // Expired data
         if (value.MetadataSize > 0 && ((RespInputHeader*)inputPtr)->CheckExpiry(value.ExtraMetadata))
@@ -307,16 +307,16 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 return TryInPlaceUpdateNumber(ref value, ref output, ref rmwInfo, ref recordInfo, input: -1);
 
             case RespCommand.INCRBY:
-                var length = input.LengthWithoutMetadata - RespInputHeader.Size;
+                int length = input.LengthWithoutMetadata - RespInputHeader.Size;
                 // Check if input contains a valid number
-                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out var incrBy))
+                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out long incrBy))
                     return true;
                 return TryInPlaceUpdateNumber(ref value, ref output, ref rmwInfo, ref recordInfo, input: incrBy);
 
             case RespCommand.DECRBY:
                 length = input.LengthWithoutMetadata - RespInputHeader.Size;
                 // Check if input contains a valid number
-                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out var decrBy))
+                if (!IsValidNumber(length, inputPtr + RespInputHeader.Size, output.SpanByte.AsSpan(), out long decrBy))
                     return true;
                 return TryInPlaceUpdateNumber(ref value, ref output, ref rmwInfo, ref recordInfo, input: -decrBy);
 
@@ -370,7 +370,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 bool updated = false;
                 rmwInfo.ClearExtraValueLength(ref recordInfo, ref value, value.TotalSize);
                 value.ShrinkSerializedLength(value.Length + value.MetadataSize);
-                var result = HyperLogLog.DefaultHLL.Update(i, v, value.Length, ref updated);
+                bool result = HyperLogLog.DefaultHLL.Update(i, v, value.Length, ref updated);
                 rmwInfo.SetUsedValueLength(ref recordInfo, ref value, value.TotalSize);
 
                 if (result)
@@ -393,8 +393,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 rmwInfo.SetUsedValueLength(ref recordInfo, ref value, value.TotalSize);
                 return HyperLogLog.DefaultHLL.TryMerge(srcHLL, dstHLL, value.Length);
             case RespCommand.SETRANGE:
-                var offset = *(int*)(inputPtr + RespInputHeader.Size);
-                var newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
+                int offset = *(int*)(inputPtr + RespInputHeader.Size);
+                int newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 var newValuePtr = new Span<byte>((byte*)*(long*)(inputPtr + RespInputHeader.Size + sizeof(int) * 2), newValueSize);
 
                 if (newValueSize + offset > value.LengthWithoutMetadata)
@@ -415,7 +415,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
             case RespCommand.APPEND:
                 // If nothing to append, can avoid copy update.
-                var appendSize = *(int*)(inputPtr + RespInputHeader.Size);
+                int appendSize = *(int*)(inputPtr + RespInputHeader.Size);
 
                 if (appendSize == 0)
                 {
@@ -428,15 +428,15 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    var functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
-                    var expiration = input.ExtraMetadata;
+                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    long expiration = input.ExtraMetadata;
                     if (expiration == -1)
                     {
                         // there is existing metadata, but we want to clear it.
                         // we remove metadata, shift the value, shrink length
                         if (value.ExtraMetadata > 0)
                         {
-                            var oldValue = value.AsReadOnlySpan();
+                            ReadOnlySpan<byte> oldValue = value.AsReadOnlySpan();
                             rmwInfo.ClearExtraValueLength(ref recordInfo, ref value, value.TotalSize);
                             value.UnmarkExtraMetadata();
                             oldValue.CopyTo(value.AsSpan());
@@ -454,7 +454,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                     int valueLength = value.LengthWithoutMetadata;
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
-                    var ret = functions.InPlaceUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsSpan(), ref valueLength, ref outp, ref rmwInfo);
+                    bool ret = functions.InPlaceUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsSpan(), ref valueLength, ref outp, ref rmwInfo);
                     Debug.Assert(valueLength <= value.LengthWithoutMetadata);
 
                     // Adjust value length if user shrinks it
@@ -476,7 +476,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public bool NeedCopyUpdate(ref SpanByte key, ref SpanByte input, ref SpanByte oldValue, ref SpanByteAndMemory output, ref RMWInfo rmwInfo)
     {
-        var inputPtr = input.ToPointer();
+        byte* inputPtr = input.ToPointer();
         switch ((RespCommand)(*inputPtr))
         {
             case RespCommand.SETEXNX:
@@ -498,7 +498,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
-                    var ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.NeedCopyUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], oldValue.AsReadOnlySpan(), ref outp);
+                    bool ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.NeedCopyUpdate(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], oldValue.AsReadOnlySpan(), ref outp);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;
                     return ret;
@@ -511,7 +511,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc />
     public bool CopyUpdater(ref SpanByte key, ref SpanByte input, ref SpanByte oldValue, ref SpanByte newValue, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
-        var inputPtr = input.ToPointer();
+        byte* inputPtr = input.ToPointer();
 
         // Expired data
         if (oldValue.MetadataSize > 0 && ((RespInputHeader*)inputPtr)->CheckExpiry(oldValue.ExtraMetadata))
@@ -584,9 +584,9 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 break;
 
             case RespCommand.INCRBY:
-                var length = input.LengthWithoutMetadata - RespInputHeader.Size;
+                int length = input.LengthWithoutMetadata - RespInputHeader.Size;
                 // Check if input contains a valid number
-                if (!IsValidNumber(length, input.ToPointer() + RespInputHeader.Size, output.SpanByte.AsSpan(), out var incrBy))
+                if (!IsValidNumber(length, input.ToPointer() + RespInputHeader.Size, output.SpanByte.AsSpan(), out long incrBy))
                 {
                     // Move to tail of the log
                     oldValue.CopyTo(ref newValue);
@@ -598,7 +598,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             case RespCommand.DECRBY:
                 length = input.LengthWithoutMetadata - RespInputHeader.Size;
                 // Check if input contains a valid number
-                if (!IsValidNumber(length, input.ToPointer() + RespInputHeader.Size, output.SpanByte.AsSpan(), out var decrBy))
+                if (!IsValidNumber(length, input.ToPointer() + RespInputHeader.Size, output.SpanByte.AsSpan(), out long decrBy))
                 {
                     // Move to tail of the log
                     oldValue.CopyTo(ref newValue);
@@ -653,10 +653,10 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 break;
 
             case RespCommand.SETRANGE:
-                var offset = *(int*)(inputPtr + RespInputHeader.Size);
+                int offset = *(int*)(inputPtr + RespInputHeader.Size);
                 oldValue.CopyTo(ref newValue);
 
-                var newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
+                int newValueSize = *(int*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 var newValuePtr = new Span<byte>((byte*)*(long*)(inputPtr + RespInputHeader.Size + sizeof(int) * 2), newValueSize);
                 newValuePtr.CopyTo(newValue.AsSpan().Slice(offset));
 
@@ -674,8 +674,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 // Copy any existing value with metadata to thew new value
                 oldValue.CopyTo(ref newValue);
 
-                var appendSize = *(int*)(inputPtr + RespInputHeader.Size);
-                var appendPtr = *(long*)(inputPtr + RespInputHeader.Size + sizeof(int));
+                int appendSize = *(int*)(inputPtr + RespInputHeader.Size);
+                long appendPtr = *(long*)(inputPtr + RespInputHeader.Size + sizeof(int));
                 var appendSpan = new Span<byte>((byte*)appendPtr, appendSize);
 
                 // Append the new value with the client input at the end of the old data
@@ -687,8 +687,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (*inputPtr >= CustomCommandManager.StartOffset)
                 {
-                    var functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
-                    var expiration = input.ExtraMetadata;
+                    CustomRawStringFunctions functions = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions;
+                    long expiration = input.ExtraMetadata;
                     if (expiration == 0)
                     {
                         // We want to retain the old metadata
@@ -702,7 +702,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                     (IMemoryOwner<byte> Memory, int Length) outp = (output.Memory, 0);
 
-                    var ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.CopyUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan().Slice(RespInputHeader.Size),
+                    bool ret = functionsState.customCommands[*inputPtr - CustomCommandManager.StartOffset].functions.CopyUpdater(key.AsReadOnlySpan(), input.AsReadOnlySpan().Slice(RespInputHeader.Size),
                         oldValue.AsReadOnlySpan(), newValue.AsSpan(), ref outp, ref rmwInfo);
                     output.Memory = outp.Memory;
                     output.Length = outp.Length;

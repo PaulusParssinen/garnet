@@ -35,7 +35,7 @@ internal sealed class ReplicaSyncSessionTaskStore
             _disposed = true;
             for (int i = 0; i < numSessions; i++)
             {
-                var s = sessions[i];
+                ReplicaSyncSession s = sessions[i];
                 s.Dispose();
             }
             numSessions = 0;
@@ -56,7 +56,7 @@ internal sealed class ReplicaSyncSessionTaskStore
             _lock.WriteLock();
             for (int i = 0; i < numSessions; i++)
             {
-                var s = sessions[i];
+                ReplicaSyncSession s = sessions[i];
                 if (s.remoteNodeId == retSession.remoteNodeId)
                 {
                     success = false;
@@ -101,7 +101,7 @@ internal sealed class ReplicaSyncSessionTaskStore
             if (_disposed) return true;
             for (int i = 0; i < numSessions; i++)
             {
-                var s = sessions[i];
+                ReplicaSyncSession s = sessions[i];
                 if (s.remoteNodeId == remoteNodeId)
                 {
                     sessions[i] = null;
@@ -130,7 +130,7 @@ internal sealed class ReplicaSyncSessionTaskStore
         //Shrink the array if it got too big but avoid often shrinking/growing
         if (numSessions > 0 && (numSessions << 2) < sessions.Length)
         {
-            var oldSessions = sessions;
+            ReplicaSyncSession[] oldSessions = sessions;
             var _sessions = new ReplicaSyncSession[sessions.Length >> 1];
             Array.Copy(sessions, _sessions, sessions.Length >> 2);
             sessions = _sessions;

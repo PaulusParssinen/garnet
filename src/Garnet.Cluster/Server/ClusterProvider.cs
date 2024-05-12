@@ -182,12 +182,12 @@ public class ClusterProvider : IClusterProvider
     /// <inheritdoc />
     public MetricsItem[] GetReplicationInfo()
     {
-        var clusterEnabled = serverOptions.EnableCluster;
-        var config = clusterEnabled ? clusterManager.CurrentConfig : null;
-        var replicaInfo = clusterEnabled ? replicationManager.GetReplicaInfo() : null;
-        var role = clusterEnabled ? config.LocalNodeRole : NodeRole.PRIMARY;
-        var replication_offset = !clusterEnabled ? "N/A" : replicationManager.ReplicationOffset.ToString();
-        var replication_offset2 = !clusterEnabled ? "N/A" : replicationManager.ReplicationOffset2.ToString();
+        bool clusterEnabled = serverOptions.EnableCluster;
+        ClusterConfig config = clusterEnabled ? clusterManager.CurrentConfig : null;
+        List<(string, string)> replicaInfo = clusterEnabled ? replicationManager.GetReplicaInfo() : null;
+        NodeRole role = clusterEnabled ? config.LocalNodeRole : NodeRole.PRIMARY;
+        string replication_offset = !clusterEnabled ? "N/A" : replicationManager.ReplicationOffset.ToString();
+        string replication_offset2 = !clusterEnabled ? "N/A" : replicationManager.ReplicationOffset2.ToString();
 
         var replicationInfo = new List<MetricsItem>()
         {
@@ -209,8 +209,8 @@ public class ClusterProvider : IClusterProvider
         {
             if (role == NodeRole.REPLICA)
             {
-                var (address, port) = config.GetLocalNodePrimaryAddress();
-                var primaryLinkStatus = clusterManager.GetPrimaryLinkStatus(config);
+                (string address, int port) = config.GetLocalNodePrimaryAddress();
+                MetricsItem[] primaryLinkStatus = clusterManager.GetPrimaryLinkStatus(config);
                 replicationInfo.Add(new("master_host", address));
                 replicationInfo.Add(new("master_port", port.ToString()));
                 replicationInfo.Add(primaryLinkStatus[0]);
@@ -225,7 +225,7 @@ public class ClusterProvider : IClusterProvider
             else
             {
                 // replica0: ip=127.0.0.1,port=7001,state=online,offset=56,lag=0
-                foreach (var ri in replicaInfo)
+                foreach ((string, string) ri in replicaInfo)
                     replicationInfo.Add(new(ri.Item1, ri.Item2));
             }
         }
@@ -235,7 +235,7 @@ public class ClusterProvider : IClusterProvider
     /// <inheritdoc />
     public MetricsItem[] GetGossipStats(bool metricsDisabled)
     {
-        var gossipStats = clusterManager.gossipStats;
+        GossipStats gossipStats = clusterManager.gossipStats;
         return
             [
                 new("meet_requests_recv", metricsDisabled ? "0" : gossipStats.meet_requests_recv.ToString()),
@@ -273,17 +273,17 @@ public class ClusterProvider : IClusterProvider
     /// <returns></returns>
     internal bool WaitForConfigTransition()
     {
-        var server = storeWrapper.GetServer();
+        GarnetServerTcp server = storeWrapper.GetServer();
         BumpCurrentEpoch();
         while (true)
         {
         retry:
-            var currentEpoch = GarnetCurrentEpoch;
+            long currentEpoch = GarnetCurrentEpoch;
             Thread.Yield();
-            var sessions = server.ActiveClusterSessions();
-            foreach (var s in sessions)
+            IEnumerable<IClusterSession> sessions = server.ActiveClusterSessions();
+            foreach (IClusterSession s in sessions)
             {
-                var entryEpoch = s.LocalCurrentEpoch;
+                long entryEpoch = s.LocalCurrentEpoch;
                 if (entryEpoch != 0 && entryEpoch < currentEpoch)
                     goto retry;
             }

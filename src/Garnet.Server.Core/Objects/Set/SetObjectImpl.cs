@@ -28,7 +28,7 @@ public unsafe partial class SetObject : IGarnetObject
 
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member, ref ptr, end))
                 return;
 
             if (set.Add(member))
@@ -55,8 +55,8 @@ public unsafe partial class SetObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -64,7 +64,7 @@ public unsafe partial class SetObject : IGarnetObject
             while (!RespWriteUtils.WriteArrayLength(set.Count, ref curr, end))
                 ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-            foreach (var item in set)
+            foreach (byte[] item in set)
             {
                 if (countDone < prevDone) // skip processing previously done entries
                 {
@@ -101,13 +101,13 @@ public unsafe partial class SetObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member, ref input_currptr, input + length))
                 return;
 
             bool isMember = set.Contains(member);
@@ -144,7 +144,7 @@ public unsafe partial class SetObject : IGarnetObject
         int countDone = 0;
         while (count > 0)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var field, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] field, ref ptr, end))
                 break;
 
             if (countDone < prevDone) // skip processing previously done entries
@@ -193,8 +193,8 @@ public unsafe partial class SetObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -203,7 +203,7 @@ public unsafe partial class SetObject : IGarnetObject
             if (count >= 1)
             {
                 // POP this number of random fields
-                var countParameter = count > set.Count ? set.Count : count;
+                int countParameter = count > set.Count ? set.Count : count;
 
                 // Write the size of the array reply
                 while (!RespWriteUtils.WriteArrayLength(countParameter, ref curr, end))
@@ -212,8 +212,8 @@ public unsafe partial class SetObject : IGarnetObject
                 for (int i = 0; i < countParameter; i++)
                 {
                     // Generate a new index based on the elements left in the set
-                    var index = RandomNumberGenerator.GetInt32(0, set.Count);
-                    var item = set.ElementAt(index);
+                    int index = RandomNumberGenerator.GetInt32(0, set.Count);
+                    byte[] item = set.ElementAt(index);
                     set.Remove(item);
                     this.UpdateSize(item, false);
                     while (!RespWriteUtils.WriteBulkString(item, ref curr, end))
@@ -229,7 +229,7 @@ public unsafe partial class SetObject : IGarnetObject
                 if (set.Count > 0)
                 {
                     int index = RandomNumberGenerator.GetInt32(0, set.Count);
-                    var item = set.ElementAt(index);
+                    byte[] item = set.ElementAt(index);
                     set.Remove(item);
                     this.UpdateSize(item, false);
                     while (!RespWriteUtils.WriteBulkString(item, ref curr, end))
@@ -271,8 +271,8 @@ public unsafe partial class SetObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -283,7 +283,7 @@ public unsafe partial class SetObject : IGarnetObject
             if (count > 0)
             {
                 // Return an array of distinct elements
-                var countParameter = count > set.Count ? set.Count : count;
+                int countParameter = count > set.Count ? set.Count : count;
 
                 // The order of fields in the reply is not truly random
                 indexes = Enumerable.Range(0, set.Count).OrderBy(x => Guid.NewGuid()).Take(countParameter).ToArray();
@@ -292,9 +292,9 @@ public unsafe partial class SetObject : IGarnetObject
                 while (!RespWriteUtils.WriteArrayLength(countParameter, ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                foreach (var index in indexes)
+                foreach (int index in indexes)
                 {
-                    var element = set.ElementAt(index);
+                    byte[] element = set.ElementAt(index);
                     while (!RespWriteUtils.WriteBulkString(element, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                     countDone++;
@@ -307,7 +307,7 @@ public unsafe partial class SetObject : IGarnetObject
                 if (set.Count > 0)
                 {
                     int index = RandomNumberGenerator.GetInt32(0, set.Count);
-                    var item = set.ElementAt(index);
+                    byte[] item = set.ElementAt(index);
                     while (!RespWriteUtils.WriteBulkString(item, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                 }
@@ -336,9 +336,9 @@ public unsafe partial class SetObject : IGarnetObject
                     while (!RespWriteUtils.WriteArrayLength(countParameter, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    foreach (var index in indexes)
+                    foreach (int index in indexes)
                     {
-                        var element = set.ElementAt(index);
+                        byte[] element = set.ElementAt(index);
                         while (!RespWriteUtils.WriteBulkString(element, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                         countDone++;

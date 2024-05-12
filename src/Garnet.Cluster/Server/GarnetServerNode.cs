@@ -119,7 +119,7 @@ internal sealed class GarnetServerNode
         {
             _ = meetLock.TryWriteLock();
             UpdateGossipSend();
-            var resp = gc.GossipWithMeet(configByteArray).WaitAsync(clusterProvider.clusterManager.gossipDelay, cts.Token).GetAwaiter().GetResult();
+            MemoryResult<byte> resp = gc.GossipWithMeet(configByteArray).WaitAsync(clusterProvider.clusterManager.gossipDelay, cts.Token).GetAwaiter().GetResult();
             return resp;
         }
         finally
@@ -134,7 +134,7 @@ internal sealed class GarnetServerNode
     /// <returns></returns>
     private byte[] GetMostRecentConfig()
     {
-        var conf = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig conf = clusterProvider.clusterManager.CurrentConfig;
         byte[] byteArray;
         if (conf != lastConfig)
         {
@@ -155,13 +155,13 @@ internal sealed class GarnetServerNode
     /// <returns></returns>
     public bool TryGossip()
     {
-        var configByteArray = GetMostRecentConfig();
-        var task = gossipTask;
+        byte[] configByteArray = GetMostRecentConfig();
+        Task task = gossipTask;
         // If first time we are sending gossip make sure to send latest version
         if (task == null)
         {
             // Issue first time gossip
-            var configArray = clusterProvider.clusterManager.CurrentConfig.ToByteArray();
+            byte[] configArray = clusterProvider.clusterManager.CurrentConfig.ToByteArray();
             gossipTask = Gossip(configArray);
             UpdateGossipSend();
             clusterProvider.clusterManager.gossipStats.gossip_full_send++;
@@ -199,13 +199,13 @@ internal sealed class GarnetServerNode
         {
             try
             {
-                var resp = t.Result;
+                MemoryResult<byte> resp = t.Result;
                 if (resp.Length > 0)
                 {
                     clusterProvider.clusterManager.gossipStats.UpdateGossipBytesRecv(resp.Length);
-                    var returnedConfigArray = resp.Span.ToArray();
+                    byte[] returnedConfigArray = resp.Span.ToArray();
                     var other = ClusterConfig.FromByteArray(returnedConfigArray);
-                    var current = clusterProvider.clusterManager.CurrentConfig;
+                    ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
                     // Check if gossip is from a node that is known and trusted before merging
                     if (current.IsKnown(other.LocalNodeId))
                         clusterProvider.clusterManager.TryMerge(ClusterConfig.FromByteArray(returnedConfigArray));

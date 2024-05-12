@@ -97,7 +97,7 @@ public class BasicLockTests
     [Category("TsavoriteKV")]
     public unsafe void RecordInfoLockTest([Values(1, 50)] int numThreads)
     {
-        for (var ii = 0; ii < 5; ++ii)
+        for (int ii = 0; ii < 5; ++ii)
         {
             RecordInfo recordInfo = new() { Valid = true };
             RecordInfo* ri = &recordInfo;
@@ -116,7 +116,7 @@ public class BasicLockTests
         const int numIters = 1000;
         SpinWait sw = new();
 
-        var tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(XLockTestFunc)).ToArray();
+        Task[] tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(XLockTestFunc)).ToArray();
         Task.WaitAll(tasks);
 
         Assert.AreEqual(numThreads * numIters, lockTestValue);
@@ -127,7 +127,7 @@ public class BasicLockTests
             {
                 while (!locker())
                     sw.SpinOnce(-1);
-                var temp = lockTestValue;
+                long temp = lockTestValue;
                 Thread.Yield();
                 lockTestValue = temp + 1;
                 unlocker();
@@ -143,7 +143,7 @@ public class BasicLockTests
 
         const int numIters = 1000;
 
-        var tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(SLockTestFunc)).ToArray();
+        Task[] tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(SLockTestFunc)).ToArray();
         Task.WaitAll(tasks);
 
         Assert.AreEqual(numThreads * numIters, lockTestValueResult);
@@ -169,7 +169,7 @@ public class BasicLockTests
 
         const int numIters = 1000;
 
-        var tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(XLockTestFunc))
+        Task[] tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(XLockTestFunc))
             .Concat(Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(SLockTestFunc))).ToArray();
         Task.WaitAll(tasks);
 
@@ -182,7 +182,7 @@ public class BasicLockTests
             {
                 while (!xlocker())
                     sw.SpinOnce(-1);
-                var temp = lockTestValue;
+                long temp = lockTestValue;
                 Thread.Yield();
                 lockTestValue = temp + 1;
                 xunlocker();
@@ -215,13 +215,13 @@ public class BasicLockTests
 
         // Update
         const int numIters = 500;
-        var tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(() => UpdateFunc((ii & 1) == 0, numRecords, numIters))).ToArray();
+        Task[] tasks = Enumerable.Range(0, numThreads).Select(ii => Task.Factory.StartNew(() => UpdateFunc((ii & 1) == 0, numRecords, numIters))).ToArray();
         Task.WaitAll(tasks);
 
         // Verify
         for (int key = 0; key < numRecords; key++)
         {
-            var expectedValue = key * valueMult + numThreads * numIters;
+            int expectedValue = key * valueMult + numThreads * numIters;
             Assert.IsFalse(session.Read(key, out int value).IsPending);
             Assert.AreEqual(expectedValue, value);
         }
@@ -229,7 +229,7 @@ public class BasicLockTests
 
     void UpdateFunc(bool useRMW, int numRecords, int numIters)
     {
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
             for (int iter = 0; iter < numIters; iter++)
             {
@@ -266,8 +266,8 @@ public class BasicLockTests
         Assert.IsTrue(store.FindTag(ref hei), "Cannot find deleteKey entry");
         Assert.Greater(hei.Address, Constants.kInvalidAddress, "Couldn't find deleteKey Address");
         long physicalAddress = store.hlog.GetPhysicalAddress(hei.Address);
-        ref var recordInfo = ref store.hlog.GetInfo(physicalAddress);
-        ref var lookupKey = ref store.hlog.GetKey(physicalAddress);
+        ref RecordInfo recordInfo = ref store.hlog.GetInfo(physicalAddress);
+        ref int lookupKey = ref store.hlog.GetKey(physicalAddress);
         Assert.AreEqual(collidingKey, lookupKey, "Expected collidingKey");
 
         // Backtrace to deleteKey
@@ -284,7 +284,7 @@ public class BasicLockTests
         if (flushMode == FlushMode.ReadOnly)
             store.hlog.ShiftReadOnlyAddress(store.Log.TailAddress);
 
-        var status = updateOp switch
+        Status status = updateOp switch
         {
             UpdateOp.RMW => session.RMW(deleteKey, default),
             UpdateOp.Upsert => session.Upsert(deleteKey, default),
@@ -315,15 +315,15 @@ public class BasicLockTests
 
         // Delete must try with an existing key; Upsert and Delete should insert a new key
         int deleteKey = numRecords / 2;
-        var insertKey = numRecords + 1;
+        int insertKey = numRecords + 1;
 
         // Make sure everything will create a new record.
         store.Log.FlushAndEvict(wait: true);
 
-        var threw = false;
+        bool threw = false;
         try
         {
-            var status = updateOp switch
+            Status status = updateOp switch
             {
                 UpdateOp.RMW => session.RMW(insertKey, default),
                 UpdateOp.Upsert => session.Upsert(insertKey, default),
@@ -342,7 +342,7 @@ public class BasicLockTests
         Assert.AreEqual(expectedThrowAddress, session.functions.initialUpdaterThrowAddress, "Unexpected throw address");
 
         long physicalAddress = store.hlog.GetPhysicalAddress(expectedThrowAddress);
-        ref var recordInfo = ref store.hlog.GetInfo(physicalAddress);
+        ref RecordInfo recordInfo = ref store.hlog.GetInfo(physicalAddress);
         Assert.IsTrue(recordInfo.Invalid, "Expected Invalid record");
     }
 

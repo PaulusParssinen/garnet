@@ -113,8 +113,8 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         long expiration = -1,
         HashSet<int> restrictedToSlots = null)
     {
-        var key = new byte[keyLen];
-        var value = new byte[valueLen];
+        byte[] key = new byte[keyLen];
+        byte[] value = new byte[valueLen];
 
         Assert.IsTrue(keyTagEnd < valueLen);
         ushort slot;
@@ -128,13 +128,13 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
             if (restrictedToSlots == null) break;
         } while (!restrictedToSlots.Contains(slot));
 
-        var db = context.clusterTestUtils.GetMultiplexer().GetDatabase(0);
+        IDatabase db = context.clusterTestUtils.GetMultiplexer().GetDatabase(0);
         for (int i = 0; i < keyCount; i++)
         {
             RandomBytes(ref key, keyTagEnd + 1);
             RandomBytes(ref value);
 
-            var ss = ClusterTestUtils.HashSlot(key);
+            ushort ss = ClusterTestUtils.HashSlot(key);
             Assert.AreEqual(slot, ss);
             if (!data.ContainsKey(key))
                 data.Add(key, value);
@@ -158,7 +158,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
             Assert.IsTrue(status);
 
-            var _v = (byte[])db.StringGet(key);
+            byte[] _v = (byte[])db.StringGet(key);
             Assert.AreEqual(value, _v);
         }
         return slot;
@@ -173,14 +173,14 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         out Dictionary<int, Dictionary<byte[], byte[]>> data,
         HashSet<int> restrictedToSlots = null)
     {
-        var db = context.clusterTestUtils.GetMultiplexer().GetDatabase(0);
+        IDatabase db = context.clusterTestUtils.GetMultiplexer().GetDatabase(0);
         Dictionary<ushort, byte[]> slotsTokey = [];
         data = [];
-        var key = new byte[keyLen];
-        var value = new byte[valueLen];
+        byte[] key = new byte[keyLen];
+        byte[] value = new byte[valueLen];
 
         Assert.IsTrue(slotCount < keyCount);
-        for (var i = 0; i < slotCount; i++)
+        for (int i = 0; i < slotCount; i++)
         {
             ushort slot;
             byte[] newKey;
@@ -205,15 +205,15 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         for (int i = 0; i < keyCount; i++)
         {
             key = slotsTokey[slots[j]];
-            var newKey = new byte[key.Length];
-            var newValue = new byte[value.Length];
+            byte[] newKey = new byte[key.Length];
+            byte[] newValue = new byte[value.Length];
 
             Array.Copy(key, 0, newKey, 0, key.Length);
             Array.Copy(value, 0, newValue, 0, value.Length);
             RandomBytes(ref newKey, keyTagEnd + 1);
             RandomBytes(ref newValue);
 
-            var slot = ClusterTestUtils.HashSlot(newKey);
+            ushort slot = ClusterTestUtils.HashSlot(newKey);
             Assert.AreEqual(slot, slots[j]);
             Assert.IsTrue(slotsTokey.ContainsKey((ushort)slot));
 
@@ -223,7 +223,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
                 data[slot][newKey] = newValue;
 
             Assert.IsTrue(db.StringSet(newKey, newValue));
-            var _v = (byte[])db.StringGet(newKey);
+            byte[] _v = (byte[])db.StringGet(newKey);
             Assert.AreEqual(newValue, _v);
             j = j + 1 < slots.Count ? j + 1 : 0;
         }
@@ -238,10 +238,10 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug("0. ClusterSimpleInitialize started");
 
         context.logger.LogDebug("1. InitSimpleCluster started");
-        var (_, slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
         context.logger.LogDebug("2. InitSimpleCluster done");
 
-        var slots2 = context.clusterTestUtils.GetOwnedSlotsFromNode(0, context.logger);
+        List<int> slots2 = context.clusterTestUtils.GetOwnedSlotsFromNode(0, context.logger);
         slots2.AddRange(context.clusterTestUtils.GetOwnedSlotsFromNode(1, context.logger));
         slots2.AddRange(context.clusterTestUtils.GetOwnedSlotsFromNode(2, context.logger));
 
@@ -259,18 +259,18 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug("0. ClusterSimpleSlotInfoTest started");
         context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var keyCount = 100;
+        int keyCount = 100;
         context.logger.LogDebug("1. Creating slot data {keyCount} started", keyCount);
-        var slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyCount, out _);
+        int slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyCount, out _);
         context.logger.LogDebug("2. Creating slot data {keyCount} done", keyCount);
 
-        var sourceIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)slot, context.logger);
-        var expectedKeyCount = context.clusterTestUtils.CountKeysInSlot(slot, context.logger);
+        int sourceIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)slot, context.logger);
+        int expectedKeyCount = context.clusterTestUtils.CountKeysInSlot(slot, context.logger);
         Assert.AreEqual(expectedKeyCount, keyCount);
         _ = context.clusterTestUtils.CountKeysInSlot(-1, context.logger);
         _ = context.clusterTestUtils.CountKeysInSlot(ushort.MaxValue, context.logger);
 
-        var result = context.clusterTestUtils.GetKeysInSlot(sourceIndex, slot, expectedKeyCount, context.logger);
+        List<byte[]> result = context.clusterTestUtils.GetKeysInSlot(sourceIndex, slot, expectedKeyCount, context.logger);
         Assert.AreEqual(result.Count, keyCount);
         _ = context.clusterTestUtils.GetKeysInSlot(-1, expectedKeyCount);
         _ = context.clusterTestUtils.GetKeysInSlot(ushort.MaxValue, expectedKeyCount);
@@ -314,13 +314,13 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         HashSet<int> slots = new(context.clusterTestUtils.GetOwnedSlotsFromNode(0, context.logger));
 
-        foreach (var _slot in new List<int>() { 1, 2, 3, 4, 5, 6 })
+        foreach (int _slot in new List<int>() { 1, 2, 3, 4, 5, 6 })
             Assert.IsTrue(slots.Contains(_slot));
 
-        foreach (var _slot in Enumerable.Range(10, 21).ToList())
+        foreach (int _slot in Enumerable.Range(10, 21).ToList())
             Assert.IsTrue(slots.Contains(_slot));
 
-        foreach (var _slot in Enumerable.Range(40, 41).ToList())
+        foreach (int _slot in Enumerable.Range(40, 41).ToList())
             Assert.IsTrue(slots.Contains(_slot));
         #endregion
 
@@ -330,22 +330,22 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         byte[] key = Encoding.ASCII.GetBytes("{abc}0");
         byte[] val = Encoding.ASCII.GetBytes("1234");
-        var respState = context.clusterTestUtils.SetKey(0, key, val, out var _, out var _, out var _, logger: context.logger);
+        ResponseState respState = context.clusterTestUtils.SetKey(0, key, val, out int _, out string _, out int _, logger: context.logger);
         Assert.AreEqual(respState, ResponseState.OK);
 
         resp = context.clusterTestUtils.AddDelSlots(0, new List<int> { 7638 }, false);
         Assert.AreEqual(resp, "OK");
 
-        respState = context.clusterTestUtils.SetKey(0, key, val, out var _, out var _, out var _, logger: context.logger);
+        respState = context.clusterTestUtils.SetKey(0, key, val, out int _, out string _, out int _, logger: context.logger);
         Assert.AreEqual(respState, ResponseState.CLUSTERDOWN);
 
-        resp = context.clusterTestUtils.GetKey(0, key, out var _, out var _, out var _, out var _, logger: context.logger);
+        resp = context.clusterTestUtils.GetKey(0, key, out int _, out string _, out int _, out ResponseState _, logger: context.logger);
         Assert.AreEqual(resp, "CLUSTERDOWN");
 
         resp = context.clusterTestUtils.AddDelSlots(0, new List<int> { 7638 }, true);
         Assert.AreEqual(resp, "OK");
 
-        resp = context.clusterTestUtils.GetKey(0, key, out var _, out var _, out var _, out var _, logger: context.logger);
+        resp = context.clusterTestUtils.GetKey(0, key, out int _, out string _, out int _, out ResponseState _, logger: context.logger);
         Assert.AreEqual(resp, val);
 
         #endregion
@@ -361,23 +361,23 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.CreateInstances(defaultShards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
         context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
-        var sourcePortIndex = 1;
-        var targetPortIndex = 2;
-        var otherNodeIndex = 0;
+        int sourcePortIndex = 1;
+        int targetPortIndex = 2;
+        int otherNodeIndex = 0;
 
-        var key = Encoding.ASCII.GetBytes("{abc}0");
-        var val = Encoding.ASCII.GetBytes("1234");
-        var respState = context.clusterTestUtils.SetKey(sourcePortIndex, key, val, out _, out _, out _, logger: context.logger);
+        byte[] key = Encoding.ASCII.GetBytes("{abc}0");
+        byte[] val = Encoding.ASCII.GetBytes("1234");
+        ResponseState respState = context.clusterTestUtils.SetKey(sourcePortIndex, key, val, out _, out _, out _, logger: context.logger);
         Assert.AreEqual(respState, ResponseState.OK);
-        var slot = 7638;
+        int slot = 7638;
 
-        var sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourcePortIndex, context.logger);
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetPortIndex, context.logger);
+        string sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourcePortIndex, context.logger);
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetPortIndex, context.logger);
 
         #region SETSLOT_IMPORTING
         //Set Importing Tests
         //1. don't know node error
-        var resp = context.clusterTestUtils.SetSlot(targetPortIndex, slot, "IMPORTING", sourceNodeId[..10], context.logger);
+        string resp = context.clusterTestUtils.SetSlot(targetPortIndex, slot, "IMPORTING", sourceNodeId[..10], context.logger);
         Assert.AreEqual(resp, $"ERR I don't know about node {sourceNodeId[..10]}");
 
         //2. cannot import slot already owned by node
@@ -434,7 +434,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         #region TEST_REDIRECTION
         //0. other node alway redirect to source node            
-        resp = context.clusterTestUtils.GetKey(otherNodeIndex, key, out slot, out var address, out var port, out var responseState, logger: context.logger);
+        resp = context.clusterTestUtils.GetKey(otherNodeIndex, key, out slot, out string address, out int port, out ResponseState responseState, logger: context.logger);
         Assert.AreEqual(ResponseState.MOVED, responseState);
         Assert.AreEqual(resp, "MOVED");
         Assert.AreEqual(slot, 7638);
@@ -504,30 +504,30 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     public void ClusterRedirectMessage()
     {
         context.logger.LogDebug("0. ClusterRedirectMessageTest started");
-        var Shards = 2;
+        int Shards = 2;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
-        var key = Encoding.ASCII.GetBytes("{abc}0");
+        byte[] key = Encoding.ASCII.GetBytes("{abc}0");
 
-        var slot = ClusterTestUtils.HashSlot(key);
+        ushort slot = ClusterTestUtils.HashSlot(key);
 
         List<byte[]> keys = [];
         List<byte[]> vals = [];
 
-        for (var i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
-            var newKey = new byte[key.Length];
+            byte[] newKey = new byte[key.Length];
             Array.Copy(key, 0, newKey, 0, key.Length);
             newKey[^1] = (byte)(newKey[^1] + i);
             keys.Add(newKey);
             vals.Add(newKey);
         }
 
-        var resp = context.clusterTestUtils.SetMultiKey(0, keys, vals, out var _, out var _, out var _);
+        string resp = context.clusterTestUtils.SetMultiKey(0, keys, vals, out int _, out string _, out int _);
         Assert.AreEqual(resp, "OK");
 
-        _ = context.clusterTestUtils.GetMultiKey(0, keys, out var valuesGet, out _, out _, out _);
+        _ = context.clusterTestUtils.GetMultiKey(0, keys, out List<byte[]> valuesGet, out _, out _, out _);
         Assert.AreEqual(valuesGet, vals);
 
         keys[0][1] = (byte)('w');
@@ -539,7 +539,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         keys[0][1] = (byte)('a');
         Assert.AreEqual(ClusterTestUtils.HashSlot(keys[0]), ClusterTestUtils.HashSlot(keys[1]));
-        resp = context.clusterTestUtils.GetMultiKey(1, keys, out _, out var _slot, out var _address, out var _port);
+        resp = context.clusterTestUtils.GetMultiKey(1, keys, out _, out int _slot, out string _address, out int _port);
         Assert.AreEqual(resp, "MOVED");
         Assert.AreEqual(_slot, slot);
         Assert.AreEqual(_address, context.clusterTestUtils.GetEndPoint(0).Address.ToString());
@@ -560,34 +560,34 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateSlotsTest started");
         var Port = TestUtils.Port;
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
 
-        var (_, slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var msp = context.clusterTestUtils.GetSlotPortMapFromNode(0, context.logger);
-        for (var i = 1; i < Shards; i++)
+        Dictionary<ushort, int> msp = context.clusterTestUtils.GetSlotPortMapFromNode(0, context.logger);
+        for (int i = 1; i < Shards; i++)
             msp = ClusterTestUtils.MergeSlotPortMap(msp, context.clusterTestUtils.GetSlotPortMapFromNode(i, context.logger));
         Assert.AreEqual(msp.Count, 16384);
 
         context.logger.LogDebug($"1. Creating data");
-        var keyCount = 100;
-        var slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyCount, out var data);
-        var sourceIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)slot, context.logger);
-        var expectedKeyCount = context.clusterTestUtils.CountKeysInSlot(slot);
+        int keyCount = 100;
+        int slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyCount, out Dictionary<byte[], byte[]> data);
+        int sourceIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)slot, context.logger);
+        int expectedKeyCount = context.clusterTestUtils.CountKeysInSlot(slot);
         Assert.AreEqual(expectedKeyCount, keyCount);
         context.logger.LogDebug("2. Data created {keyCount}", keyCount);
 
-        var sourcePort = msp[(ushort)slot];
-        var targetPort = msp[(ushort)context.r.Next(0, 16384)];
+        int sourcePort = msp[(ushort)slot];
+        int targetPort = msp[(ushort)context.r.Next(0, 16384)];
         while (sourcePort == targetPort)
             targetPort = msp[(ushort)context.r.Next(0, 16384)];
 
         // Check data are inserted correctly
-        foreach (var entry in data)
+        foreach (KeyValuePair<byte[], byte[]> entry in data)
         {
-            var value = context.clusterTestUtils.GetKey(context.clusterTestUtils.GetEndPointFromPort(sourcePort), entry.Key, out var _slot, out var _address, out var _port, out var responseState);
+            string value = context.clusterTestUtils.GetKey(context.clusterTestUtils.GetEndPointFromPort(sourcePort), entry.Key, out int _slot, out string _address, out int _port, out ResponseState responseState);
             Assert.AreEqual(ResponseState.OK, responseState);
             Assert.AreEqual(Encoding.ASCII.GetString(entry.Value), value, $"data not inserted correctly => expected: {Encoding.ASCII.GetString(entry.Value)}, actual: {value}");
             Assert.AreEqual(sourcePort, _port);
@@ -601,9 +601,9 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug($"4. Checking keys starting");
         // Wait for keys to become available for reading
         var keysList = data.Keys.ToList();
-        for (var i = 0; i < keysList.Count; i++)
+        for (int i = 0; i < keysList.Count; i++)
         {
-            var value = context.clusterTestUtils.GetKey(context.clusterTestUtils.GetEndPointFromPort(targetPort), keysList[i], out var _slot, out var _address, out var _port, out var responseState);
+            string value = context.clusterTestUtils.GetKey(context.clusterTestUtils.GetEndPointFromPort(targetPort), keysList[i], out int _slot, out string _address, out int _port, out ResponseState responseState);
             while (responseState != ResponseState.OK)
             {
                 _ = Thread.Yield();
@@ -617,16 +617,16 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         context.logger.LogDebug($"6. Checking configuration update starting");
         // Check if configuration has updated by
-        var otherPorts = context.clusterTestUtils.GetEndPoints().Select(x => ((IPEndPoint)x).Port).Where(x => x != sourcePort || x != targetPort);
+        IEnumerable<int> otherPorts = context.clusterTestUtils.GetEndPoints().Select(x => ((IPEndPoint)x).Port).Where(x => x != sourcePort || x != targetPort);
         while (true)
         {
-            var targetSlotPortMap = context.clusterTestUtils.GetSlotPortMapFromServer(targetPort, context.logger);
-            var sourceSlotPortMap = context.clusterTestUtils.GetSlotPortMapFromServer(sourcePort, context.logger);
+            Dictionary<ushort, int> targetSlotPortMap = context.clusterTestUtils.GetSlotPortMapFromServer(targetPort, context.logger);
+            Dictionary<ushort, int> sourceSlotPortMap = context.clusterTestUtils.GetSlotPortMapFromServer(sourcePort, context.logger);
 
-            var moved = false;
-            foreach (var p in otherPorts)
+            bool moved = false;
+            foreach (int p in otherPorts)
             {
-                var movedPort = context.clusterTestUtils.GetMovedAddress(p, (ushort)slot, context.logger);
+                int movedPort = context.clusterTestUtils.GetMovedAddress(p, (ushort)slot, context.logger);
                 moved |= movedPort == targetPort;
             }
 
@@ -651,21 +651,21 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.CreateConnection(useTLS: UseTLS);
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var keyExpiryCount = 10;
+        int keyExpiryCount = 10;
         context.logger.LogDebug("1. Creating expired key data {keyExpiryCount}", keyExpiryCount);
-        var slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyExpiryCount, out var data, 1);
+        int slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyExpiryCount, out Dictionary<byte[], byte[]> data, 1);
         Thread.Sleep(5000);
 
-        var keyCountRet = context.clusterTestUtils.CountKeysInSlot(slot);
+        int keyCountRet = context.clusterTestUtils.CountKeysInSlot(slot);
         Assert.AreEqual(keyCountRet, keyExpiryCount / 2);
         context.logger.LogDebug($"2. Count keys in slot after expiry");
 
         keyCountRet = 100;
         context.logger.LogDebug("3. Creating slot data {keyCountRet} with expiry started", keyCountRet);
 
-        var _slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyExpiryCount, out data, 20, new HashSet<int> { 7638 });
-        var sourceNodeIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)_slot, context.logger);
-        var targetNodeIndex = 2;
+        int _slot = CreateSingleSlotData(keyLen: 16, valueLen: 16, keyTagEnd: 6, keyExpiryCount, out data, 20, new HashSet<int> { 7638 });
+        int sourceNodeIndex = context.clusterTestUtils.GetSourceNodeIndexFromSlot((ushort)_slot, context.logger);
+        int targetNodeIndex = 2;
         Assert.AreNotEqual(_slot, slot);
         Assert.AreEqual(_slot, 7638);
 
@@ -690,16 +690,16 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
     private (string, List<Tuple<int, byte[]>>) DoZADD(int nodeIndex, byte[] key, int memberCount, int memberSize = 8, int scoreMin = int.MinValue, int scoreMax = int.MaxValue)
     {
-        var server = context.clusterTestUtils.GetServer(nodeIndex);
+        IServer server = context.clusterTestUtils.GetServer(nodeIndex);
         List<Tuple<int, byte[]>> data = [];
         HashSet<int> scores = [];
         ICollection<object> args = [key];
-        for (var i = 0; i < memberCount; i++)
+        for (int i = 0; i < memberCount; i++)
         {
-            var score = context.r.Next(scoreMin, scoreMax);
+            int score = context.r.Next(scoreMin, scoreMax);
             while (scores.Contains(score))
                 score = context.r.Next(scoreMin, scoreMax);
-            var member = new byte[memberSize];
+            byte[] member = new byte[memberSize];
             RandomBytes(ref member);
 
             data.Add(new(score, member));
@@ -709,7 +709,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         try
         {
-            var result = (string)server.Execute("zadd", args);
+            string result = (string)server.Execute("zadd", args);
             data.Sort((x, y) => x.Item1.CompareTo(y.Item1));
             return (result, data);
         }
@@ -724,7 +724,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     private string DoZCOUNT(int nodeIndex, byte[] key, out int count, out string address, out int port, out int slot, int scoreMin = int.MinValue, int scoreMax = int.MaxValue, ILogger logger = null)
     {
         count = -1;
-        var server = context.clusterTestUtils.GetServer(nodeIndex);
+        IServer server = context.clusterTestUtils.GetServer(nodeIndex);
         ICollection<object> args =
         [
             Encoding.ASCII.GetString(key),
@@ -734,7 +734,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         try
         {
-            var result = server.Execute("zcount", args, CommandFlags.NoRedirect);
+            RedisResult result = server.Execute("zcount", args, CommandFlags.NoRedirect);
             count = int.Parse((string)result);
             address = ((IPEndPoint)server.EndPoint).Address.ToString();
             port = ((IPEndPoint)server.EndPoint).Port;
@@ -743,7 +743,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -778,7 +778,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
     private (string, List<string>) DoZRANGE(int nodeIndex, byte[] key, out string address, out int port, out int slot, ILogger logger = null, int scoreMin = 0, int scoreMax = 100)
     {
-        var server = context.clusterTestUtils.GetServer(nodeIndex);
+        IServer server = context.clusterTestUtils.GetServer(nodeIndex);
         ICollection<object> args =
         [
             Encoding.ASCII.GetString(key),
@@ -787,7 +787,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         ];
         try
         {
-            var result = server.Execute("zrange", args, CommandFlags.NoRedirect);
+            RedisResult result = server.Execute("zrange", args, CommandFlags.NoRedirect);
             address = ((IPEndPoint)server.EndPoint).Address.ToString();
             port = ((IPEndPoint)server.EndPoint).Port;
             slot = ClusterTestUtils.HashSlot(key);
@@ -795,7 +795,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -834,25 +834,25 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateSlotsWithObjectsTest started");
         var Port = TestUtils.Port;
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(defaultShards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
-        var (_, slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        string sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
 
-        var key = Encoding.ASCII.GetBytes("{abc}0");
-        var slot = ClusterTestUtils.HashSlot(key);
-        var memberCount = 10;
+        byte[] key = Encoding.ASCII.GetBytes("{abc}0");
+        ushort slot = ClusterTestUtils.HashSlot(key);
+        int memberCount = 10;
         Assert.AreEqual(slot, 7638);
 
         context.logger.LogDebug($"1. Loading object keys data started");
         List<Tuple<int, byte[]>> memberPair;
         (_, memberPair) = DoZADD(sourceNodeIndex, key, memberCount);
-        var resp = DoZCOUNT(sourceNodeIndex, key, out var count, out var _Address, out var _Port, out var _Slot, logger: context.logger);
+        string resp = DoZCOUNT(sourceNodeIndex, key, out int count, out string _Address, out int _Port, out int _Slot, logger: context.logger);
         Assert.AreEqual(resp, "OK");
         Assert.AreEqual(count, memberCount);
         List<string> members;
@@ -861,8 +861,8 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         context.logger.LogDebug($"2. Loading object keys data done");
 
-        var sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
-        var targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
+        IPEndPoint sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
+        IPEndPoint targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
         context.logger.LogDebug("3. Migrating slot {slot} started {sourceEndPoint.Port} to {targetEndPoint.Port} started", slot, sourceEndPoint.Port, targetEndPoint.Port);
         context.clusterTestUtils.MigrateSlots(context.clusterTestUtils.GetEndPoint(sourceNodeIndex), context.clusterTestUtils.GetEndPoint(targetNodeIndex), new List<int>() { slot }, logger: context.logger);
         context.logger.LogDebug("4. Migrating slot {slot} started {sourceEndPoint.Port} to {targetEndPoint.Port} done", slot, sourceEndPoint.Port, targetEndPoint.Port);
@@ -893,28 +893,28 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.CreateConnection(useTLS: UseTLS);
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var otherNodeIndex = 0;
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
+        int otherNodeIndex = 0;
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        string sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
 
-        var keyCount = 10;
-        var key = Encoding.ASCII.GetBytes("{abc}a");
+        int keyCount = 10;
+        byte[] key = Encoding.ASCII.GetBytes("{abc}a");
         List<byte[]> keys = new();
-        var _workingSlot = ClusterTestUtils.HashSlot(key);
+        ushort _workingSlot = ClusterTestUtils.HashSlot(key);
         Assert.AreEqual(7638, _workingSlot);
 
         context.logger.LogDebug("1. Loading test keys {keyCount}", keyCount);
-        for (var i = 0; i < keyCount; i++)
+        for (int i = 0; i < keyCount; i++)
         {
-            var newKey = new byte[key.Length];
+            byte[] newKey = new byte[key.Length];
             Array.Copy(key, 0, newKey, 0, key.Length);
             newKey[^1] = (byte)(newKey[^1] + i);
             keys.Add(newKey);
             Assert.AreEqual(_workingSlot, ClusterTestUtils.HashSlot(newKey));
 
-            var resp = context.clusterTestUtils.SetKey(sourceNodeIndex, newKey, newKey, out _, out var address, out var port, logger: context.logger);
+            ResponseState resp = context.clusterTestUtils.SetKey(sourceNodeIndex, newKey, newKey, out _, out string address, out int port, logger: context.logger);
             Assert.AreEqual(resp, ResponseState.OK);
             Assert.AreEqual(address, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Address.ToString());
             Assert.AreEqual(port, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Port);
@@ -922,19 +922,19 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug("2. Test keys loaded");
 
         // Start migration
-        var respImport = context.clusterTestUtils.SetSlot(targetNodeIndex, _workingSlot, "IMPORTING", sourceNodeId, logger: context.logger);
+        string respImport = context.clusterTestUtils.SetSlot(targetNodeIndex, _workingSlot, "IMPORTING", sourceNodeId, logger: context.logger);
         Assert.AreEqual(respImport, "OK");
         context.logger.LogDebug("3. Set slot {_slot} to IMPORTING state on node {port}", _workingSlot, context.clusterTestUtils.GetEndPoint(targetNodeIndex).Port);
 
-        var respMigrate = context.clusterTestUtils.SetSlot(sourceNodeIndex, _workingSlot, "MIGRATING", targetNodeId, logger: context.logger);
+        string respMigrate = context.clusterTestUtils.SetSlot(sourceNodeIndex, _workingSlot, "MIGRATING", targetNodeId, logger: context.logger);
         Assert.AreEqual(respMigrate, "OK");
         context.logger.LogDebug("4. Set slot {_slot} to MIGRATING state on node {port}", _workingSlot, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Port);
 
-        var countKeys = context.clusterTestUtils.CountKeysInSlot(sourceNodeIndex, _workingSlot, context.logger);
+        int countKeys = context.clusterTestUtils.CountKeysInSlot(sourceNodeIndex, _workingSlot, context.logger);
         Assert.AreEqual(countKeys, keyCount);
         context.logger.LogDebug("5. CountKeysInSlot {countKeys}", countKeys);
 
-        var keysInSlot = context.clusterTestUtils.GetKeysInSlot(sourceNodeIndex, _workingSlot, countKeys, context.logger);
+        List<byte[]> keysInSlot = context.clusterTestUtils.GetKeysInSlot(sourceNodeIndex, _workingSlot, countKeys, context.logger);
         Assert.AreEqual(keys, keysInSlot);
         context.logger.LogDebug("6. GetKeysInSlot {keysInSlot.Count}", keysInSlot.Count);
 
@@ -942,21 +942,21 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.clusterTestUtils.MigrateKeys(context.clusterTestUtils.GetEndPoint(sourceNodeIndex), context.clusterTestUtils.GetEndPoint(targetNodeIndex), keysInSlot, context.logger);
         context.logger.LogDebug($"8. MigrateKeys done");
 
-        var respNodeTarget = context.clusterTestUtils.SetSlot(targetNodeIndex, _workingSlot, "NODE", targetNodeId, logger: context.logger);
+        string respNodeTarget = context.clusterTestUtils.SetSlot(targetNodeIndex, _workingSlot, "NODE", targetNodeId, logger: context.logger);
         Assert.AreEqual(respNodeTarget, "OK");
         context.logger.LogDebug("9a. SetSlot {_slot} to target NODE {port}", _workingSlot, context.clusterTestUtils.GetEndPoint(targetNodeIndex).Port);
         context.clusterTestUtils.BumpEpoch(targetNodeIndex, waitForSync: true, logger: context.logger);
 
-        var respNodeSource = context.clusterTestUtils.SetSlot(sourceNodeIndex, _workingSlot, "NODE", targetNodeId, logger: context.logger);
+        string respNodeSource = context.clusterTestUtils.SetSlot(sourceNodeIndex, _workingSlot, "NODE", targetNodeId, logger: context.logger);
         Assert.AreEqual(respNodeSource, "OK");
         context.logger.LogDebug("9b. SetSlot {_slot} to source NODE {port}", _workingSlot, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Port);
         context.clusterTestUtils.BumpEpoch(sourceNodeIndex, waitForSync: true, logger: context.logger);
         // End Migration
 
         context.logger.LogDebug("10. Checking config epoch");
-        var targetConfigEpochFromTarget = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(targetNodeIndex, targetNodeId, context.logger);
-        var targetConfigEpochFromSource = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(sourceNodeIndex, targetNodeId, context.logger);
-        var targetConfigEpochFromOther = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(otherNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromTarget = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(targetNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromSource = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(sourceNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromOther = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(otherNodeIndex, targetNodeId, context.logger);
 
         while (targetConfigEpochFromOther != targetConfigEpochFromTarget || targetConfigEpochFromSource != targetConfigEpochFromTarget)
         {
@@ -970,9 +970,9 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug("11. Success config epoch");
 
         context.logger.LogDebug("13. Checking migrate keys starting");
-        foreach (var _key in keys)
+        foreach (byte[] _key in keys)
         {
-            var resp = context.clusterTestUtils.GetKey(otherNodeIndex, _key, out var slot, out var address, out var port, out var responseState, logger: context.logger);
+            string resp = context.clusterTestUtils.GetKey(otherNodeIndex, _key, out int slot, out string address, out int port, out ResponseState responseState, logger: context.logger);
             while (port != context.clusterTestUtils.GetEndPoint(targetNodeIndex).Port && responseState != ResponseState.OK)
             {
                 resp = context.clusterTestUtils.GetKey(otherNodeIndex, _key, out slot, out address, out port, out responseState, logger: context.logger);
@@ -998,35 +998,35 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateKeysWithObjectsTest started");
         var Port = TestUtils.Port;
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
-        var (_, slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> slots) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var otherNodeIndex = 0;
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
+        int otherNodeIndex = 0;
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        string sourceNodeId = context.clusterTestUtils.GetNodeIdFromNode(sourceNodeIndex, context.logger);
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
 
-        var memberCount = 10;
-        var keyCount = 10;
-        var key = Encoding.ASCII.GetBytes("{abc}a");
+        int memberCount = 10;
+        int keyCount = 10;
+        byte[] key = Encoding.ASCII.GetBytes("{abc}a");
         List<byte[]> keys = [];
-        var _slot = ClusterTestUtils.HashSlot(key);
+        ushort _slot = ClusterTestUtils.HashSlot(key);
         Assert.AreEqual(7638, _slot);
 
         context.logger.LogDebug("1. Creating data started {keyCount}", keyCount);
         Dictionary<byte[], List<Tuple<int, byte[]>>> data = new(new ByteArrayComparer());
-        for (var i = 0; i < keyCount; i++)
+        for (int i = 0; i < keyCount; i++)
         {
-            var newKey = new byte[key.Length];
+            byte[] newKey = new byte[key.Length];
             Array.Copy(key, 0, newKey, 0, key.Length);
             newKey[^1] = (byte)(newKey[^1] + i);
             keys.Add(newKey);
             Assert.AreEqual(_slot, ClusterTestUtils.HashSlot(newKey));
 
-            var (_, memberPair) = DoZADD(sourceNodeIndex, newKey, memberCount);
+            (string _, List<Tuple<int, byte[]>> memberPair) = DoZADD(sourceNodeIndex, newKey, memberCount);
             data.Add(newKey, memberPair);
         }
 
@@ -1036,9 +1036,9 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         int _Port;
         int _Slot;
         context.logger.LogDebug($"3. Checking keys before migration started");
-        foreach (var _key in data.Keys)
+        foreach (byte[] _key in data.Keys)
         {
-            var resp = DoZCOUNT(sourceNodeIndex, key, out var count, out _Address, out _Port, out _Slot, logger: context.logger);
+            string resp = DoZCOUNT(sourceNodeIndex, key, out int count, out _Address, out _Port, out _Slot, logger: context.logger);
             Assert.AreEqual("OK", resp);
             Assert.AreEqual(data[_key].Count, count);
 
@@ -1051,19 +1051,19 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug($"4. Checking keys before migration done");
 
         // Start Migration
-        var respImport = context.clusterTestUtils.SetSlot(targetNodeIndex, _slot, "IMPORTING", sourceNodeId, logger: context.logger);
+        string respImport = context.clusterTestUtils.SetSlot(targetNodeIndex, _slot, "IMPORTING", sourceNodeId, logger: context.logger);
         Assert.AreEqual("OK", respImport, "IMPORTING");
         context.logger.LogDebug("5. Set slot {_slot} to IMPORTING state on node {port}", _slot, context.clusterTestUtils.GetEndPoint(targetNodeIndex).Port);
 
-        var respMigrate = context.clusterTestUtils.SetSlot(sourceNodeIndex, _slot, "MIGRATING", targetNodeId, logger: context.logger);
+        string respMigrate = context.clusterTestUtils.SetSlot(sourceNodeIndex, _slot, "MIGRATING", targetNodeId, logger: context.logger);
         Assert.AreEqual("OK", respMigrate, "MIGRATING");
         context.logger.LogDebug("6. Set slot {_slot} to MIGRATING state on node {port}", _slot, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Port);
 
-        var countKeys = context.clusterTestUtils.CountKeysInSlot(sourceNodeIndex, _slot, context.logger);
+        int countKeys = context.clusterTestUtils.CountKeysInSlot(sourceNodeIndex, _slot, context.logger);
         Assert.AreEqual(countKeys, keyCount);
         context.logger.LogDebug("7. CountKeysInSlot {countKeys}", countKeys);
 
-        var keysInSlot = context.clusterTestUtils.GetKeysInSlot(sourceNodeIndex, _slot, countKeys, context.logger);
+        List<byte[]> keysInSlot = context.clusterTestUtils.GetKeysInSlot(sourceNodeIndex, _slot, countKeys, context.logger);
         Assert.AreEqual(keys, keysInSlot);
         context.logger.LogDebug("8. GetKeysInSlot {keysInSlot.Count}", keysInSlot.Count);
 
@@ -1071,18 +1071,18 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.clusterTestUtils.MigrateKeys(context.clusterTestUtils.GetEndPoint(sourceNodeIndex), context.clusterTestUtils.GetEndPoint(targetNodeIndex), keysInSlot, context.logger);
         context.logger.LogDebug($"10. MigrateKeys done");
 
-        var respNodeTarget = context.clusterTestUtils.SetSlot(targetNodeIndex, _slot, "NODE", targetNodeId, logger: context.logger);
+        string respNodeTarget = context.clusterTestUtils.SetSlot(targetNodeIndex, _slot, "NODE", targetNodeId, logger: context.logger);
         Assert.AreEqual(respNodeTarget, "OK");
         context.logger.LogDebug("9a. SetSlot {_slot} to target NODE {port}", _slot, context.clusterTestUtils.GetEndPoint(targetNodeIndex).Port);
-        var respNodeSource = context.clusterTestUtils.SetSlot(sourceNodeIndex, _slot, "NODE", targetNodeId, logger: context.logger);
+        string respNodeSource = context.clusterTestUtils.SetSlot(sourceNodeIndex, _slot, "NODE", targetNodeId, logger: context.logger);
         Assert.AreEqual(respNodeSource, "OK");
         context.logger.LogDebug("9b. SetSlot {_slot} to source NODE {port}", _slot, context.clusterTestUtils.GetEndPoint(sourceNodeIndex).Port);
         // End Migration
 
         context.logger.LogDebug("10. Checking config epoch");
-        var targetConfigEpochFromTarget = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(targetNodeIndex, targetNodeId, context.logger);
-        var targetConfigEpochFromSource = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(sourceNodeIndex, targetNodeId, context.logger);
-        var targetConfigEpochFromOther = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(otherNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromTarget = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(targetNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromSource = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(sourceNodeIndex, targetNodeId, context.logger);
+        string targetConfigEpochFromOther = context.clusterTestUtils.GetConfigEpochOfNodeFromNodeIndex(otherNodeIndex, targetNodeId, context.logger);
 
         while (targetConfigEpochFromOther != targetConfigEpochFromTarget || targetConfigEpochFromSource != targetConfigEpochFromTarget)
         {
@@ -1096,9 +1096,9 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug("11. Success config epoch");
 
         context.logger.LogDebug("14. Checking migrate keys starting");
-        foreach (var _key in data.Keys)
+        foreach (byte[] _key in data.Keys)
         {
-            var resp = DoZCOUNT(targetNodeIndex, key, out var count, out _Address, out _Port, out _Slot, logger: context.logger);
+            string resp = DoZCOUNT(targetNodeIndex, key, out int count, out _Address, out _Port, out _Slot, logger: context.logger);
             Assert.AreEqual(resp, "OK");
             Assert.AreEqual(data[_key].Count, count);
 
@@ -1123,43 +1123,43 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     private void OperateOnSlotsTask(Dictionary<int, Dictionary<byte[], byte[]>> data, int targetNodeIndex)
     {
         var Port = TestUtils.Port;
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         var Ports = Enumerable.Range(Port, Shards).ToList();
-        var connections = ClusterTestUtils.CreateLightRequestConnections(Ports.ToArray());
+        LightClientRequest[] connections = ClusterTestUtils.CreateLightRequestConnections(Ports.ToArray());
         operatedOnData = [];
 
-        foreach (var slot in data.Keys)
+        foreach (int slot in data.Keys)
         {
-            foreach (var entry in data[slot])
+            foreach (KeyValuePair<byte[], byte[]> entry in data[slot])
                 operatedOnData.Add(new(slot, entry.Key, entry.Value));
         }
 
-        var iterCount = 0;
-        var maxIter = 100;
+        int iterCount = 0;
+        int maxIter = 100;
         while (true)
         {
             if (iterCount++ > maxIter) break;
-            var entryIndex = context.r.Next(0, operatedOnData.Count);
-            var nodeIndex = context.r.Next(0, Shards);
-            var get = context.r.Next(0, 1) == 0;
-            var oldEntry = operatedOnData[entryIndex];
-            var key = oldEntry.Item2;
-            var value = oldEntry.Item3;
+            int entryIndex = context.r.Next(0, operatedOnData.Count);
+            int nodeIndex = context.r.Next(0, Shards);
+            bool get = context.r.Next(0, 1) == 0;
+            (int, byte[], byte[]) oldEntry = operatedOnData[entryIndex];
+            byte[] key = oldEntry.Item2;
+            byte[] value = oldEntry.Item3;
 
         retryRequest:
 
             if (get)
             {
-                var getValue = context.clusterTestUtils.GetKey(nodeIndex, key, out var slot, out var redirectAddressA, out var redirectPortA, out var status, logger: context.logger);
+                string getValue = context.clusterTestUtils.GetKey(nodeIndex, key, out int slot, out string redirectAddressA, out int redirectPortA, out ResponseState status, logger: context.logger);
                 switch (status)
                 {
                     case ResponseState.OK:
                         Assert.AreEqual(value, getValue);
                         break;
                     case ResponseState.MOVED: // Everyone redirect to node that is current owner
-                        var srcNodeIndex = context.clusterTestUtils.GetEndPointIndexFromPort(redirectPortA);
+                        int srcNodeIndex = context.clusterTestUtils.GetEndPointIndexFromPort(redirectPortA);
                         Assert.AreNotEqual(srcNodeIndex, -1);
-                        getValue = context.clusterTestUtils.GetKey(srcNodeIndex, key, out _, out var redirectAddressB, out var redirectPortB, out status, logger: context.logger);
+                        getValue = context.clusterTestUtils.GetKey(srcNodeIndex, key, out _, out string redirectAddressB, out int redirectPortB, out status, logger: context.logger);
                         if (status == ResponseState.OK)
                             Assert.AreEqual(value, getValue);
                         else if (status == ResponseState.MOVED)// can redirect again if source has made target the owner
@@ -1182,16 +1182,16 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
             }
             else
             {
-                var newValue = new byte[value.Length];
+                byte[] newValue = new byte[value.Length];
                 RandomBytes(ref newValue);
-                var status = context.clusterTestUtils.SetKey(nodeIndex, key, newValue, out _, out var address, out var port, logger: context.logger);
+                ResponseState status = context.clusterTestUtils.SetKey(nodeIndex, key, newValue, out _, out string address, out int port, logger: context.logger);
                 switch (status)
                 {
                     case ResponseState.OK:
                         operatedOnData[entryIndex] = new(oldEntry.Item1, oldEntry.Item2, newValue);
                         break;
                     case ResponseState.MOVED: //everyone redirect to node that is current owner
-                        var srcNodeIndex = context.clusterTestUtils.GetEndPointIndexFromPort(port);
+                        int srcNodeIndex = context.clusterTestUtils.GetEndPointIndexFromPort(port);
                         Assert.AreNotEqual(srcNodeIndex, -1);
                         status = context.clusterTestUtils.SetKey(srcNodeIndex, key, newValue, out _, out address, out port, logger: context.logger);
                         if (status == ResponseState.OK)
@@ -1225,17 +1225,17 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     public void ClusterSimpleMigrateWithReadWrite()
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateTestWithReadWrite started");
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var keyLen = 8;
-        var valLen = 32;
-        var slotCount = 10;
-        var keyCount = 100;
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        int keyLen = 8;
+        int valLen = 32;
+        int slotCount = 10;
+        int keyCount = 100;
         context.logger.LogDebug("1. CreateMultiSlotData {keyCount} started", keyCount);
         CreateMultiSlotData(
             slotCount,
@@ -1243,7 +1243,7 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
             valLen,
             4,
             keyCount,
-            out var data,
+            out Dictionary<int, Dictionary<byte[], byte[]>> data,
             new HashSet<int>(context.clusterTestUtils.GetOwnedSlotsFromNode(sourceNodeIndex, context.logger)));
         context.logger.LogDebug("2. CreateMultiSlotData {keyCount} done", keyCount);
 
@@ -1258,12 +1258,12 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         context.logger.LogDebug($"3. Migration and workload done");
 
         context.logger.LogDebug($"4. Checking keys after migration started");
-        foreach (var entry in operatedOnData)
+        foreach ((int, byte[], byte[]) entry in operatedOnData)
         {
-            var key = entry.Item2;
-            var val = entry.Item3;
+            byte[] key = entry.Item2;
+            byte[] val = entry.Item3;
 
-            var resp = context.clusterTestUtils.GetKey(targetNodeIndex, key, out var slot, out var address, out var port, out var responseState, logger: context.logger);
+            string resp = context.clusterTestUtils.GetKey(targetNodeIndex, key, out int slot, out string address, out int port, out ResponseState responseState, logger: context.logger);
             while (responseState != ResponseState.OK)
             {
                 _ = Thread.Yield();
@@ -1296,14 +1296,14 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
         commands.Add(("get", new List<object>() { keyA }));
         commands.Add(("get", new List<object>() { keyB }));
 
-        var resp = context.clusterTestUtils.ExecuteTxnForShard(0, commands);
+        ClusterTestUtils.ClusterResponse resp = context.clusterTestUtils.ExecuteTxnForShard(0, commands);
         Assert.AreEqual(ResponseState.CLUSTERDOWN, resp.state);
 
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
-        var config = context.clusterTestUtils.ClusterNodes(0);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        ClusterConfiguration config = context.clusterTestUtils.ClusterNodes(0);
 
-        var nodeForKeyA = config.GetBySlot(keyA);
-        var nodeForKeyB = config.GetBySlot(keyB);
+        ClusterNode nodeForKeyA = config.GetBySlot(keyA);
+        ClusterNode nodeForKeyB = config.GetBySlot(keyB);
         Assert.AreEqual(nodeForKeyA, nodeForKeyB);
 
         resp = context.clusterTestUtils.ExecuteTxnForShard(0, commands);
@@ -1331,20 +1331,20 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     public void ClusterSimpleMigrateSlotsRanges(List<int> migrateRange)
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateSlotsRanges started");
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
 
-        var config = context.clusterTestUtils.ClusterNodes(sourceNodeIndex, context.logger).Nodes.First();
+        ClusterNode config = context.clusterTestUtils.ClusterNodes(sourceNodeIndex, context.logger).Nodes.First();
         Assert.IsTrue(config.IsMyself);
 
-        var sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
-        var targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
+        IPEndPoint sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
+        IPEndPoint targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
         context.clusterTestUtils.MigrateSlots(
             sourceEndPoint,
             targetEndPoint,
@@ -1354,16 +1354,16 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         while (true)
         {
-            var _config = context.clusterTestUtils.ClusterNodes(targetNodeIndex, context.logger);
-            var success = true;
-            for (var i = 0; i < migrateRange.Count; i += 2)
+            ClusterConfiguration _config = context.clusterTestUtils.ClusterNodes(targetNodeIndex, context.logger);
+            bool success = true;
+            for (int i = 0; i < migrateRange.Count; i += 2)
             {
-                var start = migrateRange[i];
-                var end = migrateRange[i + 1];
+                int start = migrateRange[i];
+                int end = migrateRange[i + 1];
 
-                for (var j = start; j <= end; j++)
+                for (int j = start; j <= end; j++)
                 {
-                    var node = _config.GetBySlot(j);
+                    ClusterNode node = _config.GetBySlot(j);
                     if (!node.NodeId.Equals(targetNodeId))
                         success = false;
                 }
@@ -1383,20 +1383,20 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
     public void ClusterSimpleMigrateWithAuth(List<int> migrateRange)
     {
         context.logger.LogDebug($"0. ClusterSimpleMigrateWithAuth started");
-        var Shards = defaultShards;
+        int Shards = defaultShards;
         context.CreateInstances(Shards, useTLS: UseTLS);
         context.CreateConnection(useTLS: UseTLS);
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
-        var sourceNodeIndex = 1;
-        var targetNodeIndex = 2;
-        var targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
+        int sourceNodeIndex = 1;
+        int targetNodeIndex = 2;
+        string targetNodeId = context.clusterTestUtils.GetNodeIdFromNode(targetNodeIndex, context.logger);
 
-        var config = context.clusterTestUtils.ClusterNodes(sourceNodeIndex, context.logger).Nodes.First();
+        ClusterNode config = context.clusterTestUtils.ClusterNodes(sourceNodeIndex, context.logger).Nodes.First();
         Assert.IsTrue(config.IsMyself);
 
-        var sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
-        var targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
+        IPEndPoint sourceEndPoint = context.clusterTestUtils.GetEndPoint(sourceNodeIndex);
+        IPEndPoint targetEndPoint = context.clusterTestUtils.GetEndPoint(targetNodeIndex);
         context.clusterTestUtils.MigrateSlots(
             sourceEndPoint,
             targetEndPoint,
@@ -1407,16 +1407,16 @@ public unsafe class ClusterMigrateTests(bool UseTLS)
 
         while (true)
         {
-            var _config = context.clusterTestUtils.ClusterNodes(targetNodeIndex, context.logger);
-            var success = true;
-            for (var i = 0; i < migrateRange.Count; i += 2)
+            ClusterConfiguration _config = context.clusterTestUtils.ClusterNodes(targetNodeIndex, context.logger);
+            bool success = true;
+            for (int i = 0; i < migrateRange.Count; i += 2)
             {
-                var start = migrateRange[i];
-                var end = migrateRange[i + 1];
+                int start = migrateRange[i];
+                int end = migrateRange[i + 1];
 
                 for (int j = start; j <= end; j++)
                 {
-                    var node = _config.GetBySlot(j);
+                    ClusterNode node = _config.GetBySlot(j);
                     if (!node.NodeId.Equals(targetNodeId))
                         success = false;
                 }

@@ -62,7 +62,7 @@ public unsafe struct AddressInfo
                     throw new TsavoriteException("Unsupported object size: " + value);
                 }
             }
-            var _word = (long)word;
+            long _word = (long)word;
             _word &= ~kSizeMaskInWord;
             _word &= ~kMultiplierMaskInWord;
             _word |= (val & kSizeMaskInInteger) << kAddressBits;
@@ -79,7 +79,7 @@ public unsafe struct AddressInfo
         }
         set
         {
-            var _word = (long)word;
+            long _word = (long)word;
             _word &= ~kAddressMask;
             _word |= (value & kAddressMask);
             word = (IntPtr)_word;

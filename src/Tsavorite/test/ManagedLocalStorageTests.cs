@@ -116,7 +116,7 @@ internal class ManageLocalStorageTests
                 new Thread(() =>
                 {
                     // Read the log - Look for the flag so know each entry is unique
-                    using (var iter = log.Scan(0, long.MaxValue))
+                    using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue))
                     {
                         while (iter.GetNext(out byte[] result, out _, out _))
                         {
@@ -161,7 +161,7 @@ internal class ManageLocalStorageTests
 
         // Read the log just to verify can actually read it
         int currentEntry = 0;
-        using var iter = logFullParams.Scan(0, 100_000_000);
+        using TsavoriteLogScanIterator iter = logFullParams.Scan(0, 100_000_000);
         while (iter.GetNext(out byte[] result, out _, out _))
         {
             Assert.AreEqual(currentEntry, result[currentEntry]);

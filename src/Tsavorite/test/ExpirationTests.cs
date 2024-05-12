@@ -549,12 +549,12 @@ internal class ExpirationTests
         for (int i = 0; i < NumRecs; i++)
         {
             keySpan[0] = i;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var valueLen = GetRandomLength(rng);
+            int valueLen = GetRandomLength(rng);
             for (int j = 0; j < valueLen; j++)
                 valueSpan[j] = GetValue(i);
-            var valueSpanByte = valueSpan.AsSpanByte();
+            SpanByte valueSpanByte = valueSpan.AsSpanByte();
 
             session.Upsert(ref keySpanByte, ref valueSpanByte, Empty.Default, 0);
         }
@@ -564,14 +564,14 @@ internal class ExpirationTests
     {
         Span<int> keySpan = stackalloc int[1];
         keySpan[0] = key;
-        var keySpanByte = keySpan.AsSpanByte();
+        SpanByte keySpanByte = keySpan.AsSpanByte();
         ExpirationOutput output = new();
 
-        var status = session.Read(ref keySpanByte, ref output, Empty.Default, 0);
+        Status status = session.Read(ref keySpanByte, ref output, Empty.Default, 0);
         if (status.IsPending)
         {
             Assert.AreNotEqual(FlushMode.NoFlush, flushMode);
-            session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, ExpirationInput, ExpirationOutput, Empty> completedOutputs, wait: true);
             (status, output) = GetSinglePendingResult(completedOutputs);
         }
 
@@ -583,14 +583,14 @@ internal class ExpirationTests
     {
         Span<int> keySpan = stackalloc int[1];
         keySpan[0] = key;
-        var keySpanByte = keySpan.AsSpanByte();
+        SpanByte keySpanByte = keySpan.AsSpanByte();
 
         ExpirationOutput output = new();
-        var status = session.RMW(ref keySpanByte, ref input, ref output);
+        Status status = session.RMW(ref keySpanByte, ref input, ref output);
         if (status.IsPending)
         {
             Assert.AreNotEqual(FlushMode.NoFlush, flushMode);
-            session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, ExpirationInput, ExpirationOutput, Empty> completedOutputs, wait: true);
             (status, output) = GetSinglePendingResult(completedOutputs);
         }
 
@@ -616,7 +616,7 @@ internal class ExpirationTests
 
     private void InitialRead(FlushMode flushMode, bool afterIncrement)
     {
-        var output = GetRecord(ModifyKey, new(StatusCode.Found), flushMode);
+        ExpirationOutput output = GetRecord(ModifyKey, new(StatusCode.Found), flushMode);
         Assert.AreEqual(GetValue(ModifyKey) + (afterIncrement ? 1 : 0), output.retrievedValue);
         Funcs expectedFuncs = flushMode switch
         {
@@ -631,11 +631,11 @@ internal class ExpirationTests
 
     private void IncrementValue(TestOp testOp, FlushMode flushMode)
     {
-        var key = ModifyKey;
+        int key = ModifyKey;
         ExpirationInput input = new() { testOp = testOp };
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord) : new(StatusCode.CopyUpdatedRecord);
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC);
@@ -656,7 +656,7 @@ internal class ExpirationTests
 
     private void VerifyKeyNotCreated(TestOp testOp, FlushMode flushMode)
     {
-        var key = NoKey;
+        int key = NoKey;
 #if false // TODO - Add to ExpirationFunctions the knowledge of whether we're calling from here or the main test part
         // Key doesn't exist - no-op
         ExpirationInput input = new() { testOp = testOp, value = NoValue, comparisonValue = GetValue(key) + 1 };
@@ -673,7 +673,7 @@ internal class ExpirationTests
 
     private static Funcs GetExpectedFuncs(FlushMode flushMode, Funcs noFlush, Funcs readOnly, Funcs onDisk)
     {
-        var expectedFuncs = flushMode switch
+        Funcs expectedFuncs = flushMode switch
         {
             FlushMode.NoFlush => noFlush,
             FlushMode.ReadOnly => readOnly,
@@ -704,7 +704,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.ExpireDelete;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord | StatusCode.Expired) : new(StatusCode.CopyUpdatedRecord);
 
         session.ctx.phase = phase;
@@ -712,7 +712,7 @@ internal class ExpirationTests
         // Increment/Delete it
         ExpirationInput input = new() { testOp = testOp };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC);
@@ -734,7 +734,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.ExpireRollover;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord) : new(StatusCode.CopyUpdatedRecord);
 
         session.ctx.phase = phase;
@@ -742,7 +742,7 @@ internal class ExpirationTests
         // Increment/Rollover to initial state
         ExpirationInput input = new() { testOp = testOp };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC);
@@ -763,7 +763,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.SetIfKeyExists;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord) : new(StatusCode.CopyUpdatedRecord);
 
         session.ctx.phase = phase;
@@ -771,7 +771,7 @@ internal class ExpirationTests
         // Key exists - update it
         ExpirationInput input = new() { testOp = testOp, value = GetValue(key) + SetIncrement };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC);
@@ -807,14 +807,14 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.SetIfKeyNotExists;
-        var key = ModifyKey;
+        int key = ModifyKey;
 
         session.ctx.phase = phase;
 
         // Key exists - no-op
         ExpirationInput input = new() { testOp = testOp, value = GetValue(key) + SetIncrement };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, GetMutableVsOnDiskStatus(flushMode));
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.NeedCopyUpdate,
                                         onDisk: Funcs.SkippedCopyUpdate);
@@ -852,7 +852,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.SetIfValueEquals;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord) : new(StatusCode.CopyUpdatedRecord);
 
         VerifyKeyNotCreated(testOp, flushMode);
@@ -861,7 +861,7 @@ internal class ExpirationTests
         // Value equals - update it
         ExpirationInput input = new() { testOp = testOp, value = GetValue(key) + SetIncrement, comparisonValue = GetValue(key) + 1 };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC);
@@ -898,7 +898,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.SetIfValueNotEquals;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord) : new(StatusCode.CopyUpdatedRecord);
 
         VerifyKeyNotCreated(testOp, flushMode);
@@ -907,7 +907,7 @@ internal class ExpirationTests
         // Value equals
         ExpirationInput input = new() { testOp = testOp, value = -2, comparisonValue = GetValue(key) + 1 };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, GetMutableVsOnDiskStatus(flushMode));
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.NeedCopyUpdate,
                                         onDisk: Funcs.SkippedCopyUpdate);
@@ -942,7 +942,7 @@ internal class ExpirationTests
         MaybeEvict(flushMode);
         bool isEqual = keyEquality == KeyEquality.Equal;
         TestOp testOp = isEqual ? TestOp.DeleteIfValueEqualsThenUpdate : TestOp.DeleteIfValueNotEqualsThenUpdate;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush
                 ? new(StatusCode.NotFound | StatusCode.Expired | StatusCode.InPlaceUpdatedRecord)
                 : new(StatusCode.NotFound | StatusCode.Expired | StatusCode.CreatedRecord);
@@ -951,10 +951,10 @@ internal class ExpirationTests
         session.ctx.phase = phase;
 
         // Target value - if isEqual, the actual value of the key, else a bogus value. Delete the record, then re-initialize it from input
-        var reinitValue = GetValue(key) + 1000;
+        int reinitValue = GetValue(key) + 1000;
         ExpirationInput input = new() { testOp = testOp, value = reinitValue, comparisonValue = isEqual ? GetValue(key) + 1 : -1 };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater | Funcs.DidInitialUpdate,
                                         readOnly: Funcs.DidCopyUpdate | Funcs.DidInitialUpdate,
                                         onDisk: Funcs.DidCopyUpdateCC | Funcs.DidInitialUpdate);
@@ -991,7 +991,7 @@ internal class ExpirationTests
         MaybeEvict(flushMode);
         bool isEqual = keyEquality == KeyEquality.Equal;
         TestOp testOp = isEqual ? TestOp.DeleteIfValueEqualsThenInsert : TestOp.DeleteIfValueNotEqualsThenInsert;
-        var key = ModifyKey;
+        int key = ModifyKey;
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ?
             new(StatusCode.NotFound | StatusCode.InPlaceUpdatedRecord | StatusCode.Expired) :
             new(StatusCode.NotFound | StatusCode.Expired | StatusCode.CreatedRecord);
@@ -1000,10 +1000,10 @@ internal class ExpirationTests
         session.ctx.phase = phase;
 
         // Target value - if isEqual, the actual value of the key, else a bogus value. Delete the record, then re-initialize it from input
-        var reinitValue = GetValue(key) + 1000;
+        int reinitValue = GetValue(key) + 1000;
         ExpirationInput input = new() { testOp = testOp, value = reinitValue, comparisonValue = isEqual ? GetValue(key) + 1 : -1 };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, expectedFoundRmwStatus);
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.DidInitialUpdate | Funcs.InPlaceUpdater,
                                         readOnly: Funcs.DidInitialUpdate | Funcs.DidCopyUpdate,
                                         onDisk: Funcs.DidInitialUpdate | Funcs.DidCopyUpdateCC);
@@ -1037,7 +1037,7 @@ internal class ExpirationTests
     {
         InitialIncrement();
         const TestOp testOp = TestOp.DeleteIfValueEqualsAndStop;
-        var key = ModifyKey;
+        int key = ModifyKey;
         FlushMode flushMode = FlushMode.NoFlush;
         Status expectedFoundRmwStatus = new(StatusCode.InPlaceUpdatedRecord | StatusCode.Expired);
 
@@ -1074,7 +1074,7 @@ internal class ExpirationTests
         InitialIncrement();
         MaybeEvict(flushMode);
         const TestOp testOp = TestOp.DeleteIfValueNotEqualsAndStop;
-        var key = ModifyKey;
+        int key = ModifyKey;
 
         // For this test, IPU will Cancel rather than go to the IPU path
         Status expectedFoundRmwStatus = flushMode == FlushMode.NoFlush ? new(StatusCode.InPlaceUpdatedRecord | StatusCode.Expired) : new(StatusCode.CreatedRecord | StatusCode.Expired);
@@ -1086,7 +1086,7 @@ internal class ExpirationTests
         // Value equals - no-op
         ExpirationInput input = new() { testOp = testOp, comparisonValue = GetValue(key) + 1 };
         ExpirationOutput output = ExecuteRMW(key, ref input, flushMode, GetMutableVsOnDiskStatus(flushMode));
-        var expectedFuncs = GetExpectedFuncs(flushMode,
+        Funcs expectedFuncs = GetExpectedFuncs(flushMode,
                                         noFlush: Funcs.InPlaceUpdater,
                                         readOnly: Funcs.NeedCopyUpdate,
                                         onDisk: Funcs.SkippedCopyUpdate);

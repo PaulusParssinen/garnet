@@ -183,7 +183,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
                 LogSecurityInfo(sslStream, remoteEndpointName, logger);
 
             // There may be extra bytes left over after auth, we need to process them (non-blocking) before returning
-            var result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
+            ValueTask<int> result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
             _ = SslReaderAsync(result.AsTask(), cancellationTokenSource.Token);
         }
         catch (Exception ex)
@@ -244,7 +244,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
                 LogSecurityInfo(sslStream, remoteEndpointName, logger);
 
             // There may be extra bytes left over after auth, we need to process them (non-blocking) before returning
-            var result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
+            ValueTask<int> result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
             _ = SslReaderAsync(result.AsTask(), cancellationTokenSource.Token);
         }
         catch (Exception ex)
@@ -348,7 +348,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
         while (networkBytesRead > networkReadHead || retry)
         {
             retry = false;
-            var result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
+            ValueTask<int> result = sslStream.ReadAsync(new Memory<byte>(transportReceiveBuffer, transportBytesRead, transportReceiveBuffer.Length - transportBytesRead), cancellationTokenSource.Token);
             if (result.IsCompletedSuccessfully)
             {
                 transportBytesRead += result.Result;
@@ -481,7 +481,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
 
     unsafe void DoubleNetworkReceiveBuffer()
     {
-        var tmp = networkPool.Get(networkReceiveBuffer.Length * 2);
+        PoolEntry tmp = networkPool.Get(networkReceiveBuffer.Length * 2);
         Array.Copy(networkReceiveBuffer, tmp.entry, networkReceiveBuffer.Length);
         networkReceiveBufferEntry.Dispose();
         networkReceiveBufferEntry = tmp;
@@ -491,7 +491,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
 
     unsafe void ShiftNetworkReceiveBuffer()
     {
-        var bytesLeft = networkBytesRead - networkReadHead;
+        int bytesLeft = networkBytesRead - networkReadHead;
         if (bytesLeft != networkBytesRead)
         {
             // Shift them to the head of the array so we can reset the buffer to a consistent state                
@@ -505,7 +505,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     {
         if (sslStream != null)
         {
-            var tmp = networkPool.Get(transportReceiveBuffer.Length * 2);
+            PoolEntry tmp = networkPool.Get(transportReceiveBuffer.Length * 2);
             Array.Copy(transportReceiveBuffer, tmp.entry, transportReceiveBuffer.Length);
             transportReceiveBufferEntry.Dispose();
             transportReceiveBufferEntry = tmp;
@@ -517,7 +517,7 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender> : Netw
     unsafe void ShiftTransportReceiveBuffer()
     {
         // The bytes left in the current buffer not consumed by previous operations
-        var bytesLeft = transportBytesRead - transportReadHead;
+        int bytesLeft = transportBytesRead - transportReadHead;
         if (bytesLeft != transportBytesRead)
         {
             // Shift them to the head of the array so we can reset the buffer to a consistent state                

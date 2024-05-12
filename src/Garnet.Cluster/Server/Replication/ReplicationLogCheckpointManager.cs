@@ -67,9 +67,9 @@ internal sealed class ReplicationLogCheckpointManager(
     /// <returns></returns>
     private unsafe byte[] AddCookie(byte[] commitMetadata)
     {
-        var cookieSize = sizeof(long) + this.CurrentReplicationId.Length;
-        var commitMetadataWithCookie = new byte[sizeof(int) + cookieSize + commitMetadata.Length];
-        var primaryReplIdBytes = Encoding.ASCII.GetBytes(CurrentReplicationId);
+        int cookieSize = sizeof(long) + this.CurrentReplicationId.Length;
+        byte[] commitMetadataWithCookie = new byte[sizeof(int) + cookieSize + commitMetadata.Length];
+        byte[] primaryReplIdBytes = Encoding.ASCII.GetBytes(CurrentReplicationId);
         fixed (byte* ptr = commitMetadataWithCookie)
         fixed (byte* pridPtr = primaryReplIdBytes)
         fixed (byte* cmPtr = commitMetadata)
@@ -84,10 +84,10 @@ internal sealed class ReplicationLogCheckpointManager(
 
     private byte[] ExtractCookie(byte[] commitMetadataWithCookie)
     {
-        var cookieTotalSize = GetCookieData(commitMetadataWithCookie, out RecoveredSafeAofAddress, out RecoveredReplicationId);
-        var payloadSize = commitMetadataWithCookie.Length - cookieTotalSize;
+        int cookieTotalSize = GetCookieData(commitMetadataWithCookie, out RecoveredSafeAofAddress, out RecoveredReplicationId);
+        int payloadSize = commitMetadataWithCookie.Length - cookieTotalSize;
 
-        var commitMetadata = new byte[payloadSize];
+        byte[] commitMetadata = new byte[payloadSize];
         Array.Copy(commitMetadataWithCookie, cookieTotalSize, commitMetadata, 0, payloadSize);
         return commitMetadata;
     }
@@ -96,11 +96,11 @@ internal sealed class ReplicationLogCheckpointManager(
     {
         checkpointCoveredAddress = -1;
         primaryReplId = null;
-        var size = sizeof(int);
+        int size = sizeof(int);
         fixed (byte* ptr = commitMetadataWithCookie)
         {
             if (commitMetadataWithCookie.Length < 4) throw new Exception($"invalid metadata length: {commitMetadataWithCookie.Length} < 4");
-            var cookieSize = *(int*)ptr;
+            int cookieSize = *(int*)ptr;
             size += cookieSize;
 
             if (commitMetadataWithCookie.Length < 12) throw new Exception($"invalid metadata length: {commitMetadataWithCookie.Length} < 12");
@@ -114,8 +114,8 @@ internal sealed class ReplicationLogCheckpointManager(
 
     public unsafe (long, string) GetCheckpointCookieMetadata(Guid logToken, DeltaLog deltaLog, bool scanDelta, long recoverTo)
     {
-        var metadata = GetLogCheckpointMetadata(logToken, deltaLog, scanDelta, recoverTo, withoutCookie: false);
-        _ = GetCookieData(metadata, out var checkpointCoveredAddress, out var primaryReplId);
+        byte[] metadata = GetLogCheckpointMetadata(logToken, deltaLog, scanDelta, recoverTo, withoutCookie: false);
+        _ = GetCookieData(metadata, out long checkpointCoveredAddress, out string primaryReplId);
         return (checkpointCoveredAddress, primaryReplId);
     }
 
@@ -129,7 +129,7 @@ internal sealed class ReplicationLogCheckpointManager(
     /// <param name="commitMetadata"></param>
     public override unsafe void CommitLogCheckpoint(Guid logToken, byte[] commitMetadata)
     {
-        var commitMetadataWithCookie = AddCookie(commitMetadata);
+        byte[] commitMetadataWithCookie = AddCookie(commitMetadata);
         base.CommitLogCheckpoint(logToken, commitMetadataWithCookie);
     }
 
@@ -143,7 +143,7 @@ internal sealed class ReplicationLogCheckpointManager(
 
     public override unsafe void CommitLogIncrementalCheckpoint(Guid logToken, long version, byte[] commitMetadata, DeltaLog deltaLog)
     {
-        var commitMetadataWithCookie = AddCookie(commitMetadata);
+        byte[] commitMetadataWithCookie = AddCookie(commitMetadata);
         base.CommitLogIncrementalCheckpoint(logToken, version, commitMetadataWithCookie, deltaLog);
     }
 
@@ -154,7 +154,7 @@ internal sealed class ReplicationLogCheckpointManager(
         {
             // Try to get latest valid metadata from delta-log
             deltaLog.Reset();
-            while (deltaLog.GetNext(out long physicalAddress, out int entryLength, out var type))
+            while (deltaLog.GetNext(out long physicalAddress, out int entryLength, out DeltaLogEntryType type))
             {
                 switch (type)
                 {
@@ -168,7 +168,7 @@ internal sealed class ReplicationLogCheckpointManager(
                             fixed (byte* m = metadata)
                                 Buffer.MemoryCopy((void*)physicalAddress, m, entryLength, entryLength);
                         }
-                        var metadataWithoutCookie = ExtractCookie(metadata);
+                        byte[] metadataWithoutCookie = ExtractCookie(metadata);
                         if (withoutCookie) metadata = metadataWithoutCookie;
                         HybridLogRecoveryInfo recoveryInfo = new();
                         using (StreamReader s = new(new MemoryStream(metadataWithoutCookie)))
@@ -191,7 +191,7 @@ internal sealed class ReplicationLogCheckpointManager(
         var device = deviceFactory.Get(checkpointNamingScheme.LogCheckpointMetadata(logToken));
 
         ReadInto(device, 0, out byte[] writePad, sizeof(int));
-        var size = BitConverter.ToInt32(writePad, 0);
+        int size = BitConverter.ToInt32(writePad, 0);
 
         byte[] body;
         if (writePad.Length >= size + sizeof(int))

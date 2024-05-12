@@ -97,17 +97,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRTest([Values] bool disableObjects)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: disableObjects, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -116,17 +116,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 16;
-        var kvpairCount = keyCount;
+        int keyLength = 16;
+        int kvpairCount = keyCount;
         context.kvPairs = [];
 
         //Populate Primary
         context.PopulatePrimary(ref context.kvPairs, keyLength, kvpairCount, 0);
 
-        for (var i = 1; i < replica_count; i++)
+        for (int i = 1; i < replica_count; i++)
             context.clusterTestUtils.WaitForReplicaAofSync(0, i);
 
-        for (var i = 1; i < replica_count; i++)
+        for (int i = 1; i < replica_count; i++)
             context.ValidateKVCollectionAgainstReplica(ref context.kvPairs, i);
     }
 
@@ -134,17 +134,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRNoCheckpointRestartSecondary([Values] bool performRMW, [Values] bool disableObjects)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: disableObjects, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -153,9 +153,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         context.kvPairs = [];
 
         // Populate Primary
@@ -201,17 +201,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRPrimaryCheckpoint([Values] bool performRMW, [Values] bool disableObjects)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: disableObjects, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -220,9 +220,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         context.kvPairs = [];
 
         // Populate Primary
@@ -231,8 +231,8 @@ public class ClusterReplicationTests(bool UseTLS = false)
         else
             context.PopulatePrimaryRMW(ref context.kvPairs, keyLength, kvpairCount, 0, addCount);
 
-        var primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
-        var replicaLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
+        DateTime primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
+        DateTime replicaLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
         context.clusterTestUtils.Checkpoint(0, logger: context.logger);
 
         // Populate Primary
@@ -298,17 +298,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
         // Test many segments on or off with lowMemory
         manySegments = lowMemory && manySegments;
 
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: disableObjects, lowMemory: lowMemory, SegmentSize: manySegments ? "4k" : "1g", DisableStorageTier: disableStorageTier, EnableIncrementalSnapshots: incrementalSnapshots, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -317,9 +317,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = disableStorageTier ? 16 : keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = disableStorageTier ? 16 : keyCount;
+        int addCount = 5;
         context.kvPairs = [];
         context.kvPairsObj = [];
 
@@ -371,9 +371,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRAddReplicaAfterPrimaryCheckpoint([Values] bool performRMW, [Values] bool disableObjects, [Values] bool lowMemory)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + (primary_count * replica_count);
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + (primary_count * replica_count);
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, tryRecover: true, disableObjects: disableObjects, lowMemory: lowMemory, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
@@ -381,20 +381,20 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual("OK", context.clusterTestUtils.AddDelSlotsRange(0, new List<(int, int)>() { (0, 16383) }, true, context.logger));
         context.clusterTestUtils.BumpEpoch(0, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
-        var shards = context.clusterTestUtils.ClusterShards(0, context.logger);
+        List<ShardInfo> shards = context.clusterTestUtils.ClusterShards(0, context.logger);
         Assert.AreEqual(1, shards.Count);
         Assert.AreEqual(1, shards[0].slotRanges.Count);
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         context.kvPairs = [];
         context.kvPairsObj = new Dictionary<string, List<int>>();
 
@@ -413,7 +413,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.clusterTestUtils.Checkpoint(0, logger: context.logger);
 
         // Add new replica node
-        var primaryId = context.clusterTestUtils.GetNodeIdFromNode(0, context.logger);
+        string primaryId = context.clusterTestUtils.GetNodeIdFromNode(0, context.logger);
         context.clusterTestUtils.Meet(1, 0, logger: context.logger);
         context.clusterTestUtils.WaitAll(context.logger);
         _ = context.clusterTestUtils.ClusterReplicate(1, primaryId, async: false, logger: context.logger);
@@ -430,9 +430,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRPrimaryRestart([Values] bool performRMW, [Values] bool disableObjects)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, tryRecover: true, disableObjects: disableObjects, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
@@ -440,20 +440,20 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual("OK", context.clusterTestUtils.AddDelSlotsRange(0, new List<(int, int)>() { (0, 16383) }, true, context.logger));
         context.clusterTestUtils.BumpEpoch(0, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
-        var shards = context.clusterTestUtils.ClusterShards(0, context.logger);
+        List<ShardInfo> shards = context.clusterTestUtils.ClusterShards(0, context.logger);
         Assert.AreEqual(1, shards.Count);
         Assert.AreEqual(1, shards[0].slotRanges.Count);
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         Dictionary<string, int> kvPairs = [];
 
         if (!performRMW)
@@ -462,7 +462,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
             context.PopulatePrimaryRMW(ref kvPairs, keyLength, kvpairCount, 0, addCount);
         context.clusterTestUtils.Checkpoint(0, logger: context.logger);
 
-        var storeCurrentAofAddress = context.clusterTestUtils.GetStoreCurrentAofAddress(0, logger: context.logger);
+        long storeCurrentAofAddress = context.clusterTestUtils.GetStoreCurrentAofAddress(0, logger: context.logger);
         long objectStoreCurrentAofAddress = -1;
         if (!disableObjects)
             objectStoreCurrentAofAddress = context.clusterTestUtils.GetObjectStoreCurrentAofAddress(0, context.logger);
@@ -482,7 +482,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.nodes[0].Start();
         context.CreateConnection(useTLS: useTLS);
 
-        var storeRecoveredAofAddress = context.clusterTestUtils.GetStoreRecoveredAofAddress(0, context.logger);
+        long storeRecoveredAofAddress = context.clusterTestUtils.GetStoreRecoveredAofAddress(0, context.logger);
         long objectStoreRecoveredAofAddress = -1;
         if (!disableObjects)
             objectStoreRecoveredAofAddress = context.clusterTestUtils.GetObjectStoreRecoveredAofAddress(0, logger: context.logger);
@@ -496,18 +496,18 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRRedirectWrites()
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
 
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -516,7 +516,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var resp = context.clusterTestUtils.SetKey(1, Encoding.ASCII.GetBytes("testKey"), Encoding.ASCII.GetBytes("testValue"), out _, out _, out _, logger: context.logger);
+        ResponseState resp = context.clusterTestUtils.SetKey(1, Encoding.ASCII.GetBytes("testKey"), Encoding.ASCII.GetBytes("testValue"), out _, out _, out _, logger: context.logger);
         Assert.AreEqual(ResponseState.MOVED, resp);
     }
 
@@ -524,7 +524,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterSRReplicaOfTest([Values] bool performRMW)
     {
-        var nodes_count = 2;
+        int nodes_count = 2;
         context.CreateInstances(nodes_count, tryRecover: true, disableObjects: true, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
 
@@ -533,7 +533,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.clusterTestUtils.SetConfigEpoch(0, 1, context.logger);
         context.clusterTestUtils.SetConfigEpoch(1, 2, context.logger);
 
-        var configEpoch = context.clusterTestUtils.GetConfigEpoch(0, context.logger);
+        long configEpoch = context.clusterTestUtils.GetConfigEpoch(0, context.logger);
         Assert.AreEqual(1, configEpoch);
 
         configEpoch = context.clusterTestUtils.GetConfigEpoch(1, context.logger);
@@ -543,9 +543,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.clusterTestUtils.WaitClusterNodesSync(syncOnNodeIndex: 0, count: 2, context.logger);
         context.clusterTestUtils.WaitUntilNodeIsKnown(1, 0, logger: context.logger);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         context.kvPairs = [];
         if (!performRMW)
             context.PopulatePrimary(ref context.kvPairs, keyLength, kvpairCount, 0);
@@ -560,17 +560,17 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterReplicationSimpleFailover([Values] bool performRMW, [Values] bool checkpoint)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: true, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
         shards = context.clusterTestUtils.ClusterShards(0, context.logger);
@@ -579,9 +579,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = 16;
-        var addCount = 10;
+        int keyLength = 32;
+        int kvpairCount = 16;
+        int addCount = 10;
         context.kvPairs = [];
 
         // Populate Primary
@@ -596,20 +596,20 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
         if (checkpoint)
         {
-            var primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
-            var replicaLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
+            DateTime primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
+            DateTime replicaLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
             context.clusterTestUtils.Checkpoint(0);
             context.clusterTestUtils.WaitCheckpoint(0, primaryLastSaveTime, logger: context.logger);
             context.clusterTestUtils.WaitCheckpoint(1, replicaLastSaveTime, logger: context.logger);
         }
 
         #region InitiateFailover
-        var slotMap = new int[16384];
+        int[] slotMap = new int[16384];
         // Failover primary
         _ = context.clusterTestUtils.ClusterFailover(1, logger: context.logger);
 
         // Reconfigure slotMap to reflect new primary
-        for (var i = 0; i < 16384; i++)
+        for (int i = 0; i < 16384; i++)
             slotMap[i] = 1;
         #endregion
 
@@ -629,21 +629,21 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterFailoverAttachReplicas([Values] bool performRMW, [Values] bool takePrimaryCheckpoint, [Values] bool takeNewPrimaryCheckpoint, [Values] bool enableIncrementalSnapshots)
     {
-        var replica_count = 2; // Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 2; // Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: true, EnableIncrementalSnapshots: enableIncrementalSnapshots, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
-        var (shards, _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
+        (List<ShardInfo> shards, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var primary = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", primary.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode primary = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", primary.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, primary.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
-        var rconfig1 = context.clusterTestUtils.ClusterNodes(1, context.logger);
-        var rconfig2 = context.clusterTestUtils.ClusterNodes(2, context.logger);
+        ClusterConfiguration rconfig1 = context.clusterTestUtils.ClusterNodes(1, context.logger);
+        ClusterConfiguration rconfig2 = context.clusterTestUtils.ClusterNodes(2, context.logger);
         Assert.AreEqual(primary.NodeId, rconfig1.Nodes.First().ParentNodeId);
         Assert.AreEqual(primary.NodeId, rconfig2.Nodes.First().ParentNodeId);
 
@@ -653,9 +653,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
         Assert.AreEqual(16383, shards[0].slotRanges[0].Item2);
 
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         context.kvPairs = [];
 
         // Populate Primary
@@ -666,7 +666,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
         if (takePrimaryCheckpoint)
         {
-            var primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
+            DateTime primaryLastSaveTime = context.clusterTestUtils.LastSave(0, logger: context.logger);
             context.clusterTestUtils.Checkpoint(0, logger: context.logger);
             context.clusterTestUtils.WaitCheckpoint(0, primaryLastSaveTime, logger: context.logger);
         }
@@ -692,7 +692,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
         if (takeNewPrimaryCheckpoint)
         {
-            var newPrimaryLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
+            DateTime newPrimaryLastSaveTime = context.clusterTestUtils.LastSave(1, logger: context.logger);
             context.clusterTestUtils.Checkpoint(1, logger: context.logger);
             context.clusterTestUtils.WaitCheckpoint(1, newPrimaryLastSaveTime, logger: context.logger);
         }
@@ -709,21 +709,21 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Test, Order(13)]
     public void ClusterReplicationCheckpointCleanupTest([Values] bool performRMW, [Values] bool disableObjects, [Values] bool enableIncrementalSnapshots)
     {
-        var replica_count = 1;//Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + (primary_count * replica_count);
+        int replica_count = 1;//Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + (primary_count * replica_count);
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, tryRecover: true, disableObjects: disableObjects, lowMemory: true, SegmentSize: "4k", EnableIncrementalSnapshots: enableIncrementalSnapshots, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
         Assert.AreEqual("OK", context.clusterTestUtils.AddDelSlotsRange(0, [(0, 16383)], true, context.logger));
         context.clusterTestUtils.BumpEpoch(0, logger: context.logger);
 
-        var cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var myself = cconfig.Nodes.First();
-        var slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
+        ClusterConfiguration cconfig = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        ClusterNode myself = cconfig.Nodes.First();
+        string slotRangesStr = string.Join(",", myself.Slots.Select(x => $"({x.From}-{x.To})").ToList());
         Assert.AreEqual(1, myself.Slots.Count, $"Setup failed slot ranges count greater than 1 {slotRangesStr}");
 
-        var shards = context.clusterTestUtils.ClusterShards(0, context.logger);
+        List<ShardInfo> shards = context.clusterTestUtils.ClusterShards(0, context.logger);
         Assert.AreEqual(1, shards.Count);
         Assert.AreEqual(1, shards[0].slotRanges.Count);
         Assert.AreEqual(0, shards[0].slotRanges[0].Item1);
@@ -742,9 +742,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterMainMemoryReplicationAttachReplicas()
     {
-        var replica_count = 2; // Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 2; // Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: true, MainMemoryReplication: true, OnDemandCheckpoint: true, CommitFrequencyMs: -1, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
@@ -754,10 +754,10 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.clusterTestUtils.SetConfigEpoch(1, 2, logger: context.logger);
         context.clusterTestUtils.SetConfigEpoch(2, 3, logger: context.logger);
 
-        for (var i = 1; i < nodes_count; i++) context.clusterTestUtils.Meet(0, i);
+        for (int i = 1; i < nodes_count; i++) context.clusterTestUtils.Meet(0, i);
 
-        for (var i = 0; i < nodes_count; i++)
-            for (var j = 0; j < nodes_count; j++)
+        for (int i = 0; i < nodes_count; i++)
+            for (int j = 0; j < nodes_count; j++)
                 if (i != j) context.clusterTestUtils.WaitUntilNodeIsKnown(i, j, context.logger);
 
         context.kvPairs = [];
@@ -765,7 +765,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         var task = Task.Run(()
             => context.PopulatePrimaryAndTakeCheckpointTask(performRMW: false, disableObjects: true, takeCheckpoint: false, iter: 10));
 
-        var primaryId = context.clusterTestUtils.ClusterMyId(0, context.logger);
+        string primaryId = context.clusterTestUtils.ClusterMyId(0, context.logger);
         _ = context.clusterTestUtils.ClusterReplicate(1, primaryId, async: true, logger: context.logger);
         _ = context.clusterTestUtils.ClusterReplicate(2, primaryId, async: true, logger: context.logger);
 
@@ -786,9 +786,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
     [Category("REPLICATION")]
     public void ClusterDontKnowReplicaFailTest([Values] bool performRMW, [Values] bool MainMemoryReplication, [Values] bool onDemandCheckpoint, [Values] bool useReplicaOf)
     {
-        var replica_count = 1;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        int replica_count = 1;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: true, MainMemoryReplication: MainMemoryReplication, OnDemandCheckpoint: onDemandCheckpoint, CommitFrequencyMs: -1, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
@@ -799,10 +799,10 @@ public class ClusterReplicationTests(bool UseTLS = false)
         context.clusterTestUtils.Meet(0, 1, logger: context.logger);
         context.clusterTestUtils.WaitUntilNodeIsKnown(0, 1, logger: context.logger);
 
-        var replicaId = context.clusterTestUtils.ClusterMyId(1, logger: context.logger);
+        string replicaId = context.clusterTestUtils.ClusterMyId(1, logger: context.logger);
         _ = context.clusterTestUtils.ClusterForget(0, replicaId, 5, logger: context.logger);
 
-        var primaryId = context.clusterTestUtils.ClusterMyId(0, logger: context.logger);
+        string primaryId = context.clusterTestUtils.ClusterMyId(0, logger: context.logger);
         string resp;
         if (!useReplicaOf)
             resp = context.clusterTestUtils.ClusterReplicate(1, primaryId, failEx: false, logger: context.logger);
@@ -814,7 +814,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         {
             context.clusterTestUtils.Meet(0, 1, logger: context.logger);
             context.clusterTestUtils.BumpEpoch(1, logger: context.logger);
-            var config = context.clusterTestUtils.ClusterNodes(0, logger: context.logger);
+            ClusterConfiguration config = context.clusterTestUtils.ClusterNodes(0, logger: context.logger);
             if (config.Nodes.Count == 2) break;
             ClusterTestUtils.BackOff();
         }
@@ -822,9 +822,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
         _ = context.clusterTestUtils.ClusterReplicate(1, primaryId, logger: context.logger);
 
         context.kvPairs = [];
-        var keyLength = 32;
-        var kvpairCount = keyCount;
-        var addCount = 5;
+        int keyLength = 32;
+        int kvpairCount = keyCount;
+        int addCount = 5;
         if (!performRMW)
             context.PopulatePrimary(ref context.kvPairs, keyLength, kvpairCount, 0);
         else
@@ -884,22 +884,22 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
     void ClusterDivergentReplicasTest(bool performRMW, bool disableObjects, bool ckptBeforeDivergence, bool multiCheckpointAfterDivergence, bool mainMemoryReplication, bool fastCommit)
     {
-        var set = false;
-        var replica_count = 2;// Per primary
-        var primary_count = 1;
-        var nodes_count = primary_count + primary_count * replica_count;
+        bool set = false;
+        int replica_count = 2;// Per primary
+        int primary_count = 1;
+        int nodes_count = primary_count + primary_count * replica_count;
         Assert.IsTrue(primary_count > 0);
         context.CreateInstances(nodes_count, disableObjects: disableObjects, MainMemoryReplication: mainMemoryReplication, CommitFrequencyMs: mainMemoryReplication ? -1 : 0, OnDemandCheckpoint: mainMemoryReplication, FastCommit: fastCommit, enableAOF: true, useTLS: useTLS);
         context.CreateConnection(useTLS: useTLS);
         _ = context.clusterTestUtils.SimpleSetupCluster(primary_count, replica_count, logger: context.logger);
 
-        var oldPrimaryIndex = 0;
-        var newPrimaryIndex = 1;
-        var replicaIndex = 2;
+        int oldPrimaryIndex = 0;
+        int newPrimaryIndex = 1;
+        int replicaIndex = 2;
 
-        var keyLength = 8;
-        var kvpairCount = 16;
-        var addCount = 5;
+        int keyLength = 8;
+        int kvpairCount = 16;
+        int addCount = 5;
         context.kvPairs = new();
         context.kvPairsObj = new Dictionary<string, List<int>>();
 
@@ -915,9 +915,9 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
         if (ckptBeforeDivergence)
         {
-            var oldPrimaryLastSaveTime = context.clusterTestUtils.LastSave(oldPrimaryIndex, logger: context.logger);
-            var newPrimaryLastSaveTime = context.clusterTestUtils.LastSave(newPrimaryIndex, logger: context.logger);
-            var replicaLastSaveTime = context.clusterTestUtils.LastSave(replicaIndex, logger: context.logger);
+            DateTime oldPrimaryLastSaveTime = context.clusterTestUtils.LastSave(oldPrimaryIndex, logger: context.logger);
+            DateTime newPrimaryLastSaveTime = context.clusterTestUtils.LastSave(newPrimaryIndex, logger: context.logger);
+            DateTime replicaLastSaveTime = context.clusterTestUtils.LastSave(replicaIndex, logger: context.logger);
             context.clusterTestUtils.Checkpoint(oldPrimaryIndex, logger: context.logger);
             context.clusterTestUtils.WaitCheckpoint(oldPrimaryIndex, oldPrimaryLastSaveTime, logger: context.logger);
             context.clusterTestUtils.WaitCheckpoint(newPrimaryIndex, newPrimaryLastSaveTime, logger: context.logger);
@@ -944,7 +944,7 @@ public class ClusterReplicationTests(bool UseTLS = false)
         // Take multiple checkpoints after divergence
         if (multiCheckpointAfterDivergence)
         {
-            var count = 2;
+            int count = 2;
             while (--count > 0)
             {
                 context.clusterTestUtils.Checkpoint(oldPrimaryIndex, logger: context.logger);
@@ -981,11 +981,11 @@ public class ClusterReplicationTests(bool UseTLS = false)
 
         if (!ckptBeforeDivergence || multiCheckpointAfterDivergence) context.clusterTestUtils.Checkpoint(newPrimaryIndex, logger: context.logger);
 
-        var newPrimaryId = context.clusterTestUtils.ClusterMyId(newPrimaryIndex, context.logger);
+        string newPrimaryId = context.clusterTestUtils.ClusterMyId(newPrimaryIndex, context.logger);
         while (true)
         {
-            var replicaConfig = context.clusterTestUtils.ClusterNodes(replicaIndex, context.logger);
-            var clusterNode = replicaConfig.GetBySlot(0);
+            ClusterConfiguration replicaConfig = context.clusterTestUtils.ClusterNodes(replicaIndex, context.logger);
+            ClusterNode clusterNode = replicaConfig.GetBySlot(0);
             if (clusterNode != null && clusterNode.NodeId.Equals(newPrimaryId))
                 break;
             _ = Thread.Yield();

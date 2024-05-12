@@ -136,11 +136,11 @@ public class FunctionPerSessionTests
     [Category("TsavoriteKV")]
     public async Task Should_create_multiple_sessions_with_different_callbacks()
     {
-        using var adderSession = _tsavorite.NewSession<long, Empty, Empty, RefCountedAdder>(_adder);
-        using var removerSession = _tsavorite.NewSession<Empty, Empty, Empty, RefCountedRemover>(_remover);
-        using var readerSession = _tsavorite.NewSession<Empty, RefCountedValue, Empty, RefCountedReader>(_reader);
-        var key = 101;
-        var input = 1000L;
+        using ClientSession<int, RefCountedValue, long, Empty, Empty, RefCountedAdder> adderSession = _tsavorite.NewSession<long, Empty, Empty, RefCountedAdder>(_adder);
+        using ClientSession<int, RefCountedValue, Empty, Empty, Empty, RefCountedRemover> removerSession = _tsavorite.NewSession<Empty, Empty, Empty, RefCountedRemover>(_remover);
+        using ClientSession<int, RefCountedValue, Empty, RefCountedValue, Empty, RefCountedReader> readerSession = _tsavorite.NewSession<Empty, RefCountedValue, Empty, RefCountedReader>(_reader);
+        int key = 101;
+        long input = 1000L;
 
         (await adderSession.RMWAsync(ref key, ref input)).Complete();
         (await adderSession.RMWAsync(ref key, ref input)).Complete();
@@ -154,10 +154,10 @@ public class FunctionPerSessionTests
 
         Assert.AreEqual(1, _remover.InPlaceCount);
 
-        var read = await readerSession.ReadAsync(ref key, ref empty);
-        var result = read.Complete();
+        TsavoriteKV<int, RefCountedValue>.ReadAsyncResult<Empty, RefCountedValue, Empty> read = await readerSession.ReadAsync(ref key, ref empty);
+        (Status status, RefCountedValue output) result = read.Complete();
 
-        var actual = result.output;
+        RefCountedValue actual = result.output;
         Assert.AreEqual(2, actual.ReferenceCount);
         Assert.AreEqual(1000L, actual.Value);
 

@@ -98,7 +98,7 @@ public class RespSortedSetGarnetClientTests
     {
         using var db = new GarnetClient(TestUtils.Address, TestUtils.Port);
         db.Connect();
-        var expectedResult = "2";
+        string expectedResult = "2";
         List<string> parameters = ["myzset1", "1", "KEY1", "2", "KEY2"];
         db.ExecuteForStringResult((c, s) =>
         {
@@ -150,10 +150,10 @@ public class RespSortedSetGarnetClientTests
     {
         using var db = new GarnetClient(TestUtils.Address, TestUtils.Port);
         db.Connect();
-        var numThreads = 2;
+        int numThreads = 2;
         Task[] tasks = new Task[numThreads];
         var rnd = new Random();
-        var numIterations = 3; // how many dictionaries to be added
+        int numIterations = 3; // how many dictionaries to be added
         ConcurrentDictionary<string, int> ss = new();
 
         string name = string.Empty;
@@ -161,7 +161,7 @@ public class RespSortedSetGarnetClientTests
         {
             tasks[i] = Task.Run(async () =>
             {
-                for (var ii = 0; ii < numIterations; ++ii)
+                for (int ii = 0; ii < numIterations; ++ii)
                 {
                     string name = GetUniqueName(ss, ii);
                     if (name == String.Empty)
@@ -187,7 +187,7 @@ public class RespSortedSetGarnetClientTests
                     var result = await db.ExecuteForMemoryResultArrayAsync("ZRANGEBYSCORE", parameters);
 
                     // assert the elements
-                    foreach (var item in leaderBoard)
+                    foreach (SortedSetEntry item in leaderBoard)
                     {
                         var found = result.First(t => t.Span.SequenceEqual(Encoding.ASCII.GetBytes(item.Element.ToString())));
                         Assert.IsTrue(found.Span.Length > 0);
@@ -211,7 +211,7 @@ public class RespSortedSetGarnetClientTests
         await db.ExecuteForMemoryResultAsync("SAVE");
 
         Memory<byte> ZCARD = Encoding.ASCII.GetBytes("$5\r\nZCARD\r\n");
-        foreach (var i in ss)
+        foreach (KeyValuePair<string, int> i in ss)
         {
             var n = await db.ExecuteForMemoryResultAsync(ZCARD, i.Key);
             Assert.AreEqual("0", Encoding.ASCII.GetString(n.Span));
@@ -244,7 +244,7 @@ public class RespSortedSetGarnetClientTests
         var result = await db.ExecuteForStringArrayResultAsync("ZRANGEBYSCORE", parameters);
 
         // assert the elements
-        foreach (var item in leaderBoard)
+        foreach (SortedSetEntry item in leaderBoard)
         {
             var found = result.First(t => t.Equals(item.Element));
             Assert.IsTrue(found.Length > 0);
@@ -292,7 +292,7 @@ public class RespSortedSetGarnetClientTests
         await db.ExecuteForMemoryResultAsync("ZADD", parameters);
 
         var tokenSource = new CancellationTokenSource();
-        var token = tokenSource.Token;
+        CancellationToken token = tokenSource.Token;
 
         parameters = ["leaderboard", "-inf", "+inf"];
         var t = db.ExecuteForMemoryResultArrayWithCancellationAsync("ZRANGEBYSCORE", parameters, token);
@@ -332,10 +332,10 @@ public class RespSortedSetGarnetClientTests
         await db.ExecuteForMemoryResultAsync("ZADD", parameters);
 
         var tokenSource = new CancellationTokenSource();
-        var token = tokenSource.Token;
+        CancellationToken token = tokenSource.Token;
 
         // Execute without cancellation
-        var t = DoZRangeAsync(1, token);
+        Task t = DoZRangeAsync(1, token);
         t.GetAwaiter().GetResult();
         Assert.IsTrue(t.IsCompletedSuccessfully);
 
@@ -369,7 +369,7 @@ public class RespSortedSetGarnetClientTests
         for (int i = 0; i <= maxIterations; i++)
         {
             var result = await db.ExecuteForStringArrayResultWithCancellationAsync("ZRANGEBYSCORE", parameters, ct);
-            foreach (var item in leaderBoard)
+            foreach (SortedSetEntry item in leaderBoard)
             {
                 var found = result.FirstOrDefault(t => t.Equals(item.Element));
                 Assert.IsTrue(found != null);
@@ -381,10 +381,10 @@ public class RespSortedSetGarnetClientTests
     {
         var rnd = new Random();
         string name;
-        var i = 0;
+        int i = 0;
         do
         {
-            var rndMillis = rnd.Next(1, 1000);
+            int rndMillis = rnd.Next(1, 1000);
             name = $"leaderboard-{ii}-{rndMillis}";
             if (names.TryAdd(name, ii))
             {
@@ -484,7 +484,7 @@ public class RespSortedSetGarnetClientTests
     {
         using var db = new GarnetClient(TestUtils.Address, TestUtils.Port);
         db.Connect();
-        var expectedValue = 0;
+        int expectedValue = 0;
 
         ManualResetEventSlim e = new();
 

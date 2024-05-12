@@ -20,7 +20,7 @@ sealed class TestProcedureHash : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        var setA = GetNextArg(input, ref offset);
+        ArgSlice setA = GetNextArg(input, ref offset);
 
         if (setA.Length == 0)
             return false;
@@ -36,7 +36,7 @@ sealed class TestProcedureHash : CustomTransactionProcedure
         var fields = new ArgSlice[pairs.Length];
         bool result = true;
 
-        var myHash = GetNextArg(input, ref offset);
+        ArgSlice myHash = GetNextArg(input, ref offset);
 
         if (myHash.Length == 0)
             result = false;
@@ -62,13 +62,13 @@ sealed class TestProcedureHash : CustomTransactionProcedure
                 if (result)
                 {
                     //HGET
-                    api.HashGet(myHash, pairs[0].field, out var value);
+                    api.HashGet(myHash, pairs[0].field, out ArgSlice value);
                     if (!value.ReadOnlySpan.SequenceEqual(pairs[0].value.ReadOnlySpan))
                         result = false;
                     if (result)
                     {
                         //HGETALL
-                        api.HashGetAll(myHash, out var values);
+                        api.HashGetAll(myHash, out ArgSlice[] values);
                         if (!values[3].ReadOnlySpan.SequenceEqual(pairs[1].value.ReadOnlySpan))
                             result = false;
                         api.HashGet(myHash, fields[0..2], out values);
@@ -77,20 +77,20 @@ sealed class TestProcedureHash : CustomTransactionProcedure
                         api.HashLength(myHash, out count);
                         if (count != 6)
                             result = false;
-                        api.HashExists(myHash, pairs[0].field, out var exists);
+                        api.HashExists(myHash, pairs[0].field, out bool exists);
                         if (!exists)
                             result = false;
-                        api.HashRandomField(myHash, out var field);
+                        api.HashRandomField(myHash, out ArgSlice field);
                         if (field.Length == 0)
                             result = false;
-                        api.HashRandomField(myHash, 2, true, out var randFields);
+                        api.HashRandomField(myHash, 2, true, out ArgSlice[] randFields);
                         if (randFields.Length != 4)
                             result = false;
                         ArgSlice elementremove = GetNextArg(input, ref offset);
                         api.HashDelete(myHash, elementremove, out count);
                         if (count != 1)
                             result = false;
-                        api.HashScan(myHash, 0, "age", 5, out var items);
+                        api.HashScan(myHash, 0, "age", 5, out ArgSlice[] items);
                         if (items.Length != 3 || !items[1].ReadOnlySpan.StartsWith("age"u8))
                             result = false;
                     }

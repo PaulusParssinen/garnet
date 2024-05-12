@@ -31,7 +31,7 @@ internal class ClusterAuthCommsTests
     [Category("CLUSTER-AUTH"), Timeout(60000)]
     public void ClusterBasicACLTest([Values] bool useDefaultUserForInterNodeComms)
     {
-        var nodes = 6;
+        int nodes = 6;
 
         // Generate default ACL file
         context.GenerateCredentials();
@@ -63,7 +63,7 @@ internal class ClusterAuthCommsTests
     [Category("CLUSTER-AUTH"), Timeout(60000)]
     public void ClusterStartupWithoutAuthCreds([Values] bool useDefaultUserForInterNodeComms)
     {
-        var shards = 3;
+        int shards = 3;
 
         // Generate default ACL file
         context.GenerateCredentials();
@@ -79,7 +79,7 @@ internal class ClusterAuthCommsTests
             context.credManager.GetUserCredentials("admin");
 
         // Update cluster credential before setting up cluster
-        for (var i = 0; i < shards; i++)
+        for (int i = 0; i < shards; i++)
         {
             context.clusterTestUtils.ConfigSet(i, "cluster-username", cred.user);
             context.clusterTestUtils.ConfigSet(i, "cluster-password", cred.password);
@@ -90,13 +90,13 @@ internal class ClusterAuthCommsTests
 
         // Validate convergence
         Dictionary<string, SlotRange> slots = new();
-        for (var i = 0; i < shards; i++)
+        for (int i = 0; i < shards; i++)
         {
-            var nodes = context.clusterTestUtils.ClusterNodes(0).Nodes;
+            ICollection<ClusterNode> nodes = context.clusterTestUtils.ClusterNodes(0).Nodes;
 
-            foreach (var node in nodes)
+            foreach (ClusterNode node in nodes)
             {
-                var endpoint = node.EndPoint.ToString();
+                string endpoint = node.EndPoint.ToString();
                 if (slots.ContainsKey(endpoint))
                     Assert.AreEqual(node.Slots.First(), slots[endpoint]);
                 else
@@ -109,7 +109,7 @@ internal class ClusterAuthCommsTests
     [Category("CLUSTER-AUTH"), Timeout(60000)]
     public void ClusterReplicationAuth()
     {
-        var shards = 3;
+        int shards = 3;
         // Generate default ACL file
         context.GenerateCredentials();
 
@@ -124,7 +124,7 @@ internal class ClusterAuthCommsTests
 
         // Retrieve credentials
         var cred = context.credManager.GetUserCredentials("admin");
-        for (var i = 0; i < shards; i++)
+        for (int i = 0; i < shards; i++)
         {
             // Set config epoch
             context.clusterTestUtils.SetConfigEpoch(i, i + 1, logger: context.logger);
@@ -146,10 +146,10 @@ internal class ClusterAuthCommsTests
         context.PopulatePrimary(ref context.kvPairs, keyLength: 8, kvpairCount: 100, primaryIndex: 0);
 
         // Get primary id to replicate
-        var primaryId = context.clusterTestUtils.GetNodeIdFromNode(nodeIndex: 0, logger: context.logger);
+        string primaryId = context.clusterTestUtils.GetNodeIdFromNode(nodeIndex: 0, logger: context.logger);
 
         // Try attach replicas
-        for (var i = 1; i < shards; i++)
+        for (int i = 1; i < shards; i++)
         {
             context.clusterTestUtils.ClusterReplicate(
                 sourceNodeIndex: i,
@@ -160,7 +160,7 @@ internal class ClusterAuthCommsTests
         }
 
         // Wait for sync and validate key/values pairs
-        for (var i = 1; i < shards; i++)
+        for (int i = 1; i < shards; i++)
         {
             context.clusterTestUtils.WaitForReplicaAofSync(
                 primaryIndex: 0,
@@ -218,29 +218,29 @@ internal class ClusterAuthCommsTests
 
         // Since credential have changed for admin user both nodes will fail their gossip
         // Bump epoch on one node
-        for (var i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
             context.clusterTestUtils.BumpEpoch(nodeIndex: 0, logger: context.logger);
 
         // Update cluster credential
-        for (var i = 0; i < context.nodes.Length; i++)
+        for (int i = 0; i < context.nodes.Length; i++)
         {
             context.clusterTestUtils.ConfigSet(i, "cluster-username", cc[1].user);
             context.clusterTestUtils.ConfigSet(i, "cluster-password", cc[1].password);
         }
 
         // Get epoch value and port for node 0
-        var epoch0 = context.clusterTestUtils.GetConfigEpoch(0, logger: context.logger);
-        var port0 = context.clusterTestUtils.GetEndPoint(0).Port;
+        long epoch0 = context.clusterTestUtils.GetConfigEpoch(0, logger: context.logger);
+        int port0 = context.clusterTestUtils.GetEndPoint(0).Port;
 
         // Wait until convergence after updating passwords
-        for (var i = 1; i < context.nodes.Length;)
+        for (int i = 1; i < context.nodes.Length;)
         {
-            var config = context.clusterTestUtils.ClusterNodes(i, logger: context.logger);
+            ClusterConfiguration config = context.clusterTestUtils.ClusterNodes(i, logger: context.logger);
 
-            foreach (var node in config.Nodes)
+            foreach (ClusterNode node in config.Nodes)
             {
-                var port = ((IPEndPoint)node.EndPoint).Port;
-                var epoch = int.Parse(node.Raw.Split(" ")[6]);
+                int port = ((IPEndPoint)node.EndPoint).Port;
+                int epoch = int.Parse(node.Raw.Split(" ")[6]);
                 if (port == port0 && epoch == epoch0)
                 {
                     i++;

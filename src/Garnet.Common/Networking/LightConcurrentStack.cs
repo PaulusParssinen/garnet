@@ -23,13 +23,13 @@ internal class LightConcurrentStack<T> : IDisposable
 
     public void Dispose()
     {
-        var lockTaken = false;
+        bool lockTaken = false;
         latch.Enter(ref lockTaken);
         Debug.Assert(lockTaken);
         disposed = true;
         while (tail > 0)
         {
-            var elem = stack[--tail];
+            T elem = stack[--tail];
             elem.Dispose();
         }
         latch.Exit();
@@ -37,7 +37,7 @@ internal class LightConcurrentStack<T> : IDisposable
 
     public bool TryPush(T elem)
     {
-        var lockTaken = false;
+        bool lockTaken = false;
         latch.Enter(ref lockTaken);
         Debug.Assert(lockTaken);
         if (disposed || tail == stack.Length)
@@ -53,7 +53,7 @@ internal class LightConcurrentStack<T> : IDisposable
     public bool TryPop(out T elem, out bool disposed)
     {
         elem = null;
-        var lockTaken = false;
+        bool lockTaken = false;
         latch.Enter(ref lockTaken);
         Debug.Assert(lockTaken);
         disposed = this.disposed;

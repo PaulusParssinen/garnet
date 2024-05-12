@@ -75,13 +75,13 @@ internal class BasicStorageTests
     [Category("Smoke")]
     public void OmitSegmentIdTest([Values] TestUtils.DeviceType deviceType)
     {
-        var filename = Path.Join(TestUtils.MethodTestDir, "test.log");
-        var omit = false;
-        for (var ii = 0; ii < 2; ++ii)
+        string filename = Path.Join(TestUtils.MethodTestDir, "test.log");
+        bool omit = false;
+        for (int ii = 0; ii < 2; ++ii)
         {
             using IDevice device = TestUtils.CreateTestDevice(deviceType, filename, omitSegmentIdFromFilename: omit);
             var storageBase = (StorageDeviceBase)device;
-            var segmentFilename = storageBase.GetSegmentFilename(filename, 0);
+            string segmentFilename = storageBase.GetSegmentFilename(filename, 0);
             if (omit)
                 Assert.AreEqual(filename, segmentFilename);
             else
@@ -95,7 +95,7 @@ internal class BasicStorageTests
         store = new TsavoriteKV<KeyStruct, ValueStruct>
                    (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 10 });
 
-        var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
         InputStruct input = default;
 
@@ -112,7 +112,7 @@ internal class BasicStorageTests
         {
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = 1, ifield2 = 1 };
-            var status = session.RMW(ref key1, ref input, Empty.Default, 0);
+            Status status = session.RMW(ref key1, ref input, Empty.Default, 0);
             if (status.IsPending)
                 session.CompletePending(true);
         }

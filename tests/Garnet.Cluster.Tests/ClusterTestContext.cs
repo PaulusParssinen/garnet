@@ -32,7 +32,7 @@ internal class ClusterTestContext
     public void Setup(HashSet<string> monitorTests)
     {
         TestFolder = TestUtils.UnitTestWorkingDir() + "\\";
-        var logLevel = monitorTests.Contains(TestContext.CurrentContext.Test.MethodName) ? LogLevel.Trace : LogLevel.Error;
+        LogLevel logLevel = monitorTests.Contains(TestContext.CurrentContext.Test.MethodName) ? LogLevel.Trace : LogLevel.Error;
         loggerFactory = TestUtils.CreateLoggerFactoryInstance(logTextWriter, logLevel, scope: TestContext.CurrentContext.Test.Name);
         logger = loggerFactory.CreateLogger(TestContext.CurrentContext.Test.Name);
         logger.LogDebug("0. Setup >>>>>>>>>>>>");
@@ -127,7 +127,7 @@ internal class ClusterTestContext
             authPassword: clusterCreds.password,
             certificates: certificates);
 
-        foreach (var node in nodes)
+        foreach (GarnetServer node in nodes)
             node.Start();
     }
 
@@ -222,7 +222,7 @@ internal class ClusterTestContext
     {
         if (nodes != null)
         {
-            for (var i = 0; i < nodes.Length; i++)
+            for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] != null)
                 {
@@ -282,23 +282,23 @@ internal class ClusterTestContext
         int randomSeed = -1)
     {
         if (randomSeed != -1) clusterTestUtils.InitRandom(randomSeed);
-        for (var i = 0; i < kvpairCount; i++)
+        for (int i = 0; i < kvpairCount; i++)
         {
-            var key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
-            var value = r.Next();
+            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            int value = r.Next();
 
             //Use slotMap
-            var keyBytes = Encoding.ASCII.GetBytes(key);
+            byte[] keyBytes = Encoding.ASCII.GetBytes(key);
             if (slotMap != null)
             {
-                var slot = ClusterTestUtils.HashSlot(keyBytes);
+                ushort slot = ClusterTestUtils.HashSlot(keyBytes);
                 primaryIndex = slotMap[slot];
             }
 
-            var resp = clusterTestUtils.SetKey(primaryIndex, keyBytes, Encoding.ASCII.GetBytes(value.ToString()), out int _, out string _, out int _, logger: logger);
+            ResponseState resp = clusterTestUtils.SetKey(primaryIndex, keyBytes, Encoding.ASCII.GetBytes(value.ToString()), out int _, out string _, out int _, logger: logger);
             Assert.AreEqual(ResponseState.OK, resp);
 
-            var retVal = clusterTestUtils.GetKey(primaryIndex, keyBytes, out int _, out string _, out int _, out ResponseState responseState, logger: logger);
+            string retVal = clusterTestUtils.GetKey(primaryIndex, keyBytes, out int _, out string _, out int _, out ResponseState responseState, logger: logger);
             Assert.AreEqual(ResponseState.OK, responseState);
             Assert.AreEqual(value, int.Parse(retVal));
 
@@ -314,13 +314,13 @@ internal class ClusterTestContext
         if (randomSeed != -1) clusterTestUtils.InitRandom(randomSeed);
         for (int i = 0; i < kvpairCount; i++)
         {
-            var key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
 
             // Use slotMap
-            var keyBytes = Encoding.ASCII.GetBytes(key);
+            byte[] keyBytes = Encoding.ASCII.GetBytes(key);
             if (slotMap != null)
             {
-                var slot = ClusterTestUtils.HashSlot(keyBytes);
+                ushort slot = ClusterTestUtils.HashSlot(keyBytes);
                 primaryIndex = slotMap[slot];
             }
 
@@ -338,10 +338,10 @@ internal class ClusterTestContext
     public void PopulatePrimaryWithObjects(ref Dictionary<string, List<int>> kvPairsObj, int keyLength, int kvpairCount, int primaryIndex, int countPerList = 32, int itemSize = 1 << 20, int randomSeed = -1, bool set = false)
     {
         if (randomSeed != -1) clusterTestUtils.InitRandom(randomSeed);
-        for (var i = 0; i < kvpairCount; i++)
+        for (int i = 0; i < kvpairCount; i++)
         {
-            var key = clusterTestUtils.RandomStr(keyLength);
-            var value = !set ? clusterTestUtils.RandomList(countPerList, itemSize) : clusterTestUtils.RandomHset(countPerList, itemSize);
+            string key = clusterTestUtils.RandomStr(keyLength);
+            List<int> value = !set ? clusterTestUtils.RandomList(countPerList, itemSize) : clusterTestUtils.RandomHset(countPerList, itemSize);
             while (kvPairsObj.ContainsKey(key))
                 key = clusterTestUtils.RandomStr(keyLength);
             kvPairsObj.Add(key, value);
@@ -353,12 +353,12 @@ internal class ClusterTestContext
 
             if (!set)
             {
-                var result = clusterTestUtils.Lrange(primaryIndex, key, logger);
+                List<int> result = clusterTestUtils.Lrange(primaryIndex, key, logger);
                 Assert.AreEqual(value, result);
             }
             else
             {
-                var result = clusterTestUtils.Smembers(primaryIndex, key, logger);
+                List<int> result = clusterTestUtils.Smembers(primaryIndex, key, logger);
                 Assert.IsTrue(result.ToHashSet().SetEquals(value.ToHashSet()));
             }
         }
@@ -366,10 +366,10 @@ internal class ClusterTestContext
 
     public void PopulatePrimaryAndTakeCheckpointTask(bool performRMW, bool disableObjects, bool takeCheckpoint, int iter = 5)
     {
-        var keyLength = 32;
-        var kvpairCount = 64;
-        var addCount = 5;
-        for (var i = 0; i < iter; i++)
+        int keyLength = 32;
+        int kvpairCount = 64;
+        int addCount = 5;
+        for (int i = 0; i < iter; i++)
         {
             // Populate Primary
             if (disableObjects)
@@ -393,22 +393,22 @@ internal class ClusterTestContext
         int primaryIndex = 0,
         int[] slotMap = null)
     {
-        var keys = orderedKeys ? kvPairs.Keys.Select(int.Parse).ToList().OrderBy(x => x).Select(x => x.ToString()) : kvPairs.Keys;
-        foreach (var key in keys)
+        IEnumerable<string> keys = orderedKeys ? kvPairs.Keys.Select(int.Parse).ToList().OrderBy(x => x).Select(x => x.ToString()) : kvPairs.Keys;
+        foreach (string key in keys)
         {
-            var value = kvPairs[key];
-            var keyBytes = Encoding.ASCII.GetBytes(key);
+            int value = kvPairs[key];
+            byte[] keyBytes = Encoding.ASCII.GetBytes(key);
 
             if (slotMap != null)
             {
-                var slot = ClusterTestUtils.HashSlot(keyBytes);
+                ushort slot = ClusterTestUtils.HashSlot(keyBytes);
                 replicaIndex = slotMap[slot];
             }
 
-            var retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out var _, out var _, out var _, out var responseState, logger: logger);
+            string retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out int _, out string _, out int _, out ResponseState responseState, logger: logger);
             while (retVal == null || (value != int.Parse(retVal)))
             {
-                retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out var _, out var _, out var _, out responseState, logger: logger);
+                retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out int _, out string _, out int _, out responseState, logger: logger);
                 ClusterTestUtils.BackOff();
             }
             Assert.AreEqual(ResponseState.OK, responseState);
@@ -418,9 +418,9 @@ internal class ClusterTestContext
 
     public void ValidateNodeObjects(ref Dictionary<string, List<int>> kvPairsObj, int nodeIndex, bool set = false)
     {
-        foreach (var key in kvPairsObj.Keys)
+        foreach (string key in kvPairsObj.Keys)
         {
-            var elements = kvPairsObj[key];
+            List<int> elements = kvPairsObj[key];
             List<int> result;
             if (!set)
                 result = clusterTestUtils.Lrange(nodeIndex, key, logger);
@@ -444,17 +444,17 @@ internal class ClusterTestContext
 
     public void SendAndValidateKeys(int primaryIndex, int replicaIndex, int keyLength, int numKeys = 1)
     {
-        for (var i = 0; i < numKeys; i++)
+        for (int i = 0; i < numKeys; i++)
         {
-            var key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
-            var keyBytes = Encoding.ASCII.GetBytes(key);
-            var value = r.Next();
-            var resp = clusterTestUtils.SetKey(primaryIndex, keyBytes, Encoding.ASCII.GetBytes(value.ToString()), out int _, out string _, out int _, logger: logger);
+            string key = orderedKeys ? (keyOffset++).ToString() : clusterTestUtils.RandomStr(keyLength);
+            byte[] keyBytes = Encoding.ASCII.GetBytes(key);
+            int value = r.Next();
+            ResponseState resp = clusterTestUtils.SetKey(primaryIndex, keyBytes, Encoding.ASCII.GetBytes(value.ToString()), out int _, out string _, out int _, logger: logger);
             Assert.AreEqual(ResponseState.OK, resp);
 
             clusterTestUtils.WaitForReplicaAofSync(primaryIndex, replicaIndex);
 
-            var retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out int _, out string _, out int _, out ResponseState responseState, logger: logger);
+            string retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out int _, out string _, out int _, out ResponseState responseState, logger: logger);
             while (retVal == null || (value != int.Parse(retVal)))
             {
                 retVal = clusterTestUtils.GetKey(replicaIndex, keyBytes, out int _, out string _, out int _, out responseState, logger: logger);
@@ -471,10 +471,10 @@ internal class ClusterTestContext
         _ = clusterTestUtils.ClusterFailover(replicaNodeIndex, "ABORT", logger);
         _ = clusterTestUtils.ClusterFailover(replicaNodeIndex, logger: logger);
 
-        var retryCount = 0;
+        int retryCount = 0;
         while (true)
         {
-            var role = clusterTestUtils.GetReplicationRole(replicaNodeIndex, logger: logger);
+            string role = clusterTestUtils.GetReplicationRole(replicaNodeIndex, logger: logger);
             if (role.Equals("master")) break;
             if (retryCount++ > 10000)
             {
@@ -487,17 +487,17 @@ internal class ClusterTestContext
 
     public void AttachAndWaitForSync(int primary_count, int replica_count, bool disableObjects)
     {
-        var primaryId = clusterTestUtils.GetNodeIdFromNode(0, logger);
+        string primaryId = clusterTestUtils.GetNodeIdFromNode(0, logger);
         // Issue meet to replicas
-        for (var i = primary_count; i < primary_count + replica_count; i++)
+        for (int i = primary_count; i < primary_count + replica_count; i++)
             clusterTestUtils.Meet(i, 0);
 
         // Wait until primary node is known so as not to fail replicate
-        for (var i = primary_count; i < primary_count + replica_count; i++)
+        for (int i = primary_count; i < primary_count + replica_count; i++)
             clusterTestUtils.WaitUntilNodeIdIsKnown(i, primaryId, logger: logger);
 
         // Issue cluster replicate and bump epoch manually to capture config.
-        for (var i = primary_count; i < primary_count + replica_count; i++)
+        for (int i = primary_count; i < primary_count + replica_count; i++)
         {
             _ = clusterTestUtils.ClusterReplicate(i, primaryId, async: true, logger: logger);
             clusterTestUtils.BumpEpoch(i, logger: logger);
@@ -506,7 +506,7 @@ internal class ClusterTestContext
         if (!checkpointTask.Wait(TimeSpan.FromSeconds(100))) Assert.Fail("Checkpoint task timeout");
 
         // Wait for recovery and AofSync
-        for (var i = primary_count; i < replica_count; i++)
+        for (int i = primary_count; i < replica_count; i++)
         {
             clusterTestUtils.WaitForReplicaRecovery(i, logger);
             clusterTestUtils.WaitForReplicaAofSync(0, i, logger);
@@ -515,7 +515,7 @@ internal class ClusterTestContext
         clusterTestUtils.WaitForConnectedReplicaCount(0, replica_count, logger: logger);
 
         // Validate data on replicas
-        for (var i = primary_count; i < replica_count; i++)
+        for (int i = primary_count; i < replica_count; i++)
         {
             if (disableObjects)
                 ValidateKVCollectionAgainstReplica(ref kvPairs, i);

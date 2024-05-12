@@ -119,7 +119,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
 
         if (removeOutdated)
         {
-            var prior = flogCommitHistory[flogCommitHistoryOffset];
+            long prior = flogCommitHistory[flogCommitHistoryOffset];
             flogCommitHistory[flogCommitHistoryOffset] = commitNum;
             flogCommitHistoryOffset = (byte)((flogCommitHistoryOffset + 1) % flogCommitCount);
             if (prior != default)
@@ -151,7 +151,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
     /// <inheritdoc />
     public void RemoveAllCommits()
     {
-        foreach (var commitNum in ListCommits())
+        foreach (long commitNum in ListCommits())
             RemoveCommit(commitNum);
     }
 
@@ -191,7 +191,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
 
         if (removeOutdated)
         {
-            var prior = indexTokenHistory[indexTokenHistoryOffset];
+            Guid prior = indexTokenHistory[indexTokenHistoryOffset];
             indexTokenHistory[indexTokenHistoryOffset] = indexToken;
             indexTokenHistoryOffset = (byte)((indexTokenHistoryOffset + 1) % indexTokenCount);
             if (prior != default)
@@ -238,7 +238,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
 
         if (removeOutdated)
         {
-            var prior = logTokenHistory[logTokenHistoryOffset];
+            Guid prior = logTokenHistory[logTokenHistoryOffset];
             logTokenHistory[logTokenHistoryOffset] = logToken;
             logTokenHistoryOffset = (byte)((logTokenHistoryOffset + 1) % logTokenCount);
             if (prior != default)
@@ -282,7 +282,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
         {
             // Try to get latest valid metadata from delta-log
             deltaLog.Reset();
-            while (deltaLog.GetNext(out long physicalAddress, out int entryLength, out var type))
+            while (deltaLog.GetNext(out long physicalAddress, out int entryLength, out DeltaLogEntryType type))
             {
                 switch (type)
                 {
@@ -380,14 +380,14 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
         }
 
         // Purge all log checkpoints that were not used for recovery
-        foreach (var recoveredLogToken in GetLogCheckpointTokens())
+        foreach (Guid recoveredLogToken in GetLogCheckpointTokens())
         {
             if (recoveredLogToken != logToken)
                 deviceFactory.Delete(checkpointNamingScheme.LogCheckpointBase(recoveredLogToken));
         }
 
         // Purge all index checkpoints that were not used for recovery
-        foreach (var recoveredIndexToken in GetIndexCheckpointTokens())
+        foreach (Guid recoveredIndexToken in GetIndexCheckpointTokens())
         {
             if (recoveredIndexToken != indexToken)
                 deviceFactory.Delete(checkpointNamingScheme.IndexCheckpointBase(recoveredIndexToken));
@@ -399,7 +399,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
     {
         if (!removeOutdated) return;
 
-        foreach (var recoveredCommitNum in ListCommits())
+        foreach (long recoveredCommitNum in ListCommits())
             if (recoveredCommitNum != commitNum) RemoveCommit(recoveredCommitNum);
 
         // Add recovered tokens to history, for eventual purging
@@ -441,7 +441,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = bufferPool.Get((int)numBytesToRead);
+        SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToRead);
         device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
             (uint)numBytesToRead, IOCallback, null);
         semaphore.Wait();
@@ -467,7 +467,7 @@ public class DeviceLogCommitCheckpointManager : ILogCommitManager, ICheckpointMa
         long numBytesToWrite = size;
         numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = bufferPool.Get((int)numBytesToWrite);
+        SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = buffer)
         {
             Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);

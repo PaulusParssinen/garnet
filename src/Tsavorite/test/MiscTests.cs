@@ -43,7 +43,7 @@ internal class MiscTests
     [Category("Smoke")]
     public void MixedTest1()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MixedFunctions>(new MixedFunctions());
+        using ClientSession<int, MyValue, MyInput, MyOutput, Empty, MixedFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MixedFunctions>(new MixedFunctions());
 
         int key = 8999998;
         var input1 = new MyInput { value = 23 };
@@ -66,7 +66,7 @@ internal class MiscTests
     [Category("TsavoriteKV")]
     public void MixedTest2()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MixedFunctions>(new MixedFunctions());
+        using ClientSession<int, MyValue, MyInput, MyOutput, Empty, MixedFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MixedFunctions>(new MixedFunctions());
 
         for (int i = 0; i < 2000; i++)
         {
@@ -74,14 +74,14 @@ internal class MiscTests
             session.Upsert(ref i, ref value, Empty.Default, 0);
         }
 
-        var key2 = 23;
+        int key2 = 23;
         MyInput input = new();
         MyOutput g1 = new();
-        var status = session.Read(ref key2, ref input, ref g1, Empty.Default, 0);
+        Status status = session.Read(ref key2, ref input, ref g1, Empty.Default, 0);
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<int, MyValue, MyInput, MyOutput, Empty> outputs, wait: true);
             (status, _) = GetSinglePendingResult(outputs);
         }
         Assert.IsTrue(status.Found);
@@ -93,7 +93,7 @@ internal class MiscTests
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<int, MyValue, MyInput, MyOutput, Empty> outputs, wait: true);
             (status, _) = GetSinglePendingResult(outputs);
         }
         Assert.IsFalse(status.Found);
@@ -112,7 +112,7 @@ internal class MiscTests
 
         try
         {
-            var checkpointDir = Path.Join(MethodTestDir, "checkpoints");
+            string checkpointDir = Path.Join(MethodTestDir, "checkpoints");
             log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "hlog1.log"), deleteOnClose: true);
             store = new TsavoriteKV<KeyStruct, ValueStruct>
                 (128, new LogSettings { LogDevice = log, MemorySizeBits = 29 },
@@ -129,7 +129,7 @@ internal class MiscTests
             key = new KeyStruct() { kfield1 = 1, kfield2 = 2 };
             value = new ValueStruct() { vfield1 = 1000, vfield2 = 2000 };
 
-            var status = session.Upsert(ref key, ref input, ref value, ref output, out RecordMetadata recordMetadata1);
+            Status status = session.Upsert(ref key, ref input, ref value, ref output, out RecordMetadata recordMetadata1);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
 
             // ConcurrentWriter and InPlaceUpater return false, so we create a new record.
@@ -149,9 +149,9 @@ internal class MiscTests
             }
             Assert.Greater(recordMetadata2.Address, recordMetadata1.Address);
 
-            using (var iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
+            using (ITsavoriteScanIterator<KeyStruct, ValueStruct> iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
             {
-                Assert.True(iterator.GetNext(out var info));    // We should only get the new record...
+                Assert.True(iterator.GetNext(out RecordInfo info));    // We should only get the new record...
                 Assert.False(iterator.GetNext(out info));       // ... the old record was elided, so was Sealed and invalidated.
             }
             status = session.Read(ref key, ref output);
@@ -171,9 +171,9 @@ internal class MiscTests
             store.Recover(token);
             session = store.NewSession<InputStruct, OutputStruct, Empty, FunctionsCopyOnWrite>(copyOnWrite);
 
-            using (var iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
+            using (ITsavoriteScanIterator<KeyStruct, ValueStruct> iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
             {
-                Assert.True(iterator.GetNext(out var info));    // We should only get one record...
+                Assert.True(iterator.GetNext(out RecordInfo info));    // We should only get one record...
                 Assert.False(iterator.GetNext(out info));       // ... the old record was Unsealed by Recovery, but remains invalid.
             }
             status = session.Read(ref key, ref output);

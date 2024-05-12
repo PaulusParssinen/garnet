@@ -32,8 +32,8 @@ public class ObjectRecoveryTests3
         this.iterations = iterations;
         Prepare(out IDevice log, out IDevice objlog, out TsavoriteKV<MyKey, MyValue> h, out MyContext context);
 
-        var session1 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
-        var tokens = Write(session1, context, h, checkpointType);
+        ClientSession<MyKey, MyValue, MyInput, MyOutput, MyContext, MyFunctions> session1 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
+        List<(int, Guid)> tokens = Write(session1, context, h, checkpointType);
         Read(session1, context, false, iterations);
         session1.Dispose();
 
@@ -42,7 +42,7 @@ public class ObjectRecoveryTests3
         tokens.Add((iterations, token));
         Destroy(log, objlog, h);
 
-        foreach (var item in tokens)
+        foreach ((int, Guid) item in tokens)
         {
             Prepare(out log, out objlog, out h, out context);
 
@@ -51,7 +51,7 @@ public class ObjectRecoveryTests3
             else
                 h.Recover(default, item.Item2);
 
-            var session2 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
+            ClientSession<MyKey, MyValue, MyInput, MyOutput, MyContext, MyFunctions> session2 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
             Read(session2, context, false, item.Item1);
             session2.Dispose();
 
@@ -116,7 +116,7 @@ public class ObjectRecoveryTests3
             var key = new MyKey { key = i, name = string.Concat(Enumerable.Repeat(i.ToString(), 100)) };
             MyInput input = default;
             MyOutput g1 = new();
-            var status = session.Read(ref key, ref input, ref g1, context, 0);
+            Status status = session.Read(ref key, ref input, ref g1, context, 0);
 
             if (status.IsPending)
             {
@@ -134,7 +134,7 @@ public class ObjectRecoveryTests3
             var input = default(MyInput);
             var output = new MyOutput();
             session.Delete(ref key, context, 0);
-            var status = session.Read(ref key, ref input, ref output, context, 0);
+            Status status = session.Read(ref key, ref input, ref output, context, 0);
 
             if (status.IsPending)
             {

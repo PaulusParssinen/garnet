@@ -58,7 +58,7 @@ public class NUnitLoggerProvider : ILoggerProvider
             Exception exception,
             Func<TState, Exception, string> formatter)
         {
-            var msg = string.Format("[{0:D3}.{1}.({2})] |{3}| <{4}> {5} ^{6}^",
+            string msg = string.Format("[{0:D3}.{1}.({2})] |{3}| <{4}> {5} ^{6}^",
                 eventId.Id,
                 LogFormatter.FormatDate(DateTime.UtcNow),
                 GetLevelStr(logLevel),

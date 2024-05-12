@@ -315,7 +315,7 @@ public sealed class SectorAlignedBufferPool
         for (int i = 0; i < levels; i++)
         {
             if (queue[i] == null) continue;
-            foreach (var item in queue[i])
+            foreach (SectorAlignedMemory item in queue[i])
             {
                 Console.WriteLine("  " + item.ToString());
             }

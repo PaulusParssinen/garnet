@@ -12,7 +12,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus GET_WithPending<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, long ctx, out bool pending, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var status = context.Read(ref key, ref input, ref output, ctx);
+        Status status = context.Read(ref key, ref input, ref output, ctx);
 
         if (status.IsPending)
         {
@@ -40,7 +40,7 @@ sealed partial class StorageSession : IDisposable
         Debug.Assert(outputArr != null);
 
         latencyMetrics?.Start(LatencyMetricsType.PENDING_LAT);
-        var ret = context.CompletePendingWithOutputs(out var completedOutputs, wait);
+        bool ret = context.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long> completedOutputs, wait);
         latencyMetrics?.Stop(LatencyMetricsType.PENDING_LAT);
 
         // Update array with completed outputs
@@ -61,7 +61,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus RMW_MainStore<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var status = context.RMW(ref key, ref input, ref output);
+        Status status = context.RMW(ref key, ref input, ref output);
 
         if (status.IsPending)
             CompletePendingForSession(ref status, ref output, ref context);
@@ -75,7 +75,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus Read_MainStore<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var status = context.Read(ref key, ref input, ref output);
+        Status status = context.Read(ref key, ref input, ref output);
 
         if (status.IsPending)
             CompletePendingForSession(ref status, ref output, ref context);

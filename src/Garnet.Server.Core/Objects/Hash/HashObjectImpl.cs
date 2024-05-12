@@ -44,8 +44,8 @@ public unsafe partial class HashObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -61,7 +61,7 @@ public unsafe partial class HashObject : IGarnetObject
                 while (!RespWriteUtils.WriteArrayLength(hash.Count * 2, ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                foreach (var item in hash)
+                foreach (KeyValuePair<byte[], byte[]> item in hash)
                 {
                     while (!RespWriteUtils.WriteBulkString(item.Key, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -72,7 +72,7 @@ public unsafe partial class HashObject : IGarnetObject
 
             while (count > 0)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref input_currptr, input + length))
                     break;
 
                 if (countDone < prevDone) // Skip processing previously done entries
@@ -82,7 +82,7 @@ public unsafe partial class HashObject : IGarnetObject
                     continue;
                 }
 
-                if (hash.TryGetValue(key, out var _value))
+                if (hash.TryGetValue(key, out byte[] _value))
                 {
 
                     while (!RespWriteUtils.WriteBulkString(_value, ref curr, end))
@@ -122,11 +122,11 @@ public unsafe partial class HashObject : IGarnetObject
 
         byte* startptr = input + sizeof(ObjectInputHeader);
         byte* ptr = startptr;
-        var end = input + length;
+        byte* end = input + length;
 
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, end))
                 return;
 
             if (c < _input->done)
@@ -134,7 +134,7 @@ public unsafe partial class HashObject : IGarnetObject
 
             _output->countDone++;
 
-            if (hash.Remove(key, out var _value))
+            if (hash.Remove(key, out byte[] _value))
             {
                 _output->opsDone++;
                 this.UpdateSize(key, _value, false);
@@ -157,11 +157,11 @@ public unsafe partial class HashObject : IGarnetObject
         byte* ptr = startptr;
 
         *_output = default;
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, input + length))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, input + length))
             return;
 
         _output->opsDone = 1;
-        _output->countDone = hash.TryGetValue(key, out var _value) ? _value.Length : 0;
+        _output->countDone = hash.TryGetValue(key, out byte[] _value) ? _value.Length : 0;
         _output->bytesDone = (int)(ptr - startptr);
     }
 
@@ -177,7 +177,7 @@ public unsafe partial class HashObject : IGarnetObject
         byte* ptr = startptr;
         byte* end = input + length;
 
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var field, ref ptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] field, ref ptr, end))
             return;
 
         _output->countDone = 1;
@@ -227,25 +227,25 @@ public unsafe partial class HashObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
-            var withValues = false;
+            bool withValues = false;
             int[] indexes = default;
 
             // [count [WITHVALUES]]
             if (count > 2)
             {
                 // Get the value for the count parameter
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var countParameterByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] countParameterByteArray, ref input_currptr, input + length))
                     return;
                 if (count == 4)
                 {
                     // Advance to read the withvalues flag
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var withValuesByteArray, ref input_currptr, input + length))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] withValuesByteArray, ref input_currptr, input + length))
                         return;
 
                     if (string.Equals(Encoding.ASCII.GetString(withValuesByteArray), "WITHVALUES", StringComparison.OrdinalIgnoreCase))
@@ -258,7 +258,7 @@ public unsafe partial class HashObject : IGarnetObject
                 countDone = count;
 
                 // Prepare response
-                if (!Utf8Parser.TryParse(countParameterByteArray, out int countParameter, out var bytesConsumed, default) ||
+                if (!Utf8Parser.TryParse(countParameterByteArray, out int countParameter, out int bytesConsumed, default) ||
                     bytesConsumed != countParameterByteArray.Length)
                 {
                     while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_VALUE_IS_NOT_INTEGER, ref curr, end))
@@ -295,9 +295,9 @@ public unsafe partial class HashObject : IGarnetObject
                     while (!RespWriteUtils.WriteArrayLength(withValues ? countParameter * 2 : countParameter, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    foreach (var index in indexes)
+                    foreach (int index in indexes)
                     {
-                        var pair = hash.ElementAt(index);
+                        KeyValuePair<byte[], byte[]> pair = hash.ElementAt(index);
                         while (!RespWriteUtils.WriteBulkString(pair.Key, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
@@ -313,7 +313,7 @@ public unsafe partial class HashObject : IGarnetObject
             {
                 // Write a bulk string value of a random field from the hash value stored at key.
                 int index = RandomNumberGenerator.GetInt32(0, hash.Count);
-                var pair = hash.ElementAt(index);
+                KeyValuePair<byte[], byte[]> pair = hash.ElementAt(index);
                 while (!RespWriteUtils.WriteBulkString(pair.Key, ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                 countDone = count;
@@ -350,10 +350,10 @@ public unsafe partial class HashObject : IGarnetObject
 
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, end))
                 return;
 
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] value, ref ptr, end))
                 return;
 
             if (c < _input->done)
@@ -391,8 +391,8 @@ public unsafe partial class HashObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -401,15 +401,15 @@ public unsafe partial class HashObject : IGarnetObject
 
         try
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref input_currptr, input + length) ||
-                !RespReadUtils.ReadByteArrayWithLengthHeader(out var incr, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref input_currptr, input + length) ||
+                !RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] incr, ref input_currptr, input + length))
                 return;
 
-            if (hash.TryGetValue(key, out var value))
+            if (hash.TryGetValue(key, out byte[] value))
             {
-                if (Utf8Parser.TryParse(value, out float result, out var valueBytesConsumed, default) &&
+                if (Utf8Parser.TryParse(value, out float result, out int valueBytesConsumed, default) &&
                     valueBytesConsumed == value.Length &&
-                    Utf8Parser.TryParse(incr, out float resultIncr, out var incrBytesConsumed, default) &&
+                    Utf8Parser.TryParse(incr, out float resultIncr, out int incrBytesConsumed, default) &&
                     incrBytesConsumed == incr.Length)
                 {
                     result += resultIncr;
@@ -430,7 +430,7 @@ public unsafe partial class HashObject : IGarnetObject
                     }
                     else
                     {
-                        var resultBytes = Encoding.ASCII.GetBytes(result.ToString(CultureInfo.InvariantCulture));
+                        byte[] resultBytes = Encoding.ASCII.GetBytes(result.ToString(CultureInfo.InvariantCulture));
                         hash[key] = resultBytes;
                         Size += Utility.RoundUp(resultBytes.Length, IntPtr.Size) - Utility.RoundUp(value.Length, IntPtr.Size);
 
@@ -446,7 +446,7 @@ public unsafe partial class HashObject : IGarnetObject
             }
             else
             {
-                if (!Utf8Parser.TryParse(incr, out float resultIncr, out var incrBytesConsumed, default) ||
+                if (!Utf8Parser.TryParse(incr, out float resultIncr, out int incrBytesConsumed, default) ||
                     incrBytesConsumed != incr.Length)
                 {
                     while (!RespWriteUtils.WriteError("ERR field value is not a number"u8, ref curr, end))
@@ -488,7 +488,7 @@ public unsafe partial class HashObject : IGarnetObject
 
     private void GetHashKeysOrValues(HashOperation op, byte* input, ref SpanByteAndMemory output)
     {
-        var count = hash.Count;
+        int count = hash.Count;
 
         byte* input_startptr = input + sizeof(ObjectInputHeader);
         byte* input_currptr = input_startptr;
@@ -497,9 +497,9 @@ public unsafe partial class HashObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
-        var countDone = 0;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
+        int countDone = 0;
 
         ObjectOutputHeader _output = default;
         try
@@ -507,7 +507,7 @@ public unsafe partial class HashObject : IGarnetObject
             while (!RespWriteUtils.WriteArrayLength(count, ref curr, end))
                 ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-            foreach (var item in hash)
+            foreach (KeyValuePair<byte[], byte[]> item in hash)
             {
                 if (HashOperation.HKEYS == op)
                 {

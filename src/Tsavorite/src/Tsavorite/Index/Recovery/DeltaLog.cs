@@ -200,15 +200,15 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
             currentAddress = nextAddress;
             type = DeltaLogEntryType.DELTA;
 
-            var _currentPage = currentAddress >> LogPageSizeBits;
-            var _currentFrame = _currentPage % frameSize;
-            var _currentOffset = currentAddress & PageSizeMask;
-            var _headAddress = long.MaxValue;
+            long _currentPage = currentAddress >> LogPageSizeBits;
+            long _currentFrame = _currentPage % frameSize;
+            long _currentOffset = currentAddress & PageSizeMask;
+            long _headAddress = long.MaxValue;
 
             if (disposed)
                 return false;
 
-            var _endAddress = endAddress;
+            long _endAddress = endAddress;
             if (tailAddress > _endAddress) _endAddress = tailAddress;
 
             if (currentAddress >= _endAddress)
@@ -276,7 +276,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe bool VerifyBlockChecksum(byte* ptr, int length)
     {
-        var cs = Utility.XorBytes(ptr + 8, length + HeaderSize - 8);
+        ulong cs = Utility.XorBytes(ptr + 8, length + HeaderSize - 8);
         if (cs != GetHeader((long)ptr).Checksum)
         {
             return false;
@@ -287,7 +287,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void SetBlockHeader(int length, DeltaLogEntryType type, byte* dest)
     {
-        ref var header = ref GetHeader((long)dest);
+        ref DeltalogHeader header = ref GetHeader((long)dest);
         header.Length = length;
         header.Type = type;
         header.Checksum = Utility.XorBytes(dest + 8, length + HeaderSize - 8);
@@ -359,7 +359,7 @@ public sealed class DeltaLog : ScanIteratorBase, IDisposable
         int startOffset = (int)(pageStartAddress & PageSizeMask);
 
         var asyncResult = new PageAsyncFlushResult<Empty> { count = 1, freeBuffer1 = buffer };
-        var alignedBlockSize = Align(tailAddress - pageStartAddress);
+        long alignedBlockSize = Align(tailAddress - pageStartAddress);
         Interlocked.Increment(ref issuedFlush);
         deltaLogDevice.WriteAsync((IntPtr)buffer.aligned_pointer + startOffset,
                     (ulong)pageStartAddress,

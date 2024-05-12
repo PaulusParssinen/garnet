@@ -32,9 +32,9 @@ internal class LogResumeTests
     {
         CancellationToken cancellationToken = default;
 
-        var input1 = new byte[] { 0, 1, 2, 3 };
-        var input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
-        var input3 = new byte[] { 11, 12 };
+        byte[] input1 = new byte[] { 0, 1, 2, 3 };
+        byte[] input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
+        byte[] input3 = new byte[] { 11, 12 };
         string readerName = "abc";
 
         using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum }))
@@ -44,7 +44,7 @@ internal class LogResumeTests
             await l.EnqueueAsync(input3);
             await l.CommitAsync();
 
-            using var originalIterator = l.Scan(0, long.MaxValue, readerName);
+            using TsavoriteLogScanIterator originalIterator = l.Scan(0, long.MaxValue, readerName);
             Assert.IsTrue(originalIterator.GetNext(out _, out _, out _, out long recoveryAddress));
             originalIterator.CompleteUntil(recoveryAddress);
             Assert.IsTrue(originalIterator.GetNext(out _, out _, out _, out _));  // move the reader ahead
@@ -53,7 +53,7 @@ internal class LogResumeTests
 
         using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum }))
         {
-            using var recoveredIterator = l.Scan(0, long.MaxValue, readerName);
+            using TsavoriteLogScanIterator recoveredIterator = l.Scan(0, long.MaxValue, readerName);
             Assert.IsTrue(recoveredIterator.GetNext(out byte[] outBuf, out _, out _, out _));
             Assert.True(input2.SequenceEqual(outBuf));  // we should have read in input2, not input1 or input3
         }
@@ -65,9 +65,9 @@ internal class LogResumeTests
     {
         CancellationToken cancellationToken = default;
 
-        var input1 = new byte[] { 0, 1, 2, 3 };
-        var input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
-        var input3 = new byte[] { 11, 12 };
+        byte[] input1 = new byte[] { 0, 1, 2, 3 };
+        byte[] input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
+        byte[] input3 = new byte[] { 11, 12 };
         string readerName = "abc";
 
         using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum }))
@@ -77,7 +77,7 @@ internal class LogResumeTests
             await l.EnqueueAsync(input3);
             await l.CommitAsync();
 
-            using var originalIterator = l.Scan(0, long.MaxValue, readerName);
+            using TsavoriteLogScanIterator originalIterator = l.Scan(0, long.MaxValue, readerName);
             Assert.IsTrue(originalIterator.GetNext(out _, out _, out long recordAddress, out _));
             await originalIterator.CompleteUntilRecordAtAsync(recordAddress);
             Assert.IsTrue(originalIterator.GetNext(out _, out _, out _, out _));  // move the reader ahead
@@ -86,7 +86,7 @@ internal class LogResumeTests
 
         using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum }))
         {
-            using var recoveredIterator = l.Scan(0, long.MaxValue, readerName);
+            using TsavoriteLogScanIterator recoveredIterator = l.Scan(0, long.MaxValue, readerName);
             Assert.IsTrue(recoveredIterator.GetNext(out byte[] outBuf, out _, out _, out _));
             Assert.True(input2.SequenceEqual(outBuf));  // we should have read in input2, not input1 or input3
         }
@@ -96,9 +96,9 @@ internal class LogResumeTests
     [Category("TsavoriteLog")]
     public async Task TsavoriteLogResumePersistedReader2([Values] LogChecksumType logChecksum, [Values] bool removeOutdated)
     {
-        var input1 = new byte[] { 0, 1, 2, 3 };
-        var input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
-        var input3 = new byte[] { 11, 12 };
+        byte[] input1 = new byte[] { 0, 1, 2, 3 };
+        byte[] input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
+        byte[] input3 = new byte[] { 11, 12 };
         string readerName = "abc";
 
         using (var logCommitManager = new DeviceLogCommitCheckpointManager(new LocalStorageNamedDeviceFactory(), new DefaultCheckpointNamingScheme(TestUtils.MethodTestDir), removeOutdated))
@@ -114,7 +114,7 @@ internal class LogResumeTests
                 await l.EnqueueAsync(input3);
                 await l.CommitAsync();
 
-                using var originalIterator = l.Scan(0, long.MaxValue, readerName);
+                using TsavoriteLogScanIterator originalIterator = l.Scan(0, long.MaxValue, readerName);
                 Assert.IsTrue(originalIterator.GetNext(out _, out _, out _, out long recoveryAddress));
                 originalIterator.CompleteUntil(recoveryAddress);
                 Assert.IsTrue(originalIterator.GetNext(out _, out _, out _, out _));  // move the reader ahead
@@ -124,7 +124,7 @@ internal class LogResumeTests
 
             using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum, LogCommitManager = logCommitManager }))
             {
-                using var recoveredIterator = l.Scan(0, long.MaxValue, readerName);
+                using TsavoriteLogScanIterator recoveredIterator = l.Scan(0, long.MaxValue, readerName);
                 Assert.IsTrue(recoveredIterator.GetNext(out byte[] outBuf, out _, out _, out _));
 
                 // we should have read in input2, not input1 or input3
@@ -139,9 +139,9 @@ internal class LogResumeTests
     [Category("TsavoriteLog")]
     public async Task TsavoriteLogResumePersistedReader3([Values] LogChecksumType logChecksum, [Values] bool removeOutdated)
     {
-        var input1 = new byte[] { 0, 1, 2, 3 };
-        var input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
-        var input3 = new byte[] { 11, 12 };
+        byte[] input1 = new byte[] { 0, 1, 2, 3 };
+        byte[] input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
+        byte[] input3 = new byte[] { 11, 12 };
         string readerName = "abcd";
 
         using (var logCommitManager = new DeviceLogCommitCheckpointManager(new LocalStorageNamedDeviceFactory(), new DefaultCheckpointNamingScheme(TestUtils.MethodTestDir), removeOutdated))
@@ -157,10 +157,10 @@ internal class LogResumeTests
                 await l.EnqueueAsync(input3);
                 await l.CommitAsync();
 
-                using var originalIterator = l.Scan(0, l.TailAddress, readerName);
+                using TsavoriteLogScanIterator originalIterator = l.Scan(0, l.TailAddress, readerName);
 
                 int count = 0;
-                await foreach (var item in originalIterator.GetAsyncEnumerable())
+                await foreach ((byte[] entry, int entryLength, long currentAddress, long nextAddress) item in originalIterator.GetAsyncEnumerable())
                 {
                     if (count < 2) // we complete 1st and 2nd item read
                         originalIterator.CompleteUntil(item.nextAddress);
@@ -175,10 +175,10 @@ internal class LogResumeTests
 
             using (var l = new TsavoriteLog(new TsavoriteLogSettings { LogDevice = device, PageSizeBits = 16, MemorySizeBits = 16, LogChecksum = logChecksum, LogCommitManager = logCommitManager }))
             {
-                using var recoveredIterator = l.Scan(0, l.TailAddress, readerName);
+                using TsavoriteLogScanIterator recoveredIterator = l.Scan(0, l.TailAddress, readerName);
 
                 int count = 0;
-                await foreach (var item in recoveredIterator.GetAsyncEnumerable())
+                await foreach ((byte[] entry, int entryLength, long currentAddress, long nextAddress) item in recoveredIterator.GetAsyncEnumerable())
                 {
                     if (count == 0) // resumed iterator will start at item2
                         Assert.True(input2.SequenceEqual(item.entry), $"Original: {input2[0]}, Recovered: {item.entry[0]}, Original: {originalCompleted}, Recovered: {recoveredIterator.CompletedUntilAddress}");

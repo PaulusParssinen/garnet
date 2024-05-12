@@ -58,10 +58,10 @@ internal sealed class AsyncCountDown
     /// <returns>A Task that completes when the counter reaches zero</returns>
     public async ValueTask WaitUntilEmptyAsync(CancellationToken cancellationToken)
     {
-        if (counter == 0 || !GetOrCreateTaskCompletionSource(out var tcsOut))
+        if (counter == 0 || !GetOrCreateTaskCompletionSource(out TaskCompletionSource<int> tcsOut))
             return;
 
-        using var reg = cancellationToken.Register(() => tcsOut.TrySetCanceled());
+        using CancellationTokenRegistration reg = cancellationToken.Register(() => tcsOut.TrySetCanceled());
         await tcsOut.Task.WithCancellationAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -69,7 +69,7 @@ internal sealed class AsyncCountDown
     private bool GetOrCreateTaskCompletionSource(out TaskCompletionSource<int> tcsOut)
     {
         // If tcs is not null, we'll get it in taskSource
-        var taskSource = Interlocked.CompareExchange(ref tcs, nextTcs, null);
+        TaskCompletionSource<int> taskSource = Interlocked.CompareExchange(ref tcs, nextTcs, null);
 
         if (taskSource == null)
         {

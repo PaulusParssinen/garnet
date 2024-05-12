@@ -33,9 +33,9 @@ public class RespAdminCommandsTests
     public void PingTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "+PONG\r\n";
+        string expectedResponse = "+PONG\r\n";
         var response = lightClientRequest.SendCommand("PING");
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -43,9 +43,9 @@ public class RespAdminCommandsTests
     public void PingMessageTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "$5\r\nHELLO\r\n";
+        string expectedResponse = "$5\r\nHELLO\r\n";
         var response = lightClientRequest.SendCommand("PING HELLO");
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -53,9 +53,9 @@ public class RespAdminCommandsTests
     public void PingErrorMessageTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "-ERR wrong number of arguments for 'ping' command\r\n";
+        string expectedResponse = "-ERR wrong number of arguments for 'ping' command\r\n";
         var response = lightClientRequest.SendCommand("PING HELLO WORLD", 1);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -63,9 +63,9 @@ public class RespAdminCommandsTests
     public void EchoWithNoMessageReturnErrorTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n";
+        string expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n";
         var response = lightClientRequest.SendCommand("ECHO", 1);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -74,9 +74,9 @@ public class RespAdminCommandsTests
     public void EchoWithMessagesReturnErrorTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n";
+        string expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n";
         var response = lightClientRequest.SendCommand("ECHO HELLO WORLD", 1);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
         response = lightClientRequest.SendCommand("ECHO HELLO WORLD WORLD2", 1);
         actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
@@ -87,9 +87,9 @@ public class RespAdminCommandsTests
     public void EchoWithMessageTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "$5\r\nHELLO\r\n";
+        string expectedResponse = "$5\r\nHELLO\r\n";
         var response = lightClientRequest.SendCommand("ECHO HELLO", 1);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -97,9 +97,9 @@ public class RespAdminCommandsTests
     public void EchoTwoCommandsTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n$5\r\nHELLO\r\n";
+        string expectedResponse = "-ERR wrong number of arguments for 'echo' command\r\n$5\r\nHELLO\r\n";
         var response = lightClientRequest.SendCommands("ECHO HELLO WORLD WORLD2", "ECHO HELLO", 1, 1);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -109,9 +109,9 @@ public class RespAdminCommandsTests
     {
         // this is an example, we just compare the length of the response with the expected one.
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "*2\r\n$10\r\n1626282789\r\n$6\r\n621362\r\n";
+        string expectedResponse = "*2\r\n$10\r\n1626282789\r\n$6\r\n621362\r\n";
         var response = lightClientRequest.SendCommand("TIME", 3);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse.Length, actualValue.Length);
     }
 
@@ -120,9 +120,9 @@ public class RespAdminCommandsTests
     public void TimeWithReturnErrorTest()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "-ERR wrong number of arguments for 'time' command\r\n";
+        string expectedResponse = "-ERR wrong number of arguments for 'time' command\r\n";
         var response = lightClientRequest.SendCommand("TIME HELLO");
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -136,7 +136,7 @@ public class RespAdminCommandsTests
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true));
         IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
 
-        var lastSave = server.LastSave();
+        DateTime lastSave = server.LastSave();
 
         // Check no saves present
         Assert.AreEqual(DateTimeOffset.FromUnixTimeSeconds(0).Ticks, lastSave.Ticks);
@@ -159,11 +159,11 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             db.StringSet("SeSaveRecoverTestKey", "SeSaveRecoverTestValue");
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
         }
@@ -174,8 +174,8 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
-            var recoveredValue = db.StringGet("SeSaveRecoverTestKey");
+            IDatabase db = redis.GetDatabase(0);
+            RedisValue recoveredValue = db.StringGet("SeSaveRecoverTestKey");
             Assert.AreEqual("SeSaveRecoverTestValue", recoveredValue.ToString());
         }
     }
@@ -183,19 +183,19 @@ public class RespAdminCommandsTests
     [Test]
     public void SeSaveRecoverObjectTest()
     {
-        var key = "SeSaveRecoverTestObjectKey";
+        string key = "SeSaveRecoverTestObjectKey";
         var ldata = new RedisValue[] { "a", "b", "c", "d" };
         RedisValue[] returned_data_before_recovery = default;
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             db.ListLeftPush(key, ldata);
             ldata = ldata.Select(x => x).Reverse().ToArray();
             returned_data_before_recovery = db.ListRange(key);
             Assert.AreEqual(ldata, returned_data_before_recovery);
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
         }
@@ -206,8 +206,8 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
-            var returnedData = db.ListRange(key);
+            IDatabase db = redis.GetDatabase(0);
+            RedisValue[] returnedData = db.ListRange(key);
             Assert.AreEqual(returned_data_before_recovery, returnedData);
             Assert.AreEqual(ldata.Length, returnedData.Length);
             Assert.AreEqual(ldata, returnedData);
@@ -227,20 +227,20 @@ public class RespAdminCommandsTests
         server.Start();
 
         var ldata = new RedisValue[] { "a", "b", "c", "d" };
-        var ldataArr = ldata.Select(x => x).Reverse().ToArray();
+        RedisValue[] ldataArr = ldata.Select(x => x).Reverse().ToArray();
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             for (int i = 0; i < 3000; i++)
             {
-                var key = $"SeSaveRecoverTestKey{i:0000}";
+                string key = $"SeSaveRecoverTestKey{i:0000}";
                 db.ListLeftPush(key, ldata);
-                var retval = db.ListRange(key);
+                RedisValue[] retval = db.ListRange(key);
                 Assert.AreEqual(ldataArr, retval, $"key {key}");
             }
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
         }
@@ -252,11 +252,11 @@ public class RespAdminCommandsTests
         Assert.LessOrEqual(server.Provider.StoreWrapper.objectStore.MaxAllocatedPageCount, (recoveryMemorySize / pageSize) + 1);
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             for (int i = 0; i < 3000; i++)
             {
-                var key = $"SeSaveRecoverTestKey{i:0000}";
-                var returnedData = db.ListRange(key);
+                string key = $"SeSaveRecoverTestKey{i:0000}";
+                RedisValue[] returnedData = db.ListRange(key);
                 Assert.AreEqual(ldataArr, returnedData, $"key {key}");
             }
         }
@@ -280,7 +280,7 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             for (int i = 0; i < 1000; i++)
             {
                 db.StringSet($"SeSaveRecoverTestKey{i:0000}", $"SeSaveRecoverTestValue");
@@ -288,14 +288,14 @@ public class RespAdminCommandsTests
 
             for (int i = 0; i < 1000; i++)
             {
-                var recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
+                RedisValue recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
                 Assert.AreEqual("SeSaveRecoverTestValue", recoveredValue.ToString());
             }
 
-            var inforesult = db.Execute("INFO");
+            RedisResult inforesult = db.Execute("INFO");
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
 
@@ -306,7 +306,7 @@ public class RespAdminCommandsTests
 
             for (int i = 1000; i < 2000; i++)
             {
-                var recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
+                RedisValue recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
                 Assert.AreEqual("SeSaveRecoverTestValue", recoveredValue.ToString());
             }
 
@@ -319,10 +319,10 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             for (int i = 0; i < 2000; i++)
             {
-                var recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
+                RedisValue recoveredValue = db.StringGet($"SeSaveRecoverTestKey{i:0000}");
                 Assert.AreEqual("SeSaveRecoverTestValue", recoveredValue.ToString(), $"Key SeSaveRecoverTestKey{i:0000}");
             }
         }
@@ -337,7 +337,7 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             db.StringSet("SeAofRecoverTestKey", "SeAofRecoverTestValue");
 
             db.Execute("COMMITAOF");
@@ -349,8 +349,8 @@ public class RespAdminCommandsTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
-            var recoveredValue = db.StringGet("SeAofRecoverTestKey");
+            IDatabase db = redis.GetDatabase(0);
+            RedisValue recoveredValue = db.StringGet("SeAofRecoverTestKey");
             Assert.AreEqual("SeAofRecoverTestValue", recoveredValue.ToString());
         }
     }
@@ -361,7 +361,7 @@ public class RespAdminCommandsTests
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true));
         IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
 
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue);
@@ -379,9 +379,9 @@ public class RespAdminCommandsTests
     public void SePingTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var expectedResponse = "PONG";
-        var actualValue = db.Execute("PING").ToString();
+        IDatabase db = redis.GetDatabase(0);
+        string expectedResponse = "PONG";
+        string actualValue = db.Execute("PING").ToString();
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -390,9 +390,9 @@ public class RespAdminCommandsTests
     public void SePingMessageTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var expectedResponse = "HELLO";
-        var actualValue = db.Execute("PING", "HELLO").ToString();
+        IDatabase db = redis.GetDatabase(0);
+        string expectedResponse = "HELLO";
+        string actualValue = db.Execute("PING", "HELLO").ToString();
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -401,7 +401,7 @@ public class RespAdminCommandsTests
     public void SePingErrorMessageTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         Assert.Throws<RedisServerException>(() => db.Execute("PING", "HELLO", "WORLD"));
     }
 
@@ -411,7 +411,7 @@ public class RespAdminCommandsTests
     public void SeEchoWithNoMessageReturnErrorTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         Assert.Throws<RedisServerException>(() => db.Execute("ECHO"));
     }
 
@@ -419,9 +419,9 @@ public class RespAdminCommandsTests
     public void SeEchoWithMessageTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var expectedResponse = "HELLO";
-        var actualValue = db.Execute("ECHO", "HELLO").ToString();
+        IDatabase db = redis.GetDatabase(0);
+        string expectedResponse = "HELLO";
+        string actualValue = db.Execute("ECHO", "HELLO").ToString();
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -430,10 +430,10 @@ public class RespAdminCommandsTests
     public void SeTimeCommandTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var actualValue = db.Execute("TIME");
-        var seconds = ((RedisValue[])actualValue)[0];
-        var microsecs = ((RedisValue[])actualValue)[1];
+        IDatabase db = redis.GetDatabase(0);
+        RedisResult actualValue = db.Execute("TIME");
+        RedisValue seconds = ((RedisValue[])actualValue)[0];
+        RedisValue microsecs = ((RedisValue[])actualValue)[1];
         Assert.AreEqual(seconds.ToString().Length, 10);
         Assert.AreEqual(microsecs.ToString().Length, 6);
     }
@@ -443,7 +443,7 @@ public class RespAdminCommandsTests
     public void SeTimeWithReturnErrorTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         Assert.Throws<RedisServerException>(() => db.Execute("TIME HELLO").ToString());
     }
 
@@ -451,12 +451,12 @@ public class RespAdminCommandsTests
     public async Task SeFlushDBTest([Values] bool async, [Values] bool unsafetruncatelog)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true));
-        var db = redis.GetDatabase(0);
-        var key = "flushdbTest";
-        var value = key;
+        IDatabase db = redis.GetDatabase(0);
+        string key = "flushdbTest";
+        string value = key;
 
         db.StringSet(key, value);
-        var _value = db.StringGet(key);
+        RedisValue _value = db.StringGet(key);
         Assert.AreEqual(value, (string)_value);
         string[] p = default;
 

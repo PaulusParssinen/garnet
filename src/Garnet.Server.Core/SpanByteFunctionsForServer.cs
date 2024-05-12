@@ -46,7 +46,7 @@ public class SpanByteFunctionsForServer<Context> : SpanByteFunctions<Context>
             if (dst.Length >= src.TotalSize)
             {
                 dst.Length = src.TotalSize;
-                var span = dst.SpanByte.AsSpan();
+                Span<byte> span = dst.SpanByte.AsSpan();
                 fixed (byte* ptr = span)
                     *(int*)ptr = src.Length;
                 src.AsReadOnlySpan().CopyTo(span.Slice(sizeof(int)));

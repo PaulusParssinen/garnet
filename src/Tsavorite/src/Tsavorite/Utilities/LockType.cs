@@ -120,7 +120,7 @@ public struct FixedLengthLockableKeyStruct<TKey> : ILockableKey
     /// <inheritdoc/>
     public override string ToString()
     {
-        var hashStr = Utility.GetHashString(KeyHash);
+        string hashStr = Utility.GetHashString(KeyHash);
         return $"key {Key}, hash {hashStr}, {LockType}";
     }
 }
@@ -139,7 +139,7 @@ internal struct LockState
 
     public override string ToString()
     {
-        var locks = $"{(IsLockedExclusive ? "x" : string.Empty)}{NumLockedShared}";
+        string locks = $"{(IsLockedExclusive ? "x" : string.Empty)}{NumLockedShared}";
         return $"found {IsFound}, locks {locks}";
     }
 }

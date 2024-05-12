@@ -48,17 +48,17 @@ public class SimpleAsyncTests
     [Category("Smoke")]
     public async Task ReadAsyncMinParamTest()
     {
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         for (long key = 0; key < numOps; key++)
         {
-            var r = await s1.UpsertAsync(ref key, ref key);
+            TsavoriteKV<long, long>.UpsertAsyncResult<long, long, Empty> r = await s1.UpsertAsync(ref key, ref key);
             while (r.Status.IsPending)
                 r = await r.CompleteAsync(); // test async version of Upsert completion
         }
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await s1.ReadAsync(ref key)).Complete();
+            (Status status, long output) = (await s1.ReadAsync(ref key)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
@@ -71,16 +71,16 @@ public class SimpleAsyncTests
     {
         CancellationToken cancellationToken = default;
 
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         for (long key = 0; key < numOps; key++)
         {
-            var r = await s1.UpsertAsync(ref key, ref key);
+            TsavoriteKV<long, long>.UpsertAsyncResult<long, long, Empty> r = await s1.UpsertAsync(ref key, ref key);
             r.Complete(); // test sync version of Upsert completion
         }
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await s1.ReadAsync(ref key, Empty.Default, 99, cancellationToken)).Complete();
+            (Status status, long output) = (await s1.ReadAsync(ref key, Empty.Default, 99, cancellationToken)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
@@ -92,16 +92,16 @@ public class SimpleAsyncTests
     [Category("Smoke")]
     public async Task ReadAsyncNoRefKeyTest()
     {
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         for (long key = 0; key < numOps; key++)
         {
-            var r = await s1.UpsertAsync(ref key, ref key);
+            TsavoriteKV<long, long>.UpsertAsyncResult<long, long, Empty> r = await s1.UpsertAsync(ref key, ref key);
             r.Complete(); // test sync version of Upsert completion
         }
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await s1.ReadAsync(key, Empty.Default, 99)).Complete();
+            (Status status, long output) = (await s1.ReadAsync(key, Empty.Default, 99)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
@@ -115,7 +115,7 @@ public class SimpleAsyncTests
         Status status;
         long key = default, input = default, output = default;
 
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
         for (key = 0; key < numOps; key++)
         {
             (await s1.RMWAsync(ref key, ref key)).Complete();
@@ -130,8 +130,8 @@ public class SimpleAsyncTests
 
         key = 0;
         input = 35;
-        var t1 = s1.RMWAsync(ref key, ref input);
-        var t2 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t1 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t2 = s1.RMWAsync(ref key, ref input);
 
         (await t1).Complete();
         (await t2).Complete(); // should trigger RMW re-do
@@ -150,7 +150,7 @@ public class SimpleAsyncTests
         Status status;
         long key = default, input = default, output = default;
 
-        using var s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, RMWSimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
         for (key = 0; key < numOps; key++)
         {
             (status, output) = (await s1.RMWAsync(ref key, ref key, Empty.Default)).Complete();
@@ -167,8 +167,8 @@ public class SimpleAsyncTests
 
         key = 0;
         input = 9912;
-        var t1 = s1.RMWAsync(ref key, ref input);
-        var t2 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t1 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t2 = s1.RMWAsync(ref key, ref input);
 
         (await t1).Complete();
         (await t2).Complete(); // should trigger RMW re-do
@@ -184,10 +184,10 @@ public class SimpleAsyncTests
     [Category("Smoke")]
     public async Task UpsertReadDeleteReadAsyncMinParamByRefTest()
     {
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         for (long key = 0; key < numOps; key++)
         {
-            var r = await s1.UpsertAsync(ref key, ref key);
+            TsavoriteKV<long, long>.UpsertAsyncResult<long, long, Empty> r = await s1.UpsertAsync(ref key, ref key);
             while (r.Status.IsPending)
                 r = await r.CompleteAsync(); // test async version of Upsert completion
         }
@@ -196,18 +196,18 @@ public class SimpleAsyncTests
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await s1.ReadAsync(ref key)).Complete();
+            (Status status, long output) = (await s1.ReadAsync(ref key)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
 
         {   // Scope for variables
             long deleteKey = 99;
-            var r = await s1.DeleteAsync(ref deleteKey);
+            TsavoriteKV<long, long>.DeleteAsyncResult<long, long, Empty> r = await s1.DeleteAsync(ref deleteKey);
             while (r.Status.IsPending)
                 r = await r.CompleteAsync(); // test async version of Delete completion
 
-            var (status, _) = (await s1.ReadAsync(ref deleteKey)).Complete();
+            (Status status, long _) = (await s1.ReadAsync(ref deleteKey)).Complete();
             Assert.IsFalse(status.Found);
         }
     }
@@ -218,10 +218,10 @@ public class SimpleAsyncTests
     [Category("Smoke")]
     public async Task UpsertReadDeleteReadAsyncMinParamByValueTest()
     {
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         for (long key = 0; key < numOps; key++)
         {
-            var status = (await s1.UpsertAsync(key, key)).Complete();   // test sync version of Upsert completion
+            Status status = (await s1.UpsertAsync(key, key)).Complete();   // test sync version of Upsert completion
             Assert.IsFalse(status.IsPending);
         }
 
@@ -229,14 +229,14 @@ public class SimpleAsyncTests
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await s1.ReadAsync(key)).Complete();
+            (Status status, long output) = (await s1.ReadAsync(key)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
 
         {   // Scope for variables
             long deleteKey = 99;
-            var status = (await s1.DeleteAsync(deleteKey)).Complete(); // test sync version of Delete completion
+            Status status = (await s1.DeleteAsync(deleteKey)).Complete(); // test sync version of Delete completion
             Assert.IsFalse(status.IsPending);
 
             (status, _) = (await s1.ReadAsync(deleteKey)).Complete();
@@ -253,10 +253,10 @@ public class SimpleAsyncTests
         Status status;
         long key = default, input = default, output = default;
 
-        var addresses = new long[numOps];
+        long[] addresses = new long[numOps];
         long recordSize = store.Log.FixedRecordSize;
 
-        using var s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, RMWSimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
         for (key = 0; key < numOps; key++)
         {
             // We can predict the address as TailAddress because we're single-threaded, *unless* a page was allocated;
@@ -280,8 +280,8 @@ public class SimpleAsyncTests
 
         key = 0;
         input = 22;
-        var t1 = s1.RMWAsync(ref key, ref input);
-        var t2 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t1 = s1.RMWAsync(ref key, ref input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t2 = s1.RMWAsync(ref key, ref input);
 
         (await t1).Complete();
         (await t2).Complete(); // should trigger RMW re-do
@@ -304,10 +304,10 @@ public class SimpleAsyncTests
         Status status;
         long key = default, input = default, output = default;
 
-        using var s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, RMWSimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, RMWSimpleFunctions<long, long>>(new RMWSimpleFunctions<long, long>((a, b) => a + b));
         for (key = 0; key < numOps; key++)
         {
-            var asyncResult = await (await s1.RMWAsync(key, key)).CompleteAsync();
+            TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty> asyncResult = await (await s1.RMWAsync(key, key)).CompleteAsync();
             Assert.IsFalse(asyncResult.Status.IsPending);
             Assert.AreEqual(key, asyncResult.Output);
         }
@@ -321,8 +321,8 @@ public class SimpleAsyncTests
 
         key = 0;
         input = 35;
-        var t1 = s1.RMWAsync(key, input);
-        var t2 = s1.RMWAsync(key, input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t1 = s1.RMWAsync(key, input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t2 = s1.RMWAsync(key, input);
 
         (await t1).Complete();
         (await t2).Complete(); // should trigger RMW re-do
@@ -341,7 +341,7 @@ public class SimpleAsyncTests
         Status status;
         long key = default, input = default, output = default;
 
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
         for (key = 0; key < numOps; key++)
         {
             (await s1.RMWAsync(key, key)).Complete();
@@ -358,8 +358,8 @@ public class SimpleAsyncTests
 
         key = 0;
         input = 35;
-        var t1 = s1.RMWAsync(key, input);
-        var t2 = s1.RMWAsync(key, input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t1 = s1.RMWAsync(key, input);
+        ValueTask<TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty>> t2 = s1.RMWAsync(key, input);
 
         (await t1).Complete();
         (await t2).Complete(); // should trigger RMW re-do
@@ -376,7 +376,7 @@ public class SimpleAsyncTests
 
     public async Task UpsertAsyncAndRMWAsyncTest([Values] bool useRMW, [Values] bool doFlush, [Values] bool completeAsync)
     {
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         async ValueTask completeRmw(TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty> ar)
         {

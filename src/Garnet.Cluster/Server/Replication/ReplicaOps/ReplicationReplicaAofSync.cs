@@ -19,7 +19,7 @@ internal sealed partial class ReplicationManager : IDisposable
     public unsafe void ProcessPrimaryStream(byte* record, int recordLength, long previousAddress, long currentAddress, long nextAddress)
     {
         // logger?.LogInformation("Processing {recordLength} bytes; previousAddress {previousAddress}, currentAddress {currentAddress}, nextAddress {nextAddress}, current AOF tail {tail}", recordLength, previousAddress, currentAddress, nextAddress, storeWrapper.appendOnlyFile.TailAddress);
-        var currentConfig = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig currentConfig = clusterProvider.clusterManager.CurrentConfig;
         try
         {
             if (clusterProvider.replicationManager.recovering)

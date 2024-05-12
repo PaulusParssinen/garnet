@@ -176,7 +176,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
         {
             if (@this.disposed || @this.Ended)
                 return false;
-            var commitTask = @this.tsavoriteLog.CommitTask;
+            Task<LinkedCommitInfo> commitTask = @this.tsavoriteLog.CommitTask;
             if (@this.NextAddress < @this.tsavoriteLog.CommittedUntilAddress)
                 return true;
 
@@ -198,7 +198,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
                 return false;
             if (@this.Ended) return false;
 
-            var tcs = @this.tsavoriteLog.refreshUncommittedTcs;
+            TaskCompletionSource<Empty> tcs = @this.tsavoriteLog.refreshUncommittedTcs;
             if (tcs == null)
             {
                 var newTcs = new TaskCompletionSource<Empty>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -257,7 +257,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             bool isCommitRecord;
             try
             {
-                var hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
+                bool hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
                     out nextAddress,
                     out isCommitRecord, out _);
                 if (!hasNext)
@@ -352,7 +352,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             bool isCommitRecord;
             try
             {
-                var hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
+                bool hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
                     out nextAddress,
                     out isCommitRecord, out _);
                 if (!hasNext)
@@ -418,7 +418,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             int entryLength;
             try
             {
-                var hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
+                bool hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
                     out nextAddress,
                     out isCommitRecord, out _);
                 if (!hasNext)
@@ -477,7 +477,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
         {
             while (true)
             {
-                var hasNext = GetNextInternal(out long startPhysicalAddress, out int newEntryLength, out long startLogicalAddress, out long endLogicalAddress, out bool isCommitRecord, out bool onFrame);
+                bool hasNext = GetNextInternal(out long startPhysicalAddress, out int newEntryLength, out long startLogicalAddress, out long endLogicalAddress, out bool isCommitRecord, out bool onFrame);
 
                 if (!hasNext)
                 {
@@ -563,7 +563,7 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             bool isCommitRecord;
             try
             {
-                var hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
+                bool hasNext = GetNextInternal(out physicalAddress, out entryLength, out currentAddress,
                     out nextAddress,
                     out isCommitRecord, out _);
                 if (!hasNext)
@@ -699,13 +699,13 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
     internal unsafe bool ScanForwardForCommit(ref TsavoriteLogRecoveryInfo info, long commitNum = -1)
     {
         epoch.Resume();
-        var foundCommit = false;
+        bool foundCommit = false;
         try
         {
             // Continue looping until we find a record that is a commit record
-            while (GetNextInternal(out long physicalAddress, out var entryLength, out _,
+            while (GetNextInternal(out long physicalAddress, out int entryLength, out _,
                 out _,
-                out var isCommitRecord, out _))
+                out bool isCommitRecord, out _))
             {
                 if (!isCommitRecord) continue;
 
@@ -766,10 +766,10 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
                 outNextAddress = currentAddress;
             }
 
-            var _currentPage = currentAddress >> allocator.LogPageSizeBits;
-            var _currentFrame = _currentPage % frameSize;
-            var _currentOffset = currentAddress & allocator.PageSizeMask;
-            var _headAddress = allocator.HeadAddress;
+            long _currentPage = currentAddress >> allocator.LogPageSizeBits;
+            long _currentFrame = _currentPage % frameSize;
+            long _currentOffset = currentAddress & allocator.PageSizeMask;
+            long _headAddress = allocator.HeadAddress;
 
             if (disposed)
                 return false;
@@ -779,11 +779,11 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
 
             if (currentAddress < _headAddress)
             {
-                var _endAddress = endAddress;
+                long _endAddress = endAddress;
                 if (tsavoriteLog.readOnlyMode)
                 {
                     // Support partial page reads of committed data
-                    var _flush = tsavoriteLog.CommittedUntilAddress;
+                    long _flush = tsavoriteLog.CommittedUntilAddress;
                     if (_flush < endAddress)
                         _endAddress = _flush;
                 }
@@ -805,10 +805,10 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
             if (entryLength == 0)
             {
                 // Zero-ed out bytes could be padding at the end of page, first jump to the start of next page. 
-                var nextStart = (1 + (currentAddress >> allocator.LogPageSizeBits)) << allocator.LogPageSizeBits;
+                long nextStart = (1 + (currentAddress >> allocator.LogPageSizeBits)) << allocator.LogPageSizeBits;
                 if (Utility.MonotonicUpdate(ref nextAddress, nextStart, out _))
                 {
-                    var pageOffset = currentAddress & ((1 << allocator.LogPageSizeBits) - 1);
+                    long pageOffset = currentAddress & ((1 << allocator.LogPageSizeBits) - 1);
 
                     // If zeroed out field is at page start, we encountered an uninitialized page and should signal up
                     if (pageOffset == 0)
@@ -877,10 +877,10 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
                 outNextAddress = currentAddress;
             }
 
-            var _currentPage = currentAddress >> allocator.LogPageSizeBits;
-            var _currentFrame = _currentPage % frameSize;
-            var _currentOffset = currentAddress & allocator.PageSizeMask;
-            var _headAddress = allocator.HeadAddress;
+            long _currentPage = currentAddress >> allocator.LogPageSizeBits;
+            long _currentFrame = _currentPage % frameSize;
+            long _currentOffset = currentAddress & allocator.PageSizeMask;
+            long _headAddress = allocator.HeadAddress;
 
             if (disposed)
                 return false;
@@ -890,11 +890,11 @@ public sealed class TsavoriteLogScanIterator : ScanIteratorBase, IDisposable
 
             if (currentAddress < _headAddress)
             {
-                var _endAddress = endAddress;
+                long _endAddress = endAddress;
                 if (tsavoriteLog.readOnlyMode)
                 {
                     // Support partial page reads of committed data
-                    var _flush = tsavoriteLog.CommittedUntilAddress;
+                    long _flush = tsavoriteLog.CommittedUntilAddress;
                     if (_flush < endAddress)
                         _endAddress = _flush;
                 }

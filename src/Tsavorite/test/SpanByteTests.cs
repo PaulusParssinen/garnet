@@ -24,10 +24,10 @@ internal class SpanByteTests
             using var log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "hlog1.log"), deleteOnClose: true);
             using var store = new TsavoriteKV<SpanByte, SpanByte>
                 (128, new LogSettings { LogDevice = log, MemorySizeBits = 17, PageSizeBits = 12 });
-            using var s = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> s = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
-            var key1 = MemoryMarshal.Cast<char, byte>("key1".AsSpan());
-            var value1 = MemoryMarshal.Cast<char, byte>("value1".AsSpan());
+            ReadOnlySpan<byte> key1 = MemoryMarshal.Cast<char, byte>("key1".AsSpan());
+            ReadOnlySpan<byte> value1 = MemoryMarshal.Cast<char, byte>("value1".AsSpan());
             var output1 = SpanByteAndMemory.FromPinnedSpan(output);
 
             fixed (byte* key1Ptr = key1)
@@ -43,8 +43,8 @@ internal class SpanByteTests
             Assert.IsTrue(output1.IsSpanByte);
             Assert.IsTrue(output1.SpanByte.AsReadOnlySpan().SequenceEqual(value1));
 
-            var key2 = MemoryMarshal.Cast<char, byte>("key2".AsSpan());
-            var value2 = MemoryMarshal.Cast<char, byte>("value2value2value2".AsSpan());
+            ReadOnlySpan<byte> key2 = MemoryMarshal.Cast<char, byte>("key2".AsSpan());
+            ReadOnlySpan<byte> value2 = MemoryMarshal.Cast<char, byte>("value2value2value2".AsSpan());
             var output2 = SpanByteAndMemory.FromPinnedSpan(output);
 
             fixed (byte* key2Ptr = key2)
@@ -79,12 +79,12 @@ internal class SpanByteTests
             using var store = new TsavoriteKV<SpanByte, SpanByte>(
                 size: 1L << 10,
                 new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 12 });
-            using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
             for (int i = 0; i < 200; i++)
             {
-                var key = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
-                var value = MemoryMarshal.Cast<char, byte>($"{i + 1000}".AsSpan());
+                ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
+                ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"{i + 1000}".AsSpan());
                 fixed (byte* k = key, v = value)
                     session.Upsert(SpanByte.FromPinnedSpan(key), SpanByte.FromPinnedSpan(value));
             }
@@ -109,7 +109,7 @@ internal class SpanByteTests
                 Status status;
                 SpanByteAndMemory output = default;
 
-                var keyBytes = MemoryMarshal.Cast<char, byte>($"{key}".AsSpan());
+                ReadOnlySpan<byte> keyBytes = MemoryMarshal.Cast<char, byte>($"{key}".AsSpan());
                 fixed (byte* _ = keyBytes)
                     status = session.Read(key: SpanByte.FromPinnedSpan(keyBytes), out output);
                 Assert.AreEqual(evicted, status.IsPending, "evicted/pending mismatch");
@@ -118,10 +118,10 @@ internal class SpanByteTests
                     Assert.IsTrue(status.Found, $"expected to find key; status = {status}");
                 else    // needs to be fetched from disk
                 {
-                    session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                    session.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty> completedOutputs, wait: true);
                     using (completedOutputs)
                     {
-                        for (var count = 0; completedOutputs.Next(); ++count)
+                        for (int count = 0; completedOutputs.Next(); ++count)
                         {
                             Assert.AreEqual(0, count, "should only have one record returned");
                             Assert.IsTrue(completedOutputs.Current.Status.Found);
@@ -129,7 +129,7 @@ internal class SpanByteTests
                         }
                     }
                 }
-                var outputString = new string(MemoryMarshal.Cast<byte, char>(output.Memory.Memory.Span));
+                string outputString = new string(MemoryMarshal.Cast<byte, char>(output.Memory.Memory.Span));
                 Assert.AreEqual(value, long.Parse(outputString));
             }
         }
@@ -204,13 +204,13 @@ internal class SpanByteTests
             (128,
             new LogSettings { LogDevice = log, MemorySizeBits = 17, PageSizeBits = 10 }, // 1KB page
             null, null, null, concurrencyControlMode: ConcurrencyControlMode.None);
-        using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
 
         const int PageSize = 1024;
         Span<long> keySpan = stackalloc long[1];
-        var key = keySpan.AsSpanByte();
+        SpanByte key = keySpan.AsSpanByte();
         Span<byte> valueSpan = stackalloc byte[PageSize];
-        var value = valueSpan.AsSpanByte();  // We'll adjust the length below
+        SpanByte value = valueSpan.AsSpanByte();  // We'll adjust the length below
 
         Set(ref keySpan, 1L, ref valueSpan, 800, 1);                // Inserted on page#0 and leaves empty space
         Set(ref keySpan, 2L, ref valueSpan, 800, 2);                // Inserted on page#1 because there is not enough space in page#0, and leaves empty space
@@ -218,7 +218,7 @@ internal class SpanByteTests
         // Add a second record on page#1 to fill it exactly. Page#1 starts at offset 0 on the page (unlike page#0, which starts at 24 or 64,
         // depending on data). Subtract the RecordInfo and key space for both the first record and the second record we're about to insert,
         // the value space for the first record, and the length header for the second record. This is the space available for the second record's value.
-        var p2value2len = PageSize
+        int p2value2len = PageSize
                             - 2 * RecordInfo.GetLength()
                             - 2 * RoundUp(key.TotalSize, SpanByteAllocator.kRecordAlignment)
                             - RoundUp(value.TotalSize, SpanByteAllocator.kRecordAlignment)
@@ -229,12 +229,12 @@ internal class SpanByteTests
         Set(ref keySpan, 4L, ref valueSpan, 64, 4);                 // Inserted on page#2
 
         var data = new List<(long, int, int)>();
-        using (var iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
+        using (ITsavoriteScanIterator<SpanByte, SpanByte> iterator = store.Log.Scan(store.Log.BeginAddress, store.Log.TailAddress))
         {
-            while (iterator.GetNext(out var info))
+            while (iterator.GetNext(out RecordInfo info))
             {
-                var scanKey = iterator.GetKey().AsSpan<long>();
-                var scanValue = iterator.GetValue().AsSpan<byte>();
+                Span<long> scanKey = iterator.GetKey().AsSpan<long>();
+                Span<byte> scanValue = iterator.GetValue().AsSpan<byte>();
 
                 data.Add((scanKey[0], scanValue.Length, scanValue[0]));
             }

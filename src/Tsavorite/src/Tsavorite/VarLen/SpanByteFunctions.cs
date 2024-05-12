@@ -67,7 +67,7 @@ public class SpanByteFunctions<Input, Output, Context> : FunctionsBase<SpanByte,
         upsertInfo.ClearExtraValueLength(ref recordInfo, ref dst, dst.TotalSize);
 
         // We want to set the used and extra lengths and Filler whether we succeed (to the new length) or fail (to the original length).
-        var result = src.TrySafeCopyTo(ref dst, upsertInfo.FullValueLength);
+        bool result = src.TrySafeCopyTo(ref dst, upsertInfo.FullValueLength);
         upsertInfo.SetUsedValueLength(ref recordInfo, ref dst, dst.TotalSize);
         return result;
     }
@@ -79,7 +79,7 @@ public class SpanByteFunctions<Input, Output, Context> : FunctionsBase<SpanByte,
     {
         // See comments in upsertInfo overload of this function.
         rmwInfo.ClearExtraValueLength(ref recordInfo, ref dst, dst.TotalSize);
-        var result = src.TrySafeCopyTo(ref dst, rmwInfo.FullValueLength);
+        bool result = src.TrySafeCopyTo(ref dst, rmwInfo.FullValueLength);
         rmwInfo.SetUsedValueLength(ref recordInfo, ref dst, dst.TotalSize);
         return result;
     }
@@ -91,7 +91,7 @@ public class SpanByteFunctions<Input, Output, Context> : FunctionsBase<SpanByte,
     /// <inheritdoc />
     public override unsafe void DisposeForRevivification(ref SpanByte key, ref SpanByte value, int newKeySize)
     {
-        var oldKeySize = RoundUp(key.TotalSize, SpanByteAllocator.kRecordAlignment);
+        int oldKeySize = RoundUp(key.TotalSize, SpanByteAllocator.kRecordAlignment);
 
         // We don't have to do anything with the Value unless the new key size requires adjusting the key length.
         // newKeySize == -1 means we are preserving the existing key (e.g. for in-chain revivification).

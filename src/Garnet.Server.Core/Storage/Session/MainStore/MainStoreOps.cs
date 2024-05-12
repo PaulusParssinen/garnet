@@ -14,7 +14,7 @@ sealed partial class StorageSession : IDisposable
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
         long ctx = default;
-        var status = context.Read(ref key, ref input, ref output, ctx);
+        Status status = context.Read(ref key, ref input, ref output, ctx);
 
         if (status.IsPending)
         {
@@ -39,11 +39,11 @@ sealed partial class StorageSession : IDisposable
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>, IUnsafeContext
     {
 
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         long ctx = default;
 
         epochChanged = false;
-        var status = context.Read(ref _key, ref Unsafe.AsRef(in input), ref output, ctx, 0);
+        Status status = context.Read(ref _key, ref Unsafe.AsRef(in input), ref output, ctx, 0);
 
         if (status.IsPending)
         {
@@ -84,9 +84,9 @@ sealed partial class StorageSession : IDisposable
         (*(RespInputHeader*)pcurr).cmd = RespCommand.GET; // Proxy for "get value without RESP header"
         (*(RespInputHeader*)pcurr).flags = 0;
 
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         var _output = new SpanByteAndMemory { SpanByte = scratchBufferManager.ViewRemainingArgSlice().SpanByte };
-        var ret = GET(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref _output, ref context);
+        GarnetStatus ret = GET(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref _output, ref context);
         value = default;
         if (ret == GarnetStatus.OK)
         {
@@ -115,9 +115,9 @@ sealed partial class StorageSession : IDisposable
         (*(RespInputHeader*)pcurr).cmd = RespCommand.GET; // Proxy for "get value without RESP header"
         (*(RespInputHeader*)pcurr).flags = 0;
 
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         var _output = new SpanByteAndMemory();
-        var ret = GET(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref _output, ref context);
+        GarnetStatus ret = GET(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref _output, ref context);
         value = new MemoryResult<byte>(_output.Memory, _output.Length);
         return ret;
     }
@@ -126,7 +126,7 @@ sealed partial class StorageSession : IDisposable
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
         long ctx = default;
-        var status = objectContext.Read(key, out output, ctx);
+        Status status = objectContext.Read(key, out output, ctx);
 
         if (status.IsPending)
         {
@@ -157,7 +157,7 @@ sealed partial class StorageSession : IDisposable
     public unsafe GarnetStatus GETDEL<TContext>(ArgSlice key, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         return GETDEL(ref _key, ref output, ref context);
     }
 
@@ -183,7 +183,7 @@ sealed partial class StorageSession : IDisposable
 
         ref var input = ref SpanByte.Reinterpret(pbCmdInput);
 
-        var status = context.RMW(ref key, ref input, ref output);
+        Status status = context.RMW(ref key, ref input, ref output);
         Debug.Assert(output.IsSpanByte);
 
         if (status.IsPending)
@@ -207,7 +207,7 @@ sealed partial class StorageSession : IDisposable
         *(int*)(pcurr) = sliceStart;
         *(int*)(pcurr + 4) = sliceLength;
 
-        var status = context.Read(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
+        Status status = context.Read(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
 
         if (status.IsPending)
         {
@@ -256,7 +256,7 @@ sealed partial class StorageSession : IDisposable
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
-            var status = context.Read(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
+            Status status = context.Read(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
 
             if (status.IsPending)
             {
@@ -272,9 +272,9 @@ sealed partial class StorageSession : IDisposable
         {
             (*(RespInputHeader*)pcurr).type = milliseconds ? GarnetObjectType.PTtl : GarnetObjectType.Ttl;
 
-            var keyBA = key.ToByteArray();
+            byte[] keyBA = key.ToByteArray();
             var objO = new GarnetObjectStoreOutput { spanByteAndMemory = output };
-            var status = objectContext.Read(ref keyBA, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref objO);
+            Status status = objectContext.Read(ref keyBA, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref objO);
 
             if (status.IsPending)
                 CompletePendingForObjectStoreSession(ref status, ref objO, ref objectContext);
@@ -301,7 +301,7 @@ sealed partial class StorageSession : IDisposable
         byte* pbOutput = stackalloc byte[8];
         var o = new SpanByteAndMemory(pbOutput, 8);
 
-        var status = context.RMW(ref key, ref input, ref o);
+        Status status = context.RMW(ref key, ref input, ref o);
 
         if (status.IsPending)
         {
@@ -325,7 +325,7 @@ sealed partial class StorageSession : IDisposable
     public unsafe GarnetStatus SET_Conditional<TContext>(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var status = context.RMW(ref key, ref input, ref output);
+        Status status = context.RMW(ref key, ref input, ref output);
 
         if (status.IsPending)
         {
@@ -349,8 +349,8 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus SET<TContext>(ArgSlice key, ArgSlice value, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
-        var _value = value.SpanByte;
+        SpanByte _key = key.SpanByte;
+        SpanByte _value = value.SpanByte;
         return SET(ref _key, ref _value, ref context);
     }
 
@@ -364,7 +364,7 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus SET<TContext>(ArgSlice key, Memory<byte> value, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         unsafe
         {
             fixed (byte* ptr = value.Span)
@@ -382,8 +382,8 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus SETEX<TContext>(ArgSlice key, ArgSlice value, TimeSpan expiry, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
-        var valueSB = scratchBufferManager.FormatScratch(sizeof(long), value).SpanByte;
+        SpanByte _key = key.SpanByte;
+        SpanByte valueSB = scratchBufferManager.FormatScratch(sizeof(long), value).SpanByte;
         valueSB.ExtraMetadata = DateTimeOffset.UtcNow.Ticks + expiry.Ticks;
         return SET(ref _key, ref valueSB, ref context);
     }
@@ -400,8 +400,8 @@ sealed partial class StorageSession : IDisposable
     public unsafe GarnetStatus APPEND<TContext>(ArgSlice key, ArgSlice value, ref ArgSlice output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
-        var _value = value.SpanByte;
+        SpanByte _key = key.SpanByte;
+        SpanByte _value = value.SpanByte;
         var _output = new SpanByteAndMemory(output.SpanByte);
 
         return APPEND(ref _key, ref _value, ref _output, ref context);
@@ -433,7 +433,7 @@ sealed partial class StorageSession : IDisposable
         pcurr += sizeof(int);
         *(long*)pcurr = (long)value.ToPointer();
 
-        var status = context.RMW(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
+        Status status = context.RMW(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref output);
         if (status.IsPending)
         {
             StartPendingMetrics();
@@ -450,7 +450,7 @@ sealed partial class StorageSession : IDisposable
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _key = key.SpanByte;
+        SpanByte _key = key.SpanByte;
         return DELETE(ref _key, storeType, ref context, ref objectContext);
     }
 
@@ -458,19 +458,19 @@ sealed partial class StorageSession : IDisposable
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var found = false;
+        bool found = false;
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
-            var status = context.Delete(ref key);
+            Status status = context.Delete(ref key);
             Debug.Assert(!status.IsPending);
             if (status.Found) found = true;
         }
 
         if (objectStoreSession != null && (storeType == StoreType.Object || storeType == StoreType.All))
         {
-            var keyBA = key.ToByteArray();
-            var status = objectContext.Delete(ref keyBA);
+            byte[] keyBA = key.ToByteArray();
+            Status status = objectContext.Delete(ref keyBA);
             Debug.Assert(!status.IsPending);
             if (status.Found) found = true;
         }
@@ -485,7 +485,7 @@ sealed partial class StorageSession : IDisposable
 
         if ((storeType == StoreType.Object || storeType == StoreType.All) && objectStoreSession != null)
         {
-            var status = objectContext.Delete(key);
+            Status status = objectContext.Delete(key);
             Debug.Assert(!status.IsPending);
             if (status.Found) found = true;
         }
@@ -497,7 +497,7 @@ sealed partial class StorageSession : IDisposable
                 fixed (byte* ptr = key)
                 {
                     var keySB = SpanByte.FromPinnedPointer(ptr, key.Length);
-                    var status = context.Delete(ref keySB);
+                    Status status = context.Delete(ref keySB);
                     Debug.Assert(!status.IsPending);
                     if (status.Found) found = true;
                 }
@@ -523,8 +523,8 @@ sealed partial class StorageSession : IDisposable
             txnManager.Run(true);
         }
 
-        var context = txnManager.LockableContext;
-        var objectContext = txnManager.ObjectStoreLockableContext;
+        LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> context = txnManager.LockableContext;
+        LockableContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> objectContext = txnManager.ObjectStoreLockableContext;
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
@@ -535,15 +535,15 @@ sealed partial class StorageSession : IDisposable
 
                 SpanByte input = default;
                 var o = new SpanByteAndMemory();
-                var status = GET(ref oldKey, ref input, ref o, ref context);
+                GarnetStatus status = GET(ref oldKey, ref input, ref o, ref context);
 
                 if (status == GarnetStatus.OK)
                 {
                     Debug.Assert(!o.IsSpanByte);
-                    var memoryHandle = o.Memory.Memory.Pin();
-                    var ptrVal = (byte*)memoryHandle.Pointer;
+                    System.Buffers.MemoryHandle memoryHandle = o.Memory.Memory.Pin();
+                    byte* ptrVal = (byte*)memoryHandle.Pointer;
 
-                    RespReadUtils.ReadLengthHeader(out var headerLength, ref ptrVal, ptrVal + o.Length);
+                    RespReadUtils.ReadLengthHeader(out int headerLength, ref ptrVal, ptrVal + o.Length);
                     var value = SpanByte.FromPinnedPointer(ptrVal, headerLength);
                     SET(ref newKey, ref value, ref context);
 
@@ -579,11 +579,11 @@ sealed partial class StorageSession : IDisposable
                 byte[] oldKeyArray = oldKeySlice.ToArray();
                 byte[] newKeyArray = newKeySlice.ToArray();
 
-                var status = GET(oldKeyArray, out var value, ref objectContext);
+                GarnetStatus status = GET(oldKeyArray, out GarnetObjectStoreOutput value, ref objectContext);
 
                 if (status == GarnetStatus.OK)
                 {
-                    var valObj = value.garnetObject;
+                    IGarnetObject valObj = value.garnetObject;
                     SET(newKeyArray, valObj, ref objectContext);
 
                     // Delete the old key
@@ -620,7 +620,7 @@ sealed partial class StorageSession : IDisposable
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
-            var _key = key.SpanByte;
+            SpanByte _key = key.SpanByte;
             SpanByte input = default;
             var _output = new SpanByteAndMemory { SpanByte = scratchBufferManager.ViewRemainingArgSlice().SpanByte };
             status = GET(ref _key, ref input, ref _output, ref context);
@@ -687,7 +687,7 @@ sealed partial class StorageSession : IDisposable
 
         input.ExtraMetadata = DateTimeOffset.UtcNow.Ticks + expiry.Ticks;
 
-        var rmwOutput = stackalloc byte[ObjectOutputHeader.Size];
+        byte* rmwOutput = stackalloc byte[ObjectOutputHeader.Size];
         var output = new SpanByteAndMemory(SpanByte.FromPinnedPointer(rmwOutput, ObjectOutputHeader.Size));
         timeoutSet = false;
 
@@ -695,8 +695,8 @@ sealed partial class StorageSession : IDisposable
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
-            var _key = key.SpanByte;
-            var status = context.RMW(ref _key, ref input, ref output);
+            SpanByte _key = key.SpanByte;
+            Status status = context.RMW(ref _key, ref input, ref output);
 
             if (status.IsPending)
                 CompletePendingForSession(ref status, ref output, ref context);
@@ -709,8 +709,8 @@ sealed partial class StorageSession : IDisposable
             *input.ToPointer() = (byte)GarnetObjectType.Expire;
 
             var objO = new GarnetObjectStoreOutput { spanByteAndMemory = output };
-            var keyBA = key.ToArray();
-            var status = objectStoreContext.RMW(ref keyBA, ref input, ref objO);
+            byte[] keyBA = key.ToArray();
+            Status status = objectStoreContext.RMW(ref keyBA, ref input, ref objO);
 
             if (status.IsPending)
                 CompletePendingForObjectStoreSession(ref status, ref objO, ref objectStoreContext);
@@ -744,8 +744,8 @@ sealed partial class StorageSession : IDisposable
 
         if (storeType == StoreType.Main || storeType == StoreType.All)
         {
-            var _key = key.SpanByte;
-            var _status = context.RMW(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+            SpanByte _key = key.SpanByte;
+            Status _status = context.RMW(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
             if (_status.IsPending)
                 CompletePendingForSession(ref _status, ref o, ref context);
@@ -761,8 +761,8 @@ sealed partial class StorageSession : IDisposable
             (*(RespInputHeader*)pcurr).type = GarnetObjectType.Persist;
 
             var objO = new GarnetObjectStoreOutput { spanByteAndMemory = o };
-            var _key = key.ToArray();
-            var _status = objectStoreContext.RMW(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref objO);
+            byte[] _key = key.ToArray();
+            Status _status = objectStoreContext.RMW(ref _key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref objO);
 
             if (_status.IsPending)
                 CompletePendingForObjectStoreSession(ref _status, ref objO, ref objectStoreContext);
@@ -789,7 +789,7 @@ sealed partial class StorageSession : IDisposable
     public unsafe GarnetStatus SETRANGE<TContext>(ArgSlice key, ArgSlice value, int offset, ref ArgSlice output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var sbKey = key.SpanByte;
+        SpanByte sbKey = key.SpanByte;
         SpanByteAndMemory sbmOut = new(output.SpanByte);
 
         // Total size + Offset size + New value size + Address of new value
@@ -808,7 +808,7 @@ sealed partial class StorageSession : IDisposable
         pcurr += sizeof(int);
         *(long*)pcurr = (long)(value.ptr);
 
-        var status = context.RMW(ref sbKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref sbmOut);
+        Status status = context.RMW(ref sbKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref sbmOut);
         if (status.IsPending)
             CompletePendingForSession(ref status, ref sbmOut, ref context);
 
@@ -821,11 +821,11 @@ sealed partial class StorageSession : IDisposable
     public GarnetStatus Increment<TContext>(ArgSlice key, ArgSlice input, ref ArgSlice output, ref TContext context)
         where TContext : ITsavoriteContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long>
     {
-        var _key = key.SpanByte;
-        var _input = input.SpanByte;
+        SpanByte _key = key.SpanByte;
+        SpanByte _input = input.SpanByte;
         SpanByteAndMemory _output = new(output.SpanByte);
 
-        var status = context.RMW(ref _key, ref _input, ref _output);
+        Status status = context.RMW(ref _key, ref _input, ref _output);
         if (status.IsPending)
             CompletePendingForSession(ref status, ref _output, ref context);
         Debug.Assert(_output.IsSpanByte);
@@ -858,7 +858,7 @@ sealed partial class StorageSession : IDisposable
     {
         keyType = "string";
         // Check if key exists in Main store
-        var status = EXISTS(key, StoreType.Main, ref context, ref objectContext);
+        GarnetStatus status = EXISTS(key, StoreType.Main, ref context, ref objectContext);
 
         // If key was not found in the main store then it is an object
         if (status != GarnetStatus.OK && objectStoreSession != null)
@@ -899,7 +899,7 @@ sealed partial class StorageSession : IDisposable
         memoryUsage = -1;
 
         // Check if key exists in Main store
-        var status = GET(key, out ArgSlice keyValue, ref context);
+        GarnetStatus status = GET(key, out ArgSlice keyValue, ref context);
 
         if (status == GarnetStatus.NOTFOUND)
         {

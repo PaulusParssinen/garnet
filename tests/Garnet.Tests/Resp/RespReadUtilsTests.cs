@@ -23,12 +23,12 @@ unsafe class RespReadUtilsTests
     [TestCase("2147483647", 2147483647)]
     public static unsafe void ReadLengthHeaderTest(string text, int expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadLengthHeader(out var length, ref start, end, allowNull: true);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadLengthHeader(out int length, ref start, end, allowNull: true);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, length);
@@ -50,13 +50,13 @@ unsafe class RespReadUtilsTests
     [TestCase("$123ab")]           // Missing "\r\n"
     public static unsafe void ReadLengthHeaderExceptionsTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes(text);
+        byte[] bytes = Encoding.ASCII.GetBytes(text);
         _ = Assert.Throws<RespParsingException>(() =>
         {
             fixed (byte* ptr = bytes)
             {
-                var start = ptr;
-                _ = RespReadUtils.ReadLengthHeader(out var length, ref start, ptr + bytes.Length, allowNull: false);
+                byte* start = ptr;
+                _ = RespReadUtils.ReadLengthHeader(out int length, ref start, ptr + bytes.Length, allowNull: false);
             }
         });
     }
@@ -70,12 +70,12 @@ unsafe class RespReadUtilsTests
     [TestCase("2147483647", 2147483647)]
     public static unsafe void ReadArrayLengthTest(string text, int expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"*{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"*{text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadArrayLength(out var length, ref start, end);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadArrayLength(out int length, ref start, end);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, length);
@@ -96,13 +96,13 @@ unsafe class RespReadUtilsTests
     [TestCase("*123ab")]           // Missing "\r\n"
     public static unsafe void ReadArrayLengthExceptionsTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes(text);
+        byte[] bytes = Encoding.ASCII.GetBytes(text);
         _ = Assert.Throws<RespParsingException>(() =>
         {
             fixed (byte* ptr = bytes)
             {
-                var start = ptr;
-                _ = RespReadUtils.ReadArrayLength(out var length, ref start, ptr + bytes.Length);
+                byte* start = ptr;
+                _ = RespReadUtils.ReadArrayLength(out int length, ref start, ptr + bytes.Length);
             }
         });
     }
@@ -117,12 +117,12 @@ unsafe class RespReadUtilsTests
     [TestCase("2147483647", 2147483647)]
     public static unsafe void ReadIntWithLengthHeaderTest(string text, int expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadIntWithLengthHeader(out var length, ref start, end);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadIntWithLengthHeader(out int length, ref start, end);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, length);
@@ -140,14 +140,14 @@ unsafe class RespReadUtilsTests
     [TestCase("abc121cba")]   // Not a number
     public static unsafe void ReadIntWithLengthHeaderExceptionsTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
 
         _ = Assert.Throws<RespParsingException>(() =>
         {
             fixed (byte* ptr = bytes)
             {
-                var start = ptr;
-                _ = RespReadUtils.ReadIntWithLengthHeader(out var length, ref start, ptr + bytes.Length);
+                byte* start = ptr;
+                _ = RespReadUtils.ReadIntWithLengthHeader(out int length, ref start, ptr + bytes.Length);
             }
         });
     }
@@ -162,12 +162,12 @@ unsafe class RespReadUtilsTests
     [TestCase("9223372036854775807", 9223372036854775807L)]
     public static unsafe void ReadLongWithLengthHeaderTest(string text, long expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadLongWithLengthHeader(out var length, ref start, end);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadLongWithLengthHeader(out long length, ref start, end);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, length);
@@ -186,14 +186,14 @@ unsafe class RespReadUtilsTests
     [TestCase("abc121cba")]            // Not a number
     public static unsafe void ReadLongWithLengthHeaderExceptionsTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
 
         _ = Assert.Throws<RespParsingException>(() =>
         {
             fixed (byte* ptr = bytes)
             {
-                var start = ptr;
-                _ = RespReadUtils.ReadLongWithLengthHeader(out var length, ref start, ptr + bytes.Length);
+                byte* start = ptr;
+                _ = RespReadUtils.ReadLongWithLengthHeader(out long length, ref start, ptr + bytes.Length);
             }
         });
     }
@@ -207,12 +207,12 @@ unsafe class RespReadUtilsTests
     [TestCase("18446744073709551615", 18446744073709551615UL)]
     public static unsafe void ReadULongWithLengthHeaderTest(string text, ulong expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadULongWithLengthHeader(out var length, ref start, end);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadULongWithLengthHeader(out ulong length, ref start, end);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, length);
@@ -230,14 +230,14 @@ unsafe class RespReadUtilsTests
     [TestCase("abc121cba")]             // Not a number
     public static unsafe void ReadULongWithLengthHeaderExceptionsTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
 
         _ = Assert.Throws<RespParsingException>(() =>
         {
             fixed (byte* ptr = bytes)
             {
-                var start = ptr;
-                _ = RespReadUtils.ReadULongWithLengthHeader(out var length, ref start, ptr + bytes.Length);
+                byte* start = ptr;
+                _ = RespReadUtils.ReadULongWithLengthHeader(out ulong length, ref start, ptr + bytes.Length);
             }
         });
     }
@@ -250,14 +250,14 @@ unsafe class RespReadUtilsTests
     [TestCase("")]
     public static unsafe void ReadPtrWithLengthHeaderTest(string text)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
         fixed (byte* ptr = bytes)
         {
             byte* result = null;
-            var length = -1;
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadPtrWithLengthHeader(ref result, ref length, ref start, end);
+            int length = -1;
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadPtrWithLengthHeader(ref result, ref length, ref start, end);
 
             Assert.IsTrue(success);
             Assert.IsTrue(result != null);
@@ -275,12 +275,12 @@ unsafe class RespReadUtilsTests
     [TestCase("0", false)]
     public static unsafe void ReadBoolWithLengthHeaderTest(string text, bool expected)
     {
-        var bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
+        byte[] bytes = Encoding.ASCII.GetBytes($"${text.Length}\r\n{text}\r\n");
         fixed (byte* ptr = bytes)
         {
-            var start = ptr;
-            var end = ptr + bytes.Length;
-            var success = RespReadUtils.ReadBoolWithLengthHeader(out var result, ref start, end);
+            byte* start = ptr;
+            byte* end = ptr + bytes.Length;
+            bool success = RespReadUtils.ReadBoolWithLengthHeader(out bool result, ref start, end);
 
             Assert.IsTrue(success);
             Assert.AreEqual(expected, result);

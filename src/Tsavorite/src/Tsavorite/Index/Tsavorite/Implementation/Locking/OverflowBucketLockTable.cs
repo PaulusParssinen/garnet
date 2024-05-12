@@ -186,8 +186,8 @@ internal struct OverflowBucketLockTable<TKey, TValue> : ILockTable<TKey>
     private static int KeyHashComparer<TLockableKey>(TLockableKey key1, TLockableKey key2, long size_mask)
         where TLockableKey : ILockableKey
     {
-        var idx1 = GetBucketIndex(key1.KeyHash, size_mask);
-        var idx2 = GetBucketIndex(key2.KeyHash, size_mask);
+        long idx1 = GetBucketIndex(key1.KeyHash, size_mask);
+        long idx2 = GetBucketIndex(key2.KeyHash, size_mask);
         return (idx1 != idx2) ? idx1.CompareTo(idx2) : ((byte)key1.LockType).CompareTo((byte)key2.LockType);
     }
 

@@ -77,9 +77,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     {
         slots = [];
         errorMessage = default;
-        var duplicate = false;
-        var outOfRange = false;
-        var invalidRange = false;
+        bool duplicate = false;
+        bool outOfRange = false;
+        bool invalidRange = false;
         int slotStart;
         int slotEnd;
 
@@ -116,7 +116,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 outOfRange = true;
             }
 
-            for (var slot = slotStart; slot <= slotEnd && !duplicate; slot++)
+            for (int slot = slotStart; slot <= slotEnd && !duplicate; slot++)
             {
                 if (!slots.Add(slot))
                 {
@@ -154,7 +154,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         string errorCmd;
         if (count > 0)
         {
-            var param = GetCommand(bufSpan, out var success1);
+            ReadOnlySpan<byte> param = GetCommand(bufSpan, out bool success1);
             if (!success1) return false;
 
             if (ProcessClusterBasicCommands(bufSpan, param, count - 1, out errorFlag, out errorCmd))
@@ -171,7 +171,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             {
                 if (!DrainCommands(bufSpan, count - 1))
                     return false;
-                var paramStr = Encoding.ASCII.GetString(param);
+                string paramStr = Encoding.ASCII.GetString(param);
                 while (!RespWriteUtils.WriteError($"ERR Unknown subcommand or wrong number of arguments for '{paramStr}'. Try CLUSTER HELP.", ref dcurr, dend))
                     SendAndReset();
             }
@@ -185,8 +185,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     checkErrorFlags:
         if (errorFlag && !string.IsNullOrWhiteSpace(errorCmd))
         {
-            var errorMsg = string.Format(CmdStrings.GenericErrMissingParam, errorCmd);
-            var bresp_ERRMISSINGPARAM = Encoding.ASCII.GetBytes(errorMsg);
+            string errorMsg = string.Format(CmdStrings.GenericErrMissingParam, errorCmd);
+            byte[] bresp_ERRMISSINGPARAM = Encoding.ASCII.GetBytes(errorMsg);
             bresp_ERRMISSINGPARAM.CopyTo(new Span<byte>(dcurr, bresp_ERRMISSINGPARAM.Length));
             dcurr += bresp_ERRMISSINGPARAM.Length;
         }
@@ -200,7 +200,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         errorCmd = string.Empty;
         if (param.SequenceEqual(CmdStrings.BUMPEPOCH) || param.SequenceEqual(CmdStrings.bumpepoch))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -214,7 +214,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 success = clusterProvider.clusterManager.TryBumpClusterEpoch();
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -232,7 +232,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.FORGET) || param.SequenceEqual(CmdStrings.forget))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -246,11 +246,11 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeid, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeid, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                var expirySeconds = 60;
+                int expirySeconds = 60;
                 if (count == 2)
                 {
                     if (!RespReadUtils.ReadIntWithLengthHeader(out expirySeconds, ref ptr, recvBufferPtr + bytesRead))
@@ -259,7 +259,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 readHead = (int)(ptr - recvBufferPtr);
 
                 logger?.LogTrace("CLUSTER FORGET {nodeid} {seconds}", nodeid, expirySeconds);
-                if (!clusterProvider.clusterManager.TryRemoveWorker(nodeid, expirySeconds, out var errorMessage))
+                if (!clusterProvider.clusterManager.TryRemoveWorker(nodeid, expirySeconds, out ReadOnlySpan<byte> errorMessage))
                 {
                     while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                         SendAndReset();
@@ -282,21 +282,21 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 readHead = (int)(ptr - recvBufferPtr);
-                var clusterInfo = clusterProvider.clusterManager.GetInfo();
+                string clusterInfo = clusterProvider.clusterManager.GetInfo();
                 while (!RespWriteUtils.WriteAsciiBulkString(clusterInfo, ref dcurr, dend))
                     SendAndReset();
             }
         }
         else if (param.SequenceEqual(CmdStrings.HELP) || param.SequenceEqual(CmdStrings.help))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
-            var clusterCommands = ClusterCommandInfo.GetClusterCommands();
+            List<string> clusterCommands = ClusterCommandInfo.GetClusterCommands();
             while (!RespWriteUtils.WriteArrayLength(clusterCommands.Count, ref dcurr, dend))
                 SendAndReset();
-            foreach (var command in clusterCommands)
+            foreach (string command in clusterCommands)
             {
                 while (!RespWriteUtils.WriteSimpleString(command, ref dcurr, dend))
                     SendAndReset();
@@ -304,7 +304,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.MEET) || param.SequenceEqual(CmdStrings.meet))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -318,15 +318,15 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var ipaddress, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] ipaddress, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadIntWithLengthHeader(out var port, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadIntWithLengthHeader(out int port, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
-                var ipaddressStr = Encoding.ASCII.GetString(ipaddress);
+                string ipaddressStr = Encoding.ASCII.GetString(ipaddress);
                 logger?.LogTrace("CLUSTER MEET {ipaddressStr} {port}", ipaddressStr, port);
                 clusterProvider.clusterManager.RunMeetTask(ipaddressStr, port);
                 while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
@@ -335,29 +335,29 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.MYID) || param.SequenceEqual(CmdStrings.myid))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
             while (!RespWriteUtils.WriteAsciiBulkString(clusterProvider.clusterManager.CurrentConfig.LocalNodeId, ref dcurr, dend))
                 SendAndReset();
         }
         else if (param.SequenceEqual(CmdStrings.MYPARENTID) || param.SequenceEqual(CmdStrings.myparentid))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
 
-            var current = clusterProvider.clusterManager.CurrentConfig;
-            var parentId = current.LocalNodeRole == NodeRole.PRIMARY ? current.LocalNodeId : current.LocalNodePrimaryId;
+            ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+            string parentId = current.LocalNodeRole == NodeRole.PRIMARY ? current.LocalNodeId : current.LocalNodePrimaryId;
             while (!RespWriteUtils.WriteAsciiBulkString(parentId, ref dcurr, dend))
                 SendAndReset();
         }
         else if (param.SequenceEqual(CmdStrings.ENDPOINT) || param.SequenceEqual(CmdStrings.endpoint))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeid, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
-            var current = clusterProvider.clusterManager.CurrentConfig;
-            var (host, port) = current.GetEndpointFromNodeId(nodeid);
+            ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+            (string host, int port) = current.GetEndpointFromNodeId(nodeid);
             while (!RespWriteUtils.WriteAsciiBulkString($"{host}:{port}", ref dcurr, dend))
                 SendAndReset();
         }
@@ -372,9 +372,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 readHead = (int)(ptr - recvBufferPtr);
-                var nodes = clusterProvider.clusterManager.CurrentConfig.GetClusterInfo();
+                string nodes = clusterProvider.clusterManager.CurrentConfig.GetClusterInfo();
                 while (!RespWriteUtils.WriteAsciiBulkString(nodes, ref dcurr, dend))
                     SendAndReset();
             }
@@ -391,8 +391,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             else
             {
                 Debug.WriteLine($"{Encoding.UTF8.GetString(new Span<byte>(recvBufferPtr, Math.Min(bytesRead, 128))).Replace("\n", "|").Replace("\r", "")}");
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadIntWithLengthHeader(out var configEpoch, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadIntWithLengthHeader(out int configEpoch, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
                 if (clusterProvider.clusterManager.CurrentConfig.NumWorkers > 2)
@@ -402,7 +402,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 }
                 else
                 {
-                    if (!clusterProvider.clusterManager.TrySetLocalConfigEpoch(configEpoch, out var errorMessage))
+                    if (!clusterProvider.clusterManager.TrySetLocalConfigEpoch(configEpoch, out ReadOnlySpan<byte> errorMessage))
                     {
                         while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                             SendAndReset();
@@ -417,9 +417,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.SHARDS) || param.SequenceEqual(CmdStrings.shards))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
-            var shardsInfo = clusterProvider.clusterManager.CurrentConfig.GetShardsInfo();
+            string shardsInfo = clusterProvider.clusterManager.CurrentConfig.GetShardsInfo();
             while (!RespWriteUtils.WriteAsciiDirect(shardsInfo, ref dcurr, dend))
                 SendAndReset();
         }
@@ -434,23 +434,23 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                var gossipWithMeet = false;
+                byte* ptr = recvBufferPtr + readHead;
+                bool gossipWithMeet = false;
                 if (count > 1)
                 {
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var withMeet, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] withMeet, ref ptr, recvBufferPtr + bytesRead))
                         return false;
                     Debug.Assert(withMeet.SequenceEqual(CmdStrings.WITHMEET.ToArray()));
                     if (withMeet.SequenceEqual(CmdStrings.WITHMEET.ToArray()))
                         gossipWithMeet = true;
                 }
 
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var gossipMessage, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] gossipMessage, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
                 clusterProvider.clusterManager.gossipStats.UpdateGossipBytesRecv(gossipMessage.Length);
-                var current = clusterProvider.clusterManager.CurrentConfig;
+                ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
 
                 // Try merge if not just a ping message
                 if (gossipMessage.Length > 0)
@@ -469,7 +469,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 // Respond if configuration has changed or gossipWithMeet option is specified
                 if (lastSentConfig != current || gossipWithMeet)
                 {
-                    var configByteArray = current.ToByteArray();
+                    byte[] configByteArray = current.ToByteArray();
                     clusterProvider.clusterManager.gossipStats.UpdateGossipBytesSend(configByteArray.Length);
                     while (!RespWriteUtils.WriteBulkString(configByteArray, ref dcurr, dend))
                         SendAndReset();
@@ -485,18 +485,18 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.RESET) || param.SequenceEqual(CmdStrings.reset))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
 
-            var ptr = recvBufferPtr + readHead;
-            var soft = true;
-            var expirySeconds = 60;
+            byte* ptr = recvBufferPtr + readHead;
+            bool soft = true;
+            int expirySeconds = 60;
 
             if (count > 0)
             {
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var option, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string option, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 if (option.Equals("HARD", StringComparison.OrdinalIgnoreCase))
                     soft = false;
@@ -526,7 +526,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         errorCmd = string.Empty;
         if (param.SequenceEqual(CmdStrings.FAILOVER) || param.SequenceEqual(CmdStrings.failover))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -540,12 +540,12 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                var failoverOption = FailoverOption.DEFAULT;
+                byte* ptr = recvBufferPtr + readHead;
+                FailoverOption failoverOption = FailoverOption.DEFAULT;
                 TimeSpan failoverTimeout = default;
                 if (count > 0)
                 {
-                    if (!RespReadUtils.ReadStringWithLengthHeader(out var failoverOptionStr, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadStringWithLengthHeader(out string failoverOptionStr, ref ptr, recvBufferPtr + bytesRead))
                         return false;
 
                     if (!Enum.TryParse(failoverOptionStr, ignoreCase: true, out failoverOption))
@@ -558,7 +558,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
                 if (count > 1)
                 {
-                    if (!RespReadUtils.ReadIntWithLengthHeader(out var failoverTimeoutSeconds, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadIntWithLengthHeader(out int failoverTimeoutSeconds, ref ptr, recvBufferPtr + bytesRead))
                         return false;
                     failoverTimeout = TimeSpan.FromSeconds(failoverTimeoutSeconds);
                 }
@@ -572,8 +572,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                     }
                     else
                     {
-                        var current = clusterProvider.clusterManager.CurrentConfig;
-                        var nodeRole = current.LocalNodeRole;
+                        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+                        NodeRole nodeRole = current.LocalNodeRole;
                         if (nodeRole == NodeRole.REPLICA)
                         {
                             if (!clusterProvider.failoverManager.TryStartReplicaFailover(failoverOption, failoverTimeout))
@@ -603,18 +603,18 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.failauthreq))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var nodeIdBytes, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] nodeIdBytes, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var requestEpochBytes, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] requestEpochBytes, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var claimedSlots, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] claimedSlots, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
-            var resp = clusterProvider.clusterManager.AuthorizeFailover(
+            ReadOnlySpan<byte> resp = clusterProvider.clusterManager.AuthorizeFailover(
                 Encoding.ASCII.GetString(nodeIdBytes),
                 BitConverter.ToInt64(requestEpochBytes),
                 claimedSlots) ? CmdStrings.RESP_RETURN_VAL_1 : CmdStrings.RESP_RETURN_VAL_0;
@@ -623,8 +623,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.failstopwrites))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var nodeIdBytes, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] nodeIdBytes, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
             clusterProvider.clusterManager.TryStopWrites(Encoding.ASCII.GetString(nodeIdBytes));
@@ -634,12 +634,12 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.failreplicationoffset))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var primaryReplicationOffset, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long primaryReplicationOffset, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
-            var rOffset = clusterProvider.replicationManager.WaitForReplicationOffset(primaryReplicationOffset).GetAwaiter().GetResult();
+            long rOffset = clusterProvider.replicationManager.WaitForReplicationOffset(primaryReplicationOffset).GetAwaiter().GetResult();
             while (!RespWriteUtils.WriteInteger(rOffset, ref dcurr, dend))
                 SendAndReset();
         }
@@ -653,7 +653,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         errorCmd = string.Empty;
         if (param.SequenceEqual(CmdStrings.ADDSLOTS) || param.SequenceEqual(CmdStrings.addslots))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -667,10 +667,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
 
                 //Try to parse slot ranges.
-                var slotsParsed = TryParseSlots(count, ref ptr, out var slots, out var errorMessage, range: false);
+                bool slotsParsed = TryParseSlots(count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: false);
 
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -684,7 +684,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 else if (!slotsParsed) return false;
 
                 //Try to to add slots
-                if (!clusterProvider.clusterManager.TryAddSlots(slots, out var slotIndex) &&
+                if (!clusterProvider.clusterManager.TryAddSlots(slots, out int slotIndex) &&
                     slotIndex != -1)
                 {
                     while (!RespWriteUtils.WriteError($"ERR Slot {slotIndex} is already busy", ref dcurr, dend))
@@ -699,7 +699,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.ADDSLOTSRANGE) || param.SequenceEqual(CmdStrings.addslotsrange))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -713,10 +713,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
 
                 // Try to parse slot ranges.
-                var slotsParsed = TryParseSlots(count, ref ptr, out var slots, out var errorMessage, range: true);
+                bool slotsParsed = TryParseSlots(count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: true);
 
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -730,7 +730,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 else if (!slotsParsed) return false;
 
                 // Try to to add slots
-                if (!clusterProvider.clusterManager.TryAddSlots(slots, out var slotIndex) &&
+                if (!clusterProvider.clusterManager.TryAddSlots(slots, out int slotIndex) &&
                     slotIndex != -1)
                 {
                     while (!RespWriteUtils.WriteError($"ERR Slot {slotIndex} is already busy", ref dcurr, dend))
@@ -745,13 +745,13 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.BANLIST) || param.SequenceEqual(CmdStrings.banlist))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
-            var banlist = clusterProvider.clusterManager.GetBanList();
+            List<string> banlist = clusterProvider.clusterManager.GetBanList();
 
             while (!RespWriteUtils.WriteArrayLength(banlist.Count, ref dcurr, dend))
                 SendAndReset();
-            foreach (var replica in banlist)
+            foreach (string replica in banlist)
             {
                 while (!RespWriteUtils.WriteAsciiBulkString(replica, ref dcurr, dend))
                     SendAndReset();
@@ -759,7 +759,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.COUNTKEYSINSLOT) || param.SequenceEqual(CmdStrings.countkeysinslot))
         {
-            var current = clusterProvider.clusterManager.CurrentConfig;
+            ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
             if (count != 1)
             {
                 if (!DrainCommands(bufSpan, count))
@@ -769,8 +769,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadIntWithLengthHeader(out var slot, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -787,7 +787,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 {
                     try
                     {
-                        var keyCount = CountKeysInSlot(slot);
+                        int keyCount = CountKeysInSlot(slot);
                         while (!RespWriteUtils.WriteInteger(keyCount, ref dcurr, dend))
                             SendAndReset();
                     }
@@ -802,7 +802,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.DELSLOTS) || param.SequenceEqual(CmdStrings.delslots))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -816,9 +816,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 //Try to parse slot ranges.
-                var slotsParsed = TryParseSlots(count, ref ptr, out var slots, out var errorMessage, range: false);
+                bool slotsParsed = TryParseSlots(count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: false);
 
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -832,7 +832,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 else if (!slotsParsed) return false;
 
                 //Try remove the slots
-                if (!clusterProvider.clusterManager.TryRemoveSlots(slots, out var slotIndex) &&
+                if (!clusterProvider.clusterManager.TryRemoveSlots(slots, out int slotIndex) &&
                     slotIndex != -1)
                 {
                     while (!RespWriteUtils.WriteError($"ERR Slot {slotIndex} is already not assigned", ref dcurr, dend))
@@ -847,7 +847,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.DELSLOTSRANGE) || param.SequenceEqual(CmdStrings.delslotsrange))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -862,10 +862,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
 
                 //Try to parse slot ranges.
-                var slotsParsed = TryParseSlots(count, ref ptr, out var slots, out var errorMessage, range: true);
+                bool slotsParsed = TryParseSlots(count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: true);
 
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -879,7 +879,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 else if (!slotsParsed) return false;
 
                 //Try remove the slots
-                if (!clusterProvider.clusterManager.TryRemoveSlots(slots, out var slotIndex) &&
+                if (!clusterProvider.clusterManager.TryRemoveSlots(slots, out int slotIndex) &&
                     slotIndex != -1)
                 {
                     while (!RespWriteUtils.WriteError($"ERR Slot {slotIndex} is already not assigned", ref dcurr, dend))
@@ -894,7 +894,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.DELKEYSINSLOT) || param.SequenceEqual(CmdStrings.delkeysinslot))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -908,7 +908,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
@@ -925,7 +925,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.DELKEYSINSLOTRANGE) || param.SequenceEqual(CmdStrings.delkeysinslotrange))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -939,10 +939,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
 
                 //Try to parse slot ranges.
-                var slotsParsed = TryParseSlots(count, ref ptr, out var slots, out var errorMessage, range: true);
+                bool slotsParsed = TryParseSlots(count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: true);
 
                 readHead = (int)(ptr - recvBufferPtr);
 
@@ -965,7 +965,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.GETKEYSINSLOT) || param.SequenceEqual(CmdStrings.getkeysinslot))
         {
-            var current = clusterProvider.clusterManager.CurrentConfig;
+            ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
 
             if (count < 2)
             {
@@ -976,7 +976,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
@@ -996,7 +996,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 }
                 else
                 {
-                    var keys = GetKeysInSlot(slot, keyCount);
+                    List<byte[]> keys = GetKeysInSlot(slot, keyCount);
                     int keyCountRet = Math.Min(keys.Count, keyCount);
                     while (!RespWriteUtils.WriteArrayLength(keyCountRet, ref dcurr, dend))
                         SendAndReset();
@@ -1017,7 +1017,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 byte* keyPtr = null;
                 int ksize = 0;
                 if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
@@ -1031,7 +1031,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.SETSLOT) || param.SequenceEqual(CmdStrings.setslot))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -1045,11 +1045,11 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadIntWithLengthHeader(out var slot, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var subcommand, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string subcommand, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 if (!Enum.TryParse(subcommand, ignoreCase: true, out SlotState slotState))
@@ -1111,7 +1111,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.SETSLOTSRANGE) || param.SequenceEqual(CmdStrings.setslotsrange))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -1131,10 +1131,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 // CLUSTER SETSLOTRANGE STABLE <slot-start> <slot-end> [slot-start slot-end]
 
                 string nodeid = default;
-                var _count = count - 1;
-                var ptr = recvBufferPtr + readHead;
+                int _count = count - 1;
+                byte* ptr = recvBufferPtr + readHead;
                 // Extract subcommand
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var subcommand, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string subcommand, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 // Try parse slot state
@@ -1158,7 +1158,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 }
 
                 // Try to parse slot ranges. The parsing may give errorMessage even if the TryParseSlots returns true.
-                var slotsParsed = TryParseSlots(_count, ref ptr, out var slots, out var errorMessage, range: true);
+                bool slotsParsed = TryParseSlots(_count, ref ptr, out HashSet<int> slots, out ReadOnlySpan<byte> errorMessage, range: true);
                 if (slotsParsed && errorMessage != default)
                 {
                     while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
@@ -1208,9 +1208,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.SLOTS) || param.SequenceEqual(CmdStrings.slots))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             readHead = (int)(ptr - recvBufferPtr);
-            var slotsInfo = clusterProvider.clusterManager.CurrentConfig.GetSlotsInfo();
+            string slotsInfo = clusterProvider.clusterManager.CurrentConfig.GetSlotsInfo();
             while (!RespWriteUtils.WriteAsciiDirect(slotsInfo, ref dcurr, dend))
                 SendAndReset();
         }
@@ -1226,15 +1226,15 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadIntWithLengthHeader(out var slot, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 readHead = (int)(ptr - recvBufferPtr);
 
-                var current = clusterProvider.clusterManager.CurrentConfig;
-                var nodeId = current.GetNodeIdFromSlot((ushort)slot);
-                var state = current.GetState((ushort)slot);
-                var stateStr = state switch
+                ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+                string nodeId = current.GetNodeIdFromSlot((ushort)slot);
+                SlotState state = current.GetState((ushort)slot);
+                string stateStr = state switch
                 {
                     SlotState.STABLE => "=",
                     SlotState.IMPORTING => "<",
@@ -1258,7 +1258,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
         if (param.SequenceEqual(CmdStrings.MIGRATE))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
@@ -1273,35 +1273,35 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var ptr = recvBufferPtr + readHead;
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var sourceNodeId, ref ptr, recvBufferPtr + bytesRead))
+                byte* ptr = recvBufferPtr + readHead;
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string sourceNodeId, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var _replace, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string _replace, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var storeType, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string storeType, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                var replaceOption = _replace.Equals("T");
+                bool replaceOption = _replace.Equals("T");
 
                 // Check if payload size has been received
                 if (ptr + 4 > recvBufferPtr + bytesRead)
                     return false;
 
-                var headerLength = *(int*)ptr;
+                int headerLength = *(int*)ptr;
                 ptr += 4;
                 // Check if payload has been received
                 if (ptr + headerLength > recvBufferPtr + bytesRead)
                     return false;
 
-                var currentConfig = clusterProvider.clusterManager.CurrentConfig;
+                ClusterConfig currentConfig = clusterProvider.clusterManager.CurrentConfig;
 
                 if (storeType.Equals("SSTORE"))
                 {
-                    var keyCount = *(int*)ptr;
+                    int keyCount = *(int*)ptr;
                     ptr += 4;
-                    var i = 0;
+                    int i = 0;
 
                     while (i < keyCount)
                     {
@@ -1323,7 +1323,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                             continue;
                         }
 
-                        var slot = NumUtils.HashSlot(key.ToPointer(), key.LengthWithoutMetadata);
+                        ushort slot = NumUtils.HashSlot(key.ToPointer(), key.LengthWithoutMetadata);
                         if (!currentConfig.IsImportingSlot(slot))//Slot is not in importing state
                         {
                             migrateState = 1;
@@ -1344,19 +1344,19 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 }
                 else if (storeType.Equals("OSTORE"))
                 {
-                    var keyCount = *(int*)ptr;
+                    int keyCount = *(int*)ptr;
                     ptr += 4;
-                    var i = 0;
+                    int i = 0;
                     while (i < keyCount)
                     {
-                        if (!RespReadUtils.ReadSerializedData(out var key, out var data, out var expiration, ref ptr, recvBufferPtr + bytesRead))
+                        if (!RespReadUtils.ReadSerializedData(out byte[] key, out byte[] data, out long expiration, ref ptr, recvBufferPtr + bytesRead))
                             return false;
 
                         // An error has occurred
                         if (migrateState > 0)
                             continue;
 
-                        var slot = NumUtils.HashSlot(key);
+                        ushort slot = NumUtils.HashSlot(key);
                         if (!currentConfig.IsImportingSlot(slot))//Slot is not in importing state
                         {
                             migrateState = 1;
@@ -1368,7 +1368,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
                         migrateSetCount++;
 
-                        var value = clusterProvider.storeWrapper.GarnetObjectSerializer.Deserialize(data);
+                        IGarnetObject value = clusterProvider.storeWrapper.GarnetObjectSerializer.Deserialize(data);
                         value.Expiration = expiration;
 
                         // Set if key replace flag is set or key does not exist
@@ -1411,10 +1411,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                var mtasks = clusterProvider.migrationManager.GetMigrationTaskCount();
+                int mtasks = clusterProvider.migrationManager.GetMigrationTaskCount();
                 while (!RespWriteUtils.WriteInteger(mtasks, ref dcurr, dend))
                     SendAndReset();
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 readHead = (int)(ptr - recvBufferPtr);
             }
         }
@@ -1428,20 +1428,20 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         errorCmd = string.Empty;
         if (param.SequenceEqual(CmdStrings.REPLICAS) || param.SequenceEqual(CmdStrings.replicas))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
 
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeid, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
-            var replicas = clusterProvider.clusterManager.ListReplicas(nodeid);
+            List<string> replicas = clusterProvider.clusterManager.ListReplicas(nodeid);
 
             while (!RespWriteUtils.WriteArrayLength(replicas.Count, ref dcurr, dend))
                 SendAndReset();
-            foreach (var replica in replicas)
+            foreach (string replica in replicas)
             {
                 while (!RespWriteUtils.WriteAsciiBulkString(replica, ref dcurr, dend))
                     SendAndReset();
@@ -1449,19 +1449,19 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.REPLICATE) || param.SequenceEqual(CmdStrings.replicate))
         {
-            if (!CheckACLAdminPermissions(bufSpan, count, out var success))
+            if (!CheckACLAdminPermissions(bufSpan, count, out bool success))
             {
                 return success;
             }
 
-            var ptr = recvBufferPtr + readHead;
-            var background = false;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeid, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            bool background = false;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (count == 2)
             {
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var backgroundFlag, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string backgroundFlag, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 if (backgroundFlag.Equals("SYNC", StringComparison.OrdinalIgnoreCase))
@@ -1485,7 +1485,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                if (!clusterProvider.replicationManager.TryBeginReplicate(this, nodeid, background, false, out var errorMessage))
+                if (!clusterProvider.replicationManager.TryBeginReplicate(this, nodeid, background, false, out ReadOnlySpan<byte> errorMessage))
                 {
                     while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                         SendAndReset();
@@ -1499,8 +1499,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.aofsync))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeid, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (!RespReadUtils.ReadLongWithLengthHeader(out long nextAddress, ref ptr, recvBufferPtr + bytesRead))
@@ -1509,8 +1509,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
             if (clusterProvider.serverOptions.EnableAOF)
             {
-                clusterProvider.replicationManager.TryAddReplicationTask(nodeid, nextAddress, out var aofSyncTaskInfo);
-                if (!clusterProvider.replicationManager.TryConnectToReplica(nodeid, nextAddress, aofSyncTaskInfo, out var errorMessage))
+                clusterProvider.replicationManager.TryAddReplicationTask(nodeid, nextAddress, out AofSyncTaskInfo aofSyncTaskInfo);
+                if (!clusterProvider.replicationManager.TryConnectToReplica(nodeid, nextAddress, aofSyncTaskInfo, out ReadOnlySpan<byte> errorMessage))
                 {
                     while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                         SendAndReset();
@@ -1529,7 +1529,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.appendlog))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeId, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
@@ -1543,14 +1543,14 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 return false;
 
             byte* record = null;
-            var recordLength = 0;
+            int recordLength = 0;
             if (!RespReadUtils.ReadPtrWithLengthHeader(ref record, ref recordLength, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
-            var currentConfig = clusterProvider.clusterManager.CurrentConfig;
-            var localRole = currentConfig.LocalNodeRole;
-            var primaryId = currentConfig.LocalNodePrimaryId;
+            ClusterConfig currentConfig = clusterProvider.clusterManager.CurrentConfig;
+            NodeRole localRole = currentConfig.LocalNodeRole;
+            string primaryId = currentConfig.LocalNodePrimaryId;
             if (localRole != NodeRole.REPLICA)
             {
                 // TODO: handle this
@@ -1572,23 +1572,23 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.initiate_replica_sync))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var nodeId, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string nodeId, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var primary_replid, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string primary_replid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var cEntryByteArray, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] cEntryByteArray, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var replicaAofBeginAddress, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long replicaAofBeginAddress, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var replicaAofTailAddress, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long replicaAofTailAddress, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
             var remoteEntry = CheckpointEntry.FromByteArray(cEntryByteArray);
 
             if (!clusterProvider.replicationManager.TryBeginReplicaSyncSession(
-                nodeId, primary_replid, remoteEntry, replicaAofBeginAddress, replicaAofTailAddress, out var errorMessage))
+                nodeId, primary_replid, remoteEntry, replicaAofBeginAddress, replicaAofTailAddress, out ReadOnlySpan<byte> errorMessage))
             {
                 while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                     SendAndReset();
@@ -1601,12 +1601,12 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.send_ckpt_metadata))
         {
-            var ptr = recvBufferPtr + readHead;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var fileTokenBytes, ref ptr, recvBufferPtr + bytesRead))
+            byte* ptr = recvBufferPtr + readHead;
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] fileTokenBytes, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadIntWithLengthHeader(out var fileTypeInt, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadIntWithLengthHeader(out int fileTypeInt, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var checkpointMetadata, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] checkpointMetadata, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
@@ -1618,17 +1618,17 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.send_ckpt_file_segment))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
             Span<byte> data = default;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var fileTokenBytes, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] fileTokenBytes, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadIntWithLengthHeader(out var ckptFileTypeInt, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadIntWithLengthHeader(out int ckptFileTypeInt, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var startAddress, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long startAddress, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             if (!RespReadUtils.ReadSpanByteWithLengthHeader(ref data, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadIntWithLengthHeader(out var segmentId, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadIntWithLengthHeader(out int segmentId, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             readHead = (int)(ptr - recvBufferPtr);
@@ -1643,26 +1643,26 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else if (param.SequenceEqual(CmdStrings.begin_replica_recover))
         {
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
 
-            if (!RespReadUtils.ReadBoolWithLengthHeader(out var recoverMainStoreFromToken, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadBoolWithLengthHeader(out bool recoverMainStoreFromToken, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadBoolWithLengthHeader(out var recoverObjectStoreFromToken, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadBoolWithLengthHeader(out bool recoverObjectStoreFromToken, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadBoolWithLengthHeader(out var replayAOF, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadBoolWithLengthHeader(out bool replayAOF, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var primary_replid, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string primary_replid, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var cEntryByteArray, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] cEntryByteArray, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var beginAddress, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long beginAddress, ref ptr, recvBufferPtr + bytesRead))
                 return false;
-            if (!RespReadUtils.ReadLongWithLengthHeader(out var tailAddress, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadLongWithLengthHeader(out long tailAddress, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             readHead = (int)(ptr - recvBufferPtr);
 
             var entry = CheckpointEntry.FromByteArray(cEntryByteArray);
-            var replicationOffset = clusterProvider.replicationManager.BeginReplicaRecover(
+            long replicationOffset = clusterProvider.replicationManager.BeginReplicaRecover(
                 recoverMainStoreFromToken,
                 recoverObjectStoreFromToken,
                 replayAOF,

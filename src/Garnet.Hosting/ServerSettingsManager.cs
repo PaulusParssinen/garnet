@@ -54,16 +54,16 @@ internal static class ServerSettingsManager
         Options initOptions = new Options();
 
         // Initialize options with defaults
-        var importSuccessful = TryImportServerOptions(DefaultOptionsEmbeddedFileName,
+        bool importSuccessful = TryImportServerOptions(DefaultOptionsEmbeddedFileName,
             ConfigFileType.GarnetConf, initOptions, logger,
             FileLocationType.EmbeddedResource);
 
         // Get argument name to default value mapping for argument parser
-        var argNameToDefaultValue = GetArgumentNameToValue(initOptions);
+        Dictionary<string, object> argNameToDefaultValue = GetArgumentNameToValue(initOptions);
 
-        var consolidatedArgs = ConsolidateFlagArguments(args);
+        string[] consolidatedArgs = ConsolidateFlagArguments(args);
         // Parse command line arguments
-        if (!parser.TryParseArguments<Options>(consolidatedArgs, argNameToDefaultValue, out var cmdLineOptions))
+        if (!parser.TryParseArguments<Options>(consolidatedArgs, argNameToDefaultValue, out Options cmdLineOptions))
             return false;
 
         // Check if any arguments were not parsed
@@ -71,10 +71,10 @@ internal static class ServerSettingsManager
         {
             // Ignore any unparsed arguments that appeared after '--'
             var unparsedArguments = new List<string>(cmdLineOptions.UnparsedArguments);
-            var dashDashIdx = Array.IndexOf(consolidatedArgs, "--");
+            int dashDashIdx = Array.IndexOf(consolidatedArgs, "--");
             if (dashDashIdx >= 0)
             {
-                for (var i = dashDashIdx + 1; i < consolidatedArgs.Length; i++)
+                for (int i = dashDashIdx + 1; i < consolidatedArgs.Length; i++)
                 {
                     unparsedArguments.Remove(consolidatedArgs[i]);
                 }
@@ -142,7 +142,7 @@ Please check the syntax of your command. For detailed usage information run with
     private static Dictionary<string, object> GetArgumentNameToValue(Options options)
     {
         var argNameToValue = new Dictionary<string, object>();
-        foreach (var prop in typeof(Options).GetProperties())
+        foreach (PropertyInfo prop in typeof(Options).GetProperties())
         {
             var optionAttr =
                 (OptionAttribute)prop.GetCustomAttributes(typeof(OptionAttribute)).FirstOrDefault();
@@ -172,7 +172,7 @@ Please check the syntax of your command. For detailed usage information run with
     /// <returns>True if parse successful</returns>
     private static bool TryParseArguments<T>(this Parser parser, string[] args, IDictionary<string, object> argNameToDefaultValue, out T obj, Func<T> factory = null) where T : new()
     {
-        var result = parser.ParseArguments(factory ?? (() => new T()), args);
+        ParserResult<T> result = parser.ParseArguments(factory ?? (() => new T()), args);
 
         obj = result.MapResult(parsed => parsed,
             notParsed =>
@@ -186,9 +186,9 @@ Please check the syntax of your command. For detailed usage information run with
                 // If parse errors occurred, skip printing usage options
                 // If not (i.e. --help or --version requested), append dynamically loaded default values to usage option help text
                 var helpTextBuilder = new StringBuilder();
-                foreach (var line in helpText.ToString().Split(Environment.NewLine))
+                foreach (string line in helpText.ToString().Split(Environment.NewLine))
                 {
-                    var match = Regex.Match(line, OptionPattern);
+                    Match match = Regex.Match(line, OptionPattern);
                     if (match.Success)
                     {
                         if (!errors.IsVersion() && !errors.IsHelp())
@@ -198,11 +198,11 @@ Please check the syntax of your command. For detailed usage information run with
                             break;
                         }
 
-                        var longName = match.Groups[2].Value;
-                        var helpIdx = match.Groups[3].Index;
+                        string longName = match.Groups[2].Value;
+                        int helpIdx = match.Groups[3].Index;
                         if (argNameToDefaultValue.ContainsKey(longName))
                         {
-                            var defaultValue = argNameToDefaultValue[longName];
+                            object defaultValue = argNameToDefaultValue[longName];
                             helpTextBuilder.Append(line.Substring(0, helpIdx));
                             if (defaultValue != null && !string.IsNullOrEmpty(defaultValue.ToString()))
                             {
@@ -235,15 +235,15 @@ Please check the syntax of your command. For detailed usage information run with
     /// <returns>True if import succeeded</returns>
     private static bool TryImportServerOptions(string path, ConfigFileType configFileType, Options options, ILogger logger, FileLocationType fileLocationType, string connString = null)
     {
-        var assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
+        Assembly assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
 
-        var streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
-        var configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
+        IConfigProvider configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
 
-        using var stream = streamProvider.Read(path);
-        var importSucceeded = configProvider.TryImportOptions(path, streamProvider, options, logger);
+        using Stream stream = streamProvider.Read(path);
+        bool importSucceeded = configProvider.TryImportOptions(path, streamProvider, options, logger);
 
-        var fileLocation = fileLocationType switch
+        string fileLocation = fileLocationType switch
         {
             FileLocationType.Local => "local machine",
             FileLocationType.AzureStorage => "Azure storage",
@@ -269,14 +269,14 @@ Please check the syntax of your command. For detailed usage information run with
     /// <returns>True if export succeeded</returns>
     private static bool TryExportServerOptions(string path, ConfigFileType configFileType, Options options, ILogger logger, FileLocationType fileLocationType, string connString = null)
     {
-        var assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
+        Assembly assembly = fileLocationType == FileLocationType.EmbeddedResource ? Assembly.GetExecutingAssembly() : null;
 
-        var streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
-        var configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(fileLocationType, connString, assembly);
+        IConfigProvider configProvider = ConfigProviderFactory.GetConfigProvider(configFileType);
 
-        var exportSucceeded = configProvider.TryExportOptions(path, streamProvider, options, logger);
+        bool exportSucceeded = configProvider.TryExportOptions(path, streamProvider, options, logger);
 
-        var fileLocation = fileLocationType switch
+        string fileLocation = fileLocationType switch
         {
             FileLocationType.Local => "local machine",
             FileLocationType.AzureStorage => "Azure storage",
@@ -299,7 +299,7 @@ Please check the syntax of your command. For detailed usage information run with
     {
         // Map option keywords to a boolean determining if the Option is of nullable bool type
         var keywordToIsNullableBool = new Dictionary<string, bool>();
-        foreach (var prop in typeof(Options).GetProperties())
+        foreach (PropertyInfo prop in typeof(Options).GetProperties())
         {
             var optionAttr = (OptionAttribute)prop.GetCustomAttributes(typeof(OptionAttribute)).FirstOrDefault();
             if (optionAttr == null)
@@ -320,7 +320,7 @@ Please check the syntax of your command. For detailed usage information run with
 
         // Check if argument list requires consolidation
         // If not, return original argument array
-        var consolidateArgs = args.Where((arg, idx) =>
+        bool consolidateArgs = args.Where((arg, idx) =>
             keywordToIsNullableBool.ContainsKey(arg) && keywordToIsNullableBool[arg] &&
             (idx == args.Length - 1 || keywordToIsNullableBool.ContainsKey(args[idx + 1])
                                     || (args[idx + 1].IndexOf('=') != -1 &&
@@ -332,9 +332,9 @@ Please check the syntax of your command. For detailed usage information run with
 
         var consolidatedArgs = new List<string>();
 
-        for (var i = 0; i < args.Length; i++)
+        for (int i = 0; i < args.Length; i++)
         {
-            var arg = args[i].Trim();
+            string arg = args[i].Trim();
 
             // Copy existing argument to consolidated argument list
             consolidatedArgs.Add(arg);

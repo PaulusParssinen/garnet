@@ -23,7 +23,7 @@ sealed unsafe partial class TransactionManager
         // Grow the buffer if needed
         if (keyCount >= keys.Length)
         {
-            var oldKeys = keys;
+            ArgSlice[] oldKeys = keys;
             keys = new ArgSlice[keys.Length * 2];
             Array.Copy(oldKeys, keys, oldKeys.Length);
         }

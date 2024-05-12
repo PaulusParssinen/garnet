@@ -46,7 +46,7 @@ public class ComponentRecoveryTests
         var rand2 = new Random(seed);
         for (int i = 0; i < numBucketsToAdd; i++)
         {
-            var logicalAddress = logicalAddresses[i];
+            long logicalAddress = logicalAddresses[i];
             var bucket = (HashBucket*)recoveredAllocator.GetPhysicalAddress(logicalAddress);
             for (int j = 0; j < Constants.kOverflowBucketIndex; j++)
             {
@@ -130,8 +130,8 @@ public class ComponentRecoveryTests
             HashEntryInfo hei1 = new(Utility.GetHashCode(key));
             HashEntryInfo hei2 = new(hei1.hash);
 
-            var exists1 = hash_table1.FindTag(ref hei1);
-            var exists2 = hash_table2.FindTag(ref hei2);
+            bool exists1 = hash_table1.FindTag(ref hei1);
+            bool exists2 = hash_table2.FindTag(ref hei2);
 
             Assert.AreEqual(exists2, exists1);
 

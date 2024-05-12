@@ -22,7 +22,7 @@ internal sealed partial class ClusterConfig
         writer.Write(workers.Length);
         for (int i = 1; i < workers.Length; i++)
         {
-            var worker = workers[i];
+            Worker worker = workers[i];
             //40 bytes
             writer.Write(worker.Nodeid);
 
@@ -69,7 +69,7 @@ internal sealed partial class ClusterConfig
 
         for (int i = 1; i < slotMap.Length; i++)
         {
-            var _state = (byte)slotMap[i]._state;
+            byte _state = (byte)slotMap[i]._state;
 
             if (slotMap[i]._workerId != workerId || _state != state)
             {
@@ -95,7 +95,7 @@ internal sealed partial class ClusterConfig
         writer.Write(state);
 
         //Write segment count in the beginning of memory stream
-        var _position = ms.Position;
+        long _position = ms.Position;
         ms.Position = 0;
         writer.Write(segmentCount);
         ms.Position = _position;
@@ -109,7 +109,7 @@ internal sealed partial class ClusterConfig
         var ms = new MemoryStream(other);
         var reader = new BinaryReader(ms);
 
-        var newSlotMap = DeserializeSlotMap(ref reader);
+        HashSlot[] newSlotMap = DeserializeSlotMap(ref reader);
 
         int numWorkers = reader.ReadInt32();
         var newWorkers = new Worker[numWorkers];

@@ -90,11 +90,11 @@ internal sealed class GarnetServerMonitor
     public string GetAllLocksets()
     {
         string result = "";
-        var sessions = ((GarnetServerBase)server).ActiveConsumers();
-        foreach (var s in sessions)
+        IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+        foreach (networking.IMessageConsumer s in sessions)
         {
             var session = (RespServerSession)s;
-            var lockset = session.txnManager.GetLockset();
+            string lockset = session.txnManager.GetLockset();
             if (lockset != "")
                 result += session.StoreSessionID + ": " + lockset + "\n";
         }
@@ -105,8 +105,8 @@ internal sealed class GarnetServerMonitor
     {
         if (monitor_iterations % instant_metrics_period == 0)
         {
-            var currTimestamp = Stopwatch.GetTimestamp();
-            var elapsedSec = TimeSpan.FromTicks(currTimestamp - startTimestamp).TotalSeconds;
+            long currTimestamp = Stopwatch.GetTimestamp();
+            double elapsedSec = TimeSpan.FromTicks(currTimestamp - startTimestamp).TotalSeconds;
             globalMetrics.instantaneous_net_input_tpt = (globalMetrics.globalSessionMetrics.get_total_net_input_bytes() - instant_input_net_bytes) / (elapsedSec * GarnetServerMetrics.byteUnit);
             globalMetrics.instantaneous_net_output_tpt = (globalMetrics.globalSessionMetrics.get_total_net_output_bytes() - instant_output_net_bytes) / (elapsedSec * GarnetServerMetrics.byteUnit);
             globalMetrics.instantaneous_cmd_per_sec = (globalMetrics.globalSessionMetrics.get_total_commands_processed() - instant_commands_processed) / elapsedSec;
@@ -133,8 +133,8 @@ internal sealed class GarnetServerMonitor
     private void UpdateAllMetrics(IGarnetServer server)
     {
         //Accumulate metrics from all active sessions
-        var sessions = ((GarnetServerBase)server).ActiveConsumers();
-        foreach (var s in sessions)
+        IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+        foreach (networking.IMessageConsumer s in sessions)
         {
             var session = (RespServerSession)s;
 
@@ -179,8 +179,8 @@ internal sealed class GarnetServerMonitor
             globalMetrics.historySessionMetrics.Reset();
 
             var garnetServer = ((GarnetServerBase)server);
-            var sessions = garnetServer.ActiveConsumers();
-            foreach (var s in sessions)
+            IEnumerable<networking.IMessageConsumer> sessions = garnetServer.ActiveConsumers();
+            foreach (networking.IMessageConsumer s in sessions)
             {
                 var session = (RespServerSession)s;
                 session.GetSessionMetrics.Reset();
@@ -202,14 +202,14 @@ internal sealed class GarnetServerMonitor
     {
         if (opts.LatencyMonitor)
         {
-            foreach (var eventType in resetLatencyMetrics.Keys)
+            foreach (LatencyMetricsType eventType in resetLatencyMetrics.Keys)
             {
                 if (resetLatencyMetrics[eventType])
                 {
                     logger?.LogInformation($"Resetting server-side stats {eventType}");
 
-                    var sessions = ((GarnetServerBase)server).ActiveConsumers();
-                    foreach (var entry in sessions)
+                    IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+                    foreach (networking.IMessageConsumer entry in sessions)
                         ((RespServerSession)entry).ResetLatencyMetrics(eventType);
 
                     rwLock.WriteLock();
@@ -232,8 +232,8 @@ internal sealed class GarnetServerMonitor
     {
         if (opts.LatencyMonitor)
         {
-            var sessions = ((GarnetServerBase)server).ActiveConsumers();
-            foreach (var entry in sessions)
+            IEnumerable<networking.IMessageConsumer> sessions = ((GarnetServerBase)server).ActiveConsumers();
+            foreach (networking.IMessageConsumer entry in sessions)
                 ((RespServerSession)entry).ResetAllLatencyMetrics();
         }
     }

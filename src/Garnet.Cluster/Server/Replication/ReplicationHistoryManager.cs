@@ -55,10 +55,10 @@ internal sealed class ReplicationHistory
         var ms = new MemoryStream(data);
         var reader = new BinaryReader(ms);
 
-        var primary_replid = reader.ReadString();
-        var primary_replid2 = reader.ReadString();
-        var replicationOffset = reader.ReadInt64();
-        var replicationOffset2 = reader.ReadInt64();
+        string primary_replid = reader.ReadString();
+        string primary_replid2 = reader.ReadString();
+        long replicationOffset = reader.ReadInt64();
+        long replicationOffset2 = reader.ReadInt64();
 
         reader.Dispose();
         ms.Dispose();
@@ -73,14 +73,14 @@ internal sealed class ReplicationHistory
 
     public ReplicationHistory UpdateReplicationId(string primary_replid)
     {
-        var newConfig = this.Copy();
+        ReplicationHistory newConfig = this.Copy();
         newConfig.primary_replid = primary_replid;
         return newConfig;
     }
 
     public ReplicationHistory FailoverUpdate(long replicationOffset2)
     {
-        var newConfig = this.Copy();
+        ReplicationHistory newConfig = this.Copy();
         newConfig.primary_replid2 = primary_replid;
         newConfig.primary_replid = Generator.CreateHexId();
         newConfig.replicationOffset2 = replicationOffset2;
@@ -116,8 +116,8 @@ internal sealed partial class ReplicationManager : IDisposable
     {
         while (true)
         {
-            var current = currentReplicationConfig;
-            var newConfig = current.UpdateReplicationId(primary_replid);
+            ReplicationHistory current = currentReplicationConfig;
+            ReplicationHistory newConfig = current.UpdateReplicationId(primary_replid);
             if (Interlocked.CompareExchange(ref currentReplicationConfig, newConfig, current) == current)
                 break;
         }
@@ -136,9 +136,9 @@ internal sealed partial class ReplicationManager : IDisposable
         }
         while (true)
         {
-            var replicationOffset2 = storeWrapper.appendOnlyFile.CommittedUntilAddress;
-            var current = currentReplicationConfig;
-            var newConfig = current.FailoverUpdate(replicationOffset2);
+            long replicationOffset2 = storeWrapper.appendOnlyFile.CommittedUntilAddress;
+            ReplicationHistory current = currentReplicationConfig;
+            ReplicationHistory newConfig = current.FailoverUpdate(replicationOffset2);
             if (Interlocked.CompareExchange(ref currentReplicationConfig, newConfig, current) == current)
                 break;
         }

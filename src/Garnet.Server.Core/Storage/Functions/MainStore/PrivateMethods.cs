@@ -41,7 +41,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             return;
         }
 
-        var numLength = NumUtils.NumDigits(srcLength);
+        int numLength = NumUtils.NumDigits(srcLength);
         int totalSize = 1 + numLength + 2 + srcLength + 2; // $5\r\nvalue\r\n
 
         if (dst.IsSpanByte)
@@ -82,7 +82,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
     void CopyRespToWithInput(ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory dst)
     {
-        var inputPtr = input.ToPointer();
+        byte* inputPtr = input.ToPointer();
         switch ((RespCommand)(*inputPtr))
         {
             case RespCommand.MIGRATE:
@@ -340,8 +340,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
     static bool InPlaceUpdateNumber(long val, ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
-        var fNeg = false;
-        var ndigits = NumUtils.NumDigitsInLong(val, ref fNeg);
+        bool fNeg = false;
+        int ndigits = NumUtils.NumDigitsInLong(val, ref fNeg);
         ndigits += fNeg ? 1 : 0;
 
         if (ndigits > value.Length)
@@ -359,7 +359,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     static bool TryInPlaceUpdateNumber(ref SpanByte value, ref SpanByteAndMemory output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo, long input)
     {
         // Check if value contains a valid number
-        if (!IsValidNumber(value.LengthWithoutMetadata, value.ToPointer(), output.SpanByte.AsSpan(), out var val))
+        if (!IsValidNumber(value.LengthWithoutMetadata, value.ToPointer(), output.SpanByte.AsSpan(), out long val))
             return true;
 
         try
@@ -394,7 +394,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         newValue.ExtraMetadata = oldValue.ExtraMetadata;
 
         // Check if value contains a valid number
-        if (!IsValidNumber(oldValue.LengthWithoutMetadata, oldValue.ToPointer(), output.SpanByte.AsSpan(), out var val))
+        if (!IsValidNumber(oldValue.LengthWithoutMetadata, oldValue.ToPointer(), output.SpanByte.AsSpan(), out long val))
         {
             // Move to tail of the log even when oldValue is alphanumeric
             // We have already paid the cost of bringing from disk so we are treating as a regular access and bring it into memory
@@ -492,7 +492,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     static void CopyValueLengthToOutput(ref SpanByte value, ref SpanByteAndMemory output)
     {
         int numDigits = NumUtils.NumDigits(value.LengthWithoutMetadata);
-        var outputPtr = output.SpanByte.ToPointer();
+        byte* outputPtr = output.SpanByte.ToPointer();
         NumUtils.IntToBytes(value.LengthWithoutMetadata, numDigits, ref outputPtr);
         output.SpanByte.Length = numDigits;
     }

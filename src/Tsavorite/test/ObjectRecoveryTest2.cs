@@ -35,7 +35,7 @@ public class ObjectRecoveryTests2
         this.iterations = iterations;
         Prepare(out IDevice log, out IDevice objlog, out TsavoriteKV<MyKey, MyValue> h, out MyContext context);
 
-        var session1 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
+        ClientSession<MyKey, MyValue, MyInput, MyOutput, MyContext, MyFunctions> session1 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
         Write(session1, context, h, checkpointType);
         Read(session1, context, false);
         session1.Dispose();
@@ -52,7 +52,7 @@ public class ObjectRecoveryTests2
         else
             h.Recover();
 
-        var session2 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
+        ClientSession<MyKey, MyValue, MyInput, MyOutput, MyContext, MyFunctions> session2 = h.NewSession<MyInput, MyOutput, MyContext, MyFunctions>(new MyFunctions());
         Read(session2, context, true);
         session2.Dispose();
 
@@ -113,7 +113,7 @@ public class ObjectRecoveryTests2
             MyKey key = new() { key = i, name = i.ToString() };
             MyInput input = default;
             MyOutput g1 = new();
-            var status = session.Read(ref key, ref input, ref g1, context, 0);
+            Status status = session.Read(ref key, ref input, ref g1, context, 0);
 
             if (status.IsPending)
             {
@@ -131,7 +131,7 @@ public class ObjectRecoveryTests2
             MyInput input = default;
             MyOutput output = new();
             session.Delete(ref key, context, 0);
-            var status = session.Read(ref key, ref input, ref output, context, 0);
+            Status status = session.Read(ref key, ref input, ref output, context, 0);
 
             if (status.IsPending)
             {
@@ -148,7 +148,7 @@ public class MyKeySerializer : BinaryObjectSerializer<MyKey>
 {
     public override void Serialize(ref MyKey key)
     {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(key.name);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(key.name);
         writer.Write(4 + bytes.Length);
         writer.Write(key.key);
         writer.Write(bytes);
@@ -157,9 +157,9 @@ public class MyKeySerializer : BinaryObjectSerializer<MyKey>
     public override void Deserialize(out MyKey key)
     {
         key = new MyKey();
-        var size = reader.ReadInt32();
+        int size = reader.ReadInt32();
         key.key = reader.ReadInt32();
-        var bytes = new byte[size - 4];
+        byte[] bytes = new byte[size - 4];
         reader.Read(bytes, 0, size - 4);
         key.name = System.Text.Encoding.UTF8.GetString(bytes);
 
@@ -170,7 +170,7 @@ public class MyValueSerializer : BinaryObjectSerializer<MyValue>
 {
     public override void Serialize(ref MyValue value)
     {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(value.value);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(value.value);
         writer.Write(bytes.Length);
         writer.Write(bytes);
     }
@@ -178,8 +178,8 @@ public class MyValueSerializer : BinaryObjectSerializer<MyValue>
     public override void Deserialize(out MyValue value)
     {
         value = new MyValue();
-        var size = reader.ReadInt32();
-        var bytes = new byte[size];
+        int size = reader.ReadInt32();
+        byte[] bytes = new byte[size];
         reader.Read(bytes, 0, size);
         value.value = System.Text.Encoding.UTF8.GetString(bytes);
     }

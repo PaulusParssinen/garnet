@@ -88,7 +88,7 @@ public sealed class LimitedFixedBufferPool : IDisposable
                 Interlocked.CompareExchange(ref pool[level], new PoolLevel(), null);
             }
 
-            if (pool[level].items.TryDequeue(out var page))
+            if (pool[level].items.TryDequeue(out PoolEntry page))
             {
                 Interlocked.Decrement(ref pool[level].size);
                 page.Reuse();
@@ -121,7 +121,7 @@ public sealed class LimitedFixedBufferPool : IDisposable
             if (pool[i] == null) continue;
             while (pool[i].size > 0)
             {
-                while (pool[i].items.TryDequeue(out var result))
+                while (pool[i].items.TryDequeue(out PoolEntry result))
                 {
                     Interlocked.Decrement(ref pool[i].size);
                 }
@@ -139,7 +139,7 @@ public sealed class LimitedFixedBufferPool : IDisposable
         for (int i = 0; i < numLevels; i++)
         {
             if (pool[i] == null) continue;
-            foreach (var item in pool[i].items)
+            foreach (PoolEntry item in pool[i].items)
             {
                 Console.WriteLine("  " + item.entry.Length.ToString());
             }

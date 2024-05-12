@@ -38,8 +38,8 @@ public partial class TsavoriteBase
 
     private ulong InitializeMainIndexRecovery(ref IndexCheckpointInfo info, bool isAsync)
     {
-        var token = info.info.token;
-        var ht_version = resizeInfo.version;
+        Guid token = info.info.token;
+        int ht_version = resizeInfo.version;
 
         // Create devices to read from using Async API
         info.main_ht_device = checkpointManager.GetIndexDevice(token);
@@ -155,8 +155,8 @@ public partial class TsavoriteBase
         HashBucketEntry entry = default;
 
         int version = resizeInfo.version;
-        var table_size_ = state[version].size;
-        var ptable_ = state[version].tableAligned;
+        long table_size_ = state[version].size;
+        HashBucket* ptable_ = state[version].tableAligned;
 
         for (long bucket = 0; bucket < table_size_; ++bucket)
         {

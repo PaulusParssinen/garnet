@@ -58,7 +58,7 @@ public class CacheSizeTracker
         this.store = store;
         var logSizeCalculator = new LogSizeCalculator();
 
-        var (mainLogTargetSizeBytes, readCacheTargetSizeBytes) = CalculateLogTargetSizeBytes(targetSize);
+        (long mainLogTargetSizeBytes, long readCacheTargetSizeBytes) = CalculateLogTargetSizeBytes(targetSize);
 
         this.mainLogTracker = new LogSizeTracker<byte[], IGarnetObject, LogSizeCalculator>(store.Log, logSizeCalculator,
             mainLogTargetSizeBytes, mainLogTargetSizeBytes / deltaFraction, loggerFactory?.CreateLogger("ObjSizeTracker"));
@@ -85,8 +85,8 @@ public class CacheSizeTracker
         if (residual <= 0)
             throw new TsavoriteException($"Target size {newTargetSize} must be larger than index size {IndexSizeBytes}");
 
-        var mainLogSizeBytes = this.store.ReadCache == null ? residual : residual / 2;
-        var readCacheSizeBytes = this.store.ReadCache == null ? 0 : residual / 2;
+        long mainLogSizeBytes = this.store.ReadCache == null ? residual : residual / 2;
+        long readCacheSizeBytes = this.store.ReadCache == null ? 0 : residual / 2;
 
         return (mainLogSizeBytes, readCacheSizeBytes);
     }

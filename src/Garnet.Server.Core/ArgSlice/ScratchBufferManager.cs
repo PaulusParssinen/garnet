@@ -92,7 +92,7 @@ internal sealed unsafe class ScratchBufferManager
         retVal.Span[..headerSize].Clear(); // Clear the header
 
         byte* ptr = scratchBufferHead + scratchBufferOffset + headerSize;
-        var success = RespWriteUtils.WriteBulkString(arg1.Span, ref ptr, scratchBufferHead + scratchBuffer.Length);
+        bool success = RespWriteUtils.WriteBulkString(arg1.Span, ref ptr, scratchBufferHead + scratchBuffer.Length);
         Debug.Assert(success);
         success = RespWriteUtils.WriteBulkString(arg2.Span, ref ptr, scratchBufferHead + scratchBuffer.Length);
         Debug.Assert(success);
@@ -114,7 +114,7 @@ internal sealed unsafe class ScratchBufferManager
         retVal.Span[..headerSize].Clear(); // Clear the header
 
         byte* ptr = scratchBufferHead + scratchBufferOffset + headerSize;
-        var success = RespWriteUtils.WriteBulkString(arg1.Span, ref ptr, scratchBufferHead + scratchBuffer.Length);
+        bool success = RespWriteUtils.WriteBulkString(arg1.Span, ref ptr, scratchBufferHead + scratchBuffer.Length);
         Debug.Assert(success);
 
         scratchBufferOffset += length;
@@ -205,8 +205,8 @@ internal sealed unsafe class ScratchBufferManager
         if (newLength < 64) newLength = 64;
         else newLength = (int)BitOperations.RoundUpToPowerOf2((uint)newLength + 1);
 
-        var _scratchBuffer = GC.AllocateArray<byte>(newLength, true);
-        var _scratchBufferHead = (byte*)Unsafe.AsPointer(ref _scratchBuffer[0]);
+        byte[] _scratchBuffer = GC.AllocateArray<byte>(newLength, true);
+        byte* _scratchBufferHead = (byte*)Unsafe.AsPointer(ref _scratchBuffer[0]);
         if (scratchBufferOffset > 0)
             new ReadOnlySpan<byte>(scratchBufferHead, scratchBufferOffset).CopyTo(new Span<byte>(_scratchBufferHead, scratchBufferOffset));
         scratchBuffer = _scratchBuffer;

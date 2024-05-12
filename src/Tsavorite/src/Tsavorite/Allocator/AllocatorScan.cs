@@ -72,11 +72,11 @@ internal abstract partial class AllocatorBase<Key, Value>
     {
         if (!scanFunctions.OnStart(beginAddress, endAddress))
             return false;
-        var headAddress = HeadAddress;
+        long headAddress = HeadAddress;
 
         long numRecords = 1;
         bool stop = false;
-        for (; !stop && iter.GetNext(out var recordInfo); ++numRecords)
+        for (; !stop && iter.GetNext(out RecordInfo recordInfo); ++numRecords)
         {
             try
             {
@@ -109,11 +109,11 @@ internal abstract partial class AllocatorBase<Key, Value>
     {
         if (!scanFunctions.OnStart(beginAddress, Constants.kInvalidAddress))
             return false;
-        var headAddress = HeadAddress;
+        long headAddress = HeadAddress;
 
         long numRecords = 1;
         bool stop = false, continueOnDisk = false;
-        for (; !stop && iter.BeginGetPrevInMemory(ref key, out var recordInfo, out continueOnDisk); ++numRecords)
+        for (; !stop && iter.BeginGetPrevInMemory(ref key, out RecordInfo recordInfo, out continueOnDisk); ++numRecords)
         {
             OperationStackContext<Key, Value> stackCtx = default;
             try
@@ -145,7 +145,7 @@ internal abstract partial class AllocatorBase<Key, Value>
             AsyncIOContextCompletionEvent<Key, Value> completionEvent = new();
             try
             {
-                var logicalAddress = iter.CurrentAddress;
+                long logicalAddress = iter.CurrentAddress;
                 while (!stop && GetFromDiskAndPushToReader(ref key, ref logicalAddress, ref scanFunctions, numRecords, completionEvent, out stop))
                     ++numRecords;
             }
@@ -205,7 +205,7 @@ internal abstract partial class AllocatorBase<Key, Value>
         where TScanFunctions : IScanIteratorFunctions<Key, Value>
         where TScanIterator : ITsavoriteScanIterator<Key, Value>, IPushScanIterator<Key>
     {
-        using var session = store.NewSession<TInput, TOutput, Empty, LogScanCursorFunctions<TInput, TOutput>>(new LogScanCursorFunctions<TInput, TOutput>());
+        using ClientSession<Key, Value, TInput, TOutput, Empty, LogScanCursorFunctions<TInput, TOutput>> session = store.NewSession<TInput, TOutput, Empty, LogScanCursorFunctions<TInput, TOutput>>(new LogScanCursorFunctions<TInput, TOutput>());
 
         if (cursor >= GetTailAddress())
             goto IterationComplete;
@@ -218,13 +218,13 @@ internal abstract partial class AllocatorBase<Key, Value>
         scanCursorState.Initialize(scanFunctions);
 
         long numPending = 0;
-        while (iter.GetNext(out var recordInfo))
+        while (iter.GetNext(out RecordInfo recordInfo))
         {
             if (!recordInfo.Tombstone)
             {
-                ref var key = ref iter.GetKey();
-                ref var value = ref iter.GetValue();
-                var status = session.ConditionalScanPush(scanCursorState, recordInfo, ref key, ref value, iter.NextAddress);
+                ref Key key = ref iter.GetKey();
+                ref Value value = ref iter.GetValue();
+                Status status = session.ConditionalScanPush(scanCursorState, recordInfo, ref key, ref value, iter.NextAddress);
                 if (status.IsPending)
                 {
                     ++numPending;
@@ -286,8 +286,8 @@ internal abstract partial class AllocatorBase<Key, Value>
             // A more recent version of the key was not found. recSrc.LogicalAddress is the correct address, because minAddress was examined
             // and this is the previous record in the tag chain. Push this record to the user.
             RecordMetadata recordMetadata = new(recordInfo, stackCtx.recSrc.LogicalAddress);
-            var stop = (stackCtx.recSrc.LogicalAddress >= HeadAddress)
-                ? !scanCursorState.functions.ConcurrentReader(ref key, ref value, recordMetadata, scanCursorState.acceptedCount, out var cursorRecordResult)
+            bool stop = (stackCtx.recSrc.LogicalAddress >= HeadAddress)
+                ? !scanCursorState.functions.ConcurrentReader(ref key, ref value, recordMetadata, scanCursorState.acceptedCount, out CursorRecordResult cursorRecordResult)
                 : !scanCursorState.functions.SingleReader(ref key, ref value, recordMetadata, scanCursorState.acceptedCount, out cursorRecordResult);
             if (stop)
                 scanCursorState.stop = true;
@@ -311,7 +311,7 @@ internal abstract partial class AllocatorBase<Key, Value>
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
         // WriteReason is not surfaced for this operation, so pick anything.
-        var status = tsavoriteSession.Store.PrepareIOForConditionalOperation(tsavoriteSession, ref pendingContext, ref key, ref input, ref value, ref output,
+        OperationStatus status = tsavoriteSession.Store.PrepareIOForConditionalOperation(tsavoriteSession, ref pendingContext, ref key, ref input, ref value, ref output,
                 userContext, lsn, ref stackCtx, minAddress, WriteReason.Compaction, OperationType.CONDITIONAL_SCAN_PUSH);
         pendingContext.scanCursorState = scanCursorState;
         return status;

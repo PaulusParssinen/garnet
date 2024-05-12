@@ -282,7 +282,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
         else
             throw new TsavoriteException("Unsupported full checkpoint type");
 
-        var result = StartStateMachine(new FullCheckpointStateMachine(backend, targetVersion));
+        bool result = StartStateMachine(new FullCheckpointStateMachine(backend, targetVersion));
         if (result)
             token = _hybridLogCheckpointToken;
         else
@@ -311,7 +311,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     public async ValueTask<(bool success, Guid token)> TakeFullCheckpointAsync(CheckpointType checkpointType,
         CancellationToken cancellationToken = default, long targetVersion = -1)
     {
-        var success = TryInitiateFullCheckpoint(out Guid token, checkpointType, targetVersion);
+        bool success = TryInitiateFullCheckpoint(out Guid token, checkpointType, targetVersion);
 
         if (success)
             await CompleteCheckpointAsync(cancellationToken).ConfigureAwait(false);
@@ -326,7 +326,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <returns>Whether we could initiate the checkpoint. Use CompleteCheckpointAsync to wait completion.</returns>
     public bool TryInitiateIndexCheckpoint(out Guid token)
     {
-        var result = StartStateMachine(new IndexSnapshotStateMachine());
+        bool result = StartStateMachine(new IndexSnapshotStateMachine());
         token = _indexCheckpointToken;
         return result;
     }
@@ -345,7 +345,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// </returns>
     public async ValueTask<(bool success, Guid token)> TakeIndexCheckpointAsync(CancellationToken cancellationToken = default)
     {
-        var success = TryInitiateIndexCheckpoint(out Guid token);
+        bool success = TryInitiateIndexCheckpoint(out Guid token);
 
         if (success)
             await CompleteCheckpointAsync(cancellationToken).ConfigureAwait(false);
@@ -381,7 +381,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
         else
             throw new TsavoriteException("Unsupported checkpoint type");
 
-        var result = StartStateMachine(new HybridLogCheckpointStateMachine(backend, targetVersion));
+        bool result = StartStateMachine(new HybridLogCheckpointStateMachine(backend, targetVersion));
         token = _hybridLogCheckpointToken;
         return result;
     }
@@ -408,7 +408,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     public async ValueTask<(bool success, Guid token)> TakeHybridLogCheckpointAsync(CheckpointType checkpointType,
         bool tryIncremental = false, CancellationToken cancellationToken = default, long targetVersion = -1)
     {
-        var success = TryInitiateHybridLogCheckpoint(out Guid token, checkpointType, tryIncremental, targetVersion);
+        bool success = TryInitiateHybridLogCheckpoint(out Guid token, checkpointType, tryIncremental, targetVersion);
 
         if (success)
             await CompleteCheckpointAsync(cancellationToken).ConfigureAwait(false);
@@ -425,7 +425,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <returns>Version we actually recovered to</returns>
     public long Recover(int numPagesToPreload = -1, bool undoNextVersion = true, long recoverTo = -1)
     {
-        FindRecoveryInfo(recoverTo, out var recoveredHlcInfo, out var recoveredIcInfo);
+        FindRecoveryInfo(recoverTo, out HybridLogCheckpointInfo recoveredHlcInfo, out IndexCheckpointInfo recoveredIcInfo);
         return InternalRecover(recoveredIcInfo, recoveredHlcInfo, numPagesToPreload, undoNextVersion, recoverTo);
     }
 
@@ -440,7 +440,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     public ValueTask<long> RecoverAsync(int numPagesToPreload = -1, bool undoNextVersion = true, long recoverTo = -1,
         CancellationToken cancellationToken = default)
     {
-        FindRecoveryInfo(recoverTo, out var recoveredHlcInfo, out var recoveredIcInfo);
+        FindRecoveryInfo(recoverTo, out HybridLogCheckpointInfo recoveredHlcInfo, out IndexCheckpointInfo recoveredIcInfo);
         return InternalRecoverAsync(recoveredIcInfo, recoveredHlcInfo, numPagesToPreload, undoNextVersion, recoverTo, cancellationToken);
     }
 
@@ -489,7 +489,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
         {
             if (_recoveredSessions != null)
             {
-                foreach (var kvp in _recoveredSessions)
+                foreach (KeyValuePair<int, (string, CommitPoint)> kvp in _recoveredSessions)
                 {
                     yield return (kvp.Key, kvp.Value.Item1, kvp.Value.Item2);
                 }
@@ -503,7 +503,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <param name="sessionID"></param>
     public void DisposeRecoverableSession(int sessionID)
     {
-        if (_recoveredSessions != null && _recoveredSessions.TryRemove(sessionID, out var entry))
+        if (_recoveredSessions != null && _recoveredSessions.TryRemove(sessionID, out (string, CommitPoint) entry))
         {
             if (entry.Item1 != null)
                 _recoveredSessionNameMap.TryRemove(entry.Item1, out _);
@@ -544,7 +544,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
 
         while (true)
         {
-            var systemState = this.systemState;
+            SystemState systemState = this.systemState;
             if (systemState.Phase == Phase.REST || systemState.Phase == Phase.PREPARE_GROW ||
                 systemState.Phase == Phase.IN_PROGRESS_GROW)
                 return;
@@ -573,7 +573,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
                 continue; // we need to re-check loop, so we return only when we are at REST
             }
 
-            foreach (var task in valueTasks)
+            foreach (ValueTask task in valueTasks)
             {
                 if (!task.IsCompleted)
                     await task.ConfigureAwait(false);
@@ -587,13 +587,13 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     {
         var pcontext = new PendingContext<Input, Output, Context>(tsavoriteSession.Ctx.ReadCopyOptions);
         OperationStatus internalStatus;
-        var keyHash = comparer.GetHashCode64(ref key);
+        long keyHash = comparer.GetHashCode64(ref key);
 
         do
             internalStatus = InternalRead(ref key, keyHash, ref input, ref output, context, serialNo, ref pcontext, tsavoriteSession);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
         tsavoriteSession.Ctx.serialNum = serialNo;
@@ -607,13 +607,13 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     {
         var pcontext = new PendingContext<Input, Output, Context>(tsavoriteSession.Ctx.ReadCopyOptions, ref readOptions);
         OperationStatus internalStatus;
-        var keyHash = readOptions.KeyHash ?? comparer.GetHashCode64(ref key);
+        long keyHash = readOptions.KeyHash ?? comparer.GetHashCode64(ref key);
 
         do
             internalStatus = InternalRead(ref key, keyHash, ref input, ref output, context, serialNo, ref pcontext, tsavoriteSession);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
         recordMetadata = status.IsCompletedSuccessfully ? new(pcontext.recordInfo, pcontext.logicalAddress) : default;
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
@@ -648,7 +648,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             internalStatus = InternalReadAtAddress(address, ref key, ref input, ref output, ref readOptions, context, serialNo, ref pcontext, tsavoriteSession);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
         recordMetadata = status.IsCompletedSuccessfully ? new(pcontext.recordInfo, pcontext.logicalAddress) : default;
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
@@ -667,7 +667,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             internalStatus = InternalUpsert(ref key, keyHash, ref input, ref value, ref output, ref context, ref pcontext, tsavoriteSession, serialNo);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
         tsavoriteSession.Ctx.serialNum = serialNo;
@@ -686,7 +686,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             internalStatus = InternalUpsert(ref key, keyHash, ref input, ref value, ref output, ref context, ref pcontext, tsavoriteSession, serialNo);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
         recordMetadata = status.IsCompletedSuccessfully ? new(pcontext.recordInfo, pcontext.logicalAddress) : default;
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
@@ -706,7 +706,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             internalStatus = InternalRMW(ref key, keyHash, ref input, ref output, ref context, ref pcontext, tsavoriteSession, serialNo);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
         recordMetadata = status.IsCompletedSuccessfully ? new(pcontext.recordInfo, pcontext.logicalAddress) : default;
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
@@ -725,7 +725,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             internalStatus = InternalDelete(ref key, keyHash, ref context, ref pcontext, tsavoriteSession, serialNo);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pcontext, internalStatus);
 
         Debug.Assert(serialNo >= tsavoriteSession.Ctx.serialNum, "Operation serial numbers must be non-decreasing");
         tsavoriteSession.Ctx.serialNum = serialNo;
@@ -789,9 +789,9 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
     /// <returns></returns>
     private unsafe long GetEntryCount()
     {
-        var version = resizeInfo.version;
-        var table_size_ = state[version].size;
-        var ptable_ = state[version].tableAligned;
+        int version = resizeInfo.version;
+        long table_size_ = state[version].size;
+        HashBucket* ptable_ = state[version].tableAligned;
         long total_entry_count = 0;
         long beginAddress = hlog.BeginAddress;
 
@@ -812,8 +812,8 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
 
     private unsafe string DumpDistributionInternal(int version)
     {
-        var table_size_ = state[version].size;
-        var ptable_ = state[version].tableAligned;
+        long table_size_ = state[version].size;
+        HashBucket* ptable_ = state[version].tableAligned;
         long total_record_count = 0;
         long beginAddress = hlog.BeginAddress;
         Dictionary<int, long> histogram = new();
@@ -846,7 +846,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             histogram[cnt]++;
         }
 
-        var distribution =
+        string distribution =
             $"Number of hash buckets: {table_size_}\n" +
             $"Number of overflow buckets: {OverflowBucketCount}\n" +
             $"Size of each bucket: {Constants.kEntriesPerBucket * sizeof(HashBucketEntry)} bytes\n" +
@@ -854,7 +854,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase, IDisposable
             $"Average #entries per hash bucket: {{{total_record_count / (double)table_size_:0.00}}}\n" +
             $"Histogram of #entries per bucket:\n";
 
-        foreach (var kvp in histogram.OrderBy(e => e.Key))
+        foreach (KeyValuePair<int, long> kvp in histogram.OrderBy(e => e.Key))
         {
             distribution += $"  {kvp.Key} : {kvp.Value}\n";
         }

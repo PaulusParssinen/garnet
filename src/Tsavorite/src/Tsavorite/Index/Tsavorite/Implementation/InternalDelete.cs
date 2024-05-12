@@ -43,7 +43,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         ref PendingContext<Input, Output, Context> pendingContext, TsavoriteSession tsavoriteSession, long lsn)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var latchOperation = LatchOperation.None;
+        LatchOperation latchOperation = LatchOperation.None;
 
         OperationStackContext<Key, Value> stackCtx = new(keyHash);
         pendingContext.keyHash = keyHash;
@@ -91,7 +91,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // Check for CPR consistency after checking if source is readcache.
             if (tsavoriteSession.Ctx.phase != Phase.REST)
             {
-                var latchDestination = CheckCPRConsistencyDelete(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
+                LatchDestination latchDestination = CheckCPRConsistencyDelete(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
                 switch (latchDestination)
                 {
                     case LatchDestination.Retry:
@@ -257,7 +257,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
         var value = default(Value);
-        var (actualSize, allocatedSize, keySize) = hlog.GetRecordSize(ref key, ref value);
+        (int actualSize, int allocatedSize, int keySize) = hlog.GetRecordSize(ref key, ref value);
 
         // We know the existing record cannot be elided; it must point to a valid record; otherwise InternalDelete would have returned NOTFOUND.
         if (!TryAllocateRecord(tsavoriteSession, ref pendingContext, ref stackCtx, actualSize, ref allocatedSize, keySize, new AllocateOptions() { Recycle = true },

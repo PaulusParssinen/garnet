@@ -56,7 +56,7 @@ internal class BasicTests
 
     private (Status status, OutputStruct output) CompletePendingResult()
     {
-        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+        session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> completedOutputs, wait: true);
         return GetSinglePendingResult(completedOutputs);
     }
 
@@ -74,7 +74,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
         AssertCompleted(new(StatusCode.Found), status);
         Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -95,7 +95,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
         AssertCompleted(new(StatusCode.Found), status);
 
         session.Delete(ref key1, Empty.Default, 0);
@@ -150,7 +150,7 @@ internal class BasicTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = 14 };
             var value = new ValueStruct { vfield1 = i, vfield2 = 24 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             AssertCompleted(new(StatusCode.NotFound), status);
 
             session.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -159,7 +159,7 @@ internal class BasicTests
         for (int i = 0; i < 10 * count; i++)
         {
             var key1 = new KeyStruct { kfield1 = i, kfield2 = 14 };
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             AssertCompleted(new(StatusCode.Found), status);
         }
     }
@@ -183,7 +183,7 @@ internal class BasicTests
         Random r = new(10);
         for (int c = 0; c < count; c++)
         {
-            var i = r.Next(10000);
+            int i = r.Next(10000);
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
             session.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -193,7 +193,7 @@ internal class BasicTests
 
         for (int c = 0; c < count; c++)
         {
-            var i = r.Next(10000);
+            int i = r.Next(10000);
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
@@ -213,7 +213,7 @@ internal class BasicTests
         r = new Random(10);
         for (int c = 0; c < count; c++)
         {
-            var i = r.Next(10000);
+            int i = r.Next(10000);
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             Assert.IsFalse(session.Read(ref key1, ref input, ref output, Empty.Default, 0).Found);
@@ -233,12 +233,12 @@ internal class BasicTests
         Random r = new(RandSeed);
         var sw = Stopwatch.StartNew();
 
-        var latencyMs = batchMode == BatchMode.NoBatch ? 0 : DefaultLocalMemoryDeviceLatencyMs;
+        int latencyMs = batchMode == BatchMode.NoBatch ? 0 : DefaultLocalMemoryDeviceLatencyMs;
         Setup(128, new LogSettings { MemorySizeBits = 22, SegmentSizeBits = 22, PageSizeBits = 10 }, deviceType, latencyMs: latencyMs);
 
         for (int c = 0; c < NumRecs; c++)
         {
-            var i = r.Next(RandRange);
+            int i = r.Next(RandRange);
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
             session.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -249,7 +249,7 @@ internal class BasicTests
 
         for (int c = 0; c < NumRecs; c++)
         {
-            var i = r.Next(RandRange);
+            int i = r.Next(RandRange);
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
@@ -271,7 +271,7 @@ internal class BasicTests
         const int batchSize = 256;
         for (int c = 0; c < NumRecs; c++)
         {
-            var i = r.Next(RandRange);
+            int i = r.Next(RandRange);
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             Status foundStatus = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
@@ -279,7 +279,7 @@ internal class BasicTests
             if (batchMode == BatchMode.NoBatch)
             {
                 Status status;
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
                 Assert.IsTrue(status.Found, status.ToString());
                 Assert.AreEqual(key1.kfield1, output.value.vfield1);
@@ -288,7 +288,7 @@ internal class BasicTests
             }
             else if (c > 0 && (c % batchSize) == 0)
             {
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> outputs, wait: true);
                 int count = 0;
                 while (outputs.Next())
                 {
@@ -312,7 +312,7 @@ internal class BasicTests
 
         Setup(128, new LogSettings { MemorySizeBits = 22, SegmentSizeBits = 22, PageSizeBits = 10 }, deviceType);
 
-        var nums = Enumerable.Range(0, 1000).ToArray();
+        int[] nums = Enumerable.Range(0, 1000).ToArray();
         var rnd = new Random(11);
         for (int i = 0; i < nums.Length; ++i)
         {
@@ -324,14 +324,14 @@ internal class BasicTests
 
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
             session.RMW(ref key1, ref input, Empty.Default, 0);
         }
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
             if (session.RMW(ref key1, ref input, ref output, Empty.Default, 0).IsPending)
@@ -350,7 +350,7 @@ internal class BasicTests
 
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
 
             key = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             ValueStruct value = new() { vfield1 = i, vfield2 = i + 1 };
@@ -376,7 +376,7 @@ internal class BasicTests
 
         Setup(128, new LogSettings { MemorySizeBits = 22, SegmentSizeBits = 22, PageSizeBits = 10 }, deviceType);
 
-        var nums = Enumerable.Range(0, 1000).ToArray();
+        int[] nums = Enumerable.Range(0, 1000).ToArray();
         var rnd = new Random(11);
         for (int i = 0; i < nums.Length; ++i)
         {
@@ -389,7 +389,7 @@ internal class BasicTests
         // InitialUpdater
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
             session.RMW(ref key1, ref input, Empty.Default, 0);
@@ -398,7 +398,7 @@ internal class BasicTests
         // CopyUpdater
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
             session.RMW(key1, input);  // no ref and do not set any other params
@@ -410,7 +410,7 @@ internal class BasicTests
 
         for (int j = 0; j < nums.Length; ++j)
         {
-            var i = nums[j];
+            int i = nums[j];
 
             key = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             ValueStruct value = new() { vfield1 = i, vfield2 = i + 1 };
@@ -441,7 +441,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(key1, input, out OutputStruct output, Empty.Default, 111);
+        Status status = session.Read(key1, input, out OutputStruct output, Empty.Default, 111);
         AssertCompleted(new(StatusCode.Found), status);
 
         // Verify the read data
@@ -462,7 +462,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(key1, out OutputStruct output, Empty.Default, 1);
+        Status status = session.Read(key1, out OutputStruct output, Empty.Default, 1);
         AssertCompleted(new(StatusCode.Found), status);
 
         // Verify the read data
@@ -487,7 +487,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref output, Empty.Default, 99);
+        Status status = session.Read(ref key1, ref output, Empty.Default, 99);
         AssertCompleted(new(StatusCode.Found), status);
 
         // Verify the read data
@@ -516,7 +516,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default);
         AssertCompleted(new(StatusCode.Found), status);
 
         Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -538,7 +538,7 @@ internal class BasicTests
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
 
-        var (status, output) = session.Read(key1);
+        (Status status, OutputStruct output) = session.Read(key1);
         AssertCompleted(new(StatusCode.Found), status);
 
         Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -565,7 +565,7 @@ internal class BasicTests
         ReadOptions readOptions = default;
 
         session.Upsert(ref key1, ref value, Empty.Default, 0);
-        var status = session.ReadAtAddress(store.Log.BeginAddress, ref input, ref output, ref readOptions, out _, Empty.Default, 0);
+        Status status = session.ReadAtAddress(store.Log.BeginAddress, ref input, ref output, ref readOptions, out _, Empty.Default, 0);
         AssertCompleted(new(StatusCode.Found), status);
 
         Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -613,13 +613,13 @@ internal class BasicTests
         Setup(128, new LogSettings { MemorySizeBits = 29, ReadCacheSettings = new ReadCacheSettings() }, deviceType);
 
         SkipReadCacheFunctions functions = new();
-        using var skipReadCacheSession = store.NewSession<InputStruct, OutputStruct, Empty, SkipReadCacheFunctions>(functions);
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, SkipReadCacheFunctions> skipReadCacheSession = store.NewSession<InputStruct, OutputStruct, Empty, SkipReadCacheFunctions>(functions);
 
         InputStruct input = default;
         OutputStruct output = default;
         var key1 = new KeyStruct { kfield1 = 13, kfield2 = 14 };
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
-        var readAtAddress = store.Log.BeginAddress;
+        long readAtAddress = store.Log.BeginAddress;
         Status status;
 
         skipReadCacheSession.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -637,7 +637,7 @@ internal class BasicTests
         {
             if (status.IsPending)
             {
-                skipReadCacheSession.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                skipReadCacheSession.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> completedOutputs, wait: true);
                 (status, output) = GetSinglePendingResult(completedOutputs);
             }
             Assert.IsTrue(status.Found);
@@ -700,7 +700,7 @@ internal class BasicTests
         Assert.AreEqual(0, store.EntryCount);
 
         session.Upsert(ref key1, ref value);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
         AssertCompleted(new(StatusCode.Found), status);
 
         Assert.AreEqual(1, store.EntryCount);
@@ -726,7 +726,7 @@ internal class BasicTests
         var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
         session.Upsert(key1, value, Empty.Default, 0);
-        var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+        Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
         AssertCompleted(new(StatusCode.Found), status);
 
         Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -757,14 +757,14 @@ internal class BasicTests
         for (int i = 0; i < numKeys; i++)
         {
             // lap is used to illustrate the changing values
-            var lap = i / keyMod;
+            int lap = i / keyMod;
             session.Upsert(ref key, ref value, serialNo: lap);
         }
 
         // Now verify 
         for (int j = 0; j < numKeys; j++)
         {
-            var status = session.Read(ref key, ref input, ref output, serialNo: maxLap + 1);
+            Status status = session.Read(ref key, ref input, ref output, serialNo: maxLap + 1);
 
             AssertCompleted(new(StatusCode.Found), status);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -781,7 +781,7 @@ internal class BasicTests
     {
         using var log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "hlog.log"), deleteOnClose: false);
         using var store = new TsavoriteKV<long, long>(1L << 20, new LogSettings { LogDevice = log });
-        using var s = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long key = 1, value = 1, input = 10, output = 0;
         s.Upsert(ref key, ref value);
         s.Read(ref key, ref output);
@@ -810,7 +810,7 @@ internal class BasicTests
     {
         using var log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "hlog.log"), deleteOnClose: false);
         using var store = new TsavoriteKV<ushort, byte>(1L << 20, new LogSettings { LogDevice = log });
-        using var s = store.NewSession<byte, byte, Empty, SimpleFunctions<ushort, byte>>(new SimpleFunctions<ushort, byte>());
+        using ClientSession<ushort, byte, byte, byte, Empty, SimpleFunctions<ushort, byte>> s = store.NewSession<byte, byte, Empty, SimpleFunctions<ushort, byte>>(new SimpleFunctions<ushort, byte>());
         ushort key = 1024;
         byte value = 1, input = 10, output = 0;
 
@@ -819,7 +819,7 @@ internal class BasicTests
         Assert.AreEqual(11, expectedRecordSize);
         long prevTailLogicalAddress = store.hlog.GetTailAddress();
         long prevTailPhysicalAddress = store.hlog.GetPhysicalAddress(prevTailLogicalAddress);
-        for (var ii = 0; ii < 5; ++ii, ++key, ++value, ++input)
+        for (int ii = 0; ii < 5; ++ii, ++key, ++value, ++input)
         {
             output = 0;
             s.Upsert(ref key, ref value);
@@ -829,7 +829,7 @@ internal class BasicTests
             s.Read(ref key, ref output);
             Assert.AreEqual(input, output);
 
-            var tailLogicalAddress = store.hlog.GetTailAddress();
+            long tailLogicalAddress = store.hlog.GetTailAddress();
             Assert.AreEqual(expectedRecordSize, tailLogicalAddress - prevTailLogicalAddress);
             long tailPhysicalAddress = store.hlog.GetPhysicalAddress(tailLogicalAddress);
             Assert.AreEqual(expectedRecordSize, tailPhysicalAddress - prevTailPhysicalAddress);
@@ -845,11 +845,11 @@ internal class BasicTests
     {
         using var log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "hlog.log"), deleteOnClose: false);
         using var store = new TsavoriteKV<long, long>(1L << 20, new LogSettings { LogDevice = log });
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         const int numRecords = 500;
         const int valueMult = 1_000_000;
 
-        var hashes = new long[numRecords];
+        long[] hashes = new long[numRecords];
         Status status;
         long output;
 
@@ -937,11 +937,11 @@ internal class BasicTests
     {
         using var log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "hlog.log"), deleteOnClose: false);
         using var store = new TsavoriteKV<long, long>(1L << 20, new LogSettings { LogDevice = log });
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         const int numRecords = 500;
         const int valueMult = 1_000_000;
 
-        var hashes = new long[numRecords];
+        long[] hashes = new long[numRecords];
         Status status;
         long output;
 

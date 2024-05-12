@@ -26,7 +26,7 @@ sealed class DeleteTxn : CustomTransactionProcedure
     public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var key = GetNextArg(input, ref offset);
+        ArgSlice key = GetNextArg(input, ref offset);
         api.DELETE(key, StoreType.Main);
         WriteSimpleString(ref output, "SUCCESS");
     }

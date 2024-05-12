@@ -36,8 +36,8 @@ sealed class SetIfPMCustomCommand : CustomRawStringFunctions
     public override bool InPlaceUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, Span<byte> value, ref int valueLength, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
         if (prefix.SequenceEqual(newVal.Slice(0, prefix.Length)))
         {
             if (newVal.Length > value.Length) return false;
@@ -52,8 +52,8 @@ sealed class SetIfPMCustomCommand : CustomRawStringFunctions
     public override bool NeedCopyUpdate(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> oldValue, ref (IMemoryOwner<byte>, int) output)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
         return prefix.SequenceEqual(newVal.Slice(0, prefix.Length));
     }
 
@@ -64,7 +64,7 @@ sealed class SetIfPMCustomCommand : CustomRawStringFunctions
     /// <inheritdoc />
     public override bool CopyUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> oldValue, Span<byte> newValue, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
-        var newVal = GetFirstArg(input);
+        ReadOnlySpan<byte> newVal = GetFirstArg(input);
         Debug.Assert(newVal.Length == newValue.Length);
         newVal.CopyTo(newValue);
 

@@ -29,7 +29,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 if (!DrainCommands(bufSpan, count))
                     return false;
                 errorCmd = "auth";
-                var errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
+                string errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
                 while (!RespWriteUtils.WriteError(errorMsg, ref dcurr, dend))
                     SendAndReset();
             }
@@ -98,7 +98,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return success;
             }
 
-            var param = GetCommand(bufSpan, out bool success1);
+            ReadOnlySpan<byte> param = GetCommand(bufSpan, out bool success1);
             if (!success1) return false;
             if (param.SequenceEqual(CmdStrings.GET) || param.SequenceEqual(CmdStrings.get))
             {
@@ -111,7 +111,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 }
                 else
                 {
-                    var key = GetCommand(bufSpan, out bool success2);
+                    ReadOnlySpan<byte> key = GetCommand(bufSpan, out bool success2);
                     if (!success2) return false;
 
                     while (!RespWriteUtils.WriteDirect(CmdStrings.GetConfig(key), ref dcurr, dend))
@@ -144,9 +144,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 {
                     for (int c = 0; c < (count - 1) / 2; c++)
                     {
-                        var key = GetCommand(bufSpan, out bool success2);
+                        ReadOnlySpan<byte> key = GetCommand(bufSpan, out bool success2);
                         if (!success2) return false;
-                        var value = GetCommand(bufSpan, out bool success3);
+                        ReadOnlySpan<byte> value = GetCommand(bufSpan, out bool success3);
                         if (!success3) return false;
 
                         if (key.SequenceEqual(CmdStrings.CertFileName))
@@ -190,7 +190,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     {
                         if (storeWrapper.serverOptions.TlsOptions != null)
                         {
-                            if (!storeWrapper.serverOptions.TlsOptions.UpdateCertFile(certFileName, certPassword, out var certErrorMessage))
+                            if (!storeWrapper.serverOptions.TlsOptions.UpdateCertFile(certFileName, certPassword, out string certErrorMessage))
                             {
                                 if (errorMsg == null) errorMsg = "ERR " + certErrorMessage;
                                 else errorMsg += " " + certErrorMessage;
@@ -233,10 +233,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
             else
             {
-                var oldReadHead = readHead;
+                int oldReadHead = readHead;
                 GetCommand(bufSpan, out bool success1);
                 if (!success1) return false;
-                var length = readHead - oldReadHead;
+                int length = readHead - oldReadHead;
                 while (!RespWriteUtils.WriteDirect(bufSpan.Slice(oldReadHead, length), ref dcurr, dend))
                     SendAndReset();
             }
@@ -254,10 +254,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
             else if (count == 1)
             {
-                var oldReadHead = readHead;
+                int oldReadHead = readHead;
                 GetCommand(bufSpan, out bool success1);
                 if (!success1) return false;
-                var length = readHead - oldReadHead;
+                int length = readHead - oldReadHead;
                 bufSpan.Slice(oldReadHead, length).CopyTo(new Span<byte>(dcurr, length));
                 dcurr += length;
             }
@@ -298,10 +298,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
             else
             {
-                var utcTime = DateTimeOffset.UtcNow;
-                var seconds = utcTime.ToUnixTimeSeconds();
-                var microsecs = utcTime.ToString("ffffff");
-                var response = string.Format("*2\r\n${0}\r\n{1}\r\n${2}\r\n{3}\r\n", seconds.ToString().Length, seconds, microsecs.Length, microsecs);
+                DateTimeOffset utcTime = DateTimeOffset.UtcNow;
+                long seconds = utcTime.ToUnixTimeSeconds();
+                string microsecs = utcTime.ToString("ffffff");
+                string response = string.Format("*2\r\n${0}\r\n{1}\r\n${2}\r\n{3}\r\n", seconds.ToString().Length, seconds, microsecs.Length, microsecs);
                 while (!RespWriteUtils.WriteAsciiDirect(response, ref dcurr, dend))
                     SendAndReset();
             }
@@ -345,7 +345,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             if (!DrainCommands(bufSpan, count))
                 return false;
-            var seconds = storeWrapper.lastSaveTime.ToUnixTimeSeconds();
+            long seconds = storeWrapper.lastSaveTime.ToUnixTimeSeconds();
             while (!RespWriteUtils.WriteInteger(seconds, ref dcurr, dend))
                 SendAndReset();
         }
@@ -389,7 +389,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 while (count > 0)
                 {
-                    var param = GetCommand(bufSpan, out bool success1);
+                    ReadOnlySpan<byte> param = GetCommand(bufSpan, out bool success1);
                     if (!success1) return false;
                     string paramStr = Encoding.ASCII.GetString(param);
                     if (paramStr.Equals("UNSAFETRUNCATELOG", StringComparison.OrdinalIgnoreCase))
@@ -415,10 +415,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
         else if (command == RespCommand.FORCEGC)
         {
-            var generation = GC.MaxGeneration;
+            int generation = GC.MaxGeneration;
             if (count == 1)
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 if (!RespReadUtils.ReadIntWithLengthHeader(out generation, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
@@ -480,7 +480,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (errorFlag && !string.IsNullOrWhiteSpace(errorCmd))
         {
-            var errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
+            string errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
             while (!RespWriteUtils.WriteError(errorMsg, ref dcurr, dend))
                 SendAndReset();
         }
@@ -545,10 +545,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     {
         //MEMORY USAGE [key] [SAMPLES count]
 
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var memoryOption, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string memoryOption, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
-        var status = GarnetStatus.OK;
+        GarnetStatus status = GarnetStatus.OK;
         long memoryUsage = default;
 
         if (memoryOption.Equals("USAGE", StringComparison.OrdinalIgnoreCase))
@@ -563,10 +563,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             if (count == 4)
             {
                 // Calculations for nested types do not apply to garnet, but we are parsing the parameter for API compatibility
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var samplesBA, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] samplesBA, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var countSamplesBA, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] countSamplesBA, ref ptr, recvBufferPtr + bytesRead))
                     return false;
             }
 

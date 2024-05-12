@@ -88,16 +88,16 @@ internal abstract class RegisterCustomCommandProviderBase : IRegisterCustomComma
     public static Lazy<Type[]> SupportedCustomCommandBaseTypesLazy = new(() =>
     {
         var supportedTypes = new HashSet<Type>();
-        foreach (var type in typeof(RegisterCustomCommandProviderBase).Assembly.GetTypes().Where(t =>
+        foreach (Type type in typeof(RegisterCustomCommandProviderBase).Assembly.GetTypes().Where(t =>
                      typeof(RegisterCustomCommandProviderBase).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract))
         {
-            var baseType = type.BaseType;
+            Type baseType = type.BaseType;
             while (baseType != null && baseType != typeof(RegisterCustomCommandProviderBase))
             {
                 if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() ==
                     typeof(RegisterCustomCommandProviderBase<,>))
                 {
-                    var customCmdType = baseType.GetGenericArguments().FirstOrDefault();
+                    Type customCmdType = baseType.GetGenericArguments().FirstOrDefault();
                     if (customCmdType != null)
                     {
                         supportedTypes.Add(customCmdType);

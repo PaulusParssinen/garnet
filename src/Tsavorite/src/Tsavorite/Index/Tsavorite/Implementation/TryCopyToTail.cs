@@ -29,11 +29,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                 ref RecordInfo srcRecordInfo, TsavoriteSession tsavoriteSession, WriteReason reason)
     where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var (actualSize, allocatedSize, keySize) = hlog.GetRecordSize(ref key, ref value);
+        (int actualSize, int allocatedSize, int keySize) = hlog.GetRecordSize(ref key, ref value);
         if (!TryAllocateRecord(tsavoriteSession, ref pendingContext, ref stackCtx, actualSize, ref allocatedSize, keySize, new AllocateOptions() { Recycle = true },
                 out long newLogicalAddress, out long newPhysicalAddress, out OperationStatus status))
             return status;
-        ref var newRecordInfo = ref WriteNewRecordInfo(ref key, hlog, newPhysicalAddress, inNewVersion: tsavoriteSession.Ctx.InNewVersion, tombstone: false, stackCtx.recSrc.LatestLogicalAddress);
+        ref RecordInfo newRecordInfo = ref WriteNewRecordInfo(ref key, hlog, newPhysicalAddress, inNewVersion: tsavoriteSession.Ctx.InNewVersion, tombstone: false, stackCtx.recSrc.LatestLogicalAddress);
         stackCtx.SetNewRecord(newLogicalAddress);
 
         UpsertInfo upsertInfo = new()

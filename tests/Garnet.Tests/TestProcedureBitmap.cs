@@ -20,11 +20,11 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        var bitmapA = GetNextArg(input, ref offset);
+        ArgSlice bitmapA = GetNextArg(input, ref offset);
         GetNextArg(input, ref offset);
         GetNextArg(input, ref offset);
-        var destinationKey = GetNextArg(input, ref offset);
-        var bitmapB = GetNextArg(input, ref offset);
+        ArgSlice destinationKey = GetNextArg(input, ref offset);
+        ArgSlice bitmapB = GetNextArg(input, ref offset);
 
         if (bitmapA.Length == 0)
             return false;
@@ -47,11 +47,11 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
         BitmapOperation[] bitwiseOps = [BitmapOperation.AND, BitmapOperation.OR, BitmapOperation.XOR];
 
         //get paramaters
-        var bitmapA = GetNextArg(input, ref offset);
-        var offsetArgument = GetNextArg(input, ref offset);
-        var bitValueArgument = GetNextArg(input, ref offset);
-        var destinationKeyBitOp = GetNextArg(input, ref offset);
-        var bitmapB = GetNextArg(input, ref offset);
+        ArgSlice bitmapA = GetNextArg(input, ref offset);
+        ArgSlice offsetArgument = GetNextArg(input, ref offset);
+        ArgSlice bitValueArgument = GetNextArg(input, ref offset);
+        ArgSlice destinationKeyBitOp = GetNextArg(input, ref offset);
+        ArgSlice bitmapB = GetNextArg(input, ref offset);
 
         //simple set and get for bitmaps
         api.StringSetBit(bitmapA, offsetArgument, bitValueArgument.ToArray()[0] == '1', out _);
@@ -71,8 +71,8 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
         }
 
         //bitop command
-        var src = Int64.MaxValue;
-        var data = BitConverter.GetBytes(src);
+        long src = Int64.MaxValue;
+        byte[] data = BitConverter.GetBytes(src);
         api.SET(bitmapA, data);
 
         //Not operator
@@ -82,8 +82,8 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
             result = false;
             goto returnTo;
         }
-        api.GET(destinationKeyBitOp, out var valueData);
-        var actualResultBitOp = BitConverter.ToInt64(valueData.ToArray(), 0);
+        api.GET(destinationKeyBitOp, out ArgSlice valueData);
+        long actualResultBitOp = BitConverter.ToInt64(valueData.ToArray(), 0);
 
         long expectedResultBitOp = ~src;
         if (expectedResultBitOp != actualResultBitOp)
@@ -92,7 +92,7 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
             goto returnTo;
         }
 
-        var srcB = Int64.MaxValue - 1234;
+        long srcB = Int64.MaxValue - 1234;
         data = BitConverter.GetBytes(srcB);
         api.SET(bitmapB, data);
 
@@ -137,7 +137,7 @@ sealed class TestProcedureBitmap : CustomTransactionProcedure
         bitFieldArguments = new BitFieldCmdArgs((byte)RespCommand.INCRBY, ((byte)BitFieldSign.UNSIGNED | 4), 4, 1, (byte)BitFieldOverflow.WRAP);
         listCommands.Add(bitFieldArguments);
 
-        api.StringBitField(bitmapA, listCommands, out var resultBitField);
+        api.StringBitField(bitmapA, listCommands, out List<long?> resultBitField);
         if (resultBitField.Count != 2)
         {
             result = false;

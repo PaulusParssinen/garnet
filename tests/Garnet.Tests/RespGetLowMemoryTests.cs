@@ -32,7 +32,7 @@ public class RespGetLowMemoryTests
     public void ScatterGatherGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const int length = 30;
         KeyValuePair<RedisKey, RedisValue>[] input = new KeyValuePair<RedisKey, RedisValue>[length];
@@ -40,7 +40,7 @@ public class RespGetLowMemoryTests
             input[i] = new KeyValuePair<RedisKey, RedisValue>(i.ToString(), i.ToString());
 
         // MSET
-        var result = db.StringSet(input);
+        bool result = db.StringSet(input);
         Assert.IsTrue(result);
 
         for (int iter = 0; iter < 5; iter++)

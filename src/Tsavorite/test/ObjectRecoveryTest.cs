@@ -94,7 +94,7 @@ internal class ObjectRecoveryTests
         }
 
         // Register thread with Tsavorite
-        var session = store.NewSession<Input, Output, Empty, Functions>(new Functions());
+        ClientSession<AdId, NumClicks, Input, Output, Empty, Functions> session = store.NewSession<Input, Output, Empty, Functions>(new Functions());
 
         // Process the batch of input data
         bool first = true;
@@ -146,11 +146,11 @@ internal class ObjectRecoveryTests
         }
 
         // Register with thread
-        var session = store.NewSession<Input, Output, Empty, Functions>(new Functions());
+        ClientSession<AdId, NumClicks, Input, Output, Empty, Functions> session = store.NewSession<Input, Output, Empty, Functions>(new Functions());
 
         Input input = default;
         // Issue read requests
-        for (var i = 0; i < numUniqueKeys; i++)
+        for (int i = 0; i < numUniqueKeys; i++)
         {
             session.Read(ref inputArray[i].Item1, ref input, ref outputArray[i], Empty.Default, i);
         }
@@ -171,12 +171,12 @@ internal class ObjectRecoveryTests
 
         // Compute expected array
         long[] expected = new long[numUniqueKeys];
-        foreach (var guid in checkpointInfo.continueTokens.Keys)
+        foreach (int guid in checkpointInfo.continueTokens.Keys)
         {
-            var cp = checkpointInfo.continueTokens[guid].Item2;
+            CommitPoint cp = checkpointInfo.continueTokens[guid].Item2;
             for (long i = 0; i <= cp.UntilSerialNo; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }
@@ -185,10 +185,10 @@ internal class ObjectRecoveryTests
         int numCompleted = threadCount - checkpointInfo.continueTokens.Count;
         for (int t = 0; t < numCompleted; t++)
         {
-            var sno = numOps;
+            long sno = numOps;
             for (long i = 0; i < sno; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }

@@ -67,7 +67,7 @@ internal class DeltaLogStandAloneTests
 
         deltaLog.InitializeForReads();
         r = new(20);
-        for (i = 0; deltaLog.GetNext(out long address, out int len, out var type); i++)
+        for (i = 0; deltaLog.GetNext(out long address, out int len, out DeltaLogEntryType type); i++)
         {
             int _len = 1 + r.Next(254);
             Assert.AreEqual(i % 2 == 0 ? DeltaLogEntryType.DELTA : DeltaLogEntryType.CHECKPOINT_METADATA, type);

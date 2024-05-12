@@ -31,7 +31,7 @@ public class CheckpointManagerTests
                 new AzureCheckpointNamingScheme($"{TestUtils.AzureTestContainer}/{TestUtils.AzureTestDirectory}"), false);
         }
 
-        using (var log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "hlog.log"), deleteOnClose: true))
+        using (IDevice log = Devices.CreateLogDevice(Path.Join(TestUtils.MethodTestDir, "hlog.log"), deleteOnClose: true))
         {
             TestUtils.RecreateDirectory(TestUtils.MethodTestDir);
 
@@ -47,18 +47,18 @@ public class CheckpointManagerTests
                 },
                 checkpointSettings: new CheckpointSettings { CheckpointManager = checkpointManager }
             );
-            using var s = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
             var logCheckpoints = new Dictionary<Guid, int>();
             var indexCheckpoints = new Dictionary<Guid, int>();
             var fullCheckpoints = new Dictionary<Guid, int>();
 
-            for (var i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 // Do some dummy update
                 s.Upsert(0, random.Next());
 
-                var checkpointType = random.Next(5);
+                int checkpointType = random.Next(5);
                 Guid result = default;
                 switch (checkpointType)
                 {
@@ -97,7 +97,7 @@ public class CheckpointManagerTests
 
             if (logCheckpoints.Count != 0)
             {
-                var guid = logCheckpoints.First().Key;
+                Guid guid = logCheckpoints.First().Key;
                 checkpointManager.Purge(guid);
                 logCheckpoints.Remove(guid);
                 Assert.AreEqual(checkpointManager.GetLogCheckpointTokens().ToDictionary(guid => guid, _ => 0),
@@ -108,7 +108,7 @@ public class CheckpointManagerTests
 
             if (indexCheckpoints.Count != 0)
             {
-                var guid = indexCheckpoints.First().Key;
+                Guid guid = indexCheckpoints.First().Key;
                 checkpointManager.Purge(guid);
                 indexCheckpoints.Remove(guid);
                 Assert.AreEqual(checkpointManager.GetLogCheckpointTokens().ToDictionary(guid => guid, _ => 0),
@@ -120,7 +120,7 @@ public class CheckpointManagerTests
 
             if (fullCheckpoints.Count != 0)
             {
-                var guid = fullCheckpoints.First().Key;
+                Guid guid = fullCheckpoints.First().Key;
                 checkpointManager.Purge(guid);
                 fullCheckpoints.Remove(guid);
                 Assert.AreEqual(checkpointManager.GetLogCheckpointTokens().ToDictionary(guid => guid, _ => 0),

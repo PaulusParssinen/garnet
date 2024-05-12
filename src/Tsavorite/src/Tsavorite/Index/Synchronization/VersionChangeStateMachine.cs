@@ -51,8 +51,8 @@ internal sealed class VersionChangeTask : ISynchronizationTask
                 if (ctx != null)
                 {
                     // Need to be very careful here as threadCtx is changing
-                    var _ctx = prev.Phase == Phase.IN_PROGRESS ? ctx.prevCtx : ctx;
-                    var tokens = store._hybridLogCheckpoint.info.checkpointTokens;
+                    TsavoriteKV<Key, Value>.TsavoriteExecutionContext<Input, Output, Context> _ctx = prev.Phase == Phase.IN_PROGRESS ? ctx.prevCtx : ctx;
+                    System.Collections.Concurrent.ConcurrentDictionary<int, (string, CommitPoint)> tokens = store._hybridLogCheckpoint.info.checkpointTokens;
                     if (!store.SameCycle(ctx, current) || tokens == null)
                         return;
 

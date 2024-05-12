@@ -51,13 +51,13 @@ public static class GlobUtils
                     {
                         pattern++;
                         patternLen--;
-                        var not = pattern[0] == '^';
+                        bool not = pattern[0] == '^';
                         if (not)
                         {
                             pattern++;
                             patternLen--;
                         }
-                        var match = false;
+                        bool match = false;
                         while (true)
                         {
                             if (pattern[0] == '\\' && patternLen >= 2)

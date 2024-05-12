@@ -24,12 +24,12 @@ internal sealed partial class FailoverSession : IDisposable
     /// <exception cref="GarnetException"></exception>
     private GarnetClient GetOrAddConnection(string nodeId)
     {
-        _ = clusterProvider.clusterManager.clusterConnectionStore.GetConnection(nodeId, out var gsn);
+        _ = clusterProvider.clusterManager.clusterConnectionStore.GetConnection(nodeId, out GarnetServerNode gsn);
 
         // If connection not available try to initialize it
         if (gsn == null)
         {
-            var (address, port) = currentConfig.GetEndpointFromNodeId(nodeId);
+            (string address, int port) = currentConfig.GetEndpointFromNodeId(nodeId);
             gsn = new GarnetServerNode(
                 clusterProvider,
                 address,
@@ -63,7 +63,7 @@ internal sealed partial class FailoverSession : IDisposable
     /// <returns></returns>
     private GarnetClient CreateConnection(string nodeId)
     {
-        var (address, port) = currentConfig.GetEndpointFromNodeId(nodeId);
+        (string address, int port) = currentConfig.GetEndpointFromNodeId(nodeId);
         var client = new GarnetClient(
             address,
             port,
@@ -103,7 +103,7 @@ internal sealed partial class FailoverSession : IDisposable
     /// <returns>True on success, false otherwise</returns>
     private async Task<bool> PauseWritesAndWaitForSync()
     {
-        var primaryId = currentConfig.LocalNodePrimaryId;
+        string primaryId = currentConfig.LocalNodePrimaryId;
         var client = GetConnection(primaryId);
         try
         {
@@ -115,8 +115,8 @@ internal sealed partial class FailoverSession : IDisposable
 
             // Issue stop writes to the primary
             status = FailoverStatus.ISSUING_PAUSE_WRITES;
-            var localIdBytes = Encoding.ASCII.GetBytes(currentConfig.LocalNodeId);
-            var primaryReplicationOffset = await client.failstopwrites(localIdBytes).WaitAsync(failoverTimeout, cts.Token);
+            byte[] localIdBytes = Encoding.ASCII.GetBytes(currentConfig.LocalNodeId);
+            long primaryReplicationOffset = await client.failstopwrites(localIdBytes).WaitAsync(failoverTimeout, cts.Token);
 
             // Wait for replica to catch up
             status = FailoverStatus.WAITING_FOR_SYNC;
@@ -177,7 +177,7 @@ internal sealed partial class FailoverSession : IDisposable
     /// <returns></returns>
     private async Task BroadcastConfigAndRequestAttach(string replicaId, byte[] configByteArray)
     {
-        var newConfig = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig newConfig = clusterProvider.clusterManager.CurrentConfig;
         var client = GetConnection(replicaId);
 
         try
@@ -191,14 +191,14 @@ internal sealed partial class FailoverSession : IDisposable
             // Force send updated config to replica
             await client.Gossip(configByteArray).ContinueWith(t =>
             {
-                var resp = t.Result;
+                MemoryResult<byte> resp = t.Result;
                 try
                 {
-                    var current = clusterProvider.clusterManager.CurrentConfig;
+                    ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
                     if (resp.Length > 0)
                     {
                         clusterProvider.clusterManager.gossipStats.UpdateGossipBytesRecv(resp.Length);
-                        var returnedConfigArray = resp.Span.ToArray();
+                        byte[] returnedConfigArray = resp.Span.ToArray();
                         var other = ClusterConfig.FromByteArray(returnedConfigArray);
 
                         // Check if gossip is from a node that is known and trusted before merging
@@ -219,8 +219,8 @@ internal sealed partial class FailoverSession : IDisposable
                 }
             }, TaskContinuationOptions.RunContinuationsAsynchronously).WaitAsync(failoverTimeout, cts.Token);
 
-            var localAddress = currentConfig.LocalNodeIp;
-            var localPort = currentConfig.LocalNodePort;
+            string localAddress = currentConfig.LocalNodeIp;
+            int localPort = currentConfig.LocalNodePort;
 
             // Ask replica to attach and sync
             var replicaOfResp = await client.ReplicaOf(localAddress, localPort).WaitAsync(failoverTimeout, cts.Token);
@@ -243,11 +243,11 @@ internal sealed partial class FailoverSession : IDisposable
     private async Task IssueAttachReplicas()
     {
         // Get information of local node from newConfig
-        var newConfig = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig newConfig = clusterProvider.clusterManager.CurrentConfig;
         // Get replica ids for old primary from old configuration
-        var oldPrimaryId = currentConfig.LocalNodePrimaryId;
-        var replicaIds = newConfig.GetReplicaIds(oldPrimaryId);
-        var configByteArray = newConfig.ToByteArray();
+        string oldPrimaryId = currentConfig.LocalNodePrimaryId;
+        List<string> replicaIds = newConfig.GetReplicaIds(oldPrimaryId);
+        byte[] configByteArray = newConfig.ToByteArray();
         var attachReplicaTasks = new List<Task>();
 
         // If DEFAULT failover try to make old primary replica of this new primary
@@ -258,7 +258,7 @@ internal sealed partial class FailoverSession : IDisposable
         }
 
         // Issue gossip and attach request to replicas
-        foreach (var replicaId in replicaIds)
+        foreach (string replicaId in replicaIds)
         {
             try
             {

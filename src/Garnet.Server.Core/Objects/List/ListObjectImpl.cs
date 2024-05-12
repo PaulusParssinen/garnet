@@ -28,17 +28,17 @@ public unsafe partial class ListObject : IGarnetObject
         _output->countDone = Int32.MinValue;
 
         // get the source string to remove
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var item, ref ptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] item, ref ptr, end))
             return;
 
-        var count = _input->count;
-        var rem_count = 0;
+        int count = _input->count;
+        int rem_count = 0;
         _output->countDone = 0;
 
         //remove all equals to item
         if (count == 0)
         {
-            var elements = list.Count;
+            int elements = list.Count;
             list.Where(i => i.SequenceEqual(item)).ToList().ForEach(i => { list.Remove(i); this.UpdateSize(i, false); });
             rem_count = elements - list.Count;
         }
@@ -46,7 +46,7 @@ public unsafe partial class ListObject : IGarnetObject
         {
             while (rem_count < Math.Abs(count) && list.Count > 0)
             {
-                var node = count > 0 ? list.FirstOrDefault(i => i.SequenceEqual(item)) : list.LastOrDefault(i => i.SequenceEqual(item));
+                byte[] node = count > 0 ? list.FirstOrDefault(i => i.SequenceEqual(item)) : list.LastOrDefault(i => i.SequenceEqual(item));
                 if (node != null)
                 {
                     list.Remove(node);
@@ -80,22 +80,22 @@ public unsafe partial class ListObject : IGarnetObject
         if (list.Count > 0)
         {
             // figure out where to insert BEFORE or AFTER
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var position, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] position, ref ptr, end))
                 return;
 
             // get the source string
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var pivot, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] pivot, ref ptr, end))
                 return;
 
             // get the string to INSERT into the list
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var insertitem, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] insertitem, ref ptr, end))
                 return;
 
             bool fBefore = CmdStrings.BEFORE.SequenceEqual(position);
 
             // find the first ocurrence of the pivot element
             current = list.Nodes().DefaultIfEmpty(null).FirstOrDefault(i => i.Value.SequenceEqual(pivot));
-            var newNode = current != default ? (fBefore ? list.AddBefore(current, insertitem) : list.AddAfter(current, insertitem)) : default;
+            LinkedListNode<byte[]> newNode = current != default ? (fBefore ? list.AddBefore(current, insertitem) : list.AddAfter(current, insertitem)) : default;
             if (current != null)
                 this.UpdateSize(insertitem);
             _output->opsDone = current != default ? list.Count : -1;
@@ -113,15 +113,15 @@ public unsafe partial class ListObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
         byte[] item = default;
 
         ObjectOutputHeader _output = default;
         _output.opsDone = -1;
         try
         {
-            var index = _input->count < 0 ? list.Count + _input->count : _input->count;
+            int index = _input->count < 0 ? list.Count + _input->count : _input->count;
             item = list.ElementAtOrDefault(index);
             if (item != default)
             {
@@ -151,8 +151,8 @@ public unsafe partial class ListObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -165,10 +165,10 @@ public unsafe partial class ListObject : IGarnetObject
             }
             else
             {
-                var start = _input->count < 0 ? list.Count + _input->count : _input->count;
+                int start = _input->count < 0 ? list.Count + _input->count : _input->count;
                 if (start < 0) start = 0;
 
-                var stop = _input->done < 0 ? list.Count + _input->done : _input->done;
+                int stop = _input->done < 0 ? list.Count + _input->done : _input->done;
                 if (stop < 0) stop = 0;
                 if (stop >= list.Count) stop = list.Count - 1;
 
@@ -180,12 +180,12 @@ public unsafe partial class ListObject : IGarnetObject
                 }
                 else
                 {
-                    var count = stop - start + 1;
+                    int count = stop - start + 1;
                     while (!RespWriteUtils.WriteArrayLength(count, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    var i = -1;
-                    foreach (var bytes in list)
+                    int i = -1;
+                    foreach (byte[] bytes in list)
                     {
                         i++;
                         if (i < start)
@@ -219,10 +219,10 @@ public unsafe partial class ListObject : IGarnetObject
 
         if (list.Count > 0)
         {
-            var start = _input->count < 0 ? list.Count + _input->count : _input->count;
+            int start = _input->count < 0 ? list.Count + _input->count : _input->count;
             if (start < -(list.Count - 1) || start >= list.Count) start = list.Count - 1;
 
-            var end = _input->done < 0 ? list.Count + _input->done : _input->done;
+            int end = _input->done < 0 ? list.Count + _input->done : _input->done;
             if (end < -(list.Count - 1) || end >= list.Count) end = list.Count - 1;
 
             Debug.Assert(end - start <= list.Count);
@@ -236,10 +236,10 @@ public unsafe partial class ListObject : IGarnetObject
                 // Only  the first end+1 elements will remain
                 if (start == 0)
                 {
-                    var numDeletes = list.Count - (end + 1);
+                    int numDeletes = list.Count - (end + 1);
                     for (int i = 0; i < numDeletes; i++)
                     {
-                        var _value = list.Last.Value;
+                        byte[] _value = list.Last.Value;
                         list.RemoveLast();
                         this.UpdateSize(_value, false);
                     }
@@ -288,7 +288,7 @@ public unsafe partial class ListObject : IGarnetObject
 
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] value, ref ptr, end))
                 return;
 
             if (c < _input->done)
@@ -324,8 +324,8 @@ public unsafe partial class ListObject : IGarnetObject
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -381,11 +381,11 @@ public unsafe partial class ListObject : IGarnetObject
 
     private void ListSet(byte* input, int length, ref SpanByteAndMemory output)
     {
-        var isMemory = false;
+        bool isMemory = false;
         MemoryHandle ptrHandle = default;
-        var output_startptr = output.SpanByte.ToPointer();
-        var output_currptr = output_startptr;
-        var output_end = output_currptr + output.Length;
+        byte* output_startptr = output.SpanByte.ToPointer();
+        byte* output_currptr = output_startptr;
+        byte* output_end = output_currptr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -403,13 +403,13 @@ public unsafe partial class ListObject : IGarnetObject
             byte* input_end = input + length;
 
             byte* indexParam = default;
-            var indexParamSize = 0;
+            int indexParamSize = 0;
 
             // index
             if (!RespReadUtils.ReadPtrWithLengthHeader(ref indexParam, ref indexParamSize, ref input_currptr, input_end))
                 return;
 
-            if (NumUtils.TryBytesToInt(indexParam, indexParamSize, out var index) == false)
+            if (NumUtils.TryBytesToInt(indexParam, indexParamSize, out int index) == false)
             {
                 while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_VALUE_IS_NOT_INTEGER, ref output_currptr, output_end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref output_startptr, ref ptrHandle, ref output_currptr, ref output_end);
@@ -426,10 +426,10 @@ public unsafe partial class ListObject : IGarnetObject
             }
 
             // element
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var element, ref input_currptr, input_end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] element, ref input_currptr, input_end))
                 return;
 
-            var targetNode = index == 0 ? list.First
+            LinkedListNode<byte[]> targetNode = index == 0 ? list.First
                 : (index == list.Count - 1 ? list.Last
                     : list.Nodes().ElementAtOrDefault(index));
 

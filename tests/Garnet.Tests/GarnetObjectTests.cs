@@ -33,15 +33,15 @@ public class GarnetObjectTests
     [Test]
     public void WriteRead()
     {
-        using var session = store.NewSession<IGarnetObject, IGarnetObject, Empty, SimpleFunctions<byte[], IGarnetObject, Empty>>(new SimpleFunctions<byte[], IGarnetObject, Empty>());
+        using ClientSession<byte[], IGarnetObject, IGarnetObject, IGarnetObject, Empty, SimpleFunctions<byte[], IGarnetObject, Empty>> session = store.NewSession<IGarnetObject, IGarnetObject, Empty, SimpleFunctions<byte[], IGarnetObject, Empty>>(new SimpleFunctions<byte[], IGarnetObject, Empty>());
 
-        var key = new byte[] { 0 };
+        byte[] key = new byte[] { 0 };
         var obj = new SortedSetObject();
 
         session.Upsert(key, obj);
 
         IGarnetObject output = null;
-        var status = session.Read(ref key, ref output);
+        Status status = session.Read(ref key, ref output);
 
         Assert.IsTrue(status.Found);
         Assert.AreEqual(obj, output);
@@ -50,9 +50,9 @@ public class GarnetObjectTests
     [Test]
     public async Task WriteCheckpointRead()
     {
-        var session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
+        ClientSession<byte[], IGarnetObject, IGarnetObject, IGarnetObject, Empty, MyFunctions> session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
 
-        var key = new byte[] { 0 };
+        byte[] key = new byte[] { 0 };
         var obj = new SortedSetObject();
         obj.Add([15], 10);
 
@@ -70,7 +70,7 @@ public class GarnetObjectTests
         session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
 
         IGarnetObject output = null;
-        var status = session.Read(ref key, ref output);
+        Status status = session.Read(ref key, ref output);
 
         session.Dispose();
 
@@ -81,9 +81,9 @@ public class GarnetObjectTests
     [Test]
     public async Task CopyUpdate()
     {
-        var session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
+        ClientSession<byte[], IGarnetObject, IGarnetObject, IGarnetObject, Empty, MyFunctions> session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
 
-        var key = new byte[] { 0 };
+        byte[] key = new byte[] { 0 };
         IGarnetObject obj = new SortedSetObject();
         ((SortedSetObject)obj).Add([15], 10);
 
@@ -105,7 +105,7 @@ public class GarnetObjectTests
         session = store.NewSession<IGarnetObject, IGarnetObject, Empty, MyFunctions>(new MyFunctions());
 
         IGarnetObject output = null;
-        var status = session.Read(ref key, ref output);
+        Status status = session.Read(ref key, ref output);
 
         session.Dispose();
 

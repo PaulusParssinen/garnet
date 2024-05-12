@@ -42,10 +42,10 @@ public partial class TsavoriteKV<Key, Value>
 
     internal void WriteHybridLogMetaInfo()
     {
-        var metadata = _hybridLogCheckpoint.info.ToByteArray();
+        byte[] metadata = _hybridLogCheckpoint.info.ToByteArray();
         if (CommitCookie != null && CommitCookie.Length != 0)
         {
-            var convertedCookie = Convert.ToBase64String(CommitCookie);
+            string convertedCookie = Convert.ToBase64String(CommitCookie);
             metadata = metadata.Concat(Encoding.Default.GetBytes(convertedCookie)).ToArray();
         }
         checkpointManager.CommitLogCheckpoint(_hybridLogCheckpointToken, metadata);
@@ -54,10 +54,10 @@ public partial class TsavoriteKV<Key, Value>
 
     internal void WriteHybridLogIncrementalMetaInfo(DeltaLog deltaLog)
     {
-        var metadata = _hybridLogCheckpoint.info.ToByteArray();
+        byte[] metadata = _hybridLogCheckpoint.info.ToByteArray();
         if (CommitCookie != null && CommitCookie.Length != 0)
         {
-            var convertedCookie = Convert.ToBase64String(CommitCookie);
+            string convertedCookie = Convert.ToBase64String(CommitCookie);
             metadata = metadata.Concat(Encoding.Default.GetBytes(convertedCookie)).ToArray();
         }
         checkpointManager.CommitLogIncrementalCheckpoint(_hybridLogCheckpointToken, _hybridLogCheckpoint.info.version, metadata, deltaLog);
@@ -71,7 +71,7 @@ public partial class TsavoriteKV<Key, Value>
 
     internal bool ObtainCurrentTailAddress(ref long location)
     {
-        var tailAddress = hlog.GetTailAddress();
+        long tailAddress = hlog.GetTailAddress();
         return Interlocked.CompareExchange(ref location, tailAddress, 0) == 0;
     }
 

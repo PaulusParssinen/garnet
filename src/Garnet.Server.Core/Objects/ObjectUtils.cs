@@ -13,9 +13,9 @@ internal static class ObjectUtils
     public static unsafe void ReallocateOutput(ref SpanByteAndMemory output, ref bool isMemory, ref byte* ptr, ref MemoryHandle ptrHandle, ref byte* curr, ref byte* end)
     {
         int length = Math.Max(output.Length * 2, 1024);
-        var newMem = MemoryPool<byte>.Shared.Rent(length);
-        var newPtrHandle = newMem.Memory.Pin();
-        var newPtr = (byte*)newPtrHandle.Pointer;
+        IMemoryOwner<byte> newMem = MemoryPool<byte>.Shared.Rent(length);
+        MemoryHandle newPtrHandle = newMem.Memory.Pin();
+        byte* newPtr = (byte*)newPtrHandle.Pointer;
         int bytesWritten = (int)(curr - ptr);
         Buffer.MemoryCopy(ptr, newPtr, length, bytesWritten);
         if (isMemory)
@@ -95,10 +95,10 @@ internal static class ObjectUtils
             }
             else if (parameterSB.SequenceEqual(CmdStrings.COUNT) || parameterSB.SequenceEqual(CmdStrings.count))
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var countParameterValue, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] countParameterValue, ref input_currptr, input + length))
                     return false;
 
-                _ = Utf8Parser.TryParse(countParameterValue, out countInInput, out var bytesConsumed, default) &&
+                _ = Utf8Parser.TryParse(countParameterValue, out countInInput, out int bytesConsumed, default) &&
                     bytesConsumed == countParameterValue.Length;
 
                 // Limiting number of items to send to the output
@@ -128,8 +128,8 @@ internal static class ObjectUtils
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -150,7 +150,7 @@ internal static class ObjectUtils
                 while (!RespWriteUtils.WriteArrayLength(items.Count, ref curr, end))
                     ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                foreach (var item in items)
+                foreach (byte[] item in items)
                 {
                     if (item != null)
                     {

@@ -85,8 +85,8 @@ public abstract partial class NetworkHandler<TServerHook, TNetworkSender>
             while (true)
             {
                 garnetNetworkHandler.networkSender.GetResponseObject();
-                var head = garnetNetworkHandler.networkSender.GetResponseObjectHead();
-                var tail = garnetNetworkHandler.networkSender.GetResponseObjectTail();
+                byte* head = garnetNetworkHandler.networkSender.GetResponseObjectHead();
+                byte* tail = garnetNetworkHandler.networkSender.GetResponseObjectTail();
 
                 int copyBytes = Math.Min(buffer.Length, (int)(tail - head));
 

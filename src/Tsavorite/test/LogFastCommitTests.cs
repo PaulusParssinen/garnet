@@ -19,10 +19,10 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
     [Category("Smoke")]
     public void TsavoriteLogSimpleFastCommitTest([Values] TestUtils.DeviceType deviceType)
     {
-        var cookie = new byte[100];
+        byte[] cookie = new byte[100];
         new Random().NextBytes(cookie);
 
-        var filename = Path.Join(TestUtils.MethodTestDir, $"fastCommit{deviceType}.log");
+        string filename = Path.Join(TestUtils.MethodTestDir, $"fastCommit{deviceType}.log");
         device = TestUtils.CreateTestDevice(deviceType, filename, deleteOnClose: true);
         var logSettings = new TsavoriteLogSettings { LogDevice = device, LogChecksum = LogChecksumType.PerEntry, LogCommitManager = manager, FastCommitMode = true, TryRecoverLatest = false, SegmentSizeBits = 26 };
         log = new TsavoriteLog(logSettings);
@@ -36,9 +36,9 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie1 = new byte[100];
+        byte[] cookie1 = new byte[100];
         new Random().NextBytes(cookie1);
-        var commitSuccessful = log.CommitStrongly(out var commit1Addr, out _, true, cookie1, 1);
+        bool commitSuccessful = log.CommitStrongly(out long commit1Addr, out _, true, cookie1, 1);
         Assert.IsTrue(commitSuccessful);
 
         for (int i = 0; i < numEntries; i++)
@@ -46,9 +46,9 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie2 = new byte[100];
+        byte[] cookie2 = new byte[100];
         new Random().NextBytes(cookie2);
-        commitSuccessful = log.CommitStrongly(out var commit2Addr, out _, true, cookie2, 2);
+        commitSuccessful = log.CommitStrongly(out long commit2Addr, out _, true, cookie2, 2);
         Assert.IsTrue(commitSuccessful);
 
         for (int i = 0; i < numEntries; i++)
@@ -56,9 +56,9 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
         }
 
-        var cookie6 = new byte[100];
+        byte[] cookie6 = new byte[100];
         new Random().NextBytes(cookie6);
-        commitSuccessful = log.CommitStrongly(out var commit6Addr, out _, true, cookie6, 6);
+        commitSuccessful = log.CommitStrongly(out long commit6Addr, out _, true, cookie6, 6);
         Assert.IsTrue(commitSuccessful);
 
         // Wait for all metadata writes to be complete to avoid a concurrent access exception
@@ -94,10 +94,10 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
     [Category("Smoke")]
     public void CommitRecordBoundedGrowthTest([Values] TestUtils.DeviceType deviceType)
     {
-        var cookie = new byte[100];
+        byte[] cookie = new byte[100];
         new Random().NextBytes(cookie);
 
-        var filename = Path.Join(TestUtils.MethodTestDir, $"boundedGrowth{deviceType}.log");
+        string filename = Path.Join(TestUtils.MethodTestDir, $"boundedGrowth{deviceType}.log");
         device = TestUtils.CreateTestDevice(deviceType, filename, deleteOnClose: true);
         var logSettings = new TsavoriteLogSettings { LogDevice = device, LogChecksum = LogChecksumType.PerEntry, LogCommitManager = manager, FastCommitMode = true, SegmentSizeBits = 26 };
         log = new TsavoriteLog(logSettings);
@@ -110,12 +110,12 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
             log.Enqueue(entry);
 
         // for comparison, insert some entries without any commit records
-        var referenceTailLength = log.TailAddress;
+        long referenceTailLength = log.TailAddress;
 
         var enqueueDone = new ManualResetEventSlim();
         var commitThreads = new List<Thread>();
         // Make sure to not spin up too many commit threads, otherwise we might clog epochs and halt progress
-        for (var i = 0; i < Math.Max(1, Environment.ProcessorCount / 2); i++)
+        for (int i = 0; i < Math.Max(1, Environment.ProcessorCount / 2); i++)
         {
             commitThreads.Add(new Thread(() =>
             {
@@ -125,7 +125,7 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
             }));
         }
 
-        foreach (var t in commitThreads)
+        foreach (Thread t in commitThreads)
             t.Start();
         for (int i = 0; i < 5 * numEntries; i++)
         {
@@ -133,13 +133,13 @@ internal class LogFastCommitTests : TsavoriteLogTestBase
         }
         enqueueDone.Set();
 
-        foreach (var t in commitThreads)
+        foreach (Thread t in commitThreads)
             t.Join();
 
 
         // TODO: Hardcoded constant --- if this number changes in TsavoriteLogRecoverInfo, it needs to be updated here too
-        var commitRecordSize = 44;
-        var logTailGrowth = log.TailAddress - referenceTailLength;
+        int commitRecordSize = 44;
+        long logTailGrowth = log.TailAddress - referenceTailLength;
         // Check that we are not growing the log more than one commit record per user entry
         Assert.IsTrue(logTailGrowth - referenceTailLength <= commitRecordSize * 5 * numEntries);
 

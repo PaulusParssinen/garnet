@@ -26,8 +26,8 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                         out Output output)
         {
             OperationStatus internalStatus;
-            ref var key = ref pendingContext.key.Get();
-            var keyHash = deleteOptions.KeyHash ?? tsavoriteKV.comparer.GetHashCode64(ref key);
+            ref Key key = ref pendingContext.key.Get();
+            long keyHash = deleteOptions.KeyHash ?? tsavoriteKV.comparer.GetHashCode64(ref key);
             do
             {
                 internalStatus = tsavoriteKV.InternalDelete(ref key, keyHash, ref pendingContext.userContext, ref pendingContext, tsavoriteSession, pendingContext.serialNum);
@@ -92,7 +92,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         try
         {
             OperationStatus internalStatus;
-            var keyHash = deleteOptions.KeyHash ?? comparer.GetHashCode64(ref key);
+            long keyHash = deleteOptions.KeyHash ?? comparer.GetHashCode64(ref key);
             do
             {
                 internalStatus = InternalDelete(ref key, keyHash, ref userContext, ref pcontext, tsavoriteSession, serialNo);

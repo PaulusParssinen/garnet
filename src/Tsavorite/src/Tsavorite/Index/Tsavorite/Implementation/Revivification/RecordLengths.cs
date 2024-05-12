@@ -41,7 +41,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         int extraValueLength = fullValueLength - usedValueLength;
         if (extraValueLength >= sizeof(int))
         {
-            var extraValueLengthPtr = GetExtraValueLengthPointer(ref recordValue, usedValueLength);
+            int* extraValueLengthPtr = GetExtraValueLengthPointer(ref recordValue, usedValueLength);
             Debug.Assert(*extraValueLengthPtr == 0 || *extraValueLengthPtr == extraValueLength, "existing ExtraValueLength should be 0 or the same value");
 
             // We always store the "extra" as the difference between the aligned usedValueLength and the fullValueLength.
@@ -64,7 +64,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         if (recordInfo.Filler)
         {
             usedValueLength = hlog.GetValueLength(ref recordValue);
-            var alignedUsedValueLength = RoundUp(usedValueLength, sizeof(int));
+            int alignedUsedValueLength = RoundUp(usedValueLength, sizeof(int));
             fullValueLength = alignedUsedValueLength + *GetExtraValueLengthPointer(ref recordValue, alignedUsedValueLength);
             Debug.Assert(fullValueLength >= usedValueLength, $"GetLengthsFromFiller: fullValueLength {fullValueLength} should be >= usedValueLength {usedValueLength}");
             allocatedSize = valueOffset + fullValueLength;
@@ -157,14 +157,14 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // If IsFixedLengthReviv, the allocatedSize will be unchanged
             if (!RevivificationManager.IsFixedLength)
             {
-                var (usedValueLength, fullValueLength, fullRecordLength) = GetRecordLengths(physicalAddress, ref hlog.GetValue(physicalAddress), ref recordInfo);
+                (int usedValueLength, int fullValueLength, int fullRecordLength) = GetRecordLengths(physicalAddress, ref hlog.GetValue(physicalAddress), ref recordInfo);
 
                 // ClearExtraValueSpace has already been called (at freelist-add time) to zero the end of the value space between used and full value lengths and clear the Filler.
                 // Now we use the newKeySize to find out how much space is actually required.
-                var valueOffset = fullRecordLength - fullValueLength;
-                var requiredValueLength = requiredSize - valueOffset;
-                var minValueLength = requiredValueLength < usedValueLength ? requiredValueLength : usedValueLength;
-                ref var recordValue = ref hlog.GetValue(physicalAddress);
+                int valueOffset = fullRecordLength - fullValueLength;
+                int requiredValueLength = requiredSize - valueOffset;
+                int minValueLength = requiredValueLength < usedValueLength ? requiredValueLength : usedValueLength;
+                ref Value recordValue = ref hlog.GetValue(physicalAddress);
                 Debug.Assert(valueOffset == (long)Unsafe.AsPointer(ref recordValue) - physicalAddress);
 
                 // Clear any no-longer-needed space, then call DisposeForRevivification again with newKeySize so SpanByte can be efficient about zeroinit.
@@ -213,9 +213,9 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             return (false, recordLengths.usedValueLength);
 
         // Zero the end of the value space between required and full value lengths and clear the Filler.
-        var valueOffset = recordLengths.allocatedSize - recordLengths.fullValueLength;
-        var requiredValueLength = requiredSize - valueOffset;
-        var minValueLength = requiredValueLength < recordLengths.usedValueLength ? requiredValueLength : recordLengths.usedValueLength;
+        int valueOffset = recordLengths.allocatedSize - recordLengths.fullValueLength;
+        int requiredValueLength = requiredSize - valueOffset;
+        int minValueLength = requiredValueLength < recordLengths.usedValueLength ? requiredValueLength : recordLengths.usedValueLength;
 
         ClearExtraValueSpace(ref srcRecordInfo, ref recordValue, minValueLength, recordLengths.fullValueLength);
         tsavoriteSession.DisposeForRevivification(ref key, ref recordValue, newKeySize: -1, ref srcRecordInfo);

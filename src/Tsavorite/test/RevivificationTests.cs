@@ -56,7 +56,7 @@ struct RevivificationTestUtils
     {
         if (pool is not null)
         {
-            foreach (var bin in pool.bins)
+            foreach (FreeRecordBin bin in pool.bins)
             {
                 if (!bin.isEmpty)
                     return true;
@@ -67,7 +67,7 @@ struct RevivificationTestUtils
 
     internal static FreeRecordPool<TKey, TValue> SwapFreeRecordPool<TKey, TValue>(TsavoriteKV<TKey, TValue> store, FreeRecordPool<TKey, TValue> inPool)
     {
-        var pool = store.RevivificationManager.FreeRecordPool;
+        FreeRecordPool<TKey, TValue> pool = store.RevivificationManager.FreeRecordPool;
         store.RevivificationManager.FreeRecordPool = inPool;
         return pool;
     }
@@ -116,9 +116,9 @@ struct RevivificationTestUtils
         int count = 0;
         if (pool is not null)
         {
-            foreach (var bin in pool.bins)
+            foreach (FreeRecordBin bin in pool.bins)
             {
-                for (var ii = 0; ii < bin.recordCount; ++ii)
+                for (int ii = 0; ii < bin.recordCount; ++ii)
                 {
                     if ((bin.records + ii)->IsSet)
                         ++count;
@@ -133,7 +133,7 @@ struct RevivificationTestUtils
     {
         OperationStackContext<TKey, TValue> stackCtx = new(store.comparer.GetHashCode64(ref key));
         Assert.IsTrue(store.FindTag(ref stackCtx.hei), $"AssertElidable: Cannot find key {key}");
-        var recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(stackCtx.hei.Address));
+        RecordInfo recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(stackCtx.hei.Address));
         Assert.Less(recordInfo.PreviousAddress, store.hlog.BeginAddress, "AssertElidable: expected elidable key");
     }
 
@@ -183,10 +183,10 @@ class RevivificationFixedLenTests
         DeleteDirectory(MethodTestDir, wait: true);
         log = Devices.CreateLogDevice(Path.Combine(MethodTestDir, "test.log"), deleteOnClose: true);
 
-        var concurrencyControlMode = ConcurrencyControlMode.LockTable;
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.LockTable;
         double? revivifiableFraction = default;
         RecordElision? recordElision = default;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ConcurrencyControlMode ccm)
             {
@@ -205,7 +205,7 @@ class RevivificationFixedLenTests
             }
         }
 
-        var revivificationSettings = RevivificationSettings.DefaultFixedLength.Clone();
+        RevivificationSettings revivificationSettings = RevivificationSettings.DefaultFixedLength.Clone();
         if (revivifiableFraction.HasValue)
             revivificationSettings.RevivifiableFraction = revivifiableFraction.Value;
         if (recordElision.HasValue)
@@ -233,7 +233,7 @@ class RevivificationFixedLenTests
     {
         for (int key = 0; key < numRecords; key++)
         {
-            var status = session.Upsert(key, key * valueMult);
+            Status status = session.Upsert(key, key * valueMult);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
     }
@@ -251,16 +251,16 @@ class RevivificationFixedLenTests
         if (stayInChain)
             _ = RevivificationTestUtils.SwapFreeRecordPool(store, default);
 
-        var deleteKey = RevivificationTestUtils.GetMinRevivifiableKey(store, numRecords);
+        int deleteKey = RevivificationTestUtils.GetMinRevivifiableKey(store, numRecords);
         if (!stayInChain)
             RevivificationTestUtils.AssertElidable(store, deleteKey);
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         session.Delete(deleteKey);
         Assert.AreEqual(tailAddress, store.Log.TailAddress);
 
-        var updateKey = deleteDest == DeleteDest.InChain ? deleteKey : numRecords + 1;
-        var updateValue = updateKey + valueMult;
+        int updateKey = deleteDest == DeleteDest.InChain ? deleteKey : numRecords + 1;
+        int updateValue = updateKey + valueMult;
 
         if (!stayInChain)
         {
@@ -287,10 +287,10 @@ class RevivificationFixedLenTests
     {
         Populate();
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         // First delete all keys. This will overflow the bin.
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
             session.Delete(key);
             Assert.AreEqual(tailAddress, store.Log.TailAddress);
@@ -300,9 +300,9 @@ class RevivificationFixedLenTests
         RevivificationTestUtils.WaitForRecords(store, want: true);
 
         // Now re-add the keys.
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
-            var value = key + valueMult;
+            int value = key + valueMult;
             if (updateOp == UpdateOp.Upsert)
                 session.Upsert(key, value);
             else if (updateOp == UpdateOp.RMW)
@@ -312,9 +312,9 @@ class RevivificationFixedLenTests
         // Now re-add the keys. For the elision case, we should see tailAddress grow sharply as only the records in the bin are available
         // for revivification. For In-Chain, we will revivify records that were unelided after the bin overflowed. But we have some records
         // ineligible for revivification due to revivifiableFraction.
-        var recordSize = RecordInfo.GetLength() + sizeof(int) * 2;
-        var numIneligibleRecords = numRecords - RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
-        var noElisionExpectedTailAddress = tailAddress + numIneligibleRecords * recordSize;
+        int recordSize = RecordInfo.GetLength() + sizeof(int) * 2;
+        int numIneligibleRecords = numRecords - RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
+        long noElisionExpectedTailAddress = tailAddress + numIneligibleRecords * recordSize;
 
         if (elision == RecordElision.NoElide)
             Assert.AreEqual(noElisionExpectedTailAddress, store.Log.TailAddress, "Expected tail address not to grow (records were revivified)");
@@ -355,20 +355,20 @@ class RevivificationFixedLenTests
         RevivificationTestUtils.WaitForRecords(store, want: true);
 
         // Detach the pool temporarily so the records aren't revivified by the next insertions.
-        var pool = RevivificationTestUtils.SwapFreeRecordPool(store, default);
+        FreeRecordPool<int, int> pool = RevivificationTestUtils.SwapFreeRecordPool(store, default);
 
         // Now add a bunch of records to drop the FreeListed address below the RevivifiableFraction
         int maxRecord = numRecords * 2;
         for (int key = numRecords; key < maxRecord; key++)
         {
-            var status = session.Upsert(key, key * valueMult);
+            Status status = session.Upsert(key, key * valueMult);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
 
         // Restore the pool
         RevivificationTestUtils.SwapFreeRecordPool(store, pool);
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         if (updateOp == UpdateOp.Upsert)
             session.Upsert(maxRecord, maxRecord * valueMult);
@@ -432,7 +432,7 @@ class RevivificationSpanByteTests
             Assert.Less(functionsKey.Length, valueLengthRemaining);
             while (valueLengthRemaining > 0)
             {
-                var compareLength = Math.Min(functionsKey.Length, valueLengthRemaining);
+                int compareLength = Math.Min(functionsKey.Length, valueLengthRemaining);
                 Span<byte> valueSpan = functionsValue.AsSpan().Slice(valueOffset, compareLength);
                 Span<byte> keySpan = functionsKey.AsSpan()[..compareLength];
                 Assert.IsTrue(valueSpan.SequenceEqual(keySpan), $"functionsValue (offset {valueOffset}, len {compareLength}: {SpanByte.FromPinnedSpan(valueSpan)}) does not match functionsKey ({SpanByte.FromPinnedSpan(keySpan)})");
@@ -442,16 +442,16 @@ class RevivificationSpanByteTests
 
         public override bool SingleWriter(ref SpanByte key, ref SpanByte input, ref SpanByte src, ref SpanByte dst, ref SpanByteAndMemory output, ref UpsertInfo upsertInfo, WriteReason reason, ref RecordInfo recordInfo)
         {
-            var rmwInfo = RevivificationTestUtils.CopyToRMWInfo(ref upsertInfo);
-            var result = InitialUpdater(ref key, ref input, ref dst, ref output, ref rmwInfo, ref recordInfo);
+            RMWInfo rmwInfo = RevivificationTestUtils.CopyToRMWInfo(ref upsertInfo);
+            bool result = InitialUpdater(ref key, ref input, ref dst, ref output, ref rmwInfo, ref recordInfo);
             upsertInfo.UsedValueLength = rmwInfo.UsedValueLength;
             return result;
         }
 
         public override bool ConcurrentWriter(ref SpanByte key, ref SpanByte input, ref SpanByte src, ref SpanByte dst, ref SpanByteAndMemory output, ref UpsertInfo upsertInfo, ref RecordInfo recordInfo)
         {
-            var rmwInfo = RevivificationTestUtils.CopyToRMWInfo(ref upsertInfo);
-            var result = InPlaceUpdater(ref key, ref input, ref dst, ref output, ref rmwInfo, ref recordInfo);
+            RMWInfo rmwInfo = RevivificationTestUtils.CopyToRMWInfo(ref upsertInfo);
+            bool result = InPlaceUpdater(ref key, ref input, ref dst, ref output, ref rmwInfo, ref recordInfo);
             upsertInfo.UsedValueLength = rmwInfo.UsedValueLength;
             return result;
         }
@@ -461,7 +461,7 @@ class RevivificationSpanByteTests
             AssertInfoValid(ref rmwInfo);
             Assert.AreEqual(expectedInputLength, input.Length);
 
-            var expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
+            int expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
 
             if (value.Length == 0)
             {
@@ -483,7 +483,7 @@ class RevivificationSpanByteTests
             AssertInfoValid(ref rmwInfo);
             Assert.AreEqual(expectedInputLength, input.Length);
 
-            var expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
+            int expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
 
             if (newValue.Length == 0)
             {
@@ -509,7 +509,7 @@ class RevivificationSpanByteTests
 
             VerifyKeyAndValue(ref key, ref value);
 
-            var expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
+            int expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
             Assert.AreEqual(expectedUsedValueLength, rmwInfo.UsedValueLength);
 
             Assert.GreaterOrEqual(rmwInfo.Address, store.hlog.ReadOnlyAddress);
@@ -526,7 +526,7 @@ class RevivificationSpanByteTests
             Assert.AreEqual(expectedSingleDestLength, value.Length);
             Assert.AreEqual(expectedSingleFullValueLength, deleteInfo.FullValueLength);
 
-            var expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
+            int expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
             Assert.AreEqual(expectedUsedValueLength, deleteInfo.UsedValueLength);
 
             Assert.GreaterOrEqual(deleteInfo.Address, store.hlog.ReadOnlyAddress);
@@ -540,7 +540,7 @@ class RevivificationSpanByteTests
             Assert.AreEqual(expectedConcurrentDestLength, value.Length);
             Assert.AreEqual(expectedConcurrentFullValueLength, deleteInfo.FullValueLength);
 
-            var expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
+            int expectedUsedValueLength = expectedUsedValueLengths.Dequeue();
             Assert.AreEqual(expectedUsedValueLength, deleteInfo.UsedValueLength);
 
             Assert.GreaterOrEqual(deleteInfo.Address, store.hlog.ReadOnlyAddress);
@@ -612,9 +612,9 @@ class RevivificationSpanByteTests
 
         CollisionRange collisionRange = CollisionRange.None;
         LogSettings logSettings = new() { LogDevice = log, ObjectLogDevice = null, PageSizeBits = 17, MemorySizeBits = 20 };
-        var concurrencyControlMode = ConcurrencyControlMode.LockTable;
-        var revivificationSettings = RevivificationSettings.PowerOf2Bins;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.LockTable;
+        PowerOf2BinsRevivificationSettings revivificationSettings = RevivificationSettings.PowerOf2Bins;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is CollisionRange cr)
             {
@@ -679,7 +679,7 @@ class RevivificationSpanByteTests
             keyVec.Fill((byte)ii);
             inputVec.Fill((byte)ii);
             functions.expectedUsedValueLengths.Enqueue(input.TotalSize);
-            var status = session.Upsert(ref key, ref input, ref input, ref output);
+            Status status = session.Upsert(ref key, ref input, ref input, ref output);
             Assert.IsTrue(status.Record.Created, status.ToString());
             Assert.IsEmpty(functions.expectedUsedValueLengths);
         }
@@ -765,7 +765,7 @@ class RevivificationSpanByteTests
     {
         Populate();
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         Span<byte> keyVec = stackalloc byte[KeyLength];
         byte fillByte = 42;
@@ -773,7 +773,7 @@ class RevivificationSpanByteTests
         var key = SpanByte.FromPinnedSpan(keyVec);
 
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-        var status = session.Delete(ref key);
+        Status status = session.Delete(ref key);
         Assert.IsTrue(status.Found, status.ToString());
 
         Assert.AreEqual(tailAddress, store.Log.TailAddress);
@@ -808,7 +808,7 @@ class RevivificationSpanByteTests
     {
         Populate();
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         Span<byte> keyVec = stackalloc byte[KeyLength];
         byte fillByte = 42;
@@ -833,12 +833,12 @@ class RevivificationSpanByteTests
         // Get a free record from a failed IPU.
         if (updateOp == UpdateOp.Upsert)
         {
-            var status = session.Upsert(ref key, ref input, ref input, ref output);
+            Status status = session.Upsert(ref key, ref input, ref input, ref output);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
         else if (updateOp == UpdateOp.RMW)
         {
-            var status = session.RMW(ref key, ref input);
+            Status status = session.RMW(ref key, ref input);
             Assert.IsTrue(status.Record.CopyUpdated, status.ToString());
         }
 
@@ -862,12 +862,12 @@ class RevivificationSpanByteTests
 
         if (updateOp == UpdateOp.Upsert)
         {
-            var status = session.Upsert(ref key, ref input, ref input, ref output);
+            Status status = session.Upsert(ref key, ref input, ref input, ref output);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
         else if (updateOp == UpdateOp.RMW)
         {
-            var status = session.RMW(ref key, ref input);
+            Status status = session.RMW(ref key, ref input);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
 
@@ -885,7 +885,7 @@ class RevivificationSpanByteTests
     {
         Populate();
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         Span<byte> keyVec = stackalloc byte[KeyLength];
         byte fillByte = 42;
@@ -893,7 +893,7 @@ class RevivificationSpanByteTests
         var key = SpanByte.FromPinnedSpan(keyVec);
 
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-        var status = session.Delete(ref key);
+        Status status = session.Delete(ref key);
         Assert.IsTrue(status.Found, status.ToString());
 
         Assert.AreEqual(tailAddress, store.Log.TailAddress);
@@ -938,7 +938,7 @@ class RevivificationSpanByteTests
         var delKeyBelowRO = SpanByte.FromPinnedSpan(keyVecDelBelowRO);
 
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-        var status = session.Delete(ref delKeyBelowRO);
+        Status status = session.Delete(ref delKeyBelowRO);
         Assert.IsTrue(status.Found, status.ToString());
 
         if (flushMode == FlushMode.ReadOnly)
@@ -948,7 +948,7 @@ class RevivificationSpanByteTests
 
         Populate(numRecords / 2 + 1, numRecords);
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         // Delete key above the readonly line. This is the record that will be revivified.
         // If not stayInChain, this also puts two elements in the free list; one should be skipped over on Take() as it is below readonly.
@@ -1084,10 +1084,10 @@ class RevivificationSpanByteTests
             RevivificationTestUtils.AssertElidable(store, ref key);
 
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-        var status = session.Delete(ref key);
+        Status status = session.Delete(ref key);
         Assert.IsTrue(status.Found, status.ToString());
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         Span<byte> inputVec = stackalloc byte[InitialLength];
         var input = SpanByte.FromPinnedSpan(inputVec);
@@ -1123,7 +1123,7 @@ class RevivificationSpanByteTests
         Span<byte> keyVec = stackalloc byte[KeyLength];
         keyVec.Fill(chainKey);
         var key = SpanByte.FromPinnedSpan(keyVec);
-        var hash = comparer.GetHashCode64(ref key);
+        long hash = comparer.GetHashCode64(ref key);
 
         List<byte> deletedSlots = new();
         for (int ii = chainKey + 1; ii < numRecords; ++ii)
@@ -1133,7 +1133,7 @@ class RevivificationSpanByteTests
                 continue;
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Delete(ref key);
+            Status status = session.Delete(ref key);
             Assert.IsTrue(status.Found, status.ToString());
             if (ii > RevivificationTestUtils.GetMinRevivifiableKey(store, numRecords))
                 deletedSlots.Add((byte)ii);
@@ -1144,7 +1144,7 @@ class RevivificationSpanByteTests
         RevivificationTestUtils.WaitForRecords(store, want: false);
         Assert.IsFalse(RevivificationTestUtils.HasRecords(store), "Expected empty pool");
         Assert.Greater(deletedSlots.Count, 5);    // should be about Ten
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         Span<byte> inputVec = stackalloc byte[InitialLength];
         var input = SpanByte.FromPinnedSpan(inputVec);
@@ -1182,15 +1182,15 @@ class RevivificationSpanByteTests
         var key = SpanByte.FromPinnedSpan(keyVec);
 
         // "sizeof(int) +" because SpanByte has an int length prefix
-        var recordSize = RecordInfo.GetLength() + RoundUp(sizeof(int) + keyVec.Length, 8) + RoundUp(sizeof(int) + InitialLength, 8);
+        int recordSize = RecordInfo.GetLength() + RoundUp(sizeof(int) + keyVec.Length, 8) + RoundUp(sizeof(int) + InitialLength, 8);
 
         // Delete
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Delete(ref key);
+            Status status = session.Delete(ref key);
             Assert.IsTrue(status.Found, status.ToString());
         }
         Assert.AreEqual(tailAddress, store.Log.TailAddress);
@@ -1209,8 +1209,8 @@ class RevivificationSpanByteTests
         functions.expectedSingleFullValueLength = functions.expectedConcurrentFullValueLength = RoundUpSpanByteFullValueLength(InitialLength);
 
         // Revivify
-        var revivifiableKeyCount = RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
-        for (var ii = 0; ii < numRecords; ++ii)
+        int revivifiableKeyCount = RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
             inputVec.Fill((byte)ii);
@@ -1225,7 +1225,7 @@ class RevivificationSpanByteTests
             else
                 Assert.Less(tailAddress, store.Log.TailAddress, $"unexpected revivified record for key {ii}");
 
-            var status = session.Read(ref key, ref output);
+            Status status = session.Read(ref key, ref output);
             Assert.IsTrue(status.Found, $"Expected to find key {ii}; status == {status}");
         }
 
@@ -1233,10 +1233,10 @@ class RevivificationSpanByteTests
         RevivificationTestUtils.WaitForRecords(store, want: false);
 
         // Confirm
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
-            var status = session.Read(ref key, ref output);
+            Status status = session.Read(ref key, ref output);
             Assert.IsTrue(status.Found, $"Expected to find key {ii}; status == {status}");
         }
     }
@@ -1253,12 +1253,12 @@ class RevivificationSpanByteTests
         var key = SpanByte.FromPinnedSpan(keyVec);
 
         // Delete
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Delete(ref key);
+            Status status = session.Delete(ref key);
             Assert.IsTrue(status.Found, status.ToString());
         }
         Assert.AreEqual(RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords), RevivificationTestUtils.GetFreeRecordCount(store), $"Expected numRecords ({numRecords}) free records");
@@ -1278,19 +1278,19 @@ class RevivificationSpanByteTests
         var key = SpanByte.FromPinnedSpan(keyVec);
 
         // Delete
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
 
             RevivificationTestUtils.AssertElidable(store, ref key);
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Delete(ref key);
+            Status status = session.Delete(ref key);
             Assert.IsTrue(status.Found, status.ToString());
         }
         Assert.AreEqual(RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords), RevivificationTestUtils.GetFreeRecordCount(store), $"Expected numRecords ({numRecords}) free records");
 
-        using var iterator = session.Iterate();
+        using ITsavoriteScanIterator<SpanByte, SpanByte> iterator = session.Iterate();
         while (iterator.GetNext(out _))
             ;
     }
@@ -1347,8 +1347,8 @@ class RevivificationSpanByteTests
         RevivificationStats revivStats = new();
 
         // Fill the bin, including wrapping around at the end.
-        var recordCount = RevivificationTestUtils.GetRecordCount(pool, binIndex);
-        for (var ii = 0; ii < recordCount; ++ii)
+        int recordCount = RevivificationTestUtils.GetRecordCount(pool, binIndex);
+        for (int ii = 0; ii < recordCount; ++ii)
             Assert.IsTrue(store.RevivificationManager.TryAdd(logicalAddress + ii, recordSize, ref revivStats), "ArtificialBinWrappingTest: Failed to Add free record, pt 1");
 
         // Try to add to a full bin; this should fail.
@@ -1357,7 +1357,7 @@ class RevivificationSpanByteTests
 
         RevivificationTestUtils.WaitForRecords(store, want: true);
 
-        for (var ii = 0; ii < recordCount; ++ii)
+        for (int ii = 0; ii < recordCount; ++ii)
             Assert.IsTrue(RevivificationTestUtils.IsSet(pool, binIndex, ii), "expected bin to be set at ii == {ii}");
 
         // Take() one to open up a space in the bin, then add one
@@ -1368,9 +1368,9 @@ class RevivificationSpanByteTests
 
         // Take() all records in the bin.
         revivStats.Reset();
-        for (var ii = 0; ii < recordCount; ++ii)
+        for (int ii = 0; ii < recordCount; ++ii)
             Assert.IsTrue(RevivificationTestUtils.TryTakeFromBin(pool, binIndex, recordSize, minAddress, store, out _, ref revivStats), $"ArtificialBinWrappingTest: failed to Take at ii == {ii}");
-        var statsString = revivStats.Dump();
+        string statsString = revivStats.Dump();
     }
 
     [Test]
@@ -1397,7 +1397,7 @@ class RevivificationSpanByteTests
         var input = SpanByte.FromPinnedSpan(inputVec);
 
         // "sizeof(int) +" because SpanByte has an int length prefix.
-        var recordSize = RecordInfo.GetLength() + RoundUp(sizeof(int) + keyVec.Length, 8) + RoundUp(sizeof(int) + InitialLength, 8);
+        int recordSize = RecordInfo.GetLength() + RoundUp(sizeof(int) + keyVec.Length, 8) + RoundUp(sizeof(int) + InitialLength, 8);
         Assert.IsTrue(pool.GetBinIndex(recordSize, out int binIndex));
         Assert.AreEqual(3, binIndex);
 
@@ -1406,20 +1406,20 @@ class RevivificationSpanByteTests
 
         // Delete 
         functions.expectedInputLength = InitialLength;
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
             inputVec.Fill((byte)ii);
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Delete(ref key);
+            Status status = session.Delete(ref key);
             Assert.IsTrue(status.Found, $"{status} for key {ii}");
             //Assert.AreEqual(ii + 1, RevivificationTestUtils.GetFreeRecordCount(store), $"mismatched free record count for key {ii}, pt 1");
         }
 
         if (deleteDest == DeleteDest.FreeList && waitMode == WaitMode.Wait)
         {
-            var actualNumRecords = RevivificationTestUtils.GetFreeRecordCount(store);
+            int actualNumRecords = RevivificationTestUtils.GetFreeRecordCount(store);
             Assert.AreEqual(RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords), actualNumRecords, $"mismatched free record count");
         }
 
@@ -1427,7 +1427,7 @@ class RevivificationSpanByteTests
         functions.expectedInputLength = InitialLength;
         functions.expectedSingleDestLength = InitialLength;
         functions.expectedConcurrentDestLength = InitialLength;
-        for (var ii = 0; ii < numRecords; ++ii)
+        for (int ii = 0; ii < numRecords; ++ii)
         {
             keyVec.Fill((byte)ii);
             inputVec.Fill((byte)ii);
@@ -1444,10 +1444,10 @@ class RevivificationSpanByteTests
 
             if (deleteDest == DeleteDest.FreeList && waitMode == WaitMode.Wait && tailAddress != store.Log.TailAddress)
             {
-                var expectedReviv = ii < RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
+                bool expectedReviv = ii < RevivificationTestUtils.GetRevivifiableRecordCount(store, numRecords);
                 if (expectedReviv != (tailAddress == store.Log.TailAddress))
                 {
-                    var freeRecs = RevivificationTestUtils.GetFreeRecordCount(store);
+                    int freeRecs = RevivificationTestUtils.GetFreeRecordCount(store);
                     if (expectedReviv)
                         Assert.AreEqual(tailAddress, store.Log.TailAddress, $"failed to revivify record for key {ii}, freeRecs {freeRecs}");
                     else
@@ -1479,21 +1479,21 @@ class RevivificationSpanByteTests
         Span<byte> inputVec = stackalloc byte[InitialLength];
         var input = SpanByte.FromPinnedSpan(inputVec);
 
-        for (var iter = 0; iter < 100; ++iter)
+        for (int iter = 0; iter < 100; ++iter)
         {
             // Delete 
             functions.expectedInputLength = InitialLength;
-            for (var ii = 0; ii < numRecords; ++ii)
+            for (int ii = 0; ii < numRecords; ++ii)
             {
                 keyVec.Fill((byte)ii);
                 inputVec.Fill((byte)ii);
 
                 functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(iter == 0 ? InitialLength : InitialLength));
-                var status = session.Delete(ref key);
+                Status status = session.Delete(ref key);
                 Assert.IsTrue(status.Found, $"{status} for key {ii}, iter {iter}");
             }
 
-            for (var ii = 0; ii < numRecords; ++ii)
+            for (int ii = 0; ii < numRecords; ++ii)
             {
                 keyVec.Fill((byte)ii);
                 inputVec.Fill((byte)ii);
@@ -1552,12 +1552,12 @@ class RevivificationSpanByteTests
 
         // Delete it
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(OversizeLength));
-        var status = session.Delete(ref key);
+        Status status = session.Delete(ref key);
         Assert.IsTrue(status.Found, status.ToString());
         if (!stayInChain)
             RevivificationTestUtils.WaitForRecords(store, want: true);
 
-        var tailAddress = store.Log.TailAddress;
+        long tailAddress = store.Log.TailAddress;
 
         // Revivify in the chain. Because this is oversize, the expectedFullValueLength remains the same
         functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(OversizeLength));
@@ -1610,11 +1610,11 @@ class RevivificationSpanByteTests
             functions.expectedSingleDestLength = InitialLength;
             functions.expectedConcurrentDestLength = InitialLength;
 
-            var spanSlice = inputVec[..InitialLength];
+            Span<byte> spanSlice = inputVec[..InitialLength];
             var inputSlice = SpanByte.FromPinnedSpan(spanSlice);
 
             functions.expectedUsedValueLengths.Enqueue(SpanByteTotalSize(InitialLength));
-            var status = session.Read(ref key, ref inputSlice, ref output);
+            Status status = session.Read(ref key, ref inputSlice, ref output);
             Assert.IsTrue(status.IsPending, status.ToString());
             session.CompletePending(wait: true);
             Assert.IsTrue(functions.readCcCalled);
@@ -1656,8 +1656,8 @@ class RevivificationObjectTests
         log = Devices.CreateLogDevice(Path.Combine(MethodTestDir, "test.log"), deleteOnClose: true);
         objlog = Devices.CreateLogDevice(Path.Combine(MethodTestDir, "test.obj.log"), deleteOnClose: true);
 
-        var concurrencyControlMode = ConcurrencyControlMode.LockTable;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.LockTable;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ConcurrencyControlMode ccm)
             {
@@ -1697,7 +1697,7 @@ class RevivificationObjectTests
         {
             var keyObj = new MyKey { key = key };
             var valueObj = new MyValue { value = key + valueMult };
-            var status = session.Upsert(keyObj, valueObj);
+            Status status = session.Upsert(keyObj, valueObj);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
     }
@@ -1711,12 +1711,12 @@ class RevivificationObjectTests
     {
         Populate();
 
-        var deleteKey = RevivificationTestUtils.GetMinRevivifiableKey(store, numRecords);
-        var tailAddress = store.Log.TailAddress;
+        int deleteKey = RevivificationTestUtils.GetMinRevivifiableKey(store, numRecords);
+        long tailAddress = store.Log.TailAddress;
         session.Delete(new MyKey { key = deleteKey });
         Assert.AreEqual(tailAddress, store.Log.TailAddress);
 
-        var updateKey = deleteDest == DeleteDest.InChain ? deleteKey : numRecords + 1;
+        int updateKey = deleteDest == DeleteDest.InChain ? deleteKey : numRecords + 1;
 
         var key = new MyKey { key = updateKey };
         var value = new MyValue { value = key.key + valueMult };
@@ -1766,7 +1766,7 @@ class RevivificationSpanByteStressTests
             Assert.Less(functionsKey.Length, valueLengthRemaining);
             while (valueLengthRemaining > 0)
             {
-                var compareLength = Math.Min(functionsKey.Length, valueLengthRemaining);
+                int compareLength = Math.Min(functionsKey.Length, valueLengthRemaining);
                 Span<byte> valueSpan = functionsValue.AsSpan().Slice(valueOffset, compareLength);
                 Span<byte> keySpan = functionsKey.AsSpan()[..compareLength];
                 Assert.IsTrue(valueSpan.SequenceEqual(keySpan), $"functionsValue (offset {valueOffset}, len {compareLength}: {SpanByte.FromPinnedSpan(valueSpan)}) does not match functionsKey ({SpanByte.FromPinnedSpan(keySpan)})");
@@ -1830,8 +1830,8 @@ class RevivificationSpanByteStressTests
 
         CollisionRange collisionRange = CollisionRange.None;
         LogSettings logSettings = new() { LogDevice = log, ObjectLogDevice = null, PageSizeBits = 17, MemorySizeBits = 20 };
-        var concurrencyControlMode = ConcurrencyControlMode.LockTable;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.LockTable;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is CollisionRange cr)
             {
@@ -1880,7 +1880,7 @@ class RevivificationSpanByteStressTests
             keyVec.Fill((byte)ii);
             inputVec.Fill((byte)ii);
 
-            var status = session.Upsert(ref key, ref input, ref input, ref output);
+            Status status = session.Upsert(ref key, ref input, ref input, ref output);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
     }
@@ -1912,10 +1912,10 @@ class RevivificationSpanByteStressTests
             RecordSize = recordSize,
             NumberOfRecords = maxRecords
         };
-        var flags = new long[maxRecords];
+        long[] flags = new long[maxRecords];
         List<int> strayFlags = new(0), strayRecords = new();
 
-        using var freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
+        using FreeRecordPool<SpanByte, SpanByte> freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
 
         int iteration = 0;
         int totalTaken = 0;
@@ -1923,7 +1923,7 @@ class RevivificationSpanByteStressTests
         void beginIteration()
         {
             totalTaken = 0;
-            for (var ii = 0; ii < flags.Length; ++ii)
+            for (int ii = 0; ii < flags.Length; ++ii)
                 flags[ii] = 0;
             strayFlags.Clear();
             strayRecords.Clear();
@@ -1931,7 +1931,7 @@ class RevivificationSpanByteStressTests
 
         void enumerateStrayFlags()
         {
-            for (var ii = 0; ii < flags.Length; ++ii)
+            for (int ii = 0; ii < flags.Length; ++ii)
             {
                 // We should have added and removed all addresses from 0 -> MaxRecords
                 if (flags[ii] < RemovedBase)
@@ -1941,8 +1941,8 @@ class RevivificationSpanByteStressTests
 
         unsafe void enumerateStrayRecords()
         {
-            var bin = freeRecordPool.bins[0];
-            for (var ii = 0; ii < bin.recordCount; ++ii)
+            FreeRecordBin bin = freeRecordPool.bins[0];
+            for (int ii = 0; ii < bin.recordCount; ++ii)
             {
                 if ((bin.records + ii)->IsSet)
                     strayRecords.Add(ii);
@@ -1960,10 +1960,10 @@ class RevivificationSpanByteStressTests
         void runAddThread(int tid)
         {
             RevivificationStats revivStats = new();
-            for (var ii = 0; ii < numRecordsPerThread; ++ii)
+            for (int ii = 0; ii < numRecordsPerThread; ++ii)
             {
-                var addressBase = ii + tid * numRecordsPerThread;
-                var flag = flags[addressBase];
+                int addressBase = ii + tid * numRecordsPerThread;
+                long flag = flags[addressBase];
                 Assert.AreEqual(Unadded, flag, $"Invalid flag {flag} trying to add addressBase {addressBase}, tid {tid}, iteration {iteration}");
                 flags[addressBase] = 1;
                 Assert.IsTrue(freeRecordPool.TryAdd(addressBase + AddressIncrement, recordSize, ref revivStats), $"Failed to add addressBase {addressBase}, tid {tid}, iteration {iteration}");
@@ -1977,8 +1977,8 @@ class RevivificationSpanByteStressTests
             {
                 if (freeRecordPool.bins[0].TryTake(recordSize, 0, store, out long address, ref revivStats))
                 {
-                    var addressBase = address - AddressIncrement;
-                    var prevFlag = Interlocked.CompareExchange(ref flags[addressBase], RemovedBase + tid, Added);
+                    long addressBase = address - AddressIncrement;
+                    long prevFlag = Interlocked.CompareExchange(ref flags[addressBase], RemovedBase + tid, Added);
                     Assert.AreEqual(1, prevFlag, $"Take() found unexpected addressBase {addressBase} (flag {prevFlag}), tid {tid}, iteration {iteration}");
                     Interlocked.Increment(ref totalTaken);
                 }
@@ -1996,25 +1996,25 @@ class RevivificationSpanByteStressTests
 
             for (int t = 0; t < numAddThreads; t++)
             {
-                var tid = t;    // Use 0 for the first TID
+                int tid = t;    // Use 0 for the first TID
                 tasks.Add(Task.Factory.StartNew(() => runAddThread(tid)));
             }
             for (int t = 0; t < numTakeThreads; t++)
             {
-                var tid = t + numAddThreads;
+                int tid = t + numAddThreads;
                 tasks.Add(Task.Factory.StartNew(() => runTakeThread(tid)));
             }
 
             try
             {
-                var timeoutSec = 5;     // 5s per iteration should be plenty
+                int timeoutSec = 5;     // 5s per iteration should be plenty
                 Assert.IsTrue(Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(timeoutSec)), $"Task timeout at {timeoutSec} sec, maxRec/taken {maxRecords}/{totalTaken}, iteration {iteration}");
                 endIteration();
             }
             finally
             {
                 // This tests runs multiple iterations so can create many tasks, so dispose them at the end of each iteration.
-                foreach (var task in tasks)
+                foreach (Task task in tasks)
                 {
                     // A non-completed task throws an exception on Dispose(), which masks the initial exception.
                     // If it's not completed when we get here, the test has already failed.
@@ -2037,16 +2037,16 @@ class RevivificationSpanByteStressTests
             NumberOfRecords = 64,
             BestFitScanLimit = RevivificationBin.UseFirstFit
         };
-        var freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
+        FreeRecordPool<SpanByte, SpanByte> freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
 
         RevivificationStats revivStats = new();
         Assert.IsTrue(freeRecordPool.TryAdd(AddressIncrement + 1, TakeSize, ref revivStats));
-        Assert.IsTrue(freeRecordPool.TryTake(TakeSize, minAddress: AddressIncrement, out var address, ref revivStats));
+        Assert.IsTrue(freeRecordPool.TryTake(TakeSize, minAddress: AddressIncrement, out long address, ref revivStats));
 
         Assert.AreEqual(AddressIncrement + 1, address, "out address");
         Assert.AreEqual(1, revivStats.successfulAdds, "Successful Adds");
         Assert.AreEqual(1, revivStats.successfulTakes, "Successful Takes");
-        var statsString = revivStats.Dump();
+        string statsString = revivStats.Dump();
     }
 
     public enum WrapMode { Wrap, NoWrap };
@@ -2060,7 +2060,7 @@ class RevivificationSpanByteStressTests
             NumberOfRecords = 64,
             BestFitScanLimit = scanLimit
         };
-        var freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
+        FreeRecordPool<SpanByte, SpanByte> freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
 
         const int minAddress = AddressIncrement - 10;
         int expectedAdds = 0, expectedTakes = 0;
@@ -2068,11 +2068,11 @@ class RevivificationSpanByteStressTests
         {
             // Add too-small records to wrap around the end of the bin records. Use lower addresses so we don't mix up the "real" results.
             const int smallSize = TakeSize - 4;
-            for (var ii = 0; ii < freeRecordPool.bins[0].recordCount - 2; ++ii, ++expectedAdds)
+            for (int ii = 0; ii < freeRecordPool.bins[0].recordCount - 2; ++ii, ++expectedAdds)
                 Assert.IsTrue(freeRecordPool.TryAdd(minAddress + ii + 1, smallSize, ref revivStats));
 
             // Now take out the four at the beginning.
-            for (var ii = 0; ii < 4; ++ii, ++expectedTakes)
+            for (int ii = 0; ii < 4; ++ii, ++expectedTakes)
                 Assert.IsTrue(freeRecordPool.TryTake(smallSize, minAddress, out _, ref revivStats));
         }
 
@@ -2099,10 +2099,10 @@ class RevivificationSpanByteStressTests
         // We should first Take the first 20-length due to exact fit, then skip over the empty to take the next 20, then we have
         // no exact fit within the scan limit, so we grab the best fit before that (21).
         RevivificationStats revivStats = new();
-        using var freeRecordPool = CreateBestFitTestPool(scanLimit: 4, wrapMode, ref revivStats);
-        var expectedTakes = revivStats.successfulTakes;
-        var minAddress = AddressIncrement;
-        Assert.IsTrue(freeRecordPool.TryTake(TakeSize, minAddress, out var address, ref revivStats));
+        using FreeRecordPool<SpanByte, SpanByte> freeRecordPool = CreateBestFitTestPool(scanLimit: 4, wrapMode, ref revivStats);
+        long expectedTakes = revivStats.successfulTakes;
+        int minAddress = AddressIncrement;
+        Assert.IsTrue(freeRecordPool.TryTake(TakeSize, minAddress, out long address, ref revivStats));
         Assert.AreEqual(4, address -= AddressIncrement);
         Assert.IsTrue(freeRecordPool.TryTake(TakeSize, minAddress, out address, ref revivStats));
         Assert.AreEqual(5, address -= AddressIncrement);
@@ -2123,7 +2123,7 @@ class RevivificationSpanByteStressTests
 
         Assert.AreEqual(expectedTakes, revivStats.successfulTakes, "Successful Takes");
         Assert.AreEqual(1, revivStats.failedTakes, "Failed Takes");
-        var statsString = revivStats.Dump();
+        string statsString = revivStats.Dump();
     }
 
     [Test]
@@ -2133,13 +2133,13 @@ class RevivificationSpanByteStressTests
     {
         // We should Take the addresses in order.
         RevivificationStats revivStats = new();
-        using var freeRecordPool = CreateBestFitTestPool(scanLimit: RevivificationBin.UseFirstFit, wrapMode, ref revivStats);
-        var expectedSuccessfulTakes = revivStats.successfulTakes;
-        var expectedFailedTakes = revivStats.failedTakes;
-        var minAddress = AddressIncrement;
+        using FreeRecordPool<SpanByte, SpanByte> freeRecordPool = CreateBestFitTestPool(scanLimit: RevivificationBin.UseFirstFit, wrapMode, ref revivStats);
+        long expectedSuccessfulTakes = revivStats.successfulTakes;
+        long expectedFailedTakes = revivStats.failedTakes;
+        int minAddress = AddressIncrement;
 
         long address = -1;
-        for (var ii = 0; ii < 6; ++ii, ++expectedSuccessfulTakes)
+        for (int ii = 0; ii < 6; ++ii, ++expectedSuccessfulTakes)
         {
             if (!freeRecordPool.TryTake(TakeSize, minAddress, out address, ref revivStats))
                 Assert.Fail($"Take failed at ii {ii}: pool.HasRecords {RevivificationTestUtils.HasRecords(freeRecordPool)}");
@@ -2153,7 +2153,7 @@ class RevivificationSpanByteStressTests
             Assert.AreEqual(1, revivStats.takeEmptyBins, "Empty Bins");
         else
             Assert.AreEqual(1, revivStats.takeRecordSizeFailures, "Record Size");
-        var statsString = revivStats.Dump();
+        string statsString = revivStats.Dump();
     }
 
     [Test]
@@ -2166,7 +2166,7 @@ class RevivificationSpanByteStressTests
             RecordSize = 32,
             NumberOfRecords = 32
         };
-        var freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
+        FreeRecordPool<SpanByte, SpanByte> freeRecordPool = RevivificationTestUtils.CreateSingleBinFreeRecordPool(store, binDef);
         const long TestAddress = AddressIncrement, minAddress = AddressIncrement - 10;
         long counter = 0, globalAddress = 0;
         const int size = 20;
@@ -2175,7 +2175,7 @@ class RevivificationSpanByteStressTests
         unsafe void runThread(int tid)
         {
             RevivificationStats revivStats = new();
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
                 if (freeRecordPool.TryTake(size, minAddress, out long address, ref revivStats))
                 {
@@ -2192,7 +2192,7 @@ class RevivificationSpanByteStressTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 0; t < 8; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runThread(tid)));
         }
         Task.WaitAll(tasks.ToArray());
@@ -2218,16 +2218,16 @@ class RevivificationSpanByteStressTests
         {
             Random rng = new(tid * 101);
 
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
 
             Span<byte> keyVec = stackalloc byte[KeyLength];
             var key = SpanByte.FromPinnedSpan(keyVec);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numDeleteThreads)
+                for (int ii = tid; ii < numRecords; ii += numDeleteThreads)
                 {
-                    var kk = rng.Next(keyRange);
+                    int kk = rng.Next(keyRange);
                     keyVec.Fill((byte)kk);
                     localSession.Delete(key);
                 }
@@ -2245,13 +2245,13 @@ class RevivificationSpanByteStressTests
             Random rng = new(tid * 101);
 
             RevivificationStressFunctions localFunctions = new(keyComparer: store.comparer);
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numUpdateThreads)
+                for (int ii = tid; ii < numRecords; ii += numUpdateThreads)
                 {
-                    var kk = rng.Next(keyRange);
+                    int kk = rng.Next(keyRange);
                     keyVec.Fill((byte)kk);
                     inputVec.Fill((byte)kk);
 
@@ -2273,12 +2273,12 @@ class RevivificationSpanByteStressTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 0; t < numDeleteThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runDeleteThread(tid)));
         }
         for (int t = 0; t < numUpdateThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runUpdateThread(tid)));
         }
         Task.WaitAll(tasks.ToArray());
@@ -2304,16 +2304,16 @@ class RevivificationSpanByteStressTests
         {
             Random rng = new(tid * 101);
 
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
 
             Span<byte> keyVec = stackalloc byte[KeyLength];
             var key = SpanByte.FromPinnedSpan(keyVec);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numDeleteThreads)
+                for (int ii = tid; ii < numRecords; ii += numDeleteThreads)
                 {
-                    var kk = threadingPattern == ThreadingPattern.RandomKeys ? rng.Next(numRecords) : ii;
+                    int kk = threadingPattern == ThreadingPattern.RandomKeys ? rng.Next(numRecords) : ii;
                     keyVec.Fill((byte)kk);
                     localSession.Delete(key);
                 }
@@ -2331,13 +2331,13 @@ class RevivificationSpanByteStressTests
             Random rng = new(tid * 101);
 
             RevivificationStressFunctions localFunctions = new(keyComparer: store.comparer);
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numUpdateThreads)
+                for (int ii = tid; ii < numRecords; ii += numUpdateThreads)
                 {
-                    var kk = threadingPattern == ThreadingPattern.RandomKeys ? rng.Next(numRecords) : ii;
+                    int kk = threadingPattern == ThreadingPattern.RandomKeys ? rng.Next(numRecords) : ii;
                     keyVec.Fill((byte)kk);
                     inputVec.Fill((byte)kk);
 
@@ -2359,12 +2359,12 @@ class RevivificationSpanByteStressTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 0; t < numDeleteThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runDeleteThread(tid)));
         }
         for (int t = 0; t < numUpdateThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runUpdateThread(tid)));
         }
         Task.WaitAll(tasks.ToArray());
@@ -2389,14 +2389,14 @@ class RevivificationSpanByteStressTests
 
         unsafe void runDeleteThread(int tid)
         {
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(new RevivificationStressFunctions(keyComparer: null));
 
             Span<byte> keyVec = stackalloc byte[KeyLength];
             var key = SpanByte.FromPinnedSpan(keyVec);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numDeleteThreads)
+                for (int ii = tid; ii < numRecords; ii += numDeleteThreads)
                 {
                     keyVec.Fill((byte)ii);
                     localSession.Delete(key);
@@ -2413,11 +2413,11 @@ class RevivificationSpanByteStressTests
             var input = SpanByte.FromPinnedSpan(inputVec);
 
             RevivificationStressFunctions localFunctions = new RevivificationStressFunctions(keyComparer: null);
-            using var localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions> localSession = store.NewSession<SpanByte, SpanByteAndMemory, Empty, RevivificationStressFunctions>(localFunctions);
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = tid; ii < numRecords; ii += numUpdateThreads)
+                for (int ii = tid; ii < numRecords; ii += numUpdateThreads)
                 {
                     keyVec.Fill((byte)ii);
                     inputVec.Fill((byte)ii);
@@ -2440,12 +2440,12 @@ class RevivificationSpanByteStressTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 0; t < numDeleteThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runDeleteThread(tid)));
         }
         for (int t = 0; t < numUpdateThreads; t++)
         {
-            var tid = t + 1;
+            int tid = t + 1;
             tasks.Add(Task.Factory.StartNew(() => runUpdateThread(tid)));
         }
         Task.WaitAll(tasks.ToArray());

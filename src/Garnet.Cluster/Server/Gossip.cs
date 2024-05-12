@@ -111,13 +111,13 @@ internal sealed partial class ClusterManager : IDisposable
     public List<string> GetBanList()
     {
         var banlist = new List<string>();
-        foreach (var w in workerBanList)
+        foreach (KeyValuePair<string, long> w in workerBanList)
         {
-            var nodeId = w.Key;
-            var expiry = w.Value;
-            var diff = expiry - DateTimeOffset.UtcNow.Ticks;
+            string nodeId = w.Key;
+            long expiry = w.Value;
+            long diff = expiry - DateTimeOffset.UtcNow.Ticks;
 
-            var str = $"{nodeId} : {TimeSpan.FromTicks(diff).Seconds}";
+            string str = $"{nodeId} : {TimeSpan.FromTicks(diff).Seconds}";
             banlist.Add(str);
         }
         return banlist;
@@ -130,7 +130,7 @@ internal sealed partial class ClusterManager : IDisposable
     /// <returns>MetricsItem array of all the associated info.</returns>
     public MetricsItem[] GetPrimaryLinkStatus(ClusterConfig config)
     {
-        var primaryId = config.LocalNodePrimaryId;
+        string primaryId = config.LocalNodePrimaryId;
         var primaryLinkStatus = new MetricsItem[2]
         {
             new("master_link_status", "down"),
@@ -176,9 +176,9 @@ internal sealed partial class ClusterManager : IDisposable
     private void TryStartGossipTasks()
     {
         // Start background task for gossip protocol
-        for (var i = 2; i <= CurrentConfig.NumWorkers; i++)
+        for (int i = 2; i <= CurrentConfig.NumWorkers; i++)
         {
-            var (address, port) = CurrentConfig.GetWorkerAddress((ushort)i);
+            (string address, int port) = CurrentConfig.GetWorkerAddress((ushort)i);
             RunMeetTask(address, port);
         }
 
@@ -202,9 +202,9 @@ internal sealed partial class ClusterManager : IDisposable
 
             while (true)
             {
-                var current = currentConfig;
-                var currentCopy = current.Copy();
-                var next = currentCopy.Merge(other, workerBanList).HandleConfigEpochCollision(other);
+                ClusterConfig current = currentConfig;
+                ClusterConfig currentCopy = current.Copy();
+                ClusterConfig next = currentCopy.Merge(other, workerBanList).HandleConfigEpochCollision(other);
                 if (currentCopy == next) return false;
                 if (Interlocked.CompareExchange(ref currentConfig, next, current) == current)
                     break;
@@ -235,10 +235,10 @@ internal sealed partial class ClusterManager : IDisposable
     public void Meet(string address, int port)
     {
         GarnetServerNode gsn = null;
-        var conf = CurrentConfig;
-        var nodeId = conf.GetWorkerNodeIdFromAddress(address, port);
+        ClusterConfig conf = CurrentConfig;
+        string nodeId = conf.GetWorkerNodeIdFromAddress(address, port);
         MemoryResult<byte> resp = default;
-        var created = false;
+        bool created = false;
 
         gossipStats.UpdateMeetRequestsRecv();
         try
@@ -294,11 +294,11 @@ internal sealed partial class ClusterManager : IDisposable
     /// </summary>
     private void DisposeBannedWorkerConnections()
     {
-        foreach (var w in workerBanList)
+        foreach (KeyValuePair<string, long> w in workerBanList)
         {
             if (ctsGossip.Token.IsCancellationRequested) return;
-            var nodeId = w.Key;
-            var expiry = w.Value;
+            string nodeId = w.Key;
+            long expiry = w.Value;
 
             // Check if ban on worker has expired or not
             if (!Expired(expiry))
@@ -307,7 +307,7 @@ internal sealed partial class ClusterManager : IDisposable
                 _ = clusterConnectionStore.TryRemove(nodeId);
             }
             else // Remove worker from ban list
-                _ = workerBanList.TryRemove(nodeId, out var _);
+                _ = workerBanList.TryRemove(nodeId, out long _);
         }
     }
 
@@ -318,18 +318,18 @@ internal sealed partial class ClusterManager : IDisposable
     {
         DisposeBannedWorkerConnections();
 
-        var current = currentConfig;
-        var addresses = current.GetWorkerInfoForGossip();
+        ClusterConfig current = currentConfig;
+        List<(string, string, int)> addresses = current.GetWorkerInfoForGossip();
 
-        foreach (var a in addresses)
+        foreach ((string, string, int) a in addresses)
         {
             if (ctsGossip.Token.IsCancellationRequested) break;
-            var nodeId = a.Item1;
-            var address = a.Item2;
-            var port = a.Item3;
+            string nodeId = a.Item1;
+            string address = a.Item2;
+            int port = a.Item3;
 
             // Establish new connection only if it is not in banlist and not in dictionary
-            if (!workerBanList.ContainsKey(nodeId) && !clusterConnectionStore.GetConnection(nodeId, out var _))
+            if (!workerBanList.ContainsKey(nodeId) && !clusterConnectionStore.GetConnection(nodeId, out GarnetServerNode _))
             {
                 var gsn = new GarnetServerNode(clusterProvider, address, port, tlsOptions?.TlsClientOptions, logger: logger)
                 {
@@ -357,7 +357,7 @@ internal sealed partial class ClusterManager : IDisposable
     {
         // Issue async gossip tasks to all nodes
         uint offset = 0;
-        while (clusterConnectionStore.GetConnectionAtOffset(offset, out var currNode))
+        while (clusterConnectionStore.GetConnectionAtOffset(offset, out GarnetServerNode currNode))
         {
             try
             {
@@ -389,20 +389,20 @@ internal sealed partial class ClusterManager : IDisposable
     /// </summary>
     public void GossipSampleSend()
     {
-        var nodeCount = clusterConnectionStore.Count;
-        var fraction = (int)(Math.Ceiling(nodeCount * (GossipSamplePercent / 100.0f)));
-        var count = Math.Max(Math.Min(1, nodeCount), fraction);
+        int nodeCount = clusterConnectionStore.Count;
+        int fraction = (int)(Math.Ceiling(nodeCount * (GossipSamplePercent / 100.0f)));
+        int count = Math.Max(Math.Min(1, nodeCount), fraction);
 
-        var startTime = DateTimeOffset.UtcNow.Ticks;
+        long startTime = DateTimeOffset.UtcNow.Ticks;
         while (count > 0)
         {
-            var minSend = startTime;
+            long minSend = startTime;
             GarnetServerNode currNode = null;
 
-            for (var i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 // Pick the node with earliest send timestamp
-                if (clusterConnectionStore.GetRandomConnection(out var c) && c.GossipSend < minSend)
+                if (clusterConnectionStore.GetRandomConnection(out GarnetServerNode c) && c.GossipSend < minSend)
                 {
                     minSend = c.GossipSend;
                     currNode = c;

@@ -63,7 +63,7 @@ internal sealed class MemoryPageScanIterator<Key, Value> : ITsavoriteScanIterato
 
     public bool GetNext(out RecordInfo recordInfo, out Key key, out Value value)
     {
-        var r = GetNext(out recordInfo);
+        bool r = GetNext(out recordInfo);
         if (r)
         {
             key = page[offset].key;

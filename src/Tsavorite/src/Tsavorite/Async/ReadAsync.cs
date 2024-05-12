@@ -30,7 +30,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                       ITsavoriteSession<Key, Value, Input, Output, Context> tsavoriteSession, out Output output)
         {
             Status status = !diskRequest.IsDefault()
-                ? tsavoriteKV.InternalCompletePendingRequestFromContext(tsavoriteSession, diskRequest, ref pendingContext, out var newDiskRequest)
+                ? tsavoriteKV.InternalCompletePendingRequestFromContext(tsavoriteSession, diskRequest, ref pendingContext, out AsyncIOContext<Key, Value> newDiskRequest)
                 : tsavoriteKV.CallInternalRead(tsavoriteSession, ref pendingContext, readAtAddress, ref pendingContext.key.Get(), ref pendingContext.input.Get(), ref pendingContext.output,
                                 ref readOptions, pendingContext.userContext, pendingContext.serialNum, out newDiskRequest);
             output = pendingContext.output;
@@ -95,7 +95,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 recordMetadata = RecordMetadata;
                 return (Status, Output);
             }
-            var readAsyncResult = updateAsyncInternal.CompleteSync();
+            ReadAsyncResult<Input, TOutput, Context> readAsyncResult = updateAsyncInternal.CompleteSync();
             recordMetadata = readAsyncResult.RecordMetadata;
             return (readAsyncResult.Status, readAsyncResult.Output);
         }
@@ -112,7 +112,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         try
         {
             Output output = default;
-            var status = CallInternalRead(tsavoriteSession, ref pcontext, readAtAddress: 0L, ref key, ref input, ref output, ref readOptions, context, serialNo, out diskRequest);
+            Status status = CallInternalRead(tsavoriteSession, ref pcontext, readAtAddress: 0L, ref key, ref input, ref output, ref readOptions, context, serialNo, out diskRequest);
             if (!status.IsPending)
                 return new ValueTask<ReadAsyncResult<Input, Output, Context>>(new ReadAsyncResult<Input, Output, Context>(status, output, new RecordMetadata(pcontext.recordInfo, pcontext.logicalAddress)));
         }
@@ -137,7 +137,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         try
         {
             Output output = default;
-            var status = CallInternalRead(tsavoriteSession, ref pcontext, readAtAddress, ref key, ref input, ref output, ref readOptions, context, serialNo, out diskRequest);
+            Status status = CallInternalRead(tsavoriteSession, ref pcontext, readAtAddress, ref key, ref input, ref output, ref readOptions, context, serialNo, out diskRequest);
             if (!status.IsPending)
                 return new ValueTask<ReadAsyncResult<Input, Output, Context>>(new ReadAsyncResult<Input, Output, Context>(status, output, new RecordMetadata(pcontext.recordInfo, pcontext.logicalAddress)));
         }
@@ -157,7 +157,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             out AsyncIOContext<Key, Value> diskRequest)
     {
         OperationStatus internalStatus;
-        var keyHash = readOptions.KeyHash ?? comparer.GetHashCode64(ref key);
+        long keyHash = readOptions.KeyHash ?? comparer.GetHashCode64(ref key);
         do
         {
             if (readAtAddress == 0)

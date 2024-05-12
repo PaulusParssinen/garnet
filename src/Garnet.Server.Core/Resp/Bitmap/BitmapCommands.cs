@@ -165,7 +165,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         #endregion
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-        var status = storageApi.StringSetBit(
+        GarnetStatus status = storageApi.StringSetBit(
             ref Unsafe.AsRef<SpanByte>(keyPtr),
             ref Unsafe.AsRef<SpanByte>(pbCmdInput),
             ref o);
@@ -224,7 +224,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         #endregion
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-        var status = storageApi.StringGetBit(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+        GarnetStatus status = storageApi.StringGetBit(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
         if (status == GarnetStatus.NOTFOUND)
             while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_RETURN_VAL_0, ref dcurr, dend))
@@ -267,7 +267,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (count > 3)
         {
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var offsetType, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string offsetType, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             bitOffsetType = offsetType.Equals("BIT", StringComparison.OrdinalIgnoreCase) ? (byte)0x1 : (byte)0x0;
         }
@@ -305,7 +305,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
 
-        var status = storageApi.StringBitCount(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+        GarnetStatus status = storageApi.StringBitCount(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
         if (status == GarnetStatus.OK)
         {
@@ -368,7 +368,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (count > 4)
         {
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var offsetType, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string offsetType, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             bitOffsetType = offsetType.Equals("BIT", StringComparison.OrdinalIgnoreCase) ? (byte)0x1 : (byte)0x0;
         }
@@ -408,7 +408,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
 
-        var status = storageApi.StringBitPosition(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+        GarnetStatus status = storageApi.StringBitPosition(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
         if (status == GarnetStatus.OK)
         {
@@ -419,7 +419,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
         else if (status == GarnetStatus.NOTFOUND)
         {
-            var resp = bSetVal == 0 ? CmdStrings.RESP_RETURN_VAL_0 : CmdStrings.RESP_RETURN_VAL_N1;
+            ReadOnlySpan<byte> resp = bSetVal == 0 ? CmdStrings.RESP_RETURN_VAL_0 : CmdStrings.RESP_RETURN_VAL_N1;
             while (!RespWriteUtils.WriteDirect(resp, ref dcurr, dend))
                 SendAndReset();
         }
@@ -433,7 +433,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     private bool StringBitOperation<TGarnetApi>(int count, byte* ptr, BitmapOperation bitop, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
-        var keyCount = count;
+        int keyCount = count;
         ArgSlice[] keys = new ArgSlice[keyCount];
 
         //Read keys
@@ -453,7 +453,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             throw new Exception("Bitop source key limit (64) exceeded");
         }
 
-        var status = storageApi.StringBitOperation(keys, bitop, out long result);
+        GarnetStatus status = storageApi.StringBitOperation(keys, bitop, out long result);
 
         if (status != GarnetStatus.NOTFOUND)
         {
@@ -491,14 +491,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         while (currCount < endCount)
         {
             //Get subcommand
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var command, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string command, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             //process overflow command
             if (command.Equals("OVERFLOW", StringComparison.OrdinalIgnoreCase))
             {
                 //Get overflow parameter
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var overflowArg, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string overflowArg, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 if (overflowArg.Equals("WRAP", StringComparison.OrdinalIgnoreCase))
                     overFlowType = (byte)BitFieldOverflow.WRAP;
@@ -520,10 +520,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 //[GET <encoding> <offset>] [SET <encoding> <offset> <value>] [INCRBY <encoding> <offset> <increment>]
                 //Process encoding argument
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var encodingArg, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string encodingArg, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var offsetArg, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string offsetArg, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 //Subcommand takes 2 args, encoding and offset
@@ -546,7 +546,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                         return true;
                     }
 
-                    if (!RespReadUtils.ReadStringWithLengthHeader(out var valueArg, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadStringWithLengthHeader(out string valueArg, ref ptr, recvBufferPtr + bytesRead))
                         return false;
 
                     value = long.Parse(valueArg);
@@ -623,7 +623,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             var output = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
 
-            var status = storageApi.StringBitField(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), bitfieldArgs[i].secondaryOpCode, ref output);
+            GarnetStatus status = storageApi.StringBitField(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), bitfieldArgs[i].secondaryOpCode, ref output);
 
             if (status == GarnetStatus.NOTFOUND && bitfieldArgs[i].secondaryOpCode == (byte)RespCommand.GET)
             {
@@ -677,7 +677,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 while (currCount < endCount)
                 {
                     //Extract bitfield subcommand
-                    if (!RespReadUtils.ReadStringWithLengthHeader(out var errorCommand, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadStringWithLengthHeader(out string errorCommand, ref ptr, recvBufferPtr + bytesRead))
                         return false;
                     currCount++;
                 }
@@ -685,14 +685,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
 
             //process overflow command
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var command, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string command, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             //Process overflow subcommand
             if (command.Equals("OVERFLOW", StringComparison.OrdinalIgnoreCase))
             {
                 //Get overflow parameter
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var overflowArg, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string overflowArg, ref ptr, recvBufferPtr + bytesRead))
                     return false;
                 if (overflowArg.Equals("WRAP", StringComparison.OrdinalIgnoreCase))
                     overFlowType = (byte)BitFieldOverflow.WRAP;
@@ -713,11 +713,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 //[GET <encoding> <offset>] [SET <encoding> <offset> <value>] [INCRBY <encoding> <offset> <increment>]
                 //Process encoding argument
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var encoding, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string encoding, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 //Process offset argument
-                if (!RespReadUtils.ReadStringWithLengthHeader(out var offsetArg, ref ptr, recvBufferPtr + bytesRead))
+                if (!RespReadUtils.ReadStringWithLengthHeader(out string offsetArg, ref ptr, recvBufferPtr + bytesRead))
                     return false;
 
                 //Subcommand takes 2 args, encoding and offset
@@ -730,7 +730,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 {
                     //SET and INCRBY take 3 args, encoding, offset, and valueArg
                     writeError = true;
-                    if (!RespReadUtils.ReadStringWithLengthHeader(out var valueArg, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadStringWithLengthHeader(out string valueArg, ref ptr, recvBufferPtr + bytesRead))
                         return false;
 
                     value = Int64.Parse(valueArg);
@@ -816,7 +816,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             var output = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
 
-            var status = storageApi.StringBitFieldReadOnly(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), bitfieldArgs[i].secondaryOpCode, ref output);
+            GarnetStatus status = storageApi.StringBitFieldReadOnly(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), bitfieldArgs[i].secondaryOpCode, ref output);
 
             if (status == GarnetStatus.NOTFOUND && bitfieldArgs[i].secondaryOpCode == (byte)RespCommand.GET)
             {

@@ -36,14 +36,14 @@ sealed class MGetIfPM : CustomTransactionProcedure
         int offset = 0;
 
         // Read prefix
-        var prefix = GetNextArg(input, ref offset);
+        ArgSlice prefix = GetNextArg(input, ref offset);
 
         // Read key, check condition, add to output
         ArgSlice key;
         List<ArgSlice> values = [];
         while ((key = GetNextArg(input, ref offset)).Length > 0)
         {
-            if (api.GET(key, out var value) == GarnetStatus.OK)
+            if (api.GET(key, out ArgSlice value) == GarnetStatus.OK)
             {
                 if (value.ReadOnlySpan.StartsWith(prefix.ReadOnlySpan))
                 {

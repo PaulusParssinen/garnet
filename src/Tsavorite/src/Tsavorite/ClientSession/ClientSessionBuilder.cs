@@ -79,7 +79,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             throw new ArgumentNullException(nameof(functions));
 
         string sessionName;
-        (sessionName, commitPoint) = InternalContinue<Input, Output, Context>(sessionID, out var ctx);
+        (sessionName, commitPoint) = InternalContinue<Input, Output, Context>(sessionID, out TsavoriteExecutionContext<Input, Output, Context> ctx);
         if (commitPoint.UntilSerialNo == -1)
             throw new Exception($"Unable to find session {sessionID} to recover");
         ctx.MergeReadCopyOptions(ReadCopyOptions, readCopyOptions);
@@ -107,7 +107,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         {
             if (_activeSessions.TryGetValue(sessionID, out SessionInfo sessionInfo))
             {
-                var session = sessionInfo.session;
+                IClientSession session = sessionInfo.session;
                 if (RevivificationManager.IsEnabled)
                     session.MergeRevivificationStatsTo(ref RevivificationManager.stats, reset: true);
                 if (sessionPhase == Phase.REST || sessionPhase == Phase.PREPARE_GROW || sessionPhase == Phase.IN_PROGRESS_GROW)
@@ -126,7 +126,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         lock (_activeSessions)
         {
             // Merge the session-level stats into the global stats, clear the session-level stats, and keep the cumulative stats.
-            foreach (var sessionInfo in _activeSessions.Values)
+            foreach (SessionInfo sessionInfo in _activeSessions.Values)
                 sessionInfo.session.MergeRevivificationStatsTo(ref RevivificationManager.stats, reset: true);
             return RevivificationManager.stats.Dump();
         }
@@ -139,7 +139,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {
         lock (_activeSessions)
         {
-            foreach (var sessionInfo in _activeSessions.Values)
+            foreach (SessionInfo sessionInfo in _activeSessions.Values)
                 sessionInfo.session.ResetRevivificationStats();
             RevivificationManager.stats.Reset();
         }

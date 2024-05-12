@@ -46,7 +46,7 @@ public class RespCommandTests
     {
         // Get all command-subcommand combinations that have RespCommandInfo objects defined
         var existingCombinations = new Dictionary<RespCommand, HashSet<byte>>();
-        foreach (var commandInfo in respCommandsInfo.Values)
+        foreach (RespCommandsInfo commandInfo in respCommandsInfo.Values)
         {
             if (!existingCombinations.ContainsKey(commandInfo.Command))
                 existingCombinations.Add(commandInfo.Command, new HashSet<byte>());
@@ -66,11 +66,11 @@ public class RespCommandTests
         };
 
         var missingCombinations = new List<(RespCommand, byte)>();
-        foreach (var respCommand in Enum.GetValues<RespCommand>())
+        foreach (RespCommand respCommand in Enum.GetValues<RespCommand>())
         {
             if (ignoreCommands.Contains(respCommand)) continue;
 
-            var arrayCommandEnumType = (respCommand) switch
+            Type arrayCommandEnumType = (respCommand) switch
             {
                 RespCommand.Set => typeof(SetOperation),
                 RespCommand.Hash => typeof(HashOperation),
@@ -81,7 +81,7 @@ public class RespCommandTests
 
             if (arrayCommandEnumType != default)
             {
-                foreach (var arrayCommand in Enum.GetValues(arrayCommandEnumType))
+                foreach (object arrayCommand in Enum.GetValues(arrayCommandEnumType))
                 {
                     if (!existingCombinations.ContainsKey(respCommand) ||
                         !existingCombinations[respCommand].Contains((byte)arrayCommand))
@@ -116,7 +116,7 @@ public class RespCommandTests
     public void CommandTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Get all commands using COMMAND command
         var results = (RedisResult[])db.Execute("COMMAND");
@@ -125,7 +125,7 @@ public class RespCommandTests
         Assert.AreEqual(respCommandsInfo.Count, results.Length);
 
         // Register custom commands
-        var customCommandsRegistered = RegisterCustomCommands();
+        int customCommandsRegistered = RegisterCustomCommands();
 
         // Get all commands (including custom commands) using COMMAND command
         results = (RedisResult[])db.Execute("COMMAND");
@@ -141,7 +141,7 @@ public class RespCommandTests
     public void CommandInfoTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Get all commands using COMMAND INFO command
         var results = (RedisResult[])db.Execute("COMMAND", "INFO");
@@ -150,7 +150,7 @@ public class RespCommandTests
         Assert.AreEqual(respCommandsInfo.Count, results.Length);
 
         // Register custom commands
-        var customCommandsRegistered = RegisterCustomCommands();
+        int customCommandsRegistered = RegisterCustomCommands();
 
         // Get all commands (including custom commands) using COMMAND INFO command
         results = (RedisResult[])db.Execute("COMMAND", "INFO");
@@ -166,15 +166,15 @@ public class RespCommandTests
     public void CommandCountTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Get command count
-        var commandCount = (int)db.Execute("COMMAND", "COUNT");
+        int commandCount = (int)db.Execute("COMMAND", "COUNT");
 
         Assert.AreEqual(respCommandsInfo.Count, commandCount);
 
         // Register custom commands
-        var customCommandsRegistered = RegisterCustomCommands();
+        int customCommandsRegistered = RegisterCustomCommands();
 
         // Get command count (including custom commands)
         commandCount = (int)db.Execute("COMMAND", "COUNT");
@@ -191,7 +191,7 @@ public class RespCommandTests
     public void CommandDocsTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Get all commands using COMMAND INFO command
         var results = (RedisResult[])db.Execute("COMMAND", "DOCS");
@@ -207,9 +207,9 @@ public class RespCommandTests
     public void CommandUnknownSubcommandTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var unknownSubCommand = "UNKNOWN";
+        string unknownSubCommand = "UNKNOWN";
 
         // Get all commands using COMMAND INFO command
         try
@@ -219,7 +219,7 @@ public class RespCommandTests
         }
         catch (RedisServerException e)
         {
-            var expectedErrorMessage = string.Format(CmdStrings.GenericErrUnknownSubCommand, unknownSubCommand, RespCommand.COMMAND);
+            string expectedErrorMessage = string.Format(CmdStrings.GenericErrUnknownSubCommand, unknownSubCommand, RespCommand.COMMAND);
             Assert.AreEqual(expectedErrorMessage, e.Message);
         }
     }
@@ -231,7 +231,7 @@ public class RespCommandTests
     public void CommandInfoWithCommandNamesTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Get basic commands using COMMAND INFO command
         var results = (RedisResult[])db.Execute("COMMAND", "INFO", "GET", "SET");
@@ -259,7 +259,7 @@ public class RespCommandTests
     private void VerifyCommandInfo(string cmdName, RedisResult[] result)
     {
         Assert.IsTrue(respCommandsInfo.ContainsKey(cmdName));
-        var cmdInfo = respCommandsInfo[cmdName];
+        RespCommandsInfo cmdInfo = respCommandsInfo[cmdName];
 
         Assert.IsNotNull(result);
         Assert.AreEqual(10, result.Length);

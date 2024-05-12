@@ -28,7 +28,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Redirect(ushort slot, ClusterConfig config)
     {
-        var (address, port) = config.GetEndpointFromSlot(slot);
+        (string address, int port) = config.GetEndpointFromSlot(slot);
         ReadOnlySpan<byte> errorMessage;
         if (port != 0)
             errorMessage = Encoding.ASCII.GetBytes($"MOVED {slot} {address}:{port}");
@@ -43,8 +43,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     private void WriteClusterSlotVerificationMessage(ClusterConfig config, ClusterSlotVerificationResult vres, ref byte* dcurr, ref byte* dend)
     {
         ReadOnlySpan<byte> errorMessage;
-        var state = vres.state;
-        var slot = vres.slot;
+        SlotVerifiedState state = vres.state;
+        ushort slot = vres.slot;
         string address;
         int port;
         switch (state)
@@ -99,8 +99,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         // If cluster is not enabled or a transaction is running skip slot check
         if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
 
-        var config = clusterProvider.clusterManager.CurrentConfig;
-        var vres = readOnly ? SingleKeyReadSlotVerify(config, keySlice, SessionAsking) : SingleKeyReadWriteSlotVerify(config, keySlice, SessionAsking);
+        ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
+        ClusterSlotVerificationResult vres = readOnly ? SingleKeyReadSlotVerify(config, keySlice, SessionAsking) : SingleKeyReadWriteSlotVerify(config, keySlice, SessionAsking);
 
         if (vres.state == SlotVerifiedState.OK)
             return false;
@@ -128,8 +128,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         // If cluster is not enabled or a transaction is running skip slot check
         if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
 
-        var config = clusterProvider.clusterManager.CurrentConfig;
-        var vres = KeyArraySlotVerify(config, keyCount, ref ptr, endPtr, readOnly: readOnly, interleavedKeys: interleavedKeys, SessionAsking, out retVal);
+        ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
+        ClusterSlotVerificationResult vres = KeyArraySlotVerify(config, keyCount, ref ptr, endPtr, readOnly: readOnly, interleavedKeys: interleavedKeys, SessionAsking, out retVal);
 
         if (vres.state == SlotVerifiedState.OK)
             return false;
@@ -155,8 +155,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         // If cluster is not enabled or a transaction is running skip slot check
         if (!clusterProvider.serverOptions.EnableCluster || txnManager.state == TxnState.Running) return false;
 
-        var config = clusterProvider.clusterManager.CurrentConfig;
-        var vres = KeyArraySlotVerify(config, ref keys, readOnly, SessionAsking, count);
+        ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
+        ClusterSlotVerificationResult vres = KeyArraySlotVerify(config, ref keys, readOnly, SessionAsking, count);
 
         if (vres.state == SlotVerifiedState.OK)
             return false;

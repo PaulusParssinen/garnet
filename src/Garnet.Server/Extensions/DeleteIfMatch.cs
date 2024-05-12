@@ -35,7 +35,7 @@ sealed class DeleteIfMatchCustomCommand : CustomRawStringFunctions
     /// <inheritdoc />
     public override bool InPlaceUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, Span<byte> value, ref int valueLength, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
-        var expectedVal = GetFirstArg(input);
+        ReadOnlySpan<byte> expectedVal = GetFirstArg(input);
         if (value.SequenceEqual(expectedVal))
         {
             rmwInfo.Action = RMWAction.ExpireAndStop;
@@ -48,7 +48,7 @@ sealed class DeleteIfMatchCustomCommand : CustomRawStringFunctions
     /// <inheritdoc />
     public override bool NeedCopyUpdate(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> oldValue, ref (IMemoryOwner<byte>, int) output)
     {
-        var expectedVal = GetFirstArg(input);
+        ReadOnlySpan<byte> expectedVal = GetFirstArg(input);
         return oldValue.SequenceEqual(expectedVal);
     }
 

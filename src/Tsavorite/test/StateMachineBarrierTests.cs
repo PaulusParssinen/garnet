@@ -49,7 +49,7 @@ public class StateMachineBarrierTests
     [Category("Smoke")]
     public void StateMachineBarrierTest1()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -154,7 +154,7 @@ public class StateMachineBarrierTests
 
         store.Recover(); // sync, does not require session
 
-        using (var s3 = store.ResumeSession<NumClicks, NumClicks, Empty, SimpleFunctions>(f, "foo", out CommitPoint lsn))
+        using (ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s3 = store.ResumeSession<NumClicks, NumClicks, Empty, SimpleFunctions>(f, "foo", out CommitPoint lsn))
         {
             Assert.AreEqual(numOps - 1, lsn.UntilSerialNo);
 
@@ -166,9 +166,9 @@ public class StateMachineBarrierTests
             // Completion callback should have been called once
             Assert.AreEqual(0, f.checkpointCallbackExpectation);
 
-            for (var key = 0; key < numOps; key++)
+            for (int key = 0; key < numOps; key++)
             {
-                var status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
+                Status status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
 
                 if (status.IsPending)
                     s3.CompletePending(true);

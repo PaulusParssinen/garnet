@@ -12,7 +12,7 @@ internal static class NumUtils
     /// <param name="result"></param>
     public static unsafe void IntToBytes(int value, ref byte* result)
     {
-        var length = NumDigits(value);
+        int length = NumDigits(value);
         result += length;
         do
         {
@@ -160,7 +160,7 @@ internal static class NumUtils
     public static unsafe long BytesToLong(byte* source)
     {
         bool fNeg = (*source == '-');
-        var beg = fNeg ? source + 1 : source;
+        byte* beg = fNeg ? source + 1 : source;
         long result = 0;
         while (*beg != '\r')
             result = result * 10 + (*beg++ - '0');

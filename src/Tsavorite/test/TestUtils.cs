@@ -158,12 +158,12 @@ public static class TestUtils
 
         if (TestContext.CurrentContext.Test.ClassName.StartsWith($"{prefix}."))
         {
-            var suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix.Length + 1);
+            string suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix.Length + 1);
             return forAzure ? suffix : $"{prefix}/{suffix}";
         }
         else if (TestContext.CurrentContext.Test.ClassName.StartsWith($"{prefix2}+"))
         {
-            var suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix2.Length + 1);
+            string suffix = TestContext.CurrentContext.Test.ClassName.Substring(prefix2.Length + 1);
             return forAzure ? suffix : $"{prefix2}/{suffix}";
         }
         else
@@ -181,7 +181,7 @@ public static class TestUtils
     {
         get
         {
-            var container = ConvertedClassName(forAzure: true).Replace('.', '-').ToLower();
+            string container = ConvertedClassName(forAzure: true).Replace('.', '-').ToLower();
             NameValidator.ValidateContainerName(container);
             return container;
         }
@@ -228,7 +228,7 @@ public static class TestUtils
     internal static (Status status, TOutput output) GetSinglePendingResult<TKey, TValue, TInput, TOutput, TContext>(CompletedOutputIterator<TKey, TValue, TInput, TOutput, TContext> completedOutputs, out RecordMetadata recordMetadata)
     {
         Assert.IsTrue(completedOutputs.Next());
-        var result = (completedOutputs.Current.Status, completedOutputs.Current.Output);
+        (Status Status, TOutput Output) result = (completedOutputs.Current.Status, completedOutputs.Current.Output);
         recordMetadata = completedOutputs.Current.RecordMetadata;
         Assert.IsFalse(completedOutputs.Next());
         completedOutputs.Dispose();
@@ -237,13 +237,13 @@ public static class TestUtils
 
     internal static async ValueTask<(Status status, Output output)> CompleteAsync<Key, Value, Input, Output, Context>(ValueTask<TsavoriteKV<Key, Value>.ReadAsyncResult<Input, Output, Context>> resultTask)
     {
-        var readCompleter = await resultTask;
+        TsavoriteKV<Key, Value>.ReadAsyncResult<Input, Output, Context> readCompleter = await resultTask;
         return readCompleter.Complete();
     }
 
     internal static async ValueTask<Status> CompleteAsync<Key, Value, Context>(ValueTask<TsavoriteKV<Key, Value>.UpsertAsyncResult<Key, Value, Context>> resultTask)
     {
-        var result = await resultTask;
+        TsavoriteKV<Key, Value>.UpsertAsyncResult<Key, Value, Context> result = await resultTask;
         while (result.Status.IsPending)
             result = await result.CompleteAsync().ConfigureAwait(false);
         return result.Status;
@@ -251,7 +251,7 @@ public static class TestUtils
 
     internal static async ValueTask<Status> CompleteAsync<Key, Value, Context>(ValueTask<TsavoriteKV<Key, Value>.RmwAsyncResult<Value, Value, Context>> resultTask)
     {
-        var result = await resultTask;
+        TsavoriteKV<Key, Value>.RmwAsyncResult<Value, Value, Context> result = await resultTask;
         while (result.Status.IsPending)
             result = await result.CompleteAsync().ConfigureAwait(false);
         return result.Status;
@@ -259,7 +259,7 @@ public static class TestUtils
 
     internal static async ValueTask<Status> CompleteAsync<Key, Value, Input, Output, Context>(ValueTask<TsavoriteKV<Key, Value>.DeleteAsyncResult<Input, Output, Context>> resultTask)
     {
-        var deleteCompleter = await resultTask;
+        TsavoriteKV<Key, Value>.DeleteAsyncResult<Input, Output, Context> deleteCompleter = await resultTask;
         return deleteCompleter.Complete();
     }
 
@@ -268,9 +268,9 @@ public static class TestUtils
         Task[] tasks = new Task[2];
 
         var rng = new Random(101);
-        for (var iter = 0; iter < count; ++iter)
+        for (int iter = 0; iter < count; ++iter)
         {
-            var arg = doRandom ? rng.Next(count) : iter;
+            int arg = doRandom ? rng.Next(count) : iter;
             tasks[0] = Task.Factory.StartNew(() => first(arg));
             tasks[1] = Task.Factory.StartNew(() => second(arg));
 
@@ -283,7 +283,7 @@ public static class TestUtils
     internal static unsafe bool FindHashBucketEntryForKey<Key, Value>(this TsavoriteKV<Key, Value> store, ref Key key, out HashBucketEntry entry)
     {
         HashEntryInfo hei = new(store.Comparer.GetHashCode64(ref key));
-        var success = store.FindTag(ref hei);
+        bool success = store.FindTag(ref hei);
         entry = hei.entry;
         return success;
     }

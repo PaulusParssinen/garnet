@@ -81,7 +81,7 @@ internal sealed unsafe class ReceiveCheckpointHandler
         long numBytesToWrite = size;
         numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = writeCheckpointBufferPool.Get((int)numBytesToWrite);
+        SectorAlignedMemory pbuffer = writeCheckpointBufferPool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = buffer)
         {
             Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);

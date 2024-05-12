@@ -34,11 +34,11 @@ sealed class GetTwoKeysNoTxn : CustomTransactionProcedure
     public override void Finalize<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var key1 = GetNextArg(input, ref offset);
-        var key2 = GetNextArg(input, ref offset);
+        ArgSlice key1 = GetNextArg(input, ref offset);
+        ArgSlice key2 = GetNextArg(input, ref offset);
 
-        api.GET(key1, out var value1);
-        api.GET(key2, out var value2);
+        api.GET(key1, out ArgSlice value1);
+        api.GET(key2, out ArgSlice value2);
 
         // Return the two keys as an array of bulk strings
         WriteBulkStringArray(ref output, value1, value2);

@@ -53,7 +53,7 @@ public class RespCustomCommandTests
         int x = server.Register.NewCommand("SETIFPM", 2, CommandType.ReadModifyWrite, new SetIfPMCustomCommand(), respCustomCommandsInfo["SETIFPM"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         string origValue = "foovalue0";
@@ -99,10 +99,10 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mykey";
-        var origValue = "foovalue0";
+        string key = "mykey";
+        string origValue = "foovalue0";
 
         // This conditional set should fail (wrong prefix size)
         bool exception = false;
@@ -125,7 +125,7 @@ public class RespCustomCommandTests
         Assert.AreEqual(retValue.Substring(8), origValue);
 
         // This conditional set should fail (wrong prefix size)
-        var newValue1 = "foovalue1";
+        string newValue1 = "foovalue1";
         exception = false;
         try
         {
@@ -146,27 +146,27 @@ public class RespCustomCommandTests
         Assert.AreEqual(newValue1, retValue.Substring(8));
 
         // This conditional set should fail (prefix is not greater)
-        var newValue2 = "foovalue2";
+        string newValue2 = "foovalue2";
         db.Execute("SETWPIFPGT", key, newValue2, BitConverter.GetBytes((long)1));
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue1, retValue.Substring(8));
 
         // This conditional set should pass (prefix is greater)
         // New value is smaller than existing
-        var newValue3 = "fooval3";
+        string newValue3 = "fooval3";
         db.Execute("SETWPIFPGT", key, newValue3, BitConverter.GetBytes((long)3));
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue3, retValue.Substring(8));
 
         // This conditional set should pass (prefix is greater)
         // New value is larger than existing
-        var newValue4 = "foolargervalue4";
+        string newValue4 = "foolargervalue4";
         db.Execute("SETWPIFPGT", key, newValue4, BitConverter.GetBytes((long)4));
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue4, retValue.Substring(8));
 
         // This conditional set should pass (prefix is greater)
-        var newValue5 = "foolargervalue4";
+        string newValue5 = "foolargervalue4";
         db.Execute("SETWPIFPGT", key, newValue4, BitConverter.GetBytes(long.MaxValue));
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue5, retValue.Substring(8));
@@ -180,10 +180,10 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mykey";
-        var origValue = "foovalue0";
+        string key = "mykey";
+        string origValue = "foovalue0";
 
         // This conditional set should pass (nothing there to begin with)
         db.Execute("SETWPIFPGT", key, origValue, BitConverter.GetBytes((long)0));
@@ -211,10 +211,10 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mykey";
-        var origValue = "foovalue0";
+        string key = "mykey";
+        string origValue = "foovalue0";
 
         // This conditional set should pass (nothing there to begin with)
         db.Execute("SETWPIFPGT", key, origValue, BitConverter.GetBytes((long)0));
@@ -228,7 +228,7 @@ public class RespCustomCommandTests
         Assert.AreEqual(retValue.Substring(8), origValue);
 
         // This conditional set should pass
-        var newValue2 = "foovalue2";
+        string newValue2 = "foovalue2";
         db.Execute("SETWPIFPGT", key, newValue2, BitConverter.GetBytes((long)1));
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue2, retValue.Substring(8));
@@ -242,10 +242,10 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mykey";
-        var origValue = "foovalue0";
+        string key = "mykey";
+        string origValue = "foovalue0";
 
         // This conditional set should pass (nothing there to begin with)
         db.Execute("SETWPIFPGT", key, origValue, BitConverter.GetBytes((long)0));
@@ -260,14 +260,14 @@ public class RespCustomCommandTests
         Assert.AreEqual(origValue, retValue.Substring(8));
 
         // Expiration should survive operation
-        var ttl = db.KeyTimeToLive(key);
+        TimeSpan? ttl = db.KeyTimeToLive(key);
         Assert.IsTrue(ttl > TimeSpan.FromSeconds(10));
 
         retValue = db.StringGet(key);
         Assert.AreEqual(retValue.Substring(8), origValue);
 
         // This conditional set should pass
-        var newValue2 = "foovalue2";
+        string newValue2 = "foovalue2";
         db.Execute("SETWPIFPGT", key, newValue2, BitConverter.GetBytes((long)2));
 
         retValue = db.StringGet(key);
@@ -281,7 +281,7 @@ public class RespCustomCommandTests
         server.Register.NewCommand("DELIFM", 1, CommandType.ReadModifyWrite, new DeleteIfMatchCustomCommand(), respCustomCommandsInfo["DELIFM"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         string origValue = "foovalue0";
@@ -312,7 +312,7 @@ public class RespCustomCommandTests
         server.Register.NewCommand("MYDICTGET", 1, CommandType.Read, factory, respCustomCommandsInfo["MYDICTGET"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string mainkey = "key";
 
@@ -320,12 +320,12 @@ public class RespCustomCommandTests
         string value1 = "foovalue1";
         db.Execute("MYDICTSET", mainkey, key1, value1);
 
-        var retValue = db.Execute("MYDICTGET", mainkey, key1);
+        RedisResult retValue = db.Execute("MYDICTGET", mainkey, key1);
         Assert.AreEqual(value1, (string)retValue);
 
-        var result = db.Execute("MEMORY", "USAGE", mainkey);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 272;
+        RedisResult result = db.Execute("MEMORY", "USAGE", mainkey);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
 
         string key2 = "mykey2";
@@ -349,7 +349,7 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int expire = 5;
         string key = "mykey";
@@ -360,7 +360,7 @@ public class RespCustomCommandTests
         Assert.AreEqual(origValue, retValue.Substring(8));
 
         db.KeyExpire(key, TimeSpan.FromSeconds(expire));
-        var time = db.KeyTimeToLive(key);
+        TimeSpan? time = db.KeyTimeToLive(key);
         Assert.IsTrue(time.Value.Seconds > 0);
 
         // This conditional set should pass (new prefix is greater)
@@ -383,7 +383,7 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int expire = 1;
         string key = "mykey";
@@ -415,7 +415,7 @@ public class RespCustomCommandTests
         server.Register.NewCommand("MYDICTGET", 1, CommandType.Read, factory, respCustomCommandsInfo["MYDICTGET"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string mainkey = "key";
 
@@ -423,7 +423,7 @@ public class RespCustomCommandTests
         string value1 = "foovalue1";
         db.Execute("MYDICTSET", mainkey, key1, value1);
 
-        var retValue = db.Execute("MYDICTGET", mainkey, key1);
+        RedisResult retValue = db.Execute("MYDICTGET", mainkey, key1);
         Assert.AreEqual(value1, (string)retValue);
 
         db.KeyExpire(mainkey, TimeSpan.FromSeconds(1));
@@ -452,7 +452,7 @@ public class RespCustomCommandTests
             respCustomCommandsInfo["SETWPIFPGT"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int expire = 180;
         string key = "mykeyKeyExpire";
@@ -483,7 +483,7 @@ public class RespCustomCommandTests
             expirationTicks: TimeSpan.FromSeconds(4).Ticks); // provide default expiration at registration time
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykeyCommandExpire";
         string origValue = "foovalue0";
@@ -515,29 +515,29 @@ public class RespCustomCommandTests
             File.Delete(dstFilePath);
         }
 
-        foreach (var referenceFile in referenceFiles)
+        foreach (string referenceFile in referenceFiles)
         {
             Assert.IsTrue(File.Exists(referenceFile), $"File '{Path.GetFullPath(referenceFile)}' does not exist.");
         }
 
-        var references = referenceFiles.Select(f => MetadataReference.CreateFromFile(f));
+        IEnumerable<PortableExecutableReference> references = referenceFiles.Select(f => MetadataReference.CreateFromFile(f));
 
-        foreach (var fileToCompile in filesToCompile)
+        foreach (string fileToCompile in filesToCompile)
         {
             Assert.IsTrue(File.Exists(fileToCompile), $"File '{Path.GetFullPath(fileToCompile)}' does not exist.");
         }
 
         var parseFunc = new Func<string, SyntaxTree>(filePath =>
         {
-            var source = File.ReadAllText(filePath);
+            string source = File.ReadAllText(filePath);
             var stringText = SourceText.From(source, Encoding.UTF8);
             return SyntaxFactory.ParseSyntaxTree(stringText,
                 CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest), string.Empty);
         });
 
-        var syntaxTrees = filesToCompile.Select(f => parseFunc(f));
+        IEnumerable<SyntaxTree> syntaxTrees = filesToCompile.Select(f => parseFunc(f));
 
-        var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             .WithAllowUnsafe(true)
             .WithOverflowChecks(true)
             .WithOptimizationLevel(OptimizationLevel.Release)
@@ -548,7 +548,7 @@ public class RespCustomCommandTests
 
         try
         {
-            var result = compilation.Emit(dstFilePath);
+            Microsoft.CodeAnalysis.Emit.EmitResult result = compilation.Emit(dstFilePath);
             Assert.IsTrue(result.Success);
         }
         catch (Exception ex)
@@ -559,11 +559,11 @@ public class RespCustomCommandTests
 
     private string[] CreateTestLibraries()
     {
-        var runtimePath = RuntimeEnvironment.GetRuntimeDirectory();
-        var binPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string runtimePath = RuntimeEnvironment.GetRuntimeDirectory();
+        string binPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         Assert.IsNotNull(binPath);
 
-        var namespaces = new[]
+        string[] namespaces = new[]
         {
             "Tsavorite",
             "Garnet.Common",
@@ -576,7 +576,7 @@ public class RespCustomCommandTests
             "System.Text",
         };
 
-        var referenceFiles = new[]
+        string[] referenceFiles = new[]
         {
             Path.Combine(runtimePath, "System.dll"),
             Path.Combine(runtimePath, "System.Collections.dll"),
@@ -588,16 +588,16 @@ public class RespCustomCommandTests
             Path.Combine(binPath, "Garnet.Server.dll"),
         };
 
-        var dir1 = Path.Combine(this._extTestDir1, Path.GetFileName(TestUtils.MethodTestDir));
-        var dir2 = Path.Combine(this._extTestDir2, Path.GetFileName(TestUtils.MethodTestDir));
+        string dir1 = Path.Combine(this._extTestDir1, Path.GetFileName(TestUtils.MethodTestDir));
+        string dir2 = Path.Combine(this._extTestDir2, Path.GetFileName(TestUtils.MethodTestDir));
 
         Directory.CreateDirectory(this._extTestDir1);
         Directory.CreateDirectory(dir1);
         Directory.CreateDirectory(this._extTestDir2);
         Directory.CreateDirectory(dir2);
 
-        var testFilePath = Path.Combine(TestUtils.MethodTestDir, "test.cs");
-        using (var testFile = File.CreateText(testFilePath))
+        string testFilePath = Path.Combine(TestUtils.MethodTestDir, "test.cs");
+        using (StreamWriter testFile = File.CreateText(testFilePath))
         {
             testFile.WriteLine("namespace Garnet { public class TestClass { } }");
         }
@@ -613,12 +613,12 @@ public class RespCustomCommandTests
             }}
         };
 
-        foreach (var ltf in libPathToFiles)
+        foreach (KeyValuePair<string, string[]> ltf in libPathToFiles)
         {
             CreateTestLibrary(namespaces, referenceFiles, ltf.Value, ltf.Key);
         }
 
-        var notAllowedPath = Path.Combine(TestUtils.MethodTestDir, "testLib1.dll");
+        string notAllowedPath = Path.Combine(TestUtils.MethodTestDir, "testLib1.dll");
         if (!File.Exists(notAllowedPath))
         {
             File.Copy(Path.Combine(dir1, "testLib1.dll"), notAllowedPath);
@@ -631,9 +631,9 @@ public class RespCustomCommandTests
     public void RegisterCustomCommandTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var libraryPaths = this.CreateTestLibraries();
+        string[] libraryPaths = this.CreateTestLibraries();
 
         var args = new List<object>
         {
@@ -646,7 +646,7 @@ public class RespCustomCommandTests
         args.AddRange(libraryPaths);
 
         // Register select custom commands and transactions
-        var resp = (string)db.Execute($"REGISTERCS",
+        string resp = (string)db.Execute($"REGISTERCS",
             args.ToArray());
 
         // Test READWRITETX
@@ -657,7 +657,7 @@ public class RespCustomCommandTests
         string writekey1 = "writekey1";
         string writekey2 = "writekey2";
 
-        var result = db.Execute("READWRITETX", key, writekey1, writekey2);
+        RedisResult result = db.Execute("READWRITETX", key, writekey1, writekey2);
         Assert.AreEqual("SUCCESS", (string)result);
 
         // Read keys to verify transaction succeeded
@@ -692,7 +692,7 @@ public class RespCustomCommandTests
 
         db.Execute("MYDICTSET", key, newKey1, newValue1);
 
-        var dictVal = db.Execute("MYDICTGET", key, newKey1);
+        RedisResult dictVal = db.Execute("MYDICTGET", key, newKey1);
         Assert.AreEqual(newValue1, (string)dictVal);
 
         db.Execute("MYDICTSET", key, newKey2, newValue2);
@@ -706,9 +706,9 @@ public class RespCustomCommandTests
     public void RegisterCustomCommandErrorConditionsTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var libraryPaths = this.CreateTestLibraries();
+        string[] libraryPaths = this.CreateTestLibraries();
 
         // Malformed request #1 - no arguments
         string resp = null;

@@ -72,7 +72,7 @@ internal class WaitForCommitTests
 
         // Read the log to make sure all entries are put in
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {

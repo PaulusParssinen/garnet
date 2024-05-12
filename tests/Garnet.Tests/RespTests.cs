@@ -36,10 +36,10 @@ public class RespTests
     [Test]
     public void UniqueRespCommandIds()
     {
-        var ids = Enum.GetValues<RespCommand>();
+        RespCommand[] ids = Enum.GetValues<RespCommand>();
 
         // Isolate command IDs that exist more than once in the array
-        var duplicateIds = ids.GroupBy(e => e).Where(e => e.Count() > 1).Select(e => e.First());
+        IEnumerable<RespCommand> duplicateIds = ids.GroupBy(e => e).Where(e => e.Count() > 1).Select(e => e.First());
 
         Assert.IsEmpty(duplicateIds, "Found ambiguous command IDs");
     }
@@ -49,7 +49,7 @@ public class RespTests
     public void SingleSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefg";
         db.StringSet("mykey", origValue);
@@ -91,7 +91,7 @@ public class RespTests
     public void MultiSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const int length = 15000;
         KeyValuePair<RedisKey, RedisValue>[] input = new KeyValuePair<RedisKey, RedisValue>[length];
@@ -99,10 +99,10 @@ public class RespTests
             input[i] = new KeyValuePair<RedisKey, RedisValue>(i.ToString(), i.ToString());
 
         // MSET NX - non-existing values
-        var result = db.StringSet(input, When.NotExists);
+        bool result = db.StringSet(input, When.NotExists);
         Assert.IsTrue(result);
 
-        var value = db.StringGet(input.Select(e => e.Key).ToArray());
+        RedisValue[] value = db.StringGet(input.Select(e => e.Key).ToArray());
         Assert.AreEqual(length, value.Length);
 
         for (int i = 0; i < length; i++)
@@ -152,18 +152,18 @@ public class RespTests
     public void LargeSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const int length = (1 << 19) + 100;
-        var value = new byte[length];
+        byte[] value = new byte[length];
 
         for (int i = 0; i < length; i++)
             value[i] = (byte)((byte)'a' + ((byte)i % 26));
 
-        var result = db.StringSet("mykey", value);
+        bool result = db.StringSet("mykey", value);
         Assert.IsTrue(result);
 
-        var retvalue = (byte[])db.StringGet("mykey");
+        byte[] retvalue = (byte[])db.StringGet("mykey");
 
         Assert.IsTrue(new ReadOnlySpan<byte>(value).SequenceEqual(new ReadOnlySpan<byte>(retvalue)));
     }
@@ -172,7 +172,7 @@ public class RespTests
     public void SetExpiry()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue, TimeSpan.FromSeconds(1));
@@ -180,13 +180,13 @@ public class RespTests
         string retValue = db.StringGet("mykey");
         Assert.AreEqual(origValue, retValue, "Get() before expiration");
 
-        var actualDbSize = db.Execute("DBSIZE");
+        RedisResult actualDbSize = db.Execute("DBSIZE");
         Assert.AreEqual(1, (ulong)actualDbSize, "DBSIZE before expiration");
 
-        var actualKeys = db.Execute("KEYS", ["*"]);
+        RedisResult actualKeys = db.Execute("KEYS", ["*"]);
         Assert.AreEqual(1, ((RedisResult[])actualKeys).Length, "KEYS before expiration");
 
-        var actualScan = db.Execute("SCAN", "0");
+        RedisResult actualScan = db.Execute("SCAN", "0");
         Assert.AreEqual(1, ((RedisValue[])((RedisResult[])actualScan!)[1]).Length, "SCAN before expiration");
 
         // Sleep to wait for expiration
@@ -209,7 +209,7 @@ public class RespTests
     public void SetExpiryHighPrecision()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue, TimeSpan.FromSeconds(1.9));
@@ -230,7 +230,7 @@ public class RespTests
     public void SetExpiryNx()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefghij";
         db.StringSet("mykey", origValue, TimeSpan.FromSeconds(3), When.NotExists, CommandFlags.None);
@@ -247,12 +247,12 @@ public class RespTests
     public void SetXx()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         string origValue = "abcdefghij";
 
-        var result = db.StringSet(key, origValue, null, When.Exists, CommandFlags.None);
+        bool result = db.StringSet(key, origValue, null, When.Exists, CommandFlags.None);
         Assert.IsFalse(result);
 
         string retValue = db.StringGet(key);
@@ -277,13 +277,13 @@ public class RespTests
     public void SetGet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         string origValue = "abcdefghijklmnopqrst";
 
         // Initial set
-        var result = db.StringSet(key, origValue);
+        bool result = db.StringSet(key, origValue);
         Assert.IsTrue(result);
         string retValue = db.StringGet(key);
         Assert.AreEqual(origValue, retValue);
@@ -301,7 +301,7 @@ public class RespTests
         Assert.AreEqual(newValue1, retValue);
         retValue = db.StringGet(key);
         Assert.AreEqual(newValue2, retValue);
-        var expiry = db.KeyTimeToLive(key);
+        TimeSpan? expiry = db.KeyTimeToLive(key);
         Assert.IsNull(expiry);
 
         // Smaller new value with expiration
@@ -346,11 +346,11 @@ public class RespTests
     public void SetExpiryIncr()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = -100000;
-        var strKey = "key1";
+        int nVal = -100000;
+        string strKey = "key1";
         db.StringSet(strKey, nVal, TimeSpan.FromSeconds(1));
 
         long n = db.StringIncrement(strKey);
@@ -376,16 +376,16 @@ public class RespTests
     public void SetOptionsCaseSensitivityTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "csKey";
-        var value = 1;
-        var setCommand = "SET";
-        var ttlCommand = "TTL";
-        var okResponse = "OK";
+        string key = "csKey";
+        int value = 1;
+        string setCommand = "SET";
+        string ttlCommand = "TTL";
+        string okResponse = "OK";
 
         // xx
-        var resp = (string)db.Execute($"{setCommand}", key, value, "xx");
+        string resp = (string)db.Execute($"{setCommand}", key, value, "xx");
         Assert.IsNull(resp);
 
         Assert.IsTrue(db.StringSet(key, value));
@@ -399,7 +399,7 @@ public class RespTests
         Assert.AreEqual(okResponse, resp);
         Thread.Sleep(TimeSpan.FromSeconds(1.1));
         resp = (string)db.Execute($"{ttlCommand}", key);
-        Assert.IsTrue(int.TryParse(resp, out var ttl) && ttl == -1);
+        Assert.IsTrue(int.TryParse(resp, out int ttl) && ttl == -1);
 
         // px
         resp = (string)db.Execute($"{setCommand}", key, value, "px", "1000");
@@ -472,12 +472,12 @@ public class RespTests
     public void LockTakeRelease()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "lock-key";
         string value = "lock-value";
 
-        var success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
+        bool success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
         Assert.IsTrue(success);
 
         success = db.LockTake(key, value, TimeSpan.FromSeconds(100));
@@ -516,10 +516,10 @@ public class RespTests
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
         // Key storing integer
-        var nVal = -100000;
-        var strKey = "key1";
+        int nVal = -100000;
+        string strKey = "key1";
 
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute($"SET {strKey} {nVal}", expectedResponse.Length, bytesPerSend);
         Assert.AreEqual(expectedResponse, response);
 
@@ -545,10 +545,10 @@ public class RespTests
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
         // Key storing integer
-        var nVal = 1000;
-        var strKey = "key1";
+        int nVal = 1000;
+        string strKey = "key1";
 
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute($"SET {strKey} {nVal}", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -571,7 +571,7 @@ public class RespTests
     public void SingleDecr(string strKey, int nVal)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
         db.StringSet(strKey, nVal);
@@ -589,9 +589,9 @@ public class RespTests
     public void SingleDecrBy(long nVal, long nDecr)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         // Key storing integer val
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
         long n = db.StringDecrement(strKey, nDecr);
 
@@ -603,14 +603,14 @@ public class RespTests
     public void SingleDecrByNoKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         long decrBy = 1000;
 
         // Key storing integer
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringDecrement(strKey, decrBy);
 
-        var retValStr = db.StringGet(strKey).ToString();
+        string retValStr = db.StringGet(strKey).ToString();
         int retVal = Convert.ToInt32(retValStr);
 
         Assert.AreEqual(-decrBy, retVal);
@@ -620,10 +620,10 @@ public class RespTests
     public void SingleIncrNoKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringIncrement(strKey);
 
         int retVal = Convert.ToInt32(db.StringGet(strKey));
@@ -649,16 +649,16 @@ public class RespTests
     public void SimpleIncrementInvalidValue(RespCommand cmd, bool initialize)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string[] values = ["", "7 3", "02+(34", "笑い男", "01", "-01", "7ab"];
 
-        for (var i = 0; i < values.Length; i++)
+        for (int i = 0; i < values.Length; i++)
         {
-            var key = $"key{i}";
-            var exception = false;
+            string key = $"key{i}";
+            bool exception = false;
             if (initialize)
             {
-                var resp = db.StringSet(key, values[i]);
+                bool resp = db.StringSet(key, values[i]);
                 Assert.AreEqual(true, resp);
             }
             try
@@ -675,7 +675,7 @@ public class RespTests
             catch (Exception ex)
             {
                 exception = true;
-                var msg = ex.Message;
+                string msg = ex.Message;
                 Assert.AreEqual("ERR value is not an integer or out of range.", msg);
             }
             Assert.IsTrue(exception);
@@ -690,10 +690,10 @@ public class RespTests
     public void SimpleIncrementOverflow(RespCommand cmd)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var exception = false;
+        IDatabase db = redis.GetDatabase(0);
+        bool exception = false;
 
-        var key = "test";
+        string key = "test";
         try
         {
             switch (cmd)
@@ -717,7 +717,7 @@ public class RespTests
         catch (Exception ex)
         {
             exception = true;
-            var msg = ex.Message;
+            string msg = ex.Message;
             Assert.AreEqual("ERR value is not an integer or out of range.", msg);
         }
         Assert.IsTrue(exception);
@@ -727,14 +727,14 @@ public class RespTests
     public void SingleDelete()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
         db.KeyDelete(strKey);
-        var retVal = Convert.ToBoolean(db.StringGet(strKey));
+        bool retVal = Convert.ToBoolean(db.StringGet(strKey));
         Assert.AreEqual(retVal, false);
     }
 
@@ -747,16 +747,16 @@ public class RespTests
         server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, DisableObjects: true);
         server.Start();
 
-        var key = "delKey";
-        var value = "1234";
+        string key = "delKey";
+        string value = "1234";
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(key, value);
 
-        var resp = (string)db.StringGet(key);
+        string resp = (string)db.StringGet(key);
         Assert.AreEqual(resp, value);
 
-        var respDel = db.KeyDelete(key);
+        bool respDel = db.KeyDelete(key);
         Assert.IsTrue(respDel);
 
         respDel = db.KeyDelete(key);
@@ -779,7 +779,7 @@ public class RespTests
         server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, lowMemory: true, DisableObjects: true);
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 5;
         int valLen = 256;
@@ -789,19 +789,19 @@ public class RespTests
         for (int i = 0; i < keyCount; i++)
         {
             data.Add(new Tuple<string, string>(GetRandomString(keyLen), GetRandomString(valLen)));
-            var pair = data.Last();
+            Tuple<string, string> pair = data.Last();
             db.StringSet(pair.Item1, pair.Item2);
         }
 
 
         for (int i = 0; i < keyCount; i++)
         {
-            var pair = data[i];
+            Tuple<string, string> pair = data[i];
 
-            var resp = (string)db.StringGet(pair.Item1);
+            string resp = (string)db.StringGet(pair.Item1);
             Assert.AreEqual(resp, pair.Item2);
 
-            var respDel = db.KeyDelete(pair.Item1);
+            bool respDel = db.KeyDelete(pair.Item1);
             resp = (string)db.StringGet(pair.Item1);
             Assert.IsNull(resp);
 
@@ -822,7 +822,7 @@ public class RespTests
         }
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 10;
         int valLen = 16;
@@ -832,16 +832,16 @@ public class RespTests
         for (int i = 0; i < keyCount; i++)
         {
             data.Add(new Tuple<string, string>(GetRandomString(keyLen), GetRandomString(valLen)));
-            var pair = data.Last();
+            Tuple<string, string> pair = data.Last();
             db.StringSet(pair.Item1, pair.Item2);
         }
 
-        var keys = data.Select(x => (RedisKey)x.Item1).ToArray();
-        var keysDeleted = db.KeyDeleteAsync(keys);
+        RedisKey[] keys = data.Select(x => (RedisKey)x.Item1).ToArray();
+        Task<long> keysDeleted = db.KeyDeleteAsync(keys);
         keysDeleted.Wait();
         Assert.AreEqual(keysDeleted.Result, 10);
 
-        var keysDel = db.KeyDelete(keys);
+        long keysDel = db.KeyDelete(keys);
         Assert.AreEqual(keysDel, 0);
     }
 
@@ -849,7 +849,7 @@ public class RespTests
     public void MultiKeyDeleteObjectStore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 10;
         int setCount = 3;
@@ -860,21 +860,21 @@ public class RespTests
         for (int i = 0; i < keyCount; i++)
         {
             keys.Add(GetRandomString(keyLen));
-            var key = keys.Last();
+            string key = keys.Last();
 
             for (int j = 0; j < setCount; j++)
             {
-                var member = GetRandomString(valLen);
+                string member = GetRandomString(valLen);
                 db.SetAdd(key, member);
             }
         }
 
-        var redisKeys = keys.Select(x => (RedisKey)x).ToArray();
-        var keysDeleted = db.KeyDeleteAsync(redisKeys);
+        RedisKey[] redisKeys = keys.Select(x => (RedisKey)x).ToArray();
+        Task<long> keysDeleted = db.KeyDeleteAsync(redisKeys);
         keysDeleted.Wait();
         Assert.AreEqual(keysDeleted.Result, 10);
 
-        var keysDel = db.KeyDelete(redisKeys);
+        long keysDel = db.KeyDelete(redisKeys);
         Assert.AreEqual(keysDel, 0);
     }
 
@@ -890,7 +890,7 @@ public class RespTests
         }
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 10;
         int valLen = 16;
@@ -900,12 +900,12 @@ public class RespTests
         for (int i = 0; i < keyCount; i++)
         {
             data.Add(new Tuple<string, string>(GetRandomString(keyLen), GetRandomString(valLen)));
-            var pair = data.Last();
+            Tuple<string, string> pair = data.Last();
             db.StringSet(pair.Item1, pair.Item2);
         }
 
-        var keys = data.Select(x => (object)x.Item1).ToArray();
-        var keysDeleted = (string)db.Execute("unlink", keys);
+        object[] keys = data.Select(x => (object)x.Item1).ToArray();
+        string keysDeleted = (string)db.Execute("unlink", keys);
         Assert.AreEqual(10, int.Parse(keysDeleted));
 
         keysDeleted = (string)db.Execute("unlink", keys);
@@ -916,7 +916,7 @@ public class RespTests
     public void MultiKeyUnlinkObjectStore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 10;
         int setCount = 3;
@@ -927,17 +927,17 @@ public class RespTests
         for (int i = 0; i < keyCount; i++)
         {
             keys.Add(GetRandomString(keyLen));
-            var key = keys.Last();
+            string key = keys.Last();
 
             for (int j = 0; j < setCount; j++)
             {
-                var member = GetRandomString(valLen);
+                string member = GetRandomString(valLen);
                 db.SetAdd(key, member);
             }
         }
 
-        var redisKey = keys.Select(x => (object)x).ToArray();
-        var keysDeleted = (string)db.Execute("unlink", redisKey);
+        object[] redisKey = keys.Select(x => (object)x).ToArray();
+        string keysDeleted = (string)db.Execute("unlink", redisKey);
         Assert.AreEqual(Int32.Parse(keysDeleted), 10);
 
         keysDeleted = (string)db.Execute("unlink", redisKey);
@@ -955,11 +955,11 @@ public class RespTests
             server.Start();
         }
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         Assert.IsFalse(db.KeyExists(strKey));
         db.StringSet(strKey, nVal);
 
@@ -974,13 +974,13 @@ public class RespTests
     public void SingleExistsObject()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "key";
+        string key = "key";
         Assert.IsFalse(db.KeyExists(key));
 
         var listData = new RedisValue[] { "a", "b", "c", "d" };
-        var count = db.ListLeftPush(key, listData);
+        long count = db.ListLeftPush(key, listData);
         Assert.AreEqual(4, count);
         Assert.True(db.KeyExists(key));
     }
@@ -989,17 +989,17 @@ public class RespTests
     public void MultipleExistsKeysAndObjects()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var count = db.ListLeftPush("listKey", ["a", "b", "c", "d"]);
+        long count = db.ListLeftPush("listKey", ["a", "b", "c", "d"]);
         Assert.AreEqual(4, count);
 
-        var zaddItems = db.SortedSetAdd("zset:test", [new SortedSetEntry("a", 1), new SortedSetEntry("b", 2)]);
+        long zaddItems = db.SortedSetAdd("zset:test", [new SortedSetEntry("a", 1), new SortedSetEntry("b", 2)]);
         Assert.AreEqual(2, zaddItems);
 
         db.StringSet("foo", "bar");
 
-        var exists = db.KeyExists(["key", "listKey", "zset:test", "foo"]);
+        long exists = db.KeyExists(["key", "listKey", "zset:test", "foo"]);
         Assert.AreEqual(3, exists);
     }
 
@@ -1008,7 +1008,7 @@ public class RespTests
     public void SingleRename()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "test1";
         db.StringSet("key1", origValue);
@@ -1033,12 +1033,12 @@ public class RespTests
             server.Start();
         }
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         //1. Key rename does not exist
         try
         {
-            var res = db.KeyRename("key1", "key2");
+            bool res = db.KeyRename("key1", "key2");
         }
         catch (Exception ex)
         {
@@ -1058,18 +1058,18 @@ public class RespTests
     public void SingleRenameObjectStore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var origList = new RedisValue[] { "a", "b", "c", "d" };
-        var key1 = "lkey1";
-        var count = db.ListRightPush(key1, origList);
+        string key1 = "lkey1";
+        long count = db.ListRightPush(key1, origList);
         Assert.AreEqual(4, count);
 
-        var result = db.ListRange(key1);
+        RedisValue[] result = db.ListRange(key1);
         Assert.AreEqual(origList, result);
 
-        var key2 = "lkey2";
-        var rb = db.KeyRename(key1, key2);
+        string key2 = "lkey2";
+        bool rb = db.KeyRename(key1, key2);
         Assert.IsTrue(rb);
         result = db.ListRange(key1);
         Assert.AreEqual(Array.Empty<RedisValue>(), result);
@@ -1082,8 +1082,8 @@ public class RespTests
     public void CanSelectCommand()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var reply = db.Execute("SELECT", "0");
+        IDatabase db = redis.GetDatabase(0);
+        RedisResult reply = db.Execute("SELECT", "0");
         Assert.IsTrue(reply.ToString() == "OK");
         Assert.Throws<RedisServerException>(() => db.Execute("SELECT", "1"));
 
@@ -1096,7 +1096,7 @@ public class RespTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = "-ERR invalid database index.\r\n+PONG\r\n";
+        string expectedResponse = "-ERR invalid database index.\r\n+PONG\r\n";
         var response = lightClientRequest.Execute("SELECT 1", "PING", expectedResponse.Length);
         Assert.AreEqual(expectedResponse, response);
     }
@@ -1110,7 +1110,7 @@ public class RespTests
         // SETEX
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute("SETEX mykey 1 abcdefghij", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -1185,7 +1185,7 @@ public class RespTests
         }
 
         // MSET
-        var expectedResponse = "+OK\r\n";
+        string expectedResponse = "+OK\r\n";
         var response = lightClientRequest.Execute($"MSET{sb}", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -1209,16 +1209,16 @@ public class RespTests
     public void PersistTTLTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "expireKey";
-        var val = "expireValue";
-        var expire = 2;
+        string key = "expireKey";
+        string val = "expireValue";
+        int expire = 2;
 
         db.StringSet(key, val);
         db.KeyExpire(key, TimeSpan.FromSeconds(expire));
 
-        var time = db.KeyTimeToLive(key);
+        TimeSpan? time = db.KeyTimeToLive(key);
         Assert.IsTrue(time.Value.TotalSeconds > 0);
 
         db.KeyExpire(key, TimeSpan.FromSeconds(expire));
@@ -1226,7 +1226,7 @@ public class RespTests
 
         Thread.Sleep((expire + 1) * 1000);
 
-        var _val = db.StringGet(key);
+        RedisValue _val = db.StringGet(key);
         Assert.AreEqual(val, _val.ToString());
 
         time = db.KeyTimeToLive(key);
@@ -1237,15 +1237,15 @@ public class RespTests
     public void ObjectTTLTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "expireKey";
-        var expire = 2;
+        string key = "expireKey";
+        int expire = 2;
 
         db.SortedSetAdd(key, key, 1.0);
         db.KeyExpire(key, TimeSpan.FromSeconds(expire));
 
-        var time = db.KeyTimeToLive(key);
+        TimeSpan? time = db.KeyTimeToLive(key);
         Assert.IsNotNull(time);
         Assert.IsTrue(time.Value.TotalSeconds > 0);
     }
@@ -1254,16 +1254,16 @@ public class RespTests
     public void PersistTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int expire = 100;
-        var keyA = "keyA";
+        string keyA = "keyA";
         db.StringSet(keyA, keyA);
-        var response = db.KeyPersist(keyA);
+        bool response = db.KeyPersist(keyA);
         Assert.IsFalse(response);
 
         db.KeyExpire(keyA, TimeSpan.FromSeconds(expire));
-        var time = db.KeyTimeToLive(keyA);
+        TimeSpan? time = db.KeyTimeToLive(keyA);
         Assert.IsTrue(time.Value.Seconds > 0);
 
         response = db.KeyPersist(keyA);
@@ -1272,10 +1272,10 @@ public class RespTests
         time = db.KeyTimeToLive(keyA);
         Assert.IsTrue(time == null);
 
-        var value = db.StringGet(keyA);
+        RedisValue value = db.StringGet(keyA);
         Assert.AreEqual(value, keyA);
 
-        var noKey = "noKey";
+        string noKey = "noKey";
         response = db.KeyPersist(noKey);
         Assert.IsFalse(response);
     }
@@ -1286,12 +1286,12 @@ public class RespTests
     public void KeyExpireStringTest(string command)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "keyA";
+        string key = "keyA";
         db.StringSet(key, key);
 
-        var value = db.StringGet(key);
+        RedisValue value = db.StringGet(key);
         Assert.AreEqual(key, (string)value);
 
         if (command.Equals("EXPIRE"))
@@ -1311,24 +1311,24 @@ public class RespTests
     public void KeyExpireObjectTest(string command)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "keyA";
+        string key = "keyA";
         db.SortedSetAdd(key, [new SortedSetEntry("element", 1.0)]);
 
-        var value = db.SortedSetScore(key, "element");
+        double? value = db.SortedSetScore(key, "element");
         Assert.AreEqual(1.0, value, "Get Score before expiration");
 
-        var actualDbSize = db.Execute("DBSIZE");
+        RedisResult actualDbSize = db.Execute("DBSIZE");
         Assert.AreEqual(1, (ulong)actualDbSize, "DBSIZE before expiration");
 
-        var actualKeys = db.Execute("KEYS", ["*"]);
+        RedisResult actualKeys = db.Execute("KEYS", ["*"]);
         Assert.AreEqual(1, ((RedisResult[])actualKeys).Length, "KEYS before expiration");
 
-        var actualScan = db.Execute("SCAN", "0");
+        RedisResult actualScan = db.Execute("SCAN", "0");
         Assert.AreEqual(1, ((RedisValue[])((RedisResult[])actualScan!)[1]).Length, "SCAN before expiration");
 
-        var exp = db.KeyExpire(key, command.Equals("EXPIRE") ? TimeSpan.FromSeconds(1) : TimeSpan.FromMilliseconds(1000));
+        bool exp = db.KeyExpire(key, command.Equals("EXPIRE") ? TimeSpan.FromSeconds(1) : TimeSpan.FromMilliseconds(1000));
         Assert.IsTrue(exp);
 
         // Sleep to wait for expiration
@@ -1353,9 +1353,9 @@ public class RespTests
     public void KeyExpireOptionsTest(string command)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "keyA";
+        string key = "keyA";
         object[] args = [key, 1000, ""];
         db.StringSet(key, key);
 
@@ -1375,7 +1375,7 @@ public class RespTests
         args[2] = "XX";// XX -- Set expiry only when the key has an existing expiry
         resp = (bool)db.Execute($"{command}", args);
         Assert.IsTrue(resp);// XX return true existing expiry
-        var time = db.KeyTimeToLive(key);
+        TimeSpan? time = db.KeyTimeToLive(key);
         Assert.IsTrue(time.Value.TotalSeconds <= (double)((int)args[1]) && time.Value.TotalSeconds > 0);
 
         args[1] = 1;
@@ -1415,7 +1415,7 @@ public class RespTests
     public async Task ReAddExpiredKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         const string key = "x:expire_trap";
 
@@ -1426,7 +1426,7 @@ public class RespTests
 
             Assert.IsTrue(db.KeyExists(key), $"KeyExists after initial add");
             Assert.AreEqual("1", db.Execute("EXISTS", key).ToString(), "EXISTS after initial add");
-            var actualScan = db.Execute("SCAN", "0");
+            RedisResult actualScan = db.Execute("SCAN", "0");
             Assert.AreEqual(1, ((RedisValue[])((RedisResult[])actualScan!)[1]).Length, "SCAN after initial ADD");
 
             db.KeyExpire(key, TimeSpan.FromSeconds(1));
@@ -1451,7 +1451,7 @@ public class RespTests
 
             Assert.IsTrue(db.KeyExists(key), $"KeyExists after initial RPUSH");
             Assert.AreEqual("1", db.Execute("EXISTS", key).ToString(), "EXISTS after initial RPUSH");
-            var actualScan = db.Execute("SCAN", "0");
+            RedisResult actualScan = db.Execute("SCAN", "0");
             Assert.AreEqual(1, ((RedisValue[])((RedisResult[])actualScan!)[1]).Length, "SCAN after initial RPUSH");
 
             db.KeyExpire(key, TimeSpan.FromSeconds(1));
@@ -1476,7 +1476,7 @@ public class RespTests
 
             Assert.IsTrue(db.KeyExists(key), $"KeyExists after initial HSET");
             Assert.AreEqual("1", db.Execute("EXISTS", key).ToString(), "EXISTS after initial HSET");
-            var actualScan = db.Execute("SCAN", "0");
+            RedisResult actualScan = db.Execute("SCAN", "0");
             Assert.AreEqual(1, ((RedisValue[])((RedisResult[])actualScan!)[1]).Length, "SCAN after initial HSET");
 
             db.KeyExpire(key, TimeSpan.FromSeconds(1));
@@ -1500,12 +1500,12 @@ public class RespTests
     public void GetSliceTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "rangeKey";
         string value = "0123456789";
 
-        var resp = (string)db.StringGetRange(key, 2, 10);
+        string resp = (string)db.StringGetRange(key, 2, 10);
         Assert.AreEqual(null, resp);
         Assert.AreEqual(true, db.StringSet(key, value));
 
@@ -1598,7 +1598,7 @@ public class RespTests
         Assert.AreEqual("", resp);
 
         //2,-1 -> 2 9
-        var negend = -1;
+        int negend = -1;
         resp = db.StringGetRange(key, 2, negend);
         Assert.AreEqual(value.Substring(2, 8), resp);
 
@@ -1608,7 +1608,7 @@ public class RespTests
         Assert.AreEqual(value.Substring(2, 6), resp);
 
         //-5,-3 -> 5,7
-        var negstart = -5;
+        int negstart = -5;
         resp = db.StringGetRange(key, negstart, negend);
         Assert.AreEqual(value.Substring(5, 3), resp);
     }
@@ -1617,14 +1617,14 @@ public class RespTests
     public void SetRangeTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "setRangeKey";
         string value = "0123456789";
         string newValue = "ABCDE";
 
         // new key, length 10, offset 0 -> 10 ("0123456789")
-        var resp = (string)db.StringSetRange(key, 0, value);
+        string resp = (string)db.StringSetRange(key, 0, value);
         Assert.AreEqual("10", resp);
         resp = db.StringGet(key);
         Assert.AreEqual("0123456789", resp);
@@ -1697,7 +1697,7 @@ public class RespTests
     public void PingTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string result = (string)db.Execute("PING");
         Assert.AreEqual("PONG", result);
@@ -1707,7 +1707,7 @@ public class RespTests
     public void AskingTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string result = (string)db.Execute("ASKING");
         Assert.AreEqual("OK", result);
@@ -1717,11 +1717,11 @@ public class RespTests
     public void KeepTtlTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int expire = 3;
-        var keyA = "keyA";
-        var keyB = "keyB";
+        string keyA = "keyA";
+        string keyB = "keyB";
         db.StringSet(keyA, keyA);
         db.StringSet(keyB, keyB);
 
@@ -1729,7 +1729,7 @@ public class RespTests
         db.KeyExpire(keyB, TimeSpan.FromSeconds(expire));
 
         db.StringSet(keyA, keyA, keepTtl: true);
-        var time = db.KeyTimeToLive(keyA);
+        TimeSpan? time = db.KeyTimeToLive(keyA);
         Assert.IsTrue(time.Value.Ticks > 0);
 
         db.StringSet(keyB, keyB, keepTtl: false);
@@ -1749,7 +1749,7 @@ public class RespTests
     public void StrlenTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         Assert.IsTrue(db.StringSet("mykey", "foo bar"));
         Assert.IsTrue(db.StringLength("mykey") == 7);
         Assert.IsTrue(db.StringLength("nokey") == 0);
@@ -1759,28 +1759,28 @@ public class RespTests
     public void TTLTestMilliseconds()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "myKey";
-        var val = "myKeyValue";
-        var expireTimeInMilliseconds = 3000;
+        string key = "myKey";
+        string val = "myKeyValue";
+        int expireTimeInMilliseconds = 3000;
 
         db.StringSet(key, val);
         db.KeyExpire(key, TimeSpan.FromMilliseconds(expireTimeInMilliseconds));
 
         //check TTL of the key in milliseconds
-        var pttl = db.Execute("PTTL", key);
+        RedisResult pttl = db.Execute("PTTL", key);
 
-        Assert.IsTrue(long.TryParse(pttl.ToString(), out var pttlInMs));
+        Assert.IsTrue(long.TryParse(pttl.ToString(), out long pttlInMs));
         Assert.IsTrue(pttlInMs > 0);
 
         db.KeyPersist(key);
         Thread.Sleep(expireTimeInMilliseconds);
 
-        var _val = db.StringGet(key);
+        RedisValue _val = db.StringGet(key);
         Assert.AreEqual(val, _val.ToString());
 
-        var ttl = db.KeyTimeToLive(key);
+        TimeSpan? ttl = db.KeyTimeToLive(key);
         Assert.IsNull(ttl);
     }
 
@@ -1788,14 +1788,14 @@ public class RespTests
     public void GetDelTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "myKey";
-        var val = "myKeyValue";
+        string key = "myKey";
+        string val = "myKeyValue";
 
         // Key Setup
         db.StringSet(key, val);
-        var retval = db.StringGet(key);
+        RedisValue retval = db.StringGet(key);
         Assert.AreEqual(val, retval.ToString());
 
         retval = db.StringGetDelete(key);
@@ -1828,51 +1828,51 @@ public class RespTests
     public void AppendTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "myKey";
-        var val = "myKeyValue";
-        var val2 = "myKeyValue2";
+        string key = "myKey";
+        string val = "myKeyValue";
+        string val2 = "myKeyValue2";
 
         db.StringSet(key, val);
-        var len = db.StringAppend(key, val2);
+        long len = db.StringAppend(key, val2);
         Assert.AreEqual(val.Length + val2.Length, len);
 
-        var _val = db.StringGet(key);
+        RedisValue _val = db.StringGet(key);
         Assert.AreEqual(val + val2, _val.ToString());
 
         // Test appending an empty string
         db.StringSet(key, val);
-        var len1 = db.StringAppend(key, "");
+        long len1 = db.StringAppend(key, "");
         Assert.AreEqual(val.Length, len1);
 
         _val = db.StringGet(key);
         Assert.AreEqual(val, _val.ToString());
 
         // Test appending to a non-existent key
-        var nonExistentKey = "nonExistentKey";
-        var len2 = db.StringAppend(nonExistentKey, val2);
+        string nonExistentKey = "nonExistentKey";
+        long len2 = db.StringAppend(nonExistentKey, val2);
         Assert.AreEqual(val2.Length, len2);
 
         _val = db.StringGet(nonExistentKey);
         Assert.AreEqual(val2, _val.ToString());
 
         // Test appending to a key with a large value
-        var largeVal = new string('a', 1000000);
+        string largeVal = new string('a', 1000000);
         db.StringSet(key, largeVal);
-        var len3 = db.StringAppend(key, val2);
+        long len3 = db.StringAppend(key, val2);
         Assert.AreEqual(largeVal.Length + val2.Length, len3);
 
         // Test appending to a key with metadata
-        var keyWithMetadata = "keyWithMetadata";
+        string keyWithMetadata = "keyWithMetadata";
         db.StringSet(keyWithMetadata, val, TimeSpan.FromSeconds(10000));
-        var len4 = db.StringAppend(keyWithMetadata, val2);
+        long len4 = db.StringAppend(keyWithMetadata, val2);
         Assert.AreEqual(val.Length + val2.Length, len4);
 
         _val = db.StringGet(keyWithMetadata);
         Assert.AreEqual(val + val2, _val.ToString());
 
-        var time = db.KeyTimeToLive(keyWithMetadata);
+        TimeSpan? time = db.KeyTimeToLive(keyWithMetadata);
         Assert.IsTrue(time.Value.TotalSeconds > 0);
     }
 

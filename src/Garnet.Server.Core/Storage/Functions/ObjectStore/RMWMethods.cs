@@ -19,7 +19,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
     /// <inheritdoc />
     public bool InitialUpdater(ref byte[] key, ref SpanByte input, ref IGarnetObject value, ref GarnetObjectStoreOutput output, ref RMWInfo rmwInfo, ref RecordInfo recordInfo)
     {
-        var type = ((RespInputHeader*)input.ToPointer())->type;
+        GarnetObjectType type = ((RespInputHeader*)input.ToPointer())->type;
         if ((byte)type < CustomCommandManager.StartOffset)
             value = GarnetObject.Create(type);
         else

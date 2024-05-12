@@ -41,8 +41,8 @@ public static class GeoHash
         long result = 0;
         bool isLongitudBit = true;
 
-        var latitudeRange = new double[] { geoLatMin, geoLatMax };
-        var longitudeRange = new double[] { geoLongMin, geoLongMax };
+        double[] latitudeRange = new double[] { geoLatMin, geoLatMax };
+        double[] longitudeRange = new double[] { geoLongMin, geoLongMax };
 
         //check for invalid values
         if (!(geoLatMin <= latitude && latitude <= geoLatMax) || !(geoLongMin <= longitude && longitude <= geoLongMax))
@@ -78,8 +78,8 @@ public static class GeoHash
 
         bool isLongitudBit = true;
 
-        var latitudeRange = new double[] { geoLatMin, geoLatMax };
-        var longitudeRange = new double[] { geoLongMin, geoLongMax };
+        double[] latitudeRange = new double[] { geoLatMin, geoLatMax };
+        double[] longitudeRange = new double[] { geoLongMin, geoLongMax };
 
         for (int i = 0; i < precision; i++)
         {
@@ -87,8 +87,8 @@ public static class GeoHash
             isLongitudBit = !isLongitudBit;
         }
 
-        var latitude = (latitudeRange[0] + latitudeRange[1]) / 2;
-        var longitude = (longitudeRange[0] + longitudeRange[1]) / 2;
+        double latitude = (latitudeRange[0] + latitudeRange[1]) / 2;
+        double longitude = (longitudeRange[0] + longitudeRange[1]) / 2;
         return (latitude, longitude);
     }
 
@@ -106,8 +106,8 @@ public static class GeoHash
         bool isLongitudBit = true;
         long hashValue = 0;
 
-        var latitudeRange = new double[] { geoLatMin, geoLatMax };
-        var longitudeRange = new double[] { geoLongMin, geoLongMax };
+        double[] latitudeRange = new double[] { geoLatMin, geoLatMax };
+        double[] longitudeRange = new double[] { geoLongMin, geoLongMax };
 
         double latitude;
         double longitude;
@@ -129,7 +129,7 @@ public static class GeoHash
             {
                 continue;
             }
-            var code = base32chars[hashValue];
+            char code = base32chars[hashValue];
             result += code;
             bits = 0;
             hashValue = 0;
@@ -151,8 +151,8 @@ public static class GeoHash
     {
         // Convert to Radians
         //Multiply by Math.PI / 180 to convert degrees to radians.
-        var lonRad = (sourceLon - targetLon) * degreesToRadians;
-        var latRad = (sourceLat - targetLat) * degreesToRadians;
+        double lonRad = (sourceLon - targetLon) * degreesToRadians;
+        double latRad = (sourceLat - targetLat) * degreesToRadians;
         double latHaversine = Math.Pow(Math.Sin(latRad * 0.5), 2);
         double lonHaversine = Math.Pow(Math.Sin(lonRad * 0.5), 2);
 
@@ -192,7 +192,7 @@ public static class GeoHash
     private static void Encode(double value, double[] range, ref long result)
     {
         double mid = (range[0] + range[1]) / 2;
-        var idx = value > mid ? 0 : 1;
+        int idx = value > mid ? 0 : 1;
         range[idx] = mid;
         result = (result << 1) + (value > mid ? 1 : 0);
     }

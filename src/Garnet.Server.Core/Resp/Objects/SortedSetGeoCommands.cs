@@ -28,7 +28,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -43,12 +43,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
-            var inputCount = count - 1;
+            int inputCount = count - 1;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -57,7 +57,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = inputCount;
             inputPtr->done = zaddDoneCount;
 
-            var status = storageApi.GeoAdd(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.GeoAdd(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             //restore input buffer
             *inputPtr = save;
@@ -100,7 +100,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     {
         int paramsRequiredInCommand = 0;
         string cmd = string.Empty;
-        var responseWhenNotFound = CmdStrings.RESP_EMPTYLIST;
+        ReadOnlySpan<byte> responseWhenNotFound = CmdStrings.RESP_EMPTYLIST;
         switch (op)
         {
             case SortedSetOperation.GEODIST:
@@ -130,7 +130,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for the Sorted Set
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -145,12 +145,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
-            var inputCount = count - 1;
+            int inputCount = count - 1;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -163,7 +163,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.GeoCommands(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.GeoCommands(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input buffer
             *inputPtr = save;
@@ -171,7 +171,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             switch (status)
             {
                 case GarnetStatus.OK:
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     zaddDoneCount += objOutputHeader.countDone;
                     zaddAddCount += objOutputHeader.opsDone;
                     //command partially done

@@ -39,7 +39,7 @@ public class IndexGrowthTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             Assert.AreEqual(0, store.OverflowBucketAllocations);
             Assert.AreEqual(1, store.IndexSize);
 
@@ -77,7 +77,7 @@ public class IndexGrowthTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             Assert.AreEqual(0, objectStore.OverflowBucketAllocations);
             Assert.AreEqual(1, objectStore.IndexSize);
 
@@ -105,7 +105,7 @@ public class IndexGrowthTests
     {
         for (int i = 0; i < keys.Length; i++)
         {
-            var members = db.SetMembers(keys[i]);
+            RedisValue[] members = db.SetMembers(keys[i]);
             Assert.AreEqual(1, members.Length, $"key {keys[i]}");
             Assert.AreEqual(values[i], members[0].ToString());
         }
@@ -125,7 +125,7 @@ public class IndexGrowthTests
         Random rnd = new Random(42);
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             Assert.AreEqual(8, store.IndexSize);
 
             for (int i = 0; i < keys.Length; i++)
@@ -138,7 +138,7 @@ public class IndexGrowthTests
             // Add lot more entries to push earlier keys to disk as server is started with low memory
             for (int i = 0; i < 1000; i++)
             {
-                var randkey = "rand" + rnd.Next(1_000_000);
+                string randkey = "rand" + rnd.Next(1_000_000);
                 db.StringSet(randkey, "randval");
             }
 
@@ -158,7 +158,7 @@ public class IndexGrowthTests
             Assert.AreEqual(values[0], db.StringGet(keys[0]).ToString());
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
         }
@@ -169,7 +169,7 @@ public class IndexGrowthTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             // Verify that entry created before checkpoint is still accessible
             Assert.AreEqual(values[0], db.StringGet(keys[0]).ToString());
         }
@@ -189,7 +189,7 @@ public class IndexGrowthTests
         Random rnd = new Random(42);
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             Assert.AreEqual(8, objectStore.IndexSize);
 
             for (int i = 0; i < keys.Length; i++)
@@ -202,7 +202,7 @@ public class IndexGrowthTests
             // Add lot more entries to push earlier keys to disk as server is started with low memory
             for (int i = 0; i < 1000; i++)
             {
-                var randkey = "rand" + rnd.Next(1_000_000);
+                string randkey = "rand" + rnd.Next(1_000_000);
                 db.SetAdd(randkey, "randval");
             }
 
@@ -222,7 +222,7 @@ public class IndexGrowthTests
             VerifyObjectStoreSetMembers(db, keys, values);
 
             // Issue and wait for DB save
-            var server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
+            IServer server = redis.GetServer($"{TestUtils.Address}:{TestUtils.Port}");
             server.Save(SaveType.BackgroundSave);
             while (server.LastSave().Ticks == DateTimeOffset.FromUnixTimeSeconds(0).Ticks) Thread.Sleep(10);
         }
@@ -233,7 +233,7 @@ public class IndexGrowthTests
 
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig(allowAdmin: true)))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             // Verify that entry created before checkpoint is still accessible
             VerifyObjectStoreSetMembers(db, keys, values);
         }

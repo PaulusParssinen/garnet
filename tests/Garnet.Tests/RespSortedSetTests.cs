@@ -79,20 +79,20 @@ public class RespSortedSetTests
     public void AddAndLength()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_Add";
+        string key = "SortedSet_Add";
 
         // 10 entries are added
-        var added = db.SortedSetAdd(key, entries);
+        long added = db.SortedSetAdd(key, entries);
         Assert.AreEqual(entries.Length, added);
 
-        var card = db.SortedSetLength(key);
+        long card = db.SortedSetLength(key);
         Assert.AreEqual(entries.Length, card);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1792;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
         var entries2 = new SortedSetEntry[entries.Length + 1];
@@ -134,19 +134,19 @@ public class RespSortedSetTests
     public void CanCreateLeaderBoard()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "LeaderBoard";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "LeaderBoard";
 
         // 10 entries are added
-        var added = db.SortedSetAdd(key, leaderBoard);
+        long added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(leaderBoard.Length, added);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1792;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var card = db.SortedSetLength(key);
+        long card = db.SortedSetLength(key);
         Assert.AreEqual(leaderBoard.Length, card);
     }
 
@@ -154,14 +154,14 @@ public class RespSortedSetTests
     public void CanGetScoresZCount()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "LeaderBoard";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "LeaderBoard";
 
         // 10 entries are added
-        var added = db.SortedSetAdd(key, leaderBoard);
+        long added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(leaderBoard.Length, added);
 
-        var card = db.SortedSetLength(new RedisKey(key), min: 500, max: 700);
+        long card = db.SortedSetLength(new RedisKey(key), min: 500, max: 700);
         Assert.IsTrue(4 == card);
 
         //using infinity
@@ -175,24 +175,24 @@ public class RespSortedSetTests
     public void AddRemove()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_AddRemove";
+        string key = "SortedSet_AddRemove";
 
         // 10 entries are added
-        var added = db.SortedSetAdd(key, entries);
+        long added = db.SortedSetAdd(key, entries);
         Assert.AreEqual(entries.Length, added);
 
-        var card = db.SortedSetLength(key);
+        long card = db.SortedSetLength(key);
         Assert.AreEqual(entries.Length, card);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1800;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1800;
         Assert.AreEqual(expectedResponse, actualValue);
 
         // remove all entries
-        var removed = db.SortedSetRemove(key, entries.Select(e => e.Element).ToArray());
+        long removed = db.SortedSetRemove(key, entries.Select(e => e.Element).ToArray());
         Assert.AreEqual(entries.Length, removed);
 
         // length should be 0
@@ -224,7 +224,7 @@ public class RespSortedSetTests
         card = db.SortedSetLength(key);
         Assert.AreEqual(0, card);
 
-        var response_keys = db.SortedSetRangeByRankWithScores(key, 0, 100);
+        SortedSetEntry[] response_keys = db.SortedSetRangeByRankWithScores(key, 0, 100);
         Assert.IsEmpty(response_keys);
 
         response = db.Execute("MEMORY", "USAGE", key);
@@ -271,18 +271,18 @@ public class RespSortedSetTests
     public void AddPopDesc()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_AddPop";
+        string key = "SortedSet_AddPop";
 
-        var added = db.SortedSetAdd(key, entries);
+        long added = db.SortedSetAdd(key, entries);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1792;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var last = db.SortedSetPop(key, Order.Descending);
+        SortedSetEntry? last = db.SortedSetPop(key, Order.Descending);
         Assert.True(last.HasValue);
         Assert.AreEqual(entries[9], last.Value);
         Assert.AreEqual(9, db.SortedSetLength(key));
@@ -292,7 +292,7 @@ public class RespSortedSetTests
         expectedResponse = 1632;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var last2 = db.SortedSetPop(key, 2, Order.Descending);
+        SortedSetEntry[] last2 = db.SortedSetPop(key, 2, Order.Descending);
         Assert.AreEqual(2, last2.Length);
         Assert.AreEqual(entries[8], last2[0]);
         Assert.AreEqual(entries[7], last2[1]);
@@ -303,7 +303,7 @@ public class RespSortedSetTests
         expectedResponse = 1312;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var last3 = db.SortedSetPop(key, 999, Order.Descending);
+        SortedSetEntry[] last3 = db.SortedSetPop(key, 999, Order.Descending);
         Assert.AreEqual(7, last3.Length);
         for (int i = 0; i < 7; i++)
             Assert.AreEqual(entries[6 - i], last3[i]);
@@ -319,22 +319,22 @@ public class RespSortedSetTests
     public void AddScore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_AddScore";
+        string key = "SortedSet_AddScore";
 
-        var added = db.SortedSetAdd(key, entries);
+        long added = db.SortedSetAdd(key, entries);
 
-        var score = db.SortedSetScore(key, "a");
+        double? score = db.SortedSetScore(key, "a");
         Assert.True(score.HasValue);
         Assert.AreEqual(1, score.Value);
 
         score = db.SortedSetScore(key, "x");
         Assert.False(score.HasValue);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1800;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1800;
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -342,11 +342,11 @@ public class RespSortedSetTests
     public void CanDoZMScore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_GetMemberScores";
-        var added = db.SortedSetAdd(key, entries);
-        var scores = db.SortedSetScores(key, ["a", "b", "z", "i"]);
+        string key = "SortedSet_GetMemberScores";
+        long added = db.SortedSetAdd(key, entries);
+        double?[] scores = db.SortedSetScores(key, ["a", "b", "z", "i"]);
         Assert.AreEqual(scores, new List<double?>() { 1, 2, null, 9 });
 
 
@@ -357,9 +357,9 @@ public class RespSortedSetTests
             () => db.SortedSetScores("nokey", []),
             "ERR wrong number of arguments for ZMSCORE command.");
 
-        var memResponse = db.Execute("MEMORY", "USAGE", key);
-        var memActualValue = ResultType.Integer == memResponse.Type ? Int32.Parse(memResponse.ToString()) : -1;
-        var memExpectedResponse = 1808;
+        RedisResult memResponse = db.Execute("MEMORY", "USAGE", key);
+        int memActualValue = ResultType.Integer == memResponse.Type ? Int32.Parse(memResponse.ToString()) : -1;
+        int memExpectedResponse = 1808;
         Assert.AreEqual(memExpectedResponse, memActualValue);
     }
 
@@ -371,8 +371,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommands("ZADD zmscore 0 a 1 b", "PING");
 
         var response = lightClientRequest.SendCommands("ZMSCORE zmscore", "PING");
-        var expectedResponse = $"{FormatWrongNumOfArgsError("ZMSCORE")}+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"{FormatWrongNumOfArgsError("ZMSCORE")}+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommands("ZMSCORE nokey a b c", "PING", 4, 1);
@@ -390,19 +390,19 @@ public class RespSortedSetTests
     public void CandDoZIncrby()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "LeaderBoard";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "LeaderBoard";
 
         // 10 entries should be added
-        var added = db.SortedSetAdd(key, leaderBoard);
+        long added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(leaderBoard.Length, added);
 
-        var incr = db.SortedSetIncrement(key, new RedisValue("Tom"), 90);
+        double incr = db.SortedSetIncrement(key, new RedisValue("Tom"), 90);
         Assert.IsTrue(incr == 650);
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 1792;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 1792;
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -412,22 +412,22 @@ public class RespSortedSetTests
     {
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         //ZPOPMAX
-        var actualResult = db.SortedSetPop(new RedisKey("nokey"), Order.Descending);
+        SortedSetEntry? actualResult = db.SortedSetPop(new RedisKey("nokey"), Order.Descending);
         Assert.AreEqual(null, actualResult);
 
         //ZCOUNT
-        var doneZCount = db.SortedSetLength(new RedisKey("nokey"), 1, 3, Exclude.None, CommandFlags.None);
+        long doneZCount = db.SortedSetLength(new RedisKey("nokey"), 1, 3, Exclude.None, CommandFlags.None);
         Assert.AreEqual(0, doneZCount);
 
         //ZLEXCOUNT
-        var doneZLEXCount = db.SortedSetLengthByValue(new RedisKey("nokey"), Double.NegativeInfinity, Double.PositiveInfinity);
+        long doneZLEXCount = db.SortedSetLengthByValue(new RedisKey("nokey"), Double.NegativeInfinity, Double.PositiveInfinity);
         Assert.AreEqual(0, doneZLEXCount);
 
         //ZCARD
-        var doneZCard = db.SortedSetLength(new RedisKey("nokey"));
+        long doneZCard = db.SortedSetLength(new RedisKey("nokey"));
         Assert.AreEqual(0, doneZCard);
 
         //ZPOPMIN
@@ -435,28 +435,28 @@ public class RespSortedSetTests
         Assert.AreEqual(null, actualResult);
 
         //ZREM
-        var doneRemove = db.SortedSetRemove(new RedisKey("nokey"), new RedisValue("a"));
+        bool doneRemove = db.SortedSetRemove(new RedisKey("nokey"), new RedisValue("a"));
         Assert.AreEqual(false, doneRemove);
 
         //ZREMRANGEBYLEX
-        var doneRemByLex = db.SortedSetRemoveRangeByValue(new RedisKey("nokey"), new RedisValue("a"), new RedisValue("b"));
+        long doneRemByLex = db.SortedSetRemoveRangeByValue(new RedisKey("nokey"), new RedisValue("a"), new RedisValue("b"));
         Assert.AreEqual(0, doneRemByLex);
 
         //ZREMRANGEBYRANK
-        var doneRemRangeByRank = db.SortedSetRemoveRangeByRank(new RedisKey("nokey"), 0, 1);
+        long doneRemRangeByRank = db.SortedSetRemoveRangeByRank(new RedisKey("nokey"), 0, 1);
         Assert.AreEqual(0, doneRemRangeByRank);
 
         //ZREMRANGEBYSCORE
-        var doneRemRangeByScore = db.SortedSetRemoveRangeByScore(new RedisKey("nokey"), 0, 1);
+        long doneRemRangeByScore = db.SortedSetRemoveRangeByScore(new RedisKey("nokey"), 0, 1);
         Assert.AreEqual(0, doneRemRangeByScore);
 
-        var response = db.Execute("MEMORY", "USAGE", "nokey");
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = -1;
+        RedisResult response = db.Execute("MEMORY", "USAGE", "nokey");
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
 
         //ZINCR, with this command the sorted set gets created
-        var doneZIncr = db.SortedSetIncrement(new RedisKey("nokey"), new RedisValue("1"), 1);
+        double doneZIncr = db.SortedSetIncrement(new RedisKey("nokey"), new RedisValue("1"), 1);
         Assert.AreEqual(1, doneZIncr);
 
         response = db.Execute("MEMORY", "USAGE", "nokey");
@@ -469,22 +469,22 @@ public class RespSortedSetTests
     public void CanUseZScanNoParameters()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Use sortedsetscan on non existing key
-        var items = db.SortedSetScan(new RedisKey("foo"), new RedisValue("*"), pageSize: 10);
+        IEnumerable<SortedSetEntry> items = db.SortedSetScan(new RedisKey("foo"), new RedisValue("*"), pageSize: 10);
         Assert.IsEmpty(items, "Failed to use SortedSetScan on non existing key");
 
         // Add some items
-        var added = db.SortedSetAdd("myss", entries);
+        long added = db.SortedSetAdd("myss", entries);
         Assert.AreEqual(entries.Length, added);
 
-        var members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("*"));
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("*"));
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == 10);
 
         int i = 0;
-        foreach (var item in members)
+        foreach (SortedSetEntry item in members)
         {
             Assert.IsTrue(entries[i++].Element.Equals(item.Element));
         }
@@ -494,13 +494,13 @@ public class RespSortedSetTests
     public void CanUseZScanWithMatch()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Add some items
-        var added = db.SortedSetAdd("myss", entries);
+        long added = db.SortedSetAdd("myss", entries);
         Assert.AreEqual(entries.Length, added);
 
-        var members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("j*"));
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("j*"));
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == 1);
         Assert.IsTrue(entries[9].Element.Equals(members.ElementAt(0).Element));
@@ -510,7 +510,7 @@ public class RespSortedSetTests
     public void CanUseZScanWithCollection()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Add some items
         var r = new Random();
@@ -521,19 +521,19 @@ public class RespSortedSetTests
 
         for (int i = 0; i < n; i++)
         {
-            var memberId = r.Next(0, 10000000);
+            int memberId = r.Next(0, 10000000);
             entries[i] = new SortedSetEntry($"key:{memberId}", memberId);
         }
 
-        var ssLen = db.SortedSetAdd("myss", entries);
-        var members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("key:*"), (Int32)ssLen);
+        long ssLen = db.SortedSetAdd("myss", entries);
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(new RedisKey("myss"), new RedisValue("key:*"), (Int32)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == ssLen);
 
         entries = new SortedSetEntry[n];
         for (int i = 0; i < n; i++)
         {
-            var memberId = r.NextDouble();
+            double memberId = r.NextDouble();
             entries[i] = new SortedSetEntry($"key:{memberId}", memberId);
         }
 
@@ -548,7 +548,7 @@ public class RespSortedSetTests
     public void CanUseZScanWithDoubleDifferentFormats()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         double[] numbers;
 
         numbers = new double[7];
@@ -562,7 +562,7 @@ public class RespSortedSetTests
         numbers[5] = 9223372036854775807;
         numbers[6] = -9223372036854775808;
 
-        var key = "ssScores";
+        string key = "ssScores";
         var entries = new SortedSetEntry[numbers.Length];
 
         for (int i = 0; i < numbers.Length; i++)
@@ -570,15 +570,15 @@ public class RespSortedSetTests
             entries[i] = new SortedSetEntry($"{key}:{i}", numbers[i]);
         }
 
-        var ssLen = db.SortedSetAdd(key, entries);
+        long ssLen = db.SortedSetAdd(key, entries);
         Assert.IsTrue(numbers.Length == ssLen);
 
-        var members = db.SortedSetScan(key, new RedisValue("*Scores:*"), (Int32)ssLen);
+        IEnumerable<SortedSetEntry> members = db.SortedSetScan(key, new RedisValue("*Scores:*"), (Int32)ssLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == ssLen);
 
         int k = 0;
-        foreach (var item in members)
+        foreach (SortedSetEntry item in members)
         {
             Assert.AreEqual(item.Score, numbers[k++]);
         }
@@ -593,7 +593,7 @@ public class RespSortedSetTests
     public void CanDoZScanWithCursor()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Fill a new SortedSetEntry with 1000 random entries
         int n = 1000;
@@ -609,14 +609,14 @@ public class RespSortedSetTests
         db.SortedSetAdd(keySS, entries);
 
         int pageSize = 45;
-        var response = db.SortedSetScan(keySS, "*", pageSize: pageSize, cursor: 0);
+        IEnumerable<SortedSetEntry> response = db.SortedSetScan(keySS, "*", pageSize: pageSize, cursor: 0);
         var cursor = ((IScanningCursor)response);
-        var j = 0;
+        int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;
 
         // Consume the enumeration
-        foreach (var i in response)
+        foreach (SortedSetEntry i in response)
         {
             // Represents the *active* page of results (not the pending/next page of results as returned by HSCAN/ZSCAN/SSCAN)
             pageNumber = cursor.Cursor;
@@ -632,7 +632,7 @@ public class RespSortedSetTests
         // Assert the cursor is at the end of the enumeration
         Assert.AreEqual(pageNumber + pageOffset, entries.Length - 1);
 
-        var l = response.LastOrDefault();
+        SortedSetEntry l = response.LastOrDefault();
         Assert.AreEqual($"key:{entries.Length - 1}", l.Element.ToString());
     }
 
@@ -640,17 +640,17 @@ public class RespSortedSetTests
     public async Task CanUseZRangeByScoreWithSE()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_Pof2";
+        string key = "SortedSet_Pof2";
 
         // 10 entries are added
         await db.SortedSetAddAsync(key, powOfTwo, CommandFlags.FireAndForget);
 
-        var res = await db.SortedSetRangeByScoreAsync(key, start: double.PositiveInfinity, double.NegativeInfinity, order: Order.Ascending);
+        RedisValue[] res = await db.SortedSetRangeByScoreAsync(key, start: double.PositiveInfinity, double.NegativeInfinity, order: Order.Ascending);
         Assert.AreEqual(powOfTwo.Length, res.Length);
 
-        var range = await db.SortedSetRangeByRankWithScoresAsync(key);
+        SortedSetEntry[] range = await db.SortedSetRangeByRankWithScoresAsync(key);
         Assert.AreEqual(powOfTwo.Length, range.Length);
     }
 
@@ -658,16 +658,16 @@ public class RespSortedSetTests
     public async Task CanManageZRangeByScoreWhenStartHigherThanExistingMaxScoreSE()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_OnlyZeroScore";
+        string key = "SortedSet_OnlyZeroScore";
 
         await db.SortedSetAddAsync(key, "A", 0, CommandFlags.FireAndForget);
 
-        var res = await db.SortedSetRangeByScoreAsync(key, start: 1);
+        RedisValue[] res = await db.SortedSetRangeByScoreAsync(key, start: 1);
         Assert.AreEqual(0, res.Length);
 
-        var range = await db.SortedSetRangeByRankWithScoresAsync(key, start: 1);
+        SortedSetEntry[] range = await db.SortedSetRangeByRankWithScoresAsync(key, start: 1);
         Assert.AreEqual(0, range.Length);
     }
 
@@ -691,11 +691,11 @@ public class RespSortedSetTests
             (690, Encoding.ASCII.GetBytes("Peter")),
             (740, Encoding.ASCII.GetBytes("Frank"))
         };
-        var c = sortedSet.Count;
+        int c = sortedSet.Count;
         Assert.AreEqual(7, c);
 
         //This simulates the ZCOUNT min max
-        var r = sortedSet.Where(t => t.Item1 >= 500 && t.Item1 <= 700).Count();
+        int r = sortedSet.Where(t => t.Item1 >= 500 && t.Item1 <= 700).Count();
         Assert.AreEqual(4, r);
     }
 
@@ -707,8 +707,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("ZADD board 340 Dave 400 Kendra 560 Tom 650 Barbara 690 Jennifer 690 Peter", bytesPerSend);
-        var expectedResponse = ":6\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":6\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommands("ZCOUNT board 500 700", "PING");
@@ -735,8 +735,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 3 three");
 
         response = lightClientRequest.SendCommandChunks("ZRANGE board 0 -1", bytesSent, 4);
-        var expectedResponse = "*3\r\n$3\r\none\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*3\r\n$3\r\none\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // get a range by index with scores
@@ -784,8 +784,8 @@ public class RespSortedSetTests
 
         // 1 < score <= 5
         response = lightClientRequest.SendCommandChunks("ZRANGEBYSCORE board (1 5", bytesSent, 3);
-        var expectedResponse = "*2\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*2\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // 1 < score <= 5
@@ -805,7 +805,7 @@ public class RespSortedSetTests
         // ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = ":3\r\n";
+        string expectedResponse = ":3\r\n";
         var response = lightClientRequest.Execute("ZADD mysales 1556 Samsung 2000 Nokia 1800 Micromax", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -843,8 +843,8 @@ public class RespSortedSetTests
 
         // get a range by lex order
         response = lightClientRequest.SendCommand("ZRANGE board (a (d BYLEX", 3);
-        var expectedResponse = "*2\r\n$1\r\nb\r\n$1\r\nc\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*2\r\n$1\r\nb\r\n$1\r\nc\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         //by lex with different range
@@ -866,8 +866,8 @@ public class RespSortedSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("ZADD mycity 0 Delhi 0 London 0 Paris 0 Tokyo 0 NewYork 0 Seoul");
         response = lightClientRequest.SendCommand("ZRANGE mycity (London + BYLEX", 5);
-        var expectedResponse = "*4\r\n$7\r\nNewYork\r\n$5\r\nParis\r\n$5\r\nSeoul\r\n$5\r\nTokyo\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*4\r\n$7\r\nNewYork\r\n$5\r\nParis\r\n$5\r\nSeoul\r\n$5\r\nTokyo\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("ZRANGE mycity - + BYLEX LIMIT 2 3", 4);
@@ -895,8 +895,8 @@ public class RespSortedSetTests
         // get a range by lex order
         response = lightClientRequest.SendCommandChunks("ZRANGE board 0 -1 REV", bytesSent, 7);
 
-        var expectedResponse = "*6\r\n$1\r\nf\r\n$1\r\ne\r\n$1\r\nd\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*6\r\n$1\r\nf\r\n$1\r\ne\r\n$1\r\nd\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("ZRANGE board 0 -1 REV", 7);
@@ -910,8 +910,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("ZADD cities 100000 Delhi 850000 Mumbai 700000 Hyderabad 800000 Kolkata", bytesSent);
-        var expectedResponse = ":4\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZREVRANGE cities -2 -1 WITHSCORES", bytesSent, 5);
@@ -931,7 +931,7 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = ":1\r\n";
+        string expectedResponse = ":1\r\n";
         var response = lightClientRequest.Execute("ZADD board 400 Kendra", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -953,8 +953,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("ZCOUNT nokey 12 232 4343 5454", "PING");
-        var expectedResponse = $"{FormatWrongNumOfArgsError("ZCOUNT")}+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"{FormatWrongNumOfArgsError("ZCOUNT")}+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZCOUNT nokey 12 232 4343 5454", bytesSent);
@@ -994,8 +994,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("ZINCRBY newboard 200 Tom", bytesSent);
-        var expectedResponse = "$3\r\n200\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$3\r\n200\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZCARD newboard", bytesSent);
@@ -1008,10 +1008,10 @@ public class RespSortedSetTests
     public void CreateLeaderBoardWithZADDWithStatusPending()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "LeaderBoard";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "LeaderBoard";
 
-        var added = db.SortedSetAdd(key, leaderBoard);
+        long added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(leaderBoard.Length, added);
 
         // 100 keys should be added
@@ -1021,7 +1021,7 @@ public class RespSortedSetTests
         added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(0, added);
 
-        var card = db.SortedSetLength(key);
+        long card = db.SortedSetLength(key);
         Assert.AreEqual(leaderBoard.Length, card);
     }
 
@@ -1034,8 +1034,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("ZADD board 340 Dave 400 Kendra 560 Tom 650 Barbara 690 Jennifer 690 Peter", bytesSent);
-        var expectedResponse = ":6\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":6\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         //get the number of elements in the Sorted Set
@@ -1061,8 +1061,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 560 Tom");
 
         response = lightClientRequest.SendCommandChunks("ZINCRBY board 10 Tom", bytesSent);
-        var expectedResponse = "$3\r\n570\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$3\r\n570\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("ZINCRBY board -590 Tom");
@@ -1093,8 +1093,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("ZINCRBY nokey", "PING");
-        var expectedResponse = $"{FormatWrongNumOfArgsError("ZINCRBY")}+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"{FormatWrongNumOfArgsError("ZINCRBY")}+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -1110,8 +1110,8 @@ public class RespSortedSetTests
 
         //do zincrby
         var response = lightClientRequest.SendCommandChunks("ZINCRBY myboard 1 field1", bytesSent);
-        var expectedResponse = "-ERR wrong key type used in ZINCRBY command.\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR wrong key type used in ZINCRBY command.\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -1130,8 +1130,8 @@ public class RespSortedSetTests
 
         // get a range by lex order
         response = lightClientRequest.SendCommand("ZREVRANGE board 0 -1", 7);
-        var expectedResponse = "*6\r\n$1\r\nf\r\n$1\r\ne\r\n$1\r\nd\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*6\r\n$1\r\nf\r\n$1\r\ne\r\n$1\r\nd\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
 
@@ -1160,8 +1160,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 560 Tom");
 
         response = lightClientRequest.SendCommandChunks("ZRANK board Jon", bytesSent);
-        var expectedResponse = "$-1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$-1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZRANK board Tom", bytesSent);
@@ -1183,8 +1183,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 560 Tom");
 
         response = lightClientRequest.SendCommandChunks("ZREVRANK board Jon", bytesSent);
-        var expectedResponse = "$-1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$-1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZREVRANK board Tom", bytesSent);
@@ -1215,8 +1215,8 @@ public class RespSortedSetTests
         var response = lightClientRequest.SendCommand("ZADD myzset 0 aaaa 0 b 0 c 0 d 0 e");
         lightClientRequest.SendCommand("ZADD myzset 0 foo 0 zap 0 zip 0 ALPHA 0 alpha");
         response = lightClientRequest.SendCommand("ZRANGE myzset 0 -1", 11);
-        var expectedResponse = "*10\r\n$5\r\nALPHA\r\n$4\r\naaaa\r\n$5\r\nalpha\r\n$1\r\nb\r\n$1\r\nc\r\n$1\r\nd\r\n$1\r\ne\r\n$3\r\nfoo\r\n$3\r\nzap\r\n$3\r\nzip\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*10\r\n$5\r\nALPHA\r\n$4\r\naaaa\r\n$5\r\nalpha\r\n$1\r\nb\r\n$1\r\nc\r\n$1\r\nd\r\n$1\r\ne\r\n$3\r\nfoo\r\n$3\r\nzap\r\n$3\r\nzip\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZREMRANGEBYLEX myzset [alpha [omega", bytesSent);
@@ -1245,8 +1245,8 @@ public class RespSortedSetTests
         response = lightClientRequest.SendCommand("ZADD myzset 0 aaaa 0 b 0 c 0 d 0 e");
         lightClientRequest.SendCommand("ZADD myzset 0 foo 0 zap 0 zip 0 ALPHA 0 alpha");
         response = lightClientRequest.SendCommand("ZRANGE myzset 0 -1", 11);
-        var expectedResponse = "*10\r\n$5\r\nALPHA\r\n$4\r\naaaa\r\n$5\r\nalpha\r\n$1\r\nb\r\n$1\r\nc\r\n$1\r\nd\r\n$1\r\ne\r\n$3\r\nfoo\r\n$3\r\nzap\r\n$3\r\nzip\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*10\r\n$5\r\nALPHA\r\n$4\r\naaaa\r\n$5\r\nalpha\r\n$1\r\nb\r\n$1\r\nc\r\n$1\r\nd\r\n$1\r\ne\r\n$3\r\nfoo\r\n$3\r\nzap\r\n$3\r\nzip\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZREMRANGEBYLEX myzset [alpha [omega", bytesSent);
@@ -1295,8 +1295,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 560 Tom");
 
         response = lightClientRequest.SendCommandChunks("ZREMRANGEBYSCORE board -inf (500", bytesSent);
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZCARD board", bytesSent);
@@ -1322,8 +1322,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD board 0 c");
 
         response = lightClientRequest.SendCommandChunks("ZRANGE board 0 -1 LIMIT 1 1", bytesSent);
-        var expectedResponse = "-ERR syntax error, LIMIT is only supported in BYSCORE or BYLEX.\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR syntax error, LIMIT is only supported in BYSCORE or BYLEX.\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -1338,8 +1338,8 @@ public class RespSortedSetTests
         var response = lightClientRequest.SendCommand("ZADD board 0 a 0 b 0 c 0 d 0 e 0 f 0 g");
 
         response = lightClientRequest.SendCommandChunks("ZLEXCOUNT board - +", bytesSent);
-        var expectedResponse = ":7\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":7\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZLEXCOUNT board [b [f", bytesSent);
@@ -1363,8 +1363,8 @@ public class RespSortedSetTests
         var response = lightClientRequest.SendCommand("ZADD board 1 one 2 two 3 three");
 
         response = lightClientRequest.SendCommandChunks("ZPOPMIN board", bytesSent);
-        var expectedResponse = "*2\r\n$3\r\none\r\n$1\r\n1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*2\r\n$3\r\none\r\n$1\r\n1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("ZPOPMIN board 3", bytesSent, 5);
@@ -1384,17 +1384,17 @@ public class RespSortedSetTests
         _ = lightClientRequest.SendCommand("ZADD dadi 1 uno 2 due 3 tre 4 quattro 5 cinque 6 six 7 sept 8 huit 9 nough 10 dis");
 
         // ZRANDMEMBER
-        var s = Encoding.ASCII.GetString(lightClientRequest.SendCommandChunks("ZRANDMEMBER dadi", bytesSent));
+        string s = Encoding.ASCII.GetString(lightClientRequest.SendCommandChunks("ZRANDMEMBER dadi", bytesSent));
         int startIndexField = s.IndexOf('\n') + 1;
         int endIndexField = s.IndexOf('\n', startIndexField) - 1;
         string memberValue = s.Substring(startIndexField, endIndexField - startIndexField);
-        var foundInSet = ("uno due tre quattro cinque six sept huit nough dis").IndexOf(memberValue, StringComparison.InvariantCultureIgnoreCase);
+        int foundInSet = ("uno due tre quattro cinque six sept huit nough dis").IndexOf(memberValue, StringComparison.InvariantCultureIgnoreCase);
         Assert.IsTrue(foundInSet >= 0);
 
         // ZRANDMEMBER count
         var response = lightClientRequest.SendCommandChunks("ZRANDMEMBER dadi 5", bytesSent, 6);
-        var expectedResponse = "*5\r\n"; // 5 values
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*5\r\n"; // 5 values
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // ZRANDMEMBER [count [WITHSCORES]]
@@ -1420,21 +1420,21 @@ public class RespSortedSetTests
     {
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "SortedSet_Add";
+        string key = "SortedSet_Add";
 
         // no-existing key case
-        var key0 = "SortedSet_Foo";
+        string key0 = "SortedSet_Foo";
 
         db.KeyDelete(key, CommandFlags.FireAndForget);
         db.SortedSetAdd(key, powOfTwo, CommandFlags.FireAndForget);
 
-        var randMember = await db.SortedSetRandomMemberAsync(key);
+        RedisValue randMember = await db.SortedSetRandomMemberAsync(key);
         Assert.True(Array.Exists(powOfTwo, element => element.Element.Equals(randMember)));
 
         //ZRANDMEMBER count
-        var randMemberArray = await db.SortedSetRandomMembersAsync(key, 5);
+        RedisValue[] randMemberArray = await db.SortedSetRandomMembersAsync(key, 5);
         Assert.AreEqual(5, randMemberArray.Length);
         randMemberArray = await db.SortedSetRandomMembersAsync(key, 15);
         Assert.AreEqual(10, randMemberArray.Length);
@@ -1444,9 +1444,9 @@ public class RespSortedSetTests
         Assert.AreEqual(15, randMemberArray.Length);
 
         //ZRANDMEMBER [count [WITHSCORES]]
-        var randMemberArray2 = await db.SortedSetRandomMembersWithScoresAsync(key, 2);
+        SortedSetEntry[] randMemberArray2 = await db.SortedSetRandomMembersWithScoresAsync(key, 2);
         Assert.AreEqual(2, randMemberArray2.Length);
-        foreach (var member in randMemberArray2)
+        foreach (SortedSetEntry member in randMemberArray2)
         {
             Assert.Contains(member, powOfTwo);
         }
@@ -1473,8 +1473,8 @@ public class RespSortedSetTests
 
         //zdiff withscores
         var zdiffResult = lightClientRequest.SendCommandChunks("ZDIFF 2 dadi seconddadi WITHSCORES", bytesSent, 5);
-        var expectedResponse = "*4\r\n$6\r\ncinque\r\n$1\r\n5\r\n$3\r\nsei\r\n$1\r\n6\r\n";
-        var actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*4\r\n$6\r\ncinque\r\n$1\r\n5\r\n$3\r\nsei\r\n$1\r\n6\r\n";
+        string actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         zdiffResult = lightClientRequest.SendCommandChunks("ZDIFF 2 dadi seconddadi", bytesSent, 3);
@@ -1494,8 +1494,8 @@ public class RespSortedSetTests
         lightClientRequest.SendCommand("ZADD zset3 300 Jean 500 Leia 350 Grant 700 Rue");
 
         var zdiffResult = lightClientRequest.SendCommandChunks("ZDIFF 3 zset1 zset2 zset3", bytesSent, 3);
-        var expectedResponse = "*2\r\n$6\r\ncinque\r\n$3\r\nsei\r\n";
-        var actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*2\r\n$6\r\ncinque\r\n$3\r\nsei\r\n";
+        string actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // Zdiff withscores
@@ -1511,8 +1511,8 @@ public class RespSortedSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
         lightClientRequest.SendCommand("ZADD zset1 1 uno 2 due 3 tre 4 quattro 5 cinque 6 sei");
         var zdiffResult = lightClientRequest.SendCommand("ZDIFF 2 zsetnotfound zset1");
-        var expectedResponse = "*0\r\n";
-        var actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string actualValue = Encoding.ASCII.GetString(zdiffResult).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         zdiffResult = lightClientRequest.SendCommand("ZDIFF 2 zsetnotfound zset1notfound");
@@ -1527,8 +1527,8 @@ public class RespSortedSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
 
         var result = lightClientRequest.SendCommand("ZCARD nokey");
-        var expectedResponse = ":0\r\n";
-        var actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n";
+        string actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         result = lightClientRequest.SendCommand("ZSCORE nokey a");
@@ -1601,8 +1601,8 @@ public class RespSortedSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
 
         var result = lightClientRequest.SendCommand("ZPOPMAX nokey");
-        var expectedResponse = "*0\r\n";
-        var actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         result = lightClientRequest.SendCommand("ZREM nokey a");
@@ -1665,8 +1665,8 @@ public class RespSortedSetTests
 
         // Executing an RMW method first
         var result = lightClientRequest.SendCommand("ZPOPMAX nokey");
-        var expectedResponse = "*0\r\n";
-        var actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // When the additional count argument is passed, the command returns an array of elements,
@@ -1688,8 +1688,8 @@ public class RespSortedSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("ZADD board 340 Dave 400 Kendra 560 Tom 650 Barbara 690 Jennifer 690 Peter", 100);
-        var expectedResponse = ":6\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":6\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("ZPOPMAX board", 3);
@@ -1714,15 +1714,15 @@ public class RespSortedSetTests
         Assert.AreEqual(expectedResponse, actualValue);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "LeaderBoard";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "LeaderBoard";
 
-        var added = db.SortedSetAdd(key, leaderBoard);
+        long added = db.SortedSetAdd(key, leaderBoard);
         Assert.AreEqual(leaderBoard.Length, added);
-        var removed = db.KeyDelete(key);
+        bool removed = db.KeyDelete(key);
 
         // ZPOPMAX
-        var actualResult = db.SortedSetPop(new RedisKey(key), Order.Descending);
+        SortedSetEntry? actualResult = db.SortedSetPop(new RedisKey(key), Order.Descending);
         Assert.AreEqual(null, actualResult);
     }
 
@@ -1815,8 +1815,8 @@ public class RespSortedSetTests
     {
         var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("ZSCORE foo bar foo bar foo");
-        var expectedResponse = FormatWrongNumOfArgsError("ZSCORE");
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = FormatWrongNumOfArgsError("ZSCORE");
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // Add a large number
@@ -1836,10 +1836,10 @@ public class RespSortedSetTests
     public void CanContinueOnInvalidInput()
     {
         using var lightClientRequest = TestUtils.CreateRequest();
-        var key = "zset1";
+        string key = "zset1";
         var response = lightClientRequest.SendCommand($"ZADD {key} 1 uno 2 due 3 tre 4 quattro 5 cinque foo bar");
-        var expectedResponse = ":5\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":5\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         key = "zset2";
@@ -1861,8 +1861,8 @@ public class RespSortedSetTests
     private static void SendCommandWithoutKey(string command, LightClientRequest lightClientRequest)
     {
         var result = lightClientRequest.SendCommand(command);
-        var expectedResponse = FormatWrongNumOfArgsError(command);
-        var actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
+        string expectedResponse = FormatWrongNumOfArgsError(command);
+        string actualValue = Encoding.ASCII.GetString(result).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -1881,7 +1881,7 @@ public class SortedSetComparer : IComparer<(double, byte[])>
 {
     public int Compare((double, byte[]) x, (double, byte[]) y)
     {
-        var ret = x.Item1.CompareTo(y.Item1);
+        int ret = x.Item1.CompareTo(y.Item1);
         if (ret == 0)
             return new ReadOnlySpan<byte>(x.Item2).SequenceCompareTo(y.Item2);
         return ret;

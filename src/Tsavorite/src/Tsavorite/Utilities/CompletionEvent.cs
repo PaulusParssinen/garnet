@@ -16,7 +16,7 @@ internal struct CompletionEvent : IDisposable
         var newSemaphore = new SemaphoreSlim(0);
         while (true)
         {
-            var tempSemaphore = semaphore;
+            SemaphoreSlim tempSemaphore = semaphore;
             if (tempSemaphore == null)
             {
                 newSemaphore.Dispose();

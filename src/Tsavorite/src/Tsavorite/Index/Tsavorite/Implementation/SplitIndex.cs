@@ -74,7 +74,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     {
         for (int i = 0; i < chunkSize; i++)
         {
-            var src_start = _src_start + i;
+            HashBucket* src_start = _src_start + i;
 
             long* left = (long*)(_dest_start0 + i);
             long* right = (long*)(_dest_start1 + i);
@@ -94,7 +94,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         continue;
                     }
 
-                    var logicalAddress = entry.Address;
+                    long logicalAddress = entry.Address;
                     long physicalAddress = 0;
 
                     if (entry.ReadCache && entry.AbsoluteAddress >= readcache.HeadAddress)
@@ -106,13 +106,13 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                     // as GetKey and GetInfo
                     if (physicalAddress != 0)
                     {
-                        var hash = comparer.GetHashCode64(ref hlog.GetKey(physicalAddress));
+                        long hash = comparer.GetHashCode64(ref hlog.GetKey(physicalAddress));
                         if ((hash & state[resizeInfo.version].size_mask) >> (state[resizeInfo.version].size_bits - 1) == 0)
                         {
                             // Insert in left
                             if (left == left_end)
                             {
-                                var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                                long new_bucket_logical = overflowBucketsAllocator.Allocate();
                                 var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                                 *left = new_bucket_logical;
                                 left = (long*)new_bucket;
@@ -128,7 +128,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                             {
                                 if (right == right_end)
                                 {
-                                    var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                                    long new_bucket_logical = overflowBucketsAllocator.Allocate();
                                     var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                                     *right = new_bucket_logical;
                                     right = (long*)new_bucket;
@@ -144,7 +144,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                             // Insert in right
                             if (right == right_end)
                             {
-                                var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                                long new_bucket_logical = overflowBucketsAllocator.Allocate();
                                 var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                                 *right = new_bucket_logical;
                                 right = (long*)new_bucket;
@@ -160,7 +160,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                             {
                                 if (left == left_end)
                                 {
-                                    var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                                    long new_bucket_logical = overflowBucketsAllocator.Allocate();
                                     var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                                     *left = new_bucket_logical;
                                     left = (long*)new_bucket;
@@ -179,7 +179,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         // Insert in left
                         if (left == left_end)
                         {
-                            var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                            long new_bucket_logical = overflowBucketsAllocator.Allocate();
                             var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                             *left = new_bucket_logical;
                             left = (long*)new_bucket;
@@ -192,7 +192,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         // Insert in right
                         if (right == right_end)
                         {
-                            var new_bucket_logical = overflowBucketsAllocator.Allocate();
+                            long new_bucket_logical = overflowBucketsAllocator.Allocate();
                             var new_bucket = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(new_bucket_logical);
                             *right = new_bucket_logical;
                             right = (long*)new_bucket;
@@ -220,8 +220,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             {
                 if (logicalAddress < readcache.HeadAddress)
                     break;
-                var physicalAddress = readcache.GetPhysicalAddress(logicalAddress);
-                var hash = comparer.GetHashCode64(ref readcache.GetKey(physicalAddress));
+                long physicalAddress = readcache.GetPhysicalAddress(logicalAddress);
+                long hash = comparer.GetHashCode64(ref readcache.GetKey(physicalAddress));
                 if ((hash & state[resizeInfo.version].size_mask) >> (state[resizeInfo.version].size_bits - 1) == bit)
                 {
                     return logicalAddress;
@@ -232,8 +232,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             {
                 if (logicalAddress < hlog.HeadAddress)
                     break;
-                var physicalAddress = hlog.GetPhysicalAddress(logicalAddress);
-                var hash = comparer.GetHashCode64(ref hlog.GetKey(physicalAddress));
+                long physicalAddress = hlog.GetPhysicalAddress(logicalAddress);
+                long hash = comparer.GetHashCode64(ref hlog.GetKey(physicalAddress));
                 if ((hash & state[resizeInfo.version].size_mask) >> (state[resizeInfo.version].size_bits - 1) == bit)
                 {
                     return logicalAddress;

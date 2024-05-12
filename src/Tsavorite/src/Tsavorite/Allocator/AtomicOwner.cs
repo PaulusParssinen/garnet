@@ -25,8 +25,8 @@ struct AtomicOwner
     {
         while (true)
         {
-            var older = this;
-            var newer = older;
+            AtomicOwner older = this;
+            AtomicOwner newer = older;
             newer.count++;
             if (older.owner == 0)
                 newer.owner = 1;
@@ -48,8 +48,8 @@ struct AtomicOwner
     {
         while (true)
         {
-            var older = this;
-            var newer = older;
+            AtomicOwner older = this;
+            AtomicOwner newer = older;
             newer.count--;
 
             if (Interlocked.CompareExchange(ref atomic, newer.atomic, older.atomic) == older.atomic)
@@ -69,8 +69,8 @@ struct AtomicOwner
     {
         while (true)
         {
-            var older = this;
-            var newer = older;
+            AtomicOwner older = this;
+            AtomicOwner newer = older;
 
             if (newer.count > 0)
                 return false;

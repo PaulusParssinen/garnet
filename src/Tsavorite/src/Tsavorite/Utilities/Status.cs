@@ -66,7 +66,7 @@ public struct Status
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal Status(OperationStatus operationStatus) : this()
     {
-        var basicOperationStatus = OperationStatusUtils.BasicOpCode(operationStatus);
+        OperationStatus basicOperationStatus = OperationStatusUtils.BasicOpCode(operationStatus);
         Debug.Assert(basicOperationStatus <= OperationStatus.MAX_MAP_TO_COMPLETED_STATUSCODE);
         statusCode = (StatusCode)basicOperationStatus | (StatusCode)((int)operationStatus >> OperationStatusUtils.OpStatusToStatusCodeShift);
     }
@@ -123,7 +123,7 @@ public struct Status
     {
         get
         {
-            var basicCode = statusCode & StatusCode.BasicMask;
+            StatusCode basicCode = statusCode & StatusCode.BasicMask;
             return basicCode != StatusCode.Pending && basicCode != StatusCode.Error;
         }
     }

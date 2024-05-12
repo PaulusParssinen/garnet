@@ -53,7 +53,7 @@ internal sealed class SingleWaiterAutoResetEvent : IValueTaskSource
     public void Signal()
     {
         // Set the signaled flag.
-        var status = Interlocked.Or(ref _status, SignaledFlag);
+        uint status = Interlocked.Or(ref _status, SignaledFlag);
 
         // If there was a waiter and the signaled flag was unset, wake the waiter now.
         if ((status & SignaledFlag) != SignaledFlag && (status & WaitingFlag) == WaitingFlag)
@@ -73,7 +73,7 @@ internal sealed class SingleWaiterAutoResetEvent : IValueTaskSource
     public ValueTask WaitAsync()
     {
         // Indicate that there is a waiter.
-        var status = Interlocked.Or(ref _status, WaitingFlag);
+        uint status = Interlocked.Or(ref _status, WaitingFlag);
 
         // If there was already a waiter, that is an error since this class is designed for use with a single waiter.
         if ((status & WaitingFlag) == WaitingFlag)
@@ -102,7 +102,7 @@ internal sealed class SingleWaiterAutoResetEvent : IValueTaskSource
     {
         // The event is being handled, so clear the "Signaled" flag now.
         // The waiter is no longer waiting, so clear the "Waiting" flag, too.
-        var status = Interlocked.And(ref _status, ResetMask);
+        uint status = Interlocked.And(ref _status, ResetMask);
 
         // If both the "Waiting" and "Signaled" flags were not already set, something has gone catastrophically wrong.
         Debug.Assert((status & (WaitingFlag | SignaledFlag)) == (WaitingFlag | SignaledFlag));

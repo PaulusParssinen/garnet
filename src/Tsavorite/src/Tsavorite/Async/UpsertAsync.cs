@@ -27,8 +27,8 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         {
             output = default;
             OperationStatus internalStatus;
-            ref var key = ref pendingContext.key.Get();
-            var keyHash = upsertOptions.KeyHash ?? tsavoriteKV.comparer.GetHashCode64(ref key);
+            ref Key key = ref pendingContext.key.Get();
+            long keyHash = upsertOptions.KeyHash ?? tsavoriteKV.comparer.GetHashCode64(ref key);
             do
             {
                 internalStatus = tsavoriteKV.InternalUpsert(ref key, keyHash, ref pendingContext.input.Get(), ref pendingContext.value.Get(), ref output,
@@ -100,7 +100,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 recordMetadata = RecordMetadata;
                 return (Status, Output);
             }
-            var upsertAsyncResult = updateAsyncInternal.CompleteSync();
+            UpsertAsyncResult<Input, TOutput, Context> upsertAsyncResult = updateAsyncInternal.CompleteSync();
             recordMetadata = upsertAsyncResult.RecordMetadata;
             return (upsertAsyncResult.Status, upsertAsyncResult.Output);
         }
@@ -118,7 +118,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         try
         {
             OperationStatus internalStatus;
-            var keyHash = upsertOptions.KeyHash ?? comparer.GetHashCode64(ref key);
+            long keyHash = upsertOptions.KeyHash ?? comparer.GetHashCode64(ref key);
             do
             {
                 internalStatus = InternalUpsert(ref key, keyHash, ref input, ref value, ref output, ref userContext, ref pcontext, tsavoriteSession, serialNo);

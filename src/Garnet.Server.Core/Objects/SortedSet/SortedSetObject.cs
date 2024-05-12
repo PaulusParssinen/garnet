@@ -94,8 +94,8 @@ public partial class SortedSetObject : GarnetObjectBase
         int count = reader.ReadInt32();
         for (int i = 0; i < count; i++)
         {
-            var item = reader.ReadBytes(reader.ReadInt32());
-            var score = reader.ReadDouble();
+            byte[] item = reader.ReadBytes(reader.ReadInt32());
+            double score = reader.ReadDouble();
             sortedSet.Add((score, item));
             sortedSetDict.Add(item, score);
 
@@ -130,7 +130,7 @@ public partial class SortedSetObject : GarnetObjectBase
 
         int count = sortedSetDict.Count;
         writer.Write(count);
-        foreach (var kvp in sortedSetDict)
+        foreach (KeyValuePair<byte[], double> kvp in sortedSetDict)
         {
             writer.Write(kvp.Key.Length);
             writer.Write(kvp.Key);
@@ -160,8 +160,8 @@ public partial class SortedSetObject : GarnetObjectBase
     {
         if (sortedSetDict.Count != other.sortedSetDict.Count) return false;
 
-        foreach (var key in sortedSetDict)
-            if (!other.sortedSetDict.TryGetValue(key.Key, out var otherValue) || key.Value != otherValue)
+        foreach (KeyValuePair<byte[], double> key in sortedSetDict)
+            if (!other.sortedSetDict.TryGetValue(key.Key, out double otherValue) || key.Value != otherValue)
                 return false;
 
         return true;
@@ -257,9 +257,9 @@ public partial class SortedSetObject : GarnetObjectBase
                     SortedSetRandomMember(_input, input.Length, ref output);
                     break;
                 case SortedSetOperation.ZSCAN:
-                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out var cursorInput, out var pattern, out var patternLength, out int limitCount, out int bytesDone))
+                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out int cursorInput, out byte* pattern, out int patternLength, out int limitCount, out int bytesDone))
                     {
-                        Scan(cursorInput, out var items, out var cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
+                        Scan(cursorInput, out List<byte[]> items, out long cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
                         ObjectUtils.WriteScanOutput(items, cursorOutput, ref output, bytesDone);
                     }
                     break;
@@ -291,7 +291,7 @@ public partial class SortedSetObject : GarnetObjectBase
             return;
         }
 
-        foreach (var item in Dictionary)
+        foreach (KeyValuePair<byte[], double> item in Dictionary)
         {
             if (index < start)
             {
@@ -353,7 +353,7 @@ public partial class SortedSetObject : GarnetObjectBase
             return new Dictionary<byte[], double>(dict1, dict1.Comparer);
 
         var result = new Dictionary<byte[], double>(dict1.Comparer);
-        foreach (var item in dict1)
+        foreach (KeyValuePair<byte[], double> item in dict1)
         {
             if (!dict2.ContainsKey(item.Key))
                 result.Add(item.Key, item.Value);
@@ -370,7 +370,7 @@ public partial class SortedSetObject : GarnetObjectBase
 
         if (dict2 != null)
         {
-            foreach (var item in dict1)
+            foreach (KeyValuePair<byte[], double> item in dict1)
             {
                 if (dict2.ContainsKey(item.Key))
                     dict1.Remove(item.Key);
@@ -383,7 +383,7 @@ public partial class SortedSetObject : GarnetObjectBase
     private void UpdateSize(byte[] item, bool add = true)
     {
         // item's length + overhead to store item + value of type double added to sorted set and dictionary + overhead for those datastructures
-        var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + (2 * sizeof(double))
+        int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + (2 * sizeof(double))
             + MemoryUtils.SortedSetEntryOverhead + MemoryUtils.DictionaryEntryOverhead;
         this.Size += add ? size : -size;
         Debug.Assert(this.Size >= MemoryUtils.SortedSetOverhead + MemoryUtils.DictionaryOverhead);

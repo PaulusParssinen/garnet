@@ -87,7 +87,7 @@ public class RecoveryCheck1Tests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointDir = TestUtils.MethodTestDir }
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<long, long, long, long, Empty, MyFunctions> s1 = store1.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
         for (long key = 0; key < 1000; key++)
         {
             s1.Upsert(ref key, ref key);
@@ -99,7 +99,7 @@ public class RecoveryCheck1Tests : RecoveryCheckBase
             for (long key = 0; key < 1000; key++)
             {
                 long output = default;
-                var status = s1.Read(ref key, ref output);
+                Status status = s1.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -109,7 +109,7 @@ public class RecoveryCheck1Tests : RecoveryCheckBase
             s1.CompletePending(true);
         }
 
-        var task = store1.TakeFullCheckpointAsync(checkpointType);
+        ValueTask<(bool success, Guid token)> task = store1.TakeFullCheckpointAsync(checkpointType);
 
         using var store2 = new TsavoriteKV<long, long>
             (size,
@@ -119,12 +119,12 @@ public class RecoveryCheck1Tests : RecoveryCheckBase
 
         if (isAsync)
         {
-            var (status, token) = await task;
+            (bool status, Guid token) = await task;
             await store2.RecoverAsync(default, token);
         }
         else
         {
-            var (status, token) = task.AsTask().GetAwaiter().GetResult();
+            (bool status, Guid token) = task.AsTask().GetAwaiter().GetResult();
             store2.Recover(default, token);
         }
 
@@ -132,11 +132,11 @@ public class RecoveryCheck1Tests : RecoveryCheckBase
         Assert.AreEqual(store1.Log.ReadOnlyAddress, store2.Log.ReadOnlyAddress);
         Assert.AreEqual(store1.Log.TailAddress, store2.Log.TailAddress);
 
-        using var s2 = store2.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<long, long, long, long, Empty, MyFunctions> s2 = store2.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s2.Read(ref key, ref output);
+            Status status = s2.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
@@ -167,7 +167,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointDir = TestUtils.MethodTestDir }
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         using var store2 = new TsavoriteKV<long, long>
             (size,
@@ -188,7 +188,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
                 for (long key = 1000 * i; key < 1000 * i + 1000; key++)
                 {
                     long output = default;
-                    var status = s1.Read(ref key, ref output);
+                    Status status = s1.Read(ref key, ref output);
                     if (!status.IsPending)
                     {
                         Assert.IsTrue(status.Found, $"status = {status}");
@@ -198,16 +198,16 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
                 s1.CompletePending(true);
             }
 
-            var task = store1.TakeHybridLogCheckpointAsync(checkpointType);
+            ValueTask<(bool success, Guid token)> task = store1.TakeHybridLogCheckpointAsync(checkpointType);
 
             if (isAsync)
             {
-                var (status, token) = await task;
+                (bool status, Guid token) = await task;
                 await store2.RecoverAsync(default, token);
             }
             else
             {
-                var (status, token) = task.AsTask().GetAwaiter().GetResult();
+                (bool status, Guid token) = task.AsTask().GetAwaiter().GetResult();
                 store2.Recover(default, token);
             }
 
@@ -215,11 +215,11 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
             Assert.AreEqual(store1.Log.ReadOnlyAddress, store2.Log.ReadOnlyAddress);
             Assert.AreEqual(store1.Log.TailAddress, store2.Log.TailAddress);
 
-            using var s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
             for (long key = 0; key < 1000 * i + 1000; key++)
             {
                 long output = default;
-                var status = s2.Read(ref key, ref output);
+                Status status = s2.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -255,23 +255,23 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
                     Assert.AreEqual(i - 3, recoverableSessionCount);
             }
 
-            using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
             for (long key = 1000 * i; key < 1000 * i + 1000; key++)
             {
                 s1.Upsert(ref key, ref key);
             }
 
-            var task = store.TakeHybridLogCheckpointAsync(checkpointType);
+            ValueTask<(bool success, Guid token)> task = store.TakeHybridLogCheckpointAsync(checkpointType);
             bool success;
             (success, token) = task.AsTask().GetAwaiter().GetResult();
             Assert.IsTrue(success);
 
-            using var s2 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s2 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
             for (long key = 0; key < 1000 * i + 1000; key++)
             {
                 long output = default;
-                var status = s2.Read(ref key, ref output);
+                Status status = s2.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -292,28 +292,28 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointDir = TestUtils.MethodTestDir }
             );
 
-        using var s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         for (long key = 0; key < 1000; key++)
         {
             s1.Upsert(ref key, ref key);
         }
 
-        var task = store.TakeHybridLogCheckpointAsync(checkpointType);
+        ValueTask<(bool success, Guid token)> task = store.TakeHybridLogCheckpointAsync(checkpointType);
         (bool success, Guid token) = task.AsTask().GetAwaiter().GetResult();
         Assert.IsTrue(success);
 
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
                 Assert.AreEqual(key, output, $"output = {output}");
             }
         }
-        s1.CompletePendingWithOutputs(out var completedOutputs, true);
+        s1.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, true);
         while (completedOutputs.Next())
         {
             Assert.IsTrue(completedOutputs.Current.Status.Found);
@@ -332,7 +332,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
         for (long key = 0; key < 2000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.NotFound, $"status = {status}");
@@ -351,7 +351,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
@@ -369,7 +369,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
         for (long key = 1000; key < 2000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.NotFound, $"status = {status}");
@@ -390,7 +390,7 @@ public class RecoveryCheck2Tests : RecoveryCheckBase
         for (long key = 0; key < 2000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
@@ -436,7 +436,7 @@ public class RecoveryCheck3Tests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointDir = TestUtils.MethodTestDir }
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         using var store2 = new TsavoriteKV<long, long>
             (size,
@@ -457,7 +457,7 @@ public class RecoveryCheck3Tests : RecoveryCheckBase
                 for (long key = 1000 * i; key < 1000 * i + 1000; key++)
                 {
                     long output = default;
-                    var status = s1.Read(ref key, ref output);
+                    Status status = s1.Read(ref key, ref output);
                     if (!status.IsPending)
                     {
                         Assert.IsTrue(status.Found, $"status = {status}");
@@ -467,16 +467,16 @@ public class RecoveryCheck3Tests : RecoveryCheckBase
                 s1.CompletePending(true);
             }
 
-            var task = store1.TakeFullCheckpointAsync(checkpointType);
+            ValueTask<(bool success, Guid token)> task = store1.TakeFullCheckpointAsync(checkpointType);
 
             if (isAsync)
             {
-                var (status, token) = await task;
+                (bool status, Guid token) = await task;
                 await store2.RecoverAsync(default, token);
             }
             else
             {
-                var (status, token) = task.AsTask().GetAwaiter().GetResult();
+                (bool status, Guid token) = task.AsTask().GetAwaiter().GetResult();
                 store2.Recover(default, token);
             }
 
@@ -484,11 +484,11 @@ public class RecoveryCheck3Tests : RecoveryCheckBase
             Assert.AreEqual(store1.Log.ReadOnlyAddress, store2.Log.ReadOnlyAddress);
             Assert.AreEqual(store1.Log.TailAddress, store2.Log.TailAddress);
 
-            using var s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
             for (long key = 0; key < 1000 * i + 1000; key++)
             {
                 long output = default;
-                var status = s2.Read(ref key, ref output);
+                Status status = s2.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -520,7 +520,7 @@ public class RecoveryCheck4Tests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointDir = TestUtils.MethodTestDir }
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         using var store2 = new TsavoriteKV<long, long>
             (size,
@@ -541,7 +541,7 @@ public class RecoveryCheck4Tests : RecoveryCheckBase
                 for (long key = 1000 * i; key < 1000 * i + 1000; key++)
                 {
                     long output = default;
-                    var status = s1.Read(ref key, ref output);
+                    Status status = s1.Read(ref key, ref output);
                     if (!status.IsPending)
                     {
                         Assert.IsTrue(status.Found, $"status = {status}");
@@ -554,16 +554,16 @@ public class RecoveryCheck4Tests : RecoveryCheckBase
             if (i == 0)
                 store1.TakeIndexCheckpointAsync().AsTask().GetAwaiter().GetResult();
 
-            var task = store1.TakeHybridLogCheckpointAsync(checkpointType);
+            ValueTask<(bool success, Guid token)> task = store1.TakeHybridLogCheckpointAsync(checkpointType);
 
             if (isAsync)
             {
-                var (status, token) = await task;
+                (bool status, Guid token) = await task;
                 await store2.RecoverAsync(default, token);
             }
             else
             {
-                var (status, token) = task.AsTask().GetAwaiter().GetResult();
+                (bool status, Guid token) = task.AsTask().GetAwaiter().GetResult();
                 store2.Recover(default, token);
             }
 
@@ -571,11 +571,11 @@ public class RecoveryCheck4Tests : RecoveryCheckBase
             Assert.AreEqual(store1.Log.ReadOnlyAddress, store2.Log.ReadOnlyAddress);
             Assert.AreEqual(store1.Log.TailAddress, store2.Log.TailAddress);
 
-            using var s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s2 = store2.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
             for (long key = 0; key < 1000 * i + 1000; key++)
             {
                 long output = default;
-                var status = s2.Read(ref key, ref output);
+                Status status = s2.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -609,7 +609,7 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
             concurrencyControlMode: ConcurrencyControlMode.RecordIsolation
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<long, long, long, long, Empty, MyFunctions> s1 = store1.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
         for (long key = 0; key < 1000; key++)
         {
             s1.Upsert(ref key, ref key);
@@ -621,7 +621,7 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
             for (long key = 0; key < 1000; key++)
             {
                 long output = default;
-                var status = s1.Read(ref key, ref output);
+                Status status = s1.Read(ref key, ref output);
                 if (!status.IsPending)
                 {
                     Assert.IsTrue(status.Found, $"status = {status}");
@@ -636,7 +636,7 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s1.Read(ref key, ref output);
+            Status status = s1.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
@@ -645,7 +645,7 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
         }
         s1.CompletePending(true);
 
-        var task = store1.TakeFullCheckpointAsync(checkpointType);
+        ValueTask<(bool success, Guid token)> task = store1.TakeFullCheckpointAsync(checkpointType);
 
         using var store2 = new TsavoriteKV<long, long>
             (size,
@@ -655,12 +655,12 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
 
         if (isAsync)
         {
-            var (status, token) = await task;
+            (bool status, Guid token) = await task;
             await store2.RecoverAsync(default, token);
         }
         else
         {
-            var (status, token) = task.AsTask().GetAwaiter().GetResult();
+            (bool status, Guid token) = task.AsTask().GetAwaiter().GetResult();
             store2.Recover(default, token);
         }
 
@@ -668,11 +668,11 @@ public class RecoveryCheck5Tests : RecoveryCheckBase
         Assert.AreEqual(store1.Log.ReadOnlyAddress, store2.Log.ReadOnlyAddress);
         Assert.AreEqual(store1.Log.TailAddress, store2.Log.TailAddress);
 
-        using var s2 = store2.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<long, long, long, long, Empty, MyFunctions> s2 = store2.NewSession<long, long, Empty, MyFunctions>(new MyFunctions());
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s2.Read(ref key, ref output);
+            Status status = s2.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 Assert.IsTrue(status.Found, $"status = {status}");
@@ -726,22 +726,22 @@ public class RecoveryCheckSnapshotTests : RecoveryCheckBase
             checkpointSettings: new CheckpointSettings { CheckpointManager = checkpointManager }
             );
 
-        using var s1 = store1.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
+        using ClientSession<long, long, long, long, Empty, MyFunctions2> s1 = store1.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
         for (long key = 0; key < 1000; key++)
         {
             s1.Upsert(ref key, ref key);
         }
 
-        var task = store1.TakeHybridLogCheckpointAsync(CheckpointType.Snapshot);
-        var (success, token) = await task;
+        ValueTask<(bool success, Guid token)> task = store1.TakeHybridLogCheckpointAsync(CheckpointType.Snapshot);
+        (bool success, Guid token) = await task;
 
         for (long key = 950; key < 1000; key++)
         {
             s1.Upsert(key, key + 1);
         }
 
-        var version1 = store1.CurrentVersion;
-        var _result1 = store1.TryInitiateHybridLogCheckpoint(out var _token1, CheckpointType.Snapshot, true);
+        long version1 = store1.CurrentVersion;
+        bool _result1 = store1.TryInitiateHybridLogCheckpoint(out Guid _token1, CheckpointType.Snapshot, true);
         await store1.CompleteCheckpointAsync();
 
         Assert.IsTrue(_result1);
@@ -752,8 +752,8 @@ public class RecoveryCheckSnapshotTests : RecoveryCheckBase
             s1.Upsert(key, key + 1);
         }
 
-        var version2 = store1.CurrentVersion;
-        var _result2 = store1.TryInitiateHybridLogCheckpoint(out var _token2, CheckpointType.Snapshot, true);
+        long version2 = store1.CurrentVersion;
+        bool _result2 = store1.TryInitiateHybridLogCheckpoint(out Guid _token2, CheckpointType.Snapshot, true);
         await store1.CompleteCheckpointAsync();
 
         Assert.IsTrue(_result2);
@@ -770,11 +770,11 @@ public class RecoveryCheckSnapshotTests : RecoveryCheckBase
 
         Assert.AreEqual(store2.Log.TailAddress, store1.Log.TailAddress);
 
-        using var s2 = store2.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
+        using ClientSession<long, long, long, long, Empty, MyFunctions2> s2 = store2.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
         for (long key = 0; key < 2000; key++)
         {
             long output = default;
-            var status = s2.Read(ref key, ref output);
+            Status status = s2.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 MyFunctions2.Verify(status, key, output);
@@ -792,11 +792,11 @@ public class RecoveryCheckSnapshotTests : RecoveryCheckBase
         await store3.RecoverAsync(recoverTo: version1);
 
         Assert.IsTrue(store3.EntryCount == 1000);
-        using var s3 = store3.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
+        using ClientSession<long, long, long, long, Empty, MyFunctions2> s3 = store3.NewSession<long, long, Empty, MyFunctions2>(new MyFunctions2());
         for (long key = 0; key < 1000; key++)
         {
             long output = default;
-            var status = s3.Read(ref key, ref output);
+            Status status = s3.Read(ref key, ref output);
             if (!status.IsPending)
             {
                 MyFunctions2.Verify(status, key, output);

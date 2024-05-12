@@ -14,7 +14,7 @@ public sealed class SortedSetComparer : IComparer<(double, byte[])>
     /// <inheritdoc/>
     public int Compare((double, byte[]) x, (double, byte[]) y)
     {
-        var ret = x.Item1.CompareTo(y.Item1);
+        int ret = x.Item1.CompareTo(y.Item1);
         if (ret == 0)
             return new ReadOnlySpan<byte>(x.Item2).SequenceCompareTo(y.Item2);
         return ret;

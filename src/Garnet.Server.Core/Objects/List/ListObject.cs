@@ -76,7 +76,7 @@ public partial class ListObject : GarnetObjectBase
         int count = reader.ReadInt32();
         for (int i = 0; i < count; i++)
         {
-            var item = reader.ReadBytes(reader.ReadInt32());
+            byte[] item = reader.ReadBytes(reader.ReadInt32());
             list.AddLast(item);
 
             this.UpdateSize(item);
@@ -107,7 +107,7 @@ public partial class ListObject : GarnetObjectBase
 
         int count = list.Count;
         writer.Write(count);
-        foreach (var item in list)
+        foreach (byte[] item in list)
         {
             writer.Write(item.Length);
             writer.Write(item);
@@ -137,7 +137,7 @@ public partial class ListObject : GarnetObjectBase
                 return true;
             }
 
-            var previouseSize = this.Size;
+            long previouseSize = this.Size;
             switch (header->ListOp)
             {
                 case ListOperation.LPUSH:
@@ -187,7 +187,7 @@ public partial class ListObject : GarnetObjectBase
 
     internal void UpdateSize(byte[] item, bool add = true)
     {
-        var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.ListEntryOverhead;
+        int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.ListEntryOverhead;
         this.Size += add ? size : -size;
         Debug.Assert(this.Size >= MemoryUtils.ListOverhead);
     }
@@ -214,7 +214,7 @@ public static class LinkedListHelper
     /// <returns></returns>
     public static IEnumerable<LinkedListNode<T>> Nodes<T>(this LinkedList<T> list)
     {
-        for (var node = list.First; node != null; node = node.Next)
+        for (LinkedListNode<T> node = list.First; node != null; node = node.Next)
         {
             yield return node;
         }

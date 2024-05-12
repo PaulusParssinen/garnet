@@ -10,16 +10,16 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 {
     private bool TryFAILOVER(int count, byte* ptr)
     {
-        var args = count - 1;
-        var replicaAddress = string.Empty;
-        var replicaPort = 0;
-        var timeout = -1;
-        var abort = false;
-        var force = false;
+        int args = count - 1;
+        string replicaAddress = string.Empty;
+        int replicaPort = 0;
+        int timeout = -1;
+        bool abort = false;
+        bool force = false;
 
         while (args > 0)
         {
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var option, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string option, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (!Enum.TryParse(option, ignoreCase: true, out FailoverOption failoverOption))
@@ -68,7 +68,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         // Validate failing over node config
         if (replicaPort != -1 && replicaAddress != string.Empty)
         {
-            var replicaNodeId = clusterProvider.clusterManager.CurrentConfig.GetWorkerNodeIdFromAddress(replicaAddress, replicaPort);
+            string replicaNodeId = clusterProvider.clusterManager.CurrentConfig.GetWorkerNodeIdFromAddress(replicaAddress, replicaPort);
             if (replicaNodeId == null)
             {
                 while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_UNKNOWN_ENDPOINT, ref dcurr, dend))
@@ -76,7 +76,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 return true;
             }
 
-            var worker = clusterProvider.clusterManager.CurrentConfig.GetWorkerFromNodeId(replicaNodeId);
+            Worker worker = clusterProvider.clusterManager.CurrentConfig.GetWorkerFromNodeId(replicaNodeId);
             if (worker.Role != NodeRole.REPLICA)
             {
                 while (!RespWriteUtils.WriteError($"ERR Node @{replicaAddress}:{replicaPort} is not a replica.", ref dcurr, dend))
@@ -100,7 +100,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else
         {
-            var timeoutTimeSpan = timeout <= 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromMilliseconds(timeout);
+            TimeSpan timeoutTimeSpan = timeout <= 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromMilliseconds(timeout);
             _ = clusterProvider.failoverManager.TryStartPrimaryFailover(replicaAddress, replicaPort, force ? FailoverOption.FORCE : FailoverOption.DEFAULT, timeoutTimeSpan);
         }
 

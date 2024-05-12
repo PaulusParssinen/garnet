@@ -22,7 +22,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         int totalTokens = 0;
         while (totalTokens < count)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var _, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] _, ref ptr, recvBufferPtr + bytesRead))
                 break;
             totalTokens++;
         }
@@ -39,7 +39,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     /// <returns>true if the command was completely consumed, false if the input on the receive buffer was incomplete.</returns>
     private bool AbortWithWrongNumberOfArguments(string cmdName, int count)
     {
-        var errorMessage = Encoding.ASCII.GetBytes(string.Format(CmdStrings.GenericErrWrongNumArgs, cmdName));
+        byte[] errorMessage = Encoding.ASCII.GetBytes(string.Format(CmdStrings.GenericErrWrongNumArgs, cmdName));
 
         return AbortWithErrorMessage(count, errorMessage);
     }

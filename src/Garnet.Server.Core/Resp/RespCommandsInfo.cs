@@ -138,18 +138,18 @@ public class RespCommandsInfo : IRespSerializable
 
     private static bool TryInitializeRespCommandsInfo(ILogger logger = null)
     {
-        var streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null,
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null,
             Assembly.GetExecutingAssembly());
-        var commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
+        IRespCommandsInfoProvider commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
 
-        var importSucceeded = commandsInfoProvider.TryImportRespCommandsInfo(RespCommandsEmbeddedFileName,
-            streamProvider, out var tmpAllRespCommandsInfo, logger);
+        bool importSucceeded = commandsInfoProvider.TryImportRespCommandsInfo(RespCommandsEmbeddedFileName,
+            streamProvider, out IReadOnlyDictionary<string, RespCommandsInfo> tmpAllRespCommandsInfo, logger);
 
         if (!importSucceeded) return false;
 
         var tmpBasicRespCommandsInfo = new Dictionary<RespCommand, RespCommandsInfo>();
         var tmpArrayRespCommandsInfo = new Dictionary<RespCommand, Dictionary<byte, RespCommandsInfo>>();
-        foreach (var respCommandInfo in tmpAllRespCommandsInfo.Values)
+        foreach (RespCommandsInfo respCommandInfo in tmpAllRespCommandsInfo.Values)
         {
             if (respCommandInfo.Command == RespCommand.NONE) continue;
 
@@ -291,7 +291,7 @@ public class RespCommandsInfo : IRespSerializable
         sb.Append($":{this.Arity}\r\n");
         // 3) Flags
         sb.Append($"*{this.respFormatFlags.Length}\r\n");
-        foreach (var flag in this.respFormatFlags)
+        foreach (string flag in this.respFormatFlags)
             sb.Append($"+{flag}\r\n");
         // 4) First key
         sb.Append($":{this.FirstKey}\r\n");
@@ -301,32 +301,32 @@ public class RespCommandsInfo : IRespSerializable
         sb.Append($":{this.Step}\r\n");
         // 7) ACL categories
         sb.Append($"*{this.respFormatAclCategories.Length}\r\n");
-        foreach (var aclCat in this.respFormatAclCategories)
+        foreach (string aclCat in this.respFormatAclCategories)
             sb.Append($"+@{aclCat}\r\n");
         // 8) Tips
-        var tipCount = this.Tips?.Length ?? 0;
+        int tipCount = this.Tips?.Length ?? 0;
         sb.Append($"*{tipCount}\r\n");
         if (this.Tips != null && tipCount > 0)
         {
-            foreach (var tip in this.Tips)
+            foreach (string tip in this.Tips)
                 sb.Append($"${tip.Length}\r\n{tip}\r\n");
         }
 
         // 9) Key specifications
-        var ksCount = this.KeySpecifications?.Length ?? 0;
+        int ksCount = this.KeySpecifications?.Length ?? 0;
         sb.Append($"*{ksCount}\r\n");
         if (this.KeySpecifications != null && ksCount > 0)
         {
-            foreach (var ks in this.KeySpecifications)
+            foreach (RespCommandKeySpecification ks in this.KeySpecifications)
                 sb.Append(ks.RespFormat);
         }
 
         // 10) SubCommands
-        var subCommandCount = this.SubCommands?.Length ?? 0;
+        int subCommandCount = this.SubCommands?.Length ?? 0;
         sb.Append($"*{subCommandCount}\r\n");
         if (this.SubCommands != null && subCommandCount > 0)
         {
-            foreach (var subCommand in SubCommands)
+            foreach (RespCommandsInfo subCommand in SubCommands)
                 sb.Append(subCommand.RespFormat);
         }
 

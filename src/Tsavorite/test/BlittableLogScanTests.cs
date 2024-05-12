@@ -39,7 +39,7 @@ internal class BlittableLogScanTests
         DeleteDirectory(MethodTestDir, wait: true);
 
         ITsavoriteEqualityComparer<KeyStruct> comparer = null;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is HashModulo mod && mod == HashModulo.Hundred)
             {
@@ -95,10 +95,10 @@ internal class BlittableLogScanTests
 
     public void BlittableDiskWriteScan([Values] ScanIteratorType scanIteratorType)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
-        using var s = store.Log.Subscribe(new LogObserver());
-        var start = store.Log.TailAddress;
+        using IDisposable s = store.Log.Subscribe(new LogObserver());
+        long start = store.Log.TailAddress;
 
         for (int i = 0; i < totalRecords; i++)
         {
@@ -115,8 +115,8 @@ internal class BlittableLogScanTests
 
             if (scanIteratorType == ScanIteratorType.Pull)
             {
-                using var iter = store.Log.Scan(start, store.Log.TailAddress, sbm);
-                while (iter.GetNext(out var recordInfo))
+                using ITsavoriteScanIterator<KeyStruct, ValueStruct> iter = store.Log.Scan(start, store.Log.TailAddress, sbm);
+                while (iter.GetNext(out RecordInfo recordInfo))
                     scanIteratorFunctions.SingleReader(ref iter.GetKey(), ref iter.GetValue(), default, default, out _);
             }
             else
@@ -135,7 +135,7 @@ internal class BlittableLogScanTests
 
     public void BlittableScanJumpToBeginAddressTest()
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
         const int numRecords = 200;
         const int numTailRecords = 10;
@@ -153,11 +153,11 @@ internal class BlittableLogScanTests
             session.Upsert(ref key, ref value, Empty.Default, 0);
         }
 
-        using var iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
+        using ITsavoriteScanIterator<KeyStruct, ValueStruct> iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
 
         for (int i = 0; i < 100; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             Assert.AreEqual(i, iter.GetKey().kfield1);
             Assert.AreEqual(i, iter.GetValue().vfield1);
         }
@@ -166,10 +166,10 @@ internal class BlittableLogScanTests
 
         for (int i = 0; i < numTailRecords; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             if (i == 0)
                 Assert.AreEqual(store.Log.BeginAddress, iter.CurrentAddress);
-            var expectedKey = numRecords - numTailRecords + i;
+            int expectedKey = numRecords - numTailRecords + i;
             Assert.AreEqual(expectedKey, iter.GetKey().kfield1);
             Assert.AreEqual(expectedKey, iter.GetValue().vfield1);
         }
@@ -194,9 +194,9 @@ internal class BlittableLogScanTests
     public void BlittableScanCursorTest([Values(HashModulo.NoMod, HashModulo.Hundred)] HashModulo hashMod)
     {
         const long PageSize = 1L << PageSizeBits;
-        var recordSize = BlittableAllocator<KeyStruct, ValueStruct>.RecordSize;
+        int recordSize = BlittableAllocator<KeyStruct, ValueStruct>.RecordSize;
 
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, ScanFunctions> session = store.NewSession<InputStruct, OutputStruct, Empty, ScanFunctions>(new ScanFunctions());
 
         for (int i = 0; i < totalRecords; i++)
         {
@@ -208,13 +208,13 @@ internal class BlittableLogScanTests
         var scanCursorFuncs = new ScanCursorFuncs();
 
         // Normal operations
-        var endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
-        var counts = new long[] { 10, 100, long.MaxValue };
+        long[] endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
+        long[] counts = new long[] { 10, 100, long.MaxValue };
 
         long cursor = 0;
-        for (var iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
+        for (int iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
         {
-            for (var iCount = 0; iCount < counts.Length; ++iCount)
+            for (int iCount = 0; iCount < counts.Length; ++iCount)
             {
                 scanCursorFuncs.Initialize(verifyKeys: true);
                 while (session.ScanCursor(ref cursor, counts[iCount], scanCursorFuncs, endAddresses[iAddr]))
@@ -261,7 +261,7 @@ internal class BlittableLogScanTests
         InputStruct input = default;
         OutputStruct output = default;
         ReadOptions readOptions = default;
-        var readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
+        Status readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(readStatus.Found, $"Could not read at HeadAddress; {readStatus}");
 
         scanCursorFuncs.Initialize(verifyKeys);
@@ -280,9 +280,9 @@ internal class BlittableLogScanTests
 
     public void BlittableScanCursorFilterTest([Values(HashModulo.NoMod, HashModulo.Hundred)] HashModulo hashMod)
     {
-        var recordSize = BlittableAllocator<KeyStruct, ValueStruct>.RecordSize;
+        int recordSize = BlittableAllocator<KeyStruct, ValueStruct>.RecordSize;
 
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, ScanFunctions> session = store.NewSession<InputStruct, OutputStruct, Empty, ScanFunctions>(new ScanFunctions());
 
         for (int i = 0; i < totalRecords; i++)
         {

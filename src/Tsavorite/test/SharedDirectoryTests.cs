@@ -49,7 +49,7 @@ internal class SharedDirectoryTests
         Populate(original.Store);
 
         // Take checkpoint from original to start the clone from
-        Assert.IsTrue(original.Store.TryInitiateFullCheckpoint(out var checkpointGuid, CheckpointType.FoldOver));
+        Assert.IsTrue(original.Store.TryInitiateFullCheckpoint(out Guid checkpointGuid, CheckpointType.FoldOver));
         original.Store.CompleteCheckpointAsync().GetAwaiter().GetResult();
 
         // Sanity check against original
@@ -57,7 +57,7 @@ internal class SharedDirectoryTests
         Test(original, checkpointGuid);
 
         // Copy checkpoint directory
-        var cloneCheckpointDirectory = Path.Join(TestUtils.MethodTestDir, "CloneCheckpoint");
+        string cloneCheckpointDirectory = Path.Join(TestUtils.MethodTestDir, "CloneCheckpoint");
         CopyDirectory(new DirectoryInfo(original.CheckpointDirectory), new DirectoryInfo(cloneCheckpointDirectory));
 
         // Recover from original checkpoint
@@ -117,7 +117,7 @@ internal class SharedDirectoryTests
                 initialHandles = new KeyValuePair<int, SafeFileHandle>[segmentIds.Count];
                 for (int i = 0; i < segmentIds.Count; i++)
                 {
-                    var segmentId = segmentIds[i];
+                    int segmentId = segmentIds[i];
 #pragma warning disable CA1416 // populateLogHandles will be false for non-windows, so turn off the "not available on all platforms" message
                     var handle = LocalStorageDevice.CreateHandle(segmentId, disableFileBuffering: false, deleteOnClose: true, preallocateFile: false, segmentSize: -1, fileName: deviceFileName, IntPtr.Zero);
 #pragma warning restore CA1416
@@ -151,7 +151,7 @@ internal class SharedDirectoryTests
 
     private void Populate(TsavoriteKV<AdId, NumClicks> store)
     {
-        using var session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
+        using ClientSession<AdId, NumClicks, AdInput, Output, Empty, Functions> session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
 
         // Prepare the dataset
         var inputArray = new AdInput[numOps];
@@ -196,11 +196,11 @@ internal class SharedDirectoryTests
         var input = default(AdInput);
         var output = default(Output);
 
-        using var session = tsavoriteInstance.Store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
+        using ClientSession<AdId, NumClicks, AdInput, Output, Empty, Functions> session = tsavoriteInstance.Store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
         // Issue read requests
-        for (var i = 0; i < numUniqueKeys; i++)
+        for (int i = 0; i < numUniqueKeys; i++)
         {
-            var status = session.Read(ref inputArray[i].adId, ref input, ref output, Empty.Default, i);
+            Status status = session.Read(ref inputArray[i].adId, ref input, ref output, Empty.Default, i);
             Assert.IsTrue(status.Found);
             inputArray[i].numClicks = output.value;
         }
@@ -210,12 +210,12 @@ internal class SharedDirectoryTests
 
         // Compute expected array
         long[] expected = new long[numUniqueKeys];
-        foreach (var guid in checkpointInfo.continueTokens.Keys)
+        foreach (int guid in checkpointInfo.continueTokens.Keys)
         {
-            var sno = checkpointInfo.continueTokens[guid].Item2.UntilSerialNo;
+            long sno = checkpointInfo.continueTokens[guid].Item2.UntilSerialNo;
             for (long i = 0; i <= sno; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }
@@ -224,10 +224,10 @@ internal class SharedDirectoryTests
         int numCompleted = threadCount - checkpointInfo.continueTokens.Count;
         for (int t = 0; t < numCompleted; t++)
         {
-            var sno = numOps;
+            long sno = numOps;
             for (long i = 0; i < sno; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }
@@ -244,15 +244,15 @@ internal class SharedDirectoryTests
     private static void CopyDirectory(DirectoryInfo source, DirectoryInfo target)
     {
         // Copy each file
-        foreach (var file in source.GetFiles())
+        foreach (FileInfo file in source.GetFiles())
         {
             file.CopyTo(Path.Combine(target.FullName, file.Name), true);
         }
 
         // Copy each subdirectory
-        foreach (var sourceSubDirectory in source.GetDirectories())
+        foreach (DirectoryInfo sourceSubDirectory in source.GetDirectories())
         {
-            var targetSubDirectory = target.CreateSubdirectory(sourceSubDirectory.Name);
+            DirectoryInfo targetSubDirectory = target.CreateSubdirectory(sourceSubDirectory.Name);
             CopyDirectory(sourceSubDirectory, targetSubDirectory);
         }
     }

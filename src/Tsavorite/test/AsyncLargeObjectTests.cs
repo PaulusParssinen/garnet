@@ -44,7 +44,7 @@ internal class LargeObjectTests
         int maxSize = 100;
         int numOps = 5000;
 
-        using (var s = store1.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(functions))
+        using (ClientSession<MyKey, MyLargeValue, MyInput, MyLargeOutput, Empty, MyLargeFunctions> s = store1.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(functions))
         {
             Random r = new Random(33);
             for (int key = 0; key < numOps; key++)
@@ -72,12 +72,12 @@ internal class LargeObjectTests
             );
 
         store2.Recover(token);
-        using (var s2 = store2.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(functions))
+        using (ClientSession<MyKey, MyLargeValue, MyInput, MyLargeOutput, Empty, MyLargeFunctions> s2 = store2.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(functions))
         {
             for (int keycnt = 0; keycnt < numOps; keycnt++)
             {
                 var key = new MyKey { key = keycnt };
-                var status = s2.Read(ref key, ref input, ref output, Empty.Default, 0);
+                Status status = s2.Read(ref key, ref input, ref output, Empty.Default, 0);
 
                 if (status.IsPending)
                     await s2.CompletePendingAsync();

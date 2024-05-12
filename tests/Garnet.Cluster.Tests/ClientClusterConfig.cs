@@ -12,16 +12,16 @@ internal class ClientClusterNode
     public ClientClusterNode(string raw)
     {
         Raw = raw;
-        var parts = raw.Split(' ');
+        string[] parts = raw.Split(' ');
 
-        var flags = parts[2].Split(',');
+        string[] flags = parts[2].Split(',');
 
         // Add @... to the endpoint
-        var ep = parts[1];
+        string ep = parts[1];
         int at = ep.IndexOf('@');
         if (at >= 0) ep = ep.Substring(0, at);
 
-        if (IPEndPoint.TryParse(ep, out var epResult))
+        if (IPEndPoint.TryParse(ep, out IPEndPoint epResult))
         {
             EndPoint = epResult;
         }
@@ -138,7 +138,7 @@ internal class ClientClusterConfig
     private static List<int> GetSlotSequence(List<(int, int)> slotRanges)
     {
         var slots = new List<int>();
-        foreach (var slotRange in slotRanges)
+        foreach ((int, int) slotRange in slotRanges)
             for (int i = slotRange.Item1; i <= slotRange.Item2; i++)
                 slots.Add(i);
         return slots;
@@ -262,7 +262,7 @@ internal class ClientClusterConfig
 
     private static void PrintOrderedConfigList(List<(string, string)> orderedConfig)
     {
-        foreach (var entry in orderedConfig)
+        foreach ((string, string) entry in orderedConfig)
             Console.Write(entry.Item2);
     }
 
@@ -276,15 +276,15 @@ internal class ClientClusterConfig
     public bool EqualsConfig(string config, bool replicasAssigned = false)
     {
         string _config = config.Replace("myself,", "");
-        var lines = _config.ToString().Split('\n');
+        string[] lines = _config.ToString().Split('\n');
         List<(string, string[])> _orderedConfig = new();
 
-        foreach (var line in lines)
+        foreach (string line in lines)
         {
             if (line == "")
                 continue;
-            var properties = line.ToString().Split(' ');
-            var nodeId = properties[0].Trim();
+            string[] properties = line.ToString().Split(' ');
+            string nodeId = properties[0].Trim();
             _orderedConfig.Add((nodeId, properties));
         }
         _orderedConfig = _orderedConfig.OrderBy(x => x.Item1).ToList();
@@ -297,8 +297,8 @@ internal class ClientClusterConfig
             if (_orderedConfig[i].Item1 != orderedConfig[i].Item1)
                 throw new Exception($"Misaligned node list");
 
-            var _properties = _orderedConfig[i].Item2;
-            var properties = orderedConfig[i].Item2.ToString().Trim().Split(' ');
+            string[] _properties = _orderedConfig[i].Item2;
+            string[] properties = orderedConfig[i].Item2.ToString().Trim().Split(' ');
             if (properties.Length != _properties.Length)
                 return false;
 

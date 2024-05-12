@@ -25,7 +25,7 @@ internal class SpanByteVLVectorTests
             (128,
             new LogSettings { LogDevice = log, MemorySizeBits = 17, PageSizeBits = 12 },
             null, null, null);
-        var s = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> s = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
 
         // Single alloc outside the loop, to the max length we'll need.
         Span<int> keySpan = stackalloc int[1];
@@ -35,12 +35,12 @@ internal class SpanByteVLVectorTests
         for (int i = 0; i < 5000; i++)
         {
             keySpan[0] = i;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var len = GetRandomLength(rng);
+            int len = GetRandomLength(rng);
             for (int j = 0; j < len; j++)
                 valueSpan[j] = len;
-            var valueSpanByte = valueSpan.Slice(0, len).AsSpanByte();
+            SpanByte valueSpanByte = valueSpan.Slice(0, len).AsSpanByte();
 
             s.Upsert(ref keySpanByte, ref valueSpanByte, Empty.Default, 0);
         }
@@ -50,15 +50,15 @@ internal class SpanByteVLVectorTests
         for (int i = 0; i < 5000; i++)
         {
             keySpan[0] = i;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var valueLen = GetRandomLength(rng);
+            int valueLen = GetRandomLength(rng);
             int[] output = null;
-            var status = s.Read(ref keySpanByte, ref output, Empty.Default, 0);
+            Status status = s.Read(ref keySpanByte, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                s.CompletePendingWithOutputs(out var outputs, wait: true);
+                s.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, int[], Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
 
@@ -85,7 +85,7 @@ internal class SpanByteVLVectorTests
             (128,
             new LogSettings { LogDevice = log, MemorySizeBits = 17, PageSizeBits = 12 },
             null, null, null);
-        var s = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> s = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
 
         // Single alloc outside the loop, to the max length we'll need.
         Span<int> keySpan = stackalloc int[StackAllocMax];
@@ -94,15 +94,15 @@ internal class SpanByteVLVectorTests
         Random rng = new(100);
         for (int i = 0; i < 5000; i++)
         {
-            var keyLen = GetRandomLength(rng);
+            int keyLen = GetRandomLength(rng);
             for (int j = 0; j < keyLen; j++)
                 keySpan[j] = i;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var valueLen = GetRandomLength(rng);
+            int valueLen = GetRandomLength(rng);
             for (int j = 0; j < valueLen; j++)
                 valueSpan[j] = valueLen;
-            var valueSpanByte = valueSpan.Slice(0, valueLen).AsSpanByte();
+            SpanByte valueSpanByte = valueSpan.Slice(0, valueLen).AsSpanByte();
 
             s.Upsert(ref keySpanByte, ref valueSpanByte, Empty.Default, 0);
         }
@@ -111,18 +111,18 @@ internal class SpanByteVLVectorTests
         rng = new Random(100);
         for (int i = 0; i < 5000; i++)
         {
-            var keyLen = GetRandomLength(rng);
+            int keyLen = GetRandomLength(rng);
             for (int j = 0; j < keyLen; j++)
                 keySpan[j] = i;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var valueLen = GetRandomLength(rng);
+            int valueLen = GetRandomLength(rng);
             int[] output = null;
-            var status = s.Read(ref keySpanByte, ref output, Empty.Default, 0);
+            Status status = s.Read(ref keySpanByte, ref output, Empty.Default, 0);
 
             if (status.IsPending)
             {
-                s.CompletePendingWithOutputs(out var outputs, wait: true);
+                s.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, int[], Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
 

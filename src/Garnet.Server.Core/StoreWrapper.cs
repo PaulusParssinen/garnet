@@ -290,7 +290,7 @@ public sealed class StoreWrapper
             {
                 await Task.Delay(1000);
                 if (token.IsCancellationRequested) break;
-                var currAofSize = appendOnlyFile.TailAddress - appendOnlyFile.BeginAddress;
+                long currAofSize = appendOnlyFile.TailAddress - appendOnlyFile.BeginAddress;
 
                 if (currAofSize > AofSizeLimit)
                 {
@@ -469,7 +469,7 @@ public sealed class StoreWrapper
 
         if (serverOptions.AofSizeLimit.Length > 0)
         {
-            var AofSizeLimitBytes = 1L << serverOptions.AofSizeLimitSizeBits();
+            long AofSizeLimitBytes = 1L << serverOptions.AofSizeLimitSizeBits();
             Task.Run(async () => await AutoCheckpointBasedOnAofSizeLimit(AofSizeLimitBytes, ctsCommit.Token, logger));
         }
 
@@ -617,22 +617,22 @@ public sealed class StoreWrapper
         try
         {
             DoCompaction();
-            var lastSaveStoreTailAddress = store.Log.TailAddress;
-            var lastSaveObjectStoreTailAddress = (objectStore?.Log.TailAddress).GetValueOrDefault();
+            long lastSaveStoreTailAddress = store.Log.TailAddress;
+            long lastSaveObjectStoreTailAddress = (objectStore?.Log.TailAddress).GetValueOrDefault();
 
-            var full = false;
+            bool full = false;
             if (this.lastSaveStoreTailAddress == 0 || lastSaveStoreTailAddress - this.lastSaveStoreTailAddress >= serverOptions.FullCheckpointLogInterval)
                 full = true;
             if (objectStore != null && (this.lastSaveObjectStoreTailAddress == 0 || lastSaveObjectStoreTailAddress - this.lastSaveObjectStoreTailAddress >= serverOptions.FullCheckpointLogInterval))
                 full = true;
 
-            var tryIncremental = serverOptions.EnableIncrementalSnapshots;
+            bool tryIncremental = serverOptions.EnableIncrementalSnapshots;
             if (store.IncrementalSnapshotTailAddress >= serverOptions.IncrementalSnapshotLogSizeLimit)
                 tryIncremental = false;
             if (objectStore?.IncrementalSnapshotTailAddress >= serverOptions.IncrementalSnapshotLogSizeLimit)
                 tryIncremental = false;
 
-            var checkpointType = serverOptions.UseFoldOverCheckpoints ? CheckpointType.FoldOver : CheckpointType.Snapshot;
+            CheckpointType checkpointType = serverOptions.UseFoldOverCheckpoints ? CheckpointType.FoldOver : CheckpointType.Snapshot;
             await InitiateCheckpoint(full, checkpointType, tryIncremental, storeType, logger);
             if (full)
             {
@@ -703,9 +703,9 @@ public sealed class StoreWrapper
         {
             // During the checkpoint, we may have serialized Garnet objects in (v) versions of objects.
             // We can now safely remove these serialized versions as they are no longer needed.
-            using (var iter1 = objectStore.Log.Scan(objectStore.Log.ReadOnlyAddress, objectStore.Log.TailAddress, ScanBufferingMode.SinglePageBuffering, includeSealedRecords: true))
+            using (ITsavoriteScanIterator<byte[], IGarnetObject> iter1 = objectStore.Log.Scan(objectStore.Log.ReadOnlyAddress, objectStore.Log.TailAddress, ScanBufferingMode.SinglePageBuffering, includeSealedRecords: true))
             {
-                while (iter1.GetNext(out _, out _, out var value))
+                while (iter1.GetNext(out _, out _, out IGarnetObject value))
                 {
                     if (value != null)
                         ((GarnetObjectBase)value).serialized = null;

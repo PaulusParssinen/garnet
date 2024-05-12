@@ -49,7 +49,7 @@ public class StateMachineTests
     [Category("Smoke")]
     public void StateMachineTest1()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -102,7 +102,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void StateMachineTest2()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -148,7 +148,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void StateMachineTest3()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -189,7 +189,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void StateMachineTest4()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -239,7 +239,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void StateMachineTest5()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -307,7 +307,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void StateMachineTest6()
     {
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // Suspend s1
         uc1.EndUnsafe();
@@ -351,7 +351,7 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void LUCScenario1()
     {
-        CreateSessions(out var f, out var s1, out var ts, out var lts);
+        CreateSessions(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> ts, out LUCThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> lts);
         // System should be in REST, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.REST, 1), store.SystemState));
 
@@ -389,12 +389,12 @@ public class StateMachineTests
     [Category("TsavoriteKV"), Category("CheckpointRestore")]
     public void LUCScenario2()
     {
-        CreateSessions(out var f, out var s1, out var ts, out var lts);
+        CreateSessions(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> ts, out LUCThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> lts);
 
         // System should be in REST, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.REST, 1), store.SystemState));
 
-        var uc1 = s1.UnsafeContext;
+        UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1 = s1.UnsafeContext;
         uc1.BeginUnsafe();
 
         store.TryInitiateHybridLogCheckpoint(out _, CheckpointType.FoldOver);
@@ -437,13 +437,13 @@ public class StateMachineTests
     public void LUCScenario3()
     {
 
-        CreateSessions(out var f, out var s1, out var ts, out var lts);
+        CreateSessions(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> ts, out LUCThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> lts);
 
         // System should be in REST, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.REST, 1), store.SystemState));
 
         // Start first LUC before checkpoint
-        var luc1 = s1.LockableUnsafeContext;
+        LockableUnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> luc1 = s1.LockableUnsafeContext;
         luc1.BeginUnsafe();
         luc1.BeginLockable();
 
@@ -499,7 +499,7 @@ public class StateMachineTests
     {
         var callback = new TestCallback();
         store.UnsafeRegisterCallback(callback);
-        Prepare(out var f, out var s1, out var uc1, out var s2);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -552,8 +552,8 @@ public class StateMachineTests
     [Category("CheckpointRestore")]
     public void VersionChangeTest()
     {
-        var toVersion = 1 + (1 << 14);
-        Prepare(out var f, out var s1, out var uc1, out var s2, toVersion);
+        int toVersion = 1 + (1 << 14);
+        Prepare(out SimpleFunctions f, out ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s1, out UnsafeContext<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> uc1, out ThreadSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s2, toVersion);
 
         // We should be in PREPARE, 1
         Assert.IsTrue(SystemState.Equal(SystemState.Make(Phase.PREPARE, 1), store.SystemState));
@@ -690,7 +690,7 @@ public class StateMachineTests
 
         store.Recover(); // sync, does not require session
 
-        using (var s3 = store.ResumeSession<NumClicks, NumClicks, Empty, SimpleFunctions>(f, "foo", out CommitPoint lsn))
+        using (ClientSession<AdId, NumClicks, NumClicks, NumClicks, Empty, SimpleFunctions> s3 = store.ResumeSession<NumClicks, NumClicks, Empty, SimpleFunctions>(f, "foo", out CommitPoint lsn))
         {
             Assert.AreEqual(numOps - 1, lsn.UntilSerialNo);
 
@@ -702,9 +702,9 @@ public class StateMachineTests
             // Completion callback should have been called once
             Assert.AreEqual(0, f.checkpointCallbackExpectation);
 
-            for (var key = 0; key < numOps; key++)
+            for (int key = 0; key < numOps; key++)
             {
-                var status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
+                Status status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
 
                 if (status.IsPending)
                     s3.CompletePending(true);

@@ -24,9 +24,9 @@ class SetUserTests : AclTest
 
         // Check user is authenticated as default
         using var lightClientRequest = TestUtils.CreateRequest();
-        var expectedResponse = "+default\r\n";
+        string expectedResponse = "+default\r\n";
         var response = lightClientRequest.SendCommand("ACL WHOAMI");
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
 
         // Correctness check
         Assert.AreEqual(expectedResponse, actualValue);

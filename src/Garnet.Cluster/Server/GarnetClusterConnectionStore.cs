@@ -66,7 +66,7 @@ internal class GarnetClusterConnectionStore
             // Iterate array of existing connections
             for (int i = 0; i < numConnection; i++)
             {
-                var _conn = connections[i];
+                GarnetServerNode _conn = connections[i];
                 if (_conn.NodeId.Equals(conn.NodeId, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
@@ -75,7 +75,7 @@ internal class GarnetClusterConnectionStore
 
             if (numConnection == connections.Length)
             {
-                var oldArray = connections;
+                GarnetServerNode[] oldArray = connections;
                 var newArray = new GarnetServerNode[connections.Length * 2];
                 Array.Copy(oldArray, newArray, oldArray.Length);
                 Array.Clear(oldArray);
@@ -105,7 +105,7 @@ internal class GarnetClusterConnectionStore
             if (_disposed) return false;
             for (int i = 0; i < numConnection; i++)
             {
-                var _conn = connections[i];
+                GarnetServerNode _conn = connections[i];
                 if (nodeId.Equals(_conn.NodeId, StringComparison.OrdinalIgnoreCase))
                 {
                     connections[i] = null;
@@ -145,7 +145,7 @@ internal class GarnetClusterConnectionStore
         if (_disposed) return false;
         for (int i = 0; i < numConnection; i++)
         {
-            var _conn = connections[i];
+            GarnetServerNode _conn = connections[i];
             if (_conn.NodeId.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
             {
                 conn = _conn;
@@ -218,7 +218,7 @@ internal class GarnetClusterConnectionStore
             if (_disposed) return false;
             if (numConnection == 0) return false;
 
-            var offset = RandomNumberGenerator.GetInt32(0, numConnection);
+            int offset = RandomNumberGenerator.GetInt32(0, numConnection);
             conn = connections[offset];
             return true;
         }
@@ -239,12 +239,12 @@ internal class GarnetClusterConnectionStore
         try
         {
             _lock.ReadLock();
-            if (UnsafeGetConnection(nodeId, out var conn))
+            if (UnsafeGetConnection(nodeId, out GarnetServerNode conn))
             {
-                var nowTicks = DateTimeOffset.UtcNow.Ticks;
-                var last_io_seconds = conn.GossipRecv == -1 ? -1 : nowTicks - conn.GossipSend;
+                long nowTicks = DateTimeOffset.UtcNow.Ticks;
+                long last_io_seconds = conn.GossipRecv == -1 ? -1 : nowTicks - conn.GossipSend;
                 last_io_seconds = last_io_seconds < 0 ? 0 : TimeSpan.FromTicks(last_io_seconds).Seconds;
-                var connection_status = conn.IsConnected ? "up" : "down";
+                string connection_status = conn.IsConnected ? "up" : "down";
                 linkStatus[0] = new("master_link_status", connection_status);
                 linkStatus[1] = new("master_last_io_seconds_ago", last_io_seconds.ToString());
                 return true;

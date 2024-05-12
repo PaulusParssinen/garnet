@@ -483,13 +483,13 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                     if ((p < prevEndPage || endAddress == prevEndAddress) && PageStatusIndicator[p % BufferSize].Dirty < version)
                         continue;
 
-                    var logicalAddress = p << LogPageSizeBits;
-                    var physicalAddress = GetPhysicalAddress(logicalAddress);
+                    long logicalAddress = p << LogPageSizeBits;
+                    long physicalAddress = GetPhysicalAddress(logicalAddress);
 
-                    var endLogicalAddress = logicalAddress + PageSize;
+                    long endLogicalAddress = logicalAddress + PageSize;
                     if (endAddress < endLogicalAddress) endLogicalAddress = endAddress;
                     Debug.Assert(endLogicalAddress > logicalAddress);
-                    var endPhysicalAddress = physicalAddress + (endLogicalAddress - logicalAddress);
+                    long endPhysicalAddress = physicalAddress + (endLogicalAddress - logicalAddress);
 
                     if (p == startPage)
                     {
@@ -499,8 +499,8 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
                     while (physicalAddress < endPhysicalAddress)
                     {
-                        ref var info = ref GetInfo(physicalAddress);
-                        var (_, alignedRecordSize) = GetRecordSize(physicalAddress);
+                        ref RecordInfo info = ref GetInfo(physicalAddress);
+                        (int _, int alignedRecordSize) = GetRecordSize(physicalAddress);
                         if (info.Dirty)
                         {
                             info.ClearDirtyAtomic(); // there may be read locks being taken, hence atomic
@@ -551,7 +551,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         long endLogicalAddress = GetStartLogicalAddress(endPage);
 
         log.Reset();
-        while (log.GetNext(out long physicalAddress, out int entryLength, out var type))
+        while (log.GetNext(out long physicalAddress, out int entryLength, out DeltaLogEntryType type))
         {
             switch (type)
             {
@@ -566,10 +566,10 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                         physicalAddress += sizeof(int);
                         if (address >= startLogicalAddress && address < endLogicalAddress)
                         {
-                            var destination = GetPhysicalAddress(address);
+                            long destination = GetPhysicalAddress(address);
 
                             // Clear extra space (if any) in old record
-                            var oldSize = GetRecordSize(destination).Item2;
+                            int oldSize = GetRecordSize(destination).Item2;
                             if (oldSize > size)
                                 new Span<byte>((byte*)(destination + size), oldSize - size).Clear();
 
@@ -577,7 +577,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                             Buffer.MemoryCopy((void*)physicalAddress, (void*)destination, size, size);
 
                             // Clean up temporary bits when applying the delta log
-                            ref var destInfo = ref GetInfo(destination);
+                            ref RecordInfo destInfo = ref GetInfo(destination);
                             destInfo.ClearBitsForDiskImages();
                         }
                         physicalAddress += size;
@@ -587,7 +587,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                     if (recoverTo != -1)
                     {
                         // Only read metadata if we need to stop at a specific version
-                        var metadata = new byte[entryLength];
+                        byte[] metadata = new byte[entryLength];
                         unsafe
                         {
                             fixed (byte* m = metadata)
@@ -612,7 +612,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void MarkPage(long logicalAddress, long version)
     {
-        var offset = (logicalAddress >> LogPageSizeBits) % BufferSize;
+        long offset = (logicalAddress >> LogPageSizeBits) % BufferSize;
         if (PageStatusIndicator[offset].Dirty < version)
             PageStatusIndicator[offset].Dirty = version;
     }
@@ -620,7 +620,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void MarkPageAtomic(long logicalAddress, long version)
     {
-        var offset = (logicalAddress >> LogPageSizeBits) % BufferSize;
+        long offset = (logicalAddress >> LogPageSizeBits) % BufferSize;
         Utility.MonotonicUpdate(ref PageStatusIndicator[offset].Dirty, version, out _);
     }
 
@@ -649,8 +649,8 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
     private unsafe void VerifyPage(long page)
     {
-        var startLogicalAddress = GetStartLogicalAddress(page);
-        var physicalAddress = GetPhysicalAddress(startLogicalAddress);
+        long startLogicalAddress = GetStartLogicalAddress(page);
+        long physicalAddress = GetPhysicalAddress(startLogicalAddress);
 
         long untilLogicalAddressInPage = GetPageSize();
         long pointer = 0;
@@ -797,7 +797,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             throw new TsavoriteException($"{nameof(settings.MutableFraction)} must be >= 0.0 and <= 1.0");
         if (settings.ReadCacheSettings is not null)
         {
-            var rcs = settings.ReadCacheSettings;
+            ReadCacheSettings rcs = settings.ReadCacheSettings;
             if (rcs.PageSizeBits < LogSettings.kMinPageSizeBits || rcs.PageSizeBits > LogSettings.kMaxPageSizeBits)
                 throw new TsavoriteException($"{nameof(rcs.PageSizeBits)} must be between {LogSettings.kMinPageSizeBits} and {LogSettings.kMaxPageSizeBits}");
             if (rcs.MemorySizeBits < LogSettings.kMinMemorySizeBits || rcs.MemorySizeBits > LogSettings.kMaxMemorySizeBits)
@@ -893,7 +893,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// </summary>
     public virtual void Reset()
     {
-        var newBeginAddress = GetTailAddress();
+        long newBeginAddress = GetTailAddress();
 
         // Shift read-only addresses to tail without flushing
         Utility.MonotonicUpdate(ref ReadOnlyAddress, newBeginAddress, out _);
@@ -932,8 +932,8 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         // Note: trimLog is unused right now. Can be used to trim the log to the minimum
         // segment range necessary for recovery to given checkpoint
 
-        var diskBeginAddress = recoveredHLCInfo.info.beginAddress;
-        var diskFlushedUntilAddress =
+        long diskBeginAddress = recoveredHLCInfo.info.beginAddress;
+        long diskFlushedUntilAddress =
             recoveredHLCInfo.info.useSnapshotFile == 0 ?
             recoveredHLCInfo.info.finalLogicalAddress :
             recoveredHLCInfo.info.flushedLogicalAddress;
@@ -1075,7 +1075,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         set
         {
             // HeadOffset lag (from tail).
-            var headOffsetLagSize = MaxEmptyPageCount;
+            int headOffsetLagSize = MaxEmptyPageCount;
             if (value > headOffsetLagSize) return;
             if (value < MinEmptyPageCount) return;
 
@@ -1100,7 +1100,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                 try
                 {
                     // These shifts adjust via application of the lag addresses.
-                    var _tailAddress = GetTailAddress();
+                    long _tailAddress = GetTailAddress();
                     PageAlignedShiftReadOnlyAddress(_tailAddress);
                     PageAlignedShiftHeadAddress(_tailAddress);
                 }
@@ -1124,8 +1124,8 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void IncrementAllocatedPageCount()
     {
-        var newAllocatedPageCount = Interlocked.Increment(ref AllocatedPageCount);
-        var currMaxAllocatedPageCount = MaxAllocatedPageCount;
+        int newAllocatedPageCount = Interlocked.Increment(ref AllocatedPageCount);
+        int currMaxAllocatedPageCount = MaxAllocatedPageCount;
         while (currMaxAllocatedPageCount < newAllocatedPageCount)
         {
             if (Interlocked.CompareExchange(ref MaxAllocatedPageCount, newAllocatedPageCount, currMaxAllocatedPageCount) == currMaxAllocatedPageCount)
@@ -1149,7 +1149,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
     /// <returns></returns>
     public long GetTailAddress()
     {
-        var local = TailPageOffset;
+        PageOffset local = TailPageOffset;
         if (local.Offset >= PageSize)
         {
             local.Page++;
@@ -1402,11 +1402,11 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         }
 
         // Shift read-only address
-        var flushEvent = FlushEvent;
+        CompletionEvent flushEvent = FlushEvent;
         ShiftReadOnlyAddress(newBeginAddress, noFlush);
 
         // Wait for flush to complete
-        var spins = 0;
+        int spins = 0;
         while (true)
         {
             if (FlushedUntilAddress >= newBeginAddress)
@@ -1429,7 +1429,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         }
 
         // Then shift head address
-        var h = Utility.MonotonicUpdate(ref HeadAddress, newBeginAddress, out _);
+        bool h = Utility.MonotonicUpdate(ref HeadAddress, newBeginAddress, out _);
 
         if (h || truncateLog)
         {
@@ -1491,7 +1491,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             {
                 // This scan does not need a store because it does not lock; it is epoch-protected so by the time it runs no current thread
                 // will have seen a record below the new ReadOnlyAddress as "in mutable region".
-                using var iter = Scan(store: null, oldSafeReadOnlyAddress, newSafeReadOnlyAddress, ScanBufferingMode.NoBuffering);
+                using ITsavoriteScanIterator<Key, Value> iter = Scan(store: null, oldSafeReadOnlyAddress, newSafeReadOnlyAddress, ScanBufferingMode.NoBuffering);
                 OnReadOnlyObserver?.OnNext(iter);
             }
             AsyncFlushPages(oldSafeReadOnlyAddress, newSafeReadOnlyAddress, noFlush);
@@ -1575,14 +1575,14 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
     private void DebugPrintAddresses()
     {
-        var _begin = BeginAddress;
-        var _closedUntil = ClosedUntilAddress;
-        var _safehead = SafeHeadAddress;
-        var _head = HeadAddress;
-        var _flush = FlushedUntilAddress;
-        var _safereadonly = SafeReadOnlyAddress;
-        var _readonly = ReadOnlyAddress;
-        var _tail = GetTailAddress();
+        long _begin = BeginAddress;
+        long _closedUntil = ClosedUntilAddress;
+        long _safehead = SafeHeadAddress;
+        long _head = HeadAddress;
+        long _flush = FlushedUntilAddress;
+        long _safereadonly = SafeReadOnlyAddress;
+        long _readonly = ReadOnlyAddress;
+        long _tail = GetTailAddress();
 
         Console.WriteLine("BeginAddress: {0}.{1}", GetPage(_begin), GetOffsetInPage(_begin));
         Console.WriteLine("ClosedUntilAddress: {0}.{1}", GetPage(_closedUntil), GetOffsetInPage(_closedUntil));
@@ -1687,7 +1687,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
         if (!errorList.Empty)
         {
-            var info = errorList.GetEarliestError();
+            CommitInfo info = errorList.GetEarliestError();
             if (info.FromAddress == FlushedUntilAddress)
             {
                 // all requests before error range has finished successfully -- this is the earliest error and we
@@ -1724,12 +1724,12 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         TailPageOffset.Offset = (int)offsetInPage;
 
         // Allocate current page if necessary
-        var pageIndex = TailPageOffset.Page % BufferSize;
+        int pageIndex = TailPageOffset.Page % BufferSize;
         if (!IsAllocated(pageIndex))
             AllocatePage(pageIndex);
 
         // Allocate next page as well - this is an invariant in the allocator!
-        var nextPageIndex = (pageIndex + 1) % BufferSize;
+        int nextPageIndex = (pageIndex + 1) % BufferSize;
         if (!IsAllocated(nextPageIndex))
             AllocatePage(nextPageIndex);
 
@@ -1773,7 +1773,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         uint alignedReadLength = (uint)((long)fileOffset + numBytes - (long)alignedFileOffset);
         alignedReadLength = (uint)((alignedReadLength + (sectorSize - 1)) & ~(sectorSize - 1));
 
-        var record = bufferPool.Get((int)alignedReadLength);
+        SectorAlignedMemory record = bufferPool.Get((int)alignedReadLength);
         record.valid_offset = (int)(fileOffset - alignedFileOffset);
         record.available_bytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
         record.required_bytes = numBytes;
@@ -1980,10 +1980,10 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             // ongoing adjacent flush is completed to ensure correctness
             if (GetOffsetInPage(asyncResult.fromAddress) > 0)
             {
-                var index = GetPageIndexForAddress(asyncResult.fromAddress);
+                int index = GetPageIndexForAddress(asyncResult.fromAddress);
 
                 // Try to merge request with existing adjacent (earlier) pending requests
-                while (PendingFlush[index].RemovePreviousAdjacent(asyncResult.fromAddress, out var existingRequest))
+                while (PendingFlush[index].RemovePreviousAdjacent(asyncResult.fromAddress, out PageAsyncFlushResult<Empty> existingRequest))
                 {
                     asyncResult.fromAddress = existingRequest.fromAddress;
                 }
@@ -2058,12 +2058,12 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             int totalNumPages = (int)(endPage - startPage);
 
             var flushCompletionTracker = new FlushCompletionTracker(_completedSemaphore, throttleCheckpointFlushDelayMs >= 0 ? new SemaphoreSlim(0) : null, totalNumPages);
-            var localSegmentOffsets = new long[SegmentBufferSize];
+            long[] localSegmentOffsets = new long[SegmentBufferSize];
 
             for (long flushPage = startPage; flushPage < endPage; flushPage++)
             {
                 long flushPageAddress = flushPage << LogPageSizeBits;
-                var pageSize = PageSize;
+                int pageSize = PageSize;
                 if (flushPage == endPage - 1)
                     pageSize = (int)(endLogicalAddress - flushPageAddress);
 
@@ -2112,10 +2112,10 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
             logger?.LogError("AsyncGetFromDiskCallback error: {0}", errorCode);
 
         var result = (AsyncGetFromDiskResult<AsyncIOContext<Key, Value>>)context;
-        var ctx = result.context;
+        AsyncIOContext<Key, Value> ctx = result.context;
         try
         {
-            var record = ctx.record.GetValidPointer();
+            byte* record = ctx.record.GetValidPointer();
             int requiredBytes = GetRequiredRecordSize((long)record, ctx.record.available_bytes);
             if (ctx.record.available_bytes >= requiredBytes)
             {
@@ -2203,7 +2203,7 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
                 result.Free();
             }
 
-            var _flush = FlushedUntilAddress;
+            long _flush = FlushedUntilAddress;
             if (GetOffsetInPage(_flush) > 0 && PendingFlush[GetPage(_flush) % BufferSize].RemoveNextAdjacent(_flush, out PageAsyncFlushResult<Empty> request))
             {
                 WriteAsync(request.fromAddress >> LogPageSizeBits, AsyncFlushPageCallback, request);
@@ -2217,12 +2217,12 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
         try
         {
             errorList.TruncateUntil(info.UntilAddress);
-            var page = info.FromAddress >> PageSizeMask;
+            long page = info.FromAddress >> PageSizeMask;
             Utility.MonotonicUpdate(
                 ref PageStatusIndicator[page % BufferSize].LastFlushedUntilAddress,
                 info.UntilAddress, out _);
             ShiftFlushedUntilAddress();
-            var _flush = FlushedUntilAddress;
+            long _flush = FlushedUntilAddress;
             if (GetOffsetInPage(_flush) > 0 && PendingFlush[GetPage(_flush) % BufferSize].RemoveNextAdjacent(_flush, out PageAsyncFlushResult<Empty> request))
             {
                 WriteAsync(request.fromAddress >> LogPageSizeBits, AsyncFlushPageCallback, request);
@@ -2259,12 +2259,12 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
             try
             {
-                var startAddress = result.page << LogPageSizeBits;
-                var endAddress = startAddress + PageSize;
+                long startAddress = result.page << LogPageSizeBits;
+                long endAddress = startAddress + PageSize;
 
                 if (result.fromAddress > startAddress)
                     startAddress = result.fromAddress;
-                var _readOnlyAddress = SafeReadOnlyAddress;
+                long _readOnlyAddress = SafeReadOnlyAddress;
                 if (_readOnlyAddress > startAddress)
                     startAddress = _readOnlyAddress;
 
@@ -2274,13 +2274,13 @@ internal abstract partial class AllocatorBase<Key, Value> : IDisposable
 
                 if (flushWidth > 0)
                 {
-                    var physicalAddress = GetPhysicalAddress(startAddress);
-                    var endPhysicalAddress = physicalAddress + flushWidth;
+                    long physicalAddress = GetPhysicalAddress(startAddress);
+                    long endPhysicalAddress = physicalAddress + flushWidth;
 
                     while (physicalAddress < endPhysicalAddress)
                     {
-                        ref var info = ref GetInfo(physicalAddress);
-                        var (_, alignedRecordSize) = GetRecordSize(physicalAddress);
+                        ref RecordInfo info = ref GetInfo(physicalAddress);
+                        (int _, int alignedRecordSize) = GetRecordSize(physicalAddress);
                         if (info.Dirty)
                             info.ClearDirtyAtomic(); // there may be read locks being taken, hence atomic
                         physicalAddress += alignedRecordSize;

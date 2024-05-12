@@ -15,7 +15,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     {
         try
         {
-            var storeTailAddress = clusterProvider.storeWrapper.store.Log.TailAddress;
+            long storeTailAddress = clusterProvider.storeWrapper.store.Log.TailAddress;
             MigrationKeyIterationFunctions.MainStoreMigrateSlots mainStoreIterFuncs = new(this, _sslots);
 
             // Initialize migrate buffers
@@ -30,7 +30,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             // Flush and initialize gcs buffers and offsets
             if (!clusterProvider.serverOptions.DisableObjects)
             {
-                var objectStoreTailAddress = clusterProvider.storeWrapper.objectStore.Log.TailAddress;
+                long objectStoreTailAddress = clusterProvider.storeWrapper.objectStore.Log.TailAddress;
                 MigrationKeyIterationFunctions.ObjectStoreMigrateSlots objectStoreIterFuncs = new(this, _sslots);
 
                 // Initialize migrate buffers

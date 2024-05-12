@@ -25,7 +25,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                     if (MakeTransition(currentState, intermediateState))
                     {
                         // No one can change from REST phase
-                        if (_recoveredSessions.TryRemove(sessionID, out var cp))
+                        if (_recoveredSessions.TryRemove(sessionID, out (string, CommitPoint) cp))
                         {
                             // We have atomically removed session details. 
                             // No one else can continue this session
@@ -133,7 +133,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         dst.sessionName = src.sessionName;
         dst.excludedSerialNos = new List<long>();
 
-        foreach (var v in src.ioPendingRequests.Values)
+        foreach (PendingContext<Input, Output, Context> v in src.ioPendingRequests.Values)
         {
             dst.excludedSerialNos.Add(v.serialNum);
         }
@@ -179,9 +179,9 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
         // Get and Remove this request.id pending dictionary if it is there.
-        if (tsavoriteSession.Ctx.ioPendingRequests.Remove(request.id, out var pendingContext))
+        if (tsavoriteSession.Ctx.ioPendingRequests.Remove(request.id, out PendingContext<Input, Output, Context> pendingContext))
         {
-            var status = InternalCompletePendingRequestFromContext(tsavoriteSession, request, ref pendingContext, out _);
+            Status status = InternalCompletePendingRequestFromContext(tsavoriteSession, request, ref pendingContext, out _);
             if (completedOutputs is not null && status.IsCompletedSuccessfully)
             {
                 // Transfer things to outputs from pendingContext before we dispose it.
@@ -217,7 +217,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             _ => throw new TsavoriteException("Unexpected OperationType")
         };
 
-        var status = HandleOperationStatus(tsavoriteSession.Ctx, ref pendingContext, internalStatus, out newRequest);
+        Status status = HandleOperationStatus(tsavoriteSession.Ctx, ref pendingContext, internalStatus, out newRequest);
 
         // If done, callback user code
         if (status.IsCompletedSuccessfully)

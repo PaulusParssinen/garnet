@@ -21,11 +21,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                     ref Key key, ref Input input, ref Value recordValue, ref OperationStackContext<Key, Value> stackCtx)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var (actualSize, allocatedSize, _) = hlog.GetRecordSize(ref key, ref recordValue);
+        (int actualSize, int allocatedSize, int _) = hlog.GetRecordSize(ref key, ref recordValue);
 
         if (!TryAllocateRecordReadCache(ref pendingContext, ref stackCtx, allocatedSize, out long newLogicalAddress, out long newPhysicalAddress, out _))
             return false;
-        ref var newRecordInfo = ref WriteNewRecordInfo(ref key, readcache, newPhysicalAddress, inNewVersion: false, tombstone: false, stackCtx.hei.Address);
+        ref RecordInfo newRecordInfo = ref WriteNewRecordInfo(ref key, readcache, newPhysicalAddress, inNewVersion: false, tombstone: false, stackCtx.hei.Address);
         stackCtx.SetNewRecord(newLogicalAddress | Constants.kReadCacheBitMask);
 
         UpsertInfo upsertInfo = new()
@@ -51,8 +51,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
         // Insert the new record by CAS'ing directly into the hash entry (readcache records are always CAS'd into the HashBucketEntry, never spliced).
         // It is possible that we will successfully CAS but subsequently fail due to a main log entry having been spliced in.
-        var success = stackCtx.hei.TryCAS(newLogicalAddress | Constants.kReadCacheBitMask);
-        var casSuccess = success;
+        bool success = stackCtx.hei.TryCAS(newLogicalAddress | Constants.kReadCacheBitMask);
+        bool casSuccess = success;
 
         OperationStatus failStatus = OperationStatus.RETRY_NOW;     // Default to CAS-failed status, which does not require an epoch refresh
         if (success && stackCtx.recSrc.LowestReadCacheLogicalAddress != Constants.kInvalidAddress)

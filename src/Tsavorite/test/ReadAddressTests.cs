@@ -64,7 +64,7 @@ internal class ReadAddressTests
         internal Functions(bool preserveCopyUpdaterSource = false)
         {
             this.preserveCopyUpdaterSource = preserveCopyUpdaterSource;
-            foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+            foreach (object arg in TestContext.CurrentContext.Test.Arguments)
             {
                 if (arg is UseReadCache urc)
                 {
@@ -185,13 +185,13 @@ internal class ReadAddressTests
         internal async Task Populate(bool useRMW, bool useAsync, bool preserveCopyUpdaterSource = false)
         {
             var functions = new Functions(preserveCopyUpdaterSource);
-            using var session = store.NewSession<Value, Output, Empty, Functions>(functions);
+            using ClientSession<Key, Value, Value, Output, Empty, Functions> session = store.NewSession<Value, Output, Empty, Functions>(functions);
 
-            var prevLap = 0;
+            int prevLap = 0;
             for (int ii = 0; ii < numKeys; ii++)
             {
                 // lap is used to illustrate the changing values
-                var lap = ii / keyMod;
+                int lap = ii / keyMod;
 
                 if (lap != prevLap)
                 {
@@ -202,7 +202,7 @@ internal class ReadAddressTests
                 var key = new Key(ii % keyMod);
                 var value = new Value(key.key + LapOffset(lap));
 
-                var status = useRMW
+                Status status = useRMW
                     ? useAsync
                         ? (await session.RMWAsync(ref key, ref value, serialNo: lap)).Complete().status
                         : session.RMW(ref key, ref value, serialNo: lap)
@@ -224,7 +224,7 @@ internal class ReadAddressTests
 
         internal bool ProcessChainRecord(Status status, RecordMetadata recordMetadata, int lap, ref Output actualOutput)
         {
-            var recordInfo = recordMetadata.RecordInfo;
+            RecordInfo recordInfo = recordMetadata.RecordInfo;
             Assert.GreaterOrEqual(lap, 0);
             long expectedValue = SetReadOutput(defaultKeyToScan, LapOffset(lap) + defaultKeyToScan);
 
@@ -240,8 +240,8 @@ internal class ReadAddressTests
         {
             if (status.Found)
             {
-                var keyToScan = keyOrdinal % keyMod;
-                var lap = keyOrdinal / keyMod;
+                int keyToScan = keyOrdinal % keyMod;
+                int lap = keyOrdinal / keyMod;
                 long expectedValue = SetReadOutput(keyToScan, LapOffset(lap) + keyToScan);
                 if (!recordInfo.Tombstone)
                     Assert.AreEqual(expectedValue, actualOutput.value, $"keyToScan {keyToScan}, lap({lap})");
@@ -268,11 +268,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public void VersionedReadSyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         testStore.Populate(updateOp == UpdateOp.RMW, useAsync: false).GetAwaiter().GetResult();
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -287,14 +287,14 @@ internal class ReadAddressTests
             for (int lap = maxLap - 1; /* tested in loop */; --lap)
             {
                 // We need a non-AtAddress read to start the loop of returning the previous address to read at.
-                var status = readAtAddress == 0
+                Status status = readAtAddress == 0
                     ? session.Read(ref key, ref input, ref output, ref readOptions, out _, serialNo: maxLap + 1)
                     : session.ReadAtAddress(readAtAddress, ref key, ref input, ref output, ref readOptions, out _, serialNo: maxLap + 1);
 
                 if (status.IsPending)
                 {
                     // This will wait for each retrieved record; not recommended for performance-critical code or when retrieving multiple records unless necessary.
-                    session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                    session.CompletePendingWithOutputs(out CompletedOutputIterator<Key, Value, Value, Output, Empty> completedOutputs, wait: true);
                     (status, output) = GetSinglePendingResult(completedOutputs, out recordMetadata);
                 }
                 if (!testStore.ProcessChainRecord(status, recordMetadata, lap, ref output))
@@ -380,11 +380,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public async Task VersionedReadAsyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         await testStore.Populate(updateOp == UpdateOp.RMW, useAsync: true);
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -398,10 +398,10 @@ internal class ReadAddressTests
             for (int lap = maxLap - 1; /* tested in loop */; --lap)
             {
                 // We need a non-AtAddress read to start the loop of returning the previous address to read at.
-                var readAsyncResult = readAtAddress == 0
+                TsavoriteKV<Key, Value>.ReadAsyncResult<Value, Output, Empty> readAsyncResult = readAtAddress == 0
                     ? await session.ReadAsync(ref key, ref input, ref readOptions, default, serialNo: maxLap + 1)
                     : await session.ReadAtAddressAsync(readAtAddress, ref key, ref input, ref readOptions, default, serialNo: maxLap + 1);
-                var (status, output) = readAsyncResult.Complete(out recordMetadata);
+                (Status status, Output output) = readAsyncResult.Complete(out recordMetadata);
 
                 if (!testStore.ProcessChainRecord(status, recordMetadata, lap, ref output))
                     break;
@@ -420,11 +420,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public void ReadAtAddressSyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         testStore.Populate(updateOp == UpdateOp.RMW, useAsync: false).GetAwaiter().GetResult();
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -438,13 +438,13 @@ internal class ReadAddressTests
 
             for (int lap = maxLap - 1; /* tested in loop */; --lap)
             {
-                var status = readAtAddress == 0
+                Status status = readAtAddress == 0
                     ? session.Read(ref key, ref input, ref output, ref readOptions, out recordMetadata, serialNo: maxLap + 1)
                     : session.ReadAtAddress(readAtAddress, ref input, ref output, ref readOptions, out recordMetadata, serialNo: maxLap + 1);
                 if (status.IsPending)
                 {
                     // This will wait for each retrieved record; not recommended for performance-critical code or when retrieving multiple records unless necessary.
-                    session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                    session.CompletePendingWithOutputs(out CompletedOutputIterator<Key, Value, Value, Output, Empty> completedOutputs, wait: true);
                     (status, output) = GetSinglePendingResult(completedOutputs, out recordMetadata);
                 }
 
@@ -465,11 +465,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public async Task ReadAtAddressAsyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         await testStore.Populate(updateOp == UpdateOp.RMW, useAsync: true);
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -482,10 +482,10 @@ internal class ReadAddressTests
 
             for (int lap = maxLap - 1; /* tested in loop */; --lap)
             {
-                var readAsyncResult = readAtAddress == 0
+                TsavoriteKV<Key, Value>.ReadAsyncResult<Value, Output, Empty> readAsyncResult = readAtAddress == 0
                     ? await session.ReadAsync(ref key, ref input, ref readOptions, default, serialNo: maxLap + 1)
                     : await session.ReadAtAddressAsync(readAtAddress, ref input, ref readOptions, default, serialNo: maxLap + 1);
-                var (status, output) = readAsyncResult.Complete(out recordMetadata);
+                (Status status, Output output) = readAsyncResult.Complete(out recordMetadata);
 
                 if (!testStore.ProcessChainRecord(status, recordMetadata, lap, ref output))
                     break;
@@ -504,11 +504,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public async Task ReadAtAddressAsyncCopyOptNoRcTest(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         await testStore.Populate(updateOp == UpdateOp.RMW, useAsync: true);
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -521,10 +521,10 @@ internal class ReadAddressTests
 
             for (int lap = maxLap - 1; /* tested in loop */; --lap)
             {
-                var readAsyncResult = readAtAddress == 0
+                TsavoriteKV<Key, Value>.ReadAsyncResult<Value, Output, Empty> readAsyncResult = readAtAddress == 0
                     ? await session.ReadAsync(ref key, ref input, ref readOptions, default, serialNo: maxLap + 1)
                     : await session.ReadAtAddressAsync(readAtAddress, ref input, ref readOptions, default, serialNo: maxLap + 1);
-                var (status, output) = readAsyncResult.Complete(out recordMetadata);
+                (Status status, Output output) = readAsyncResult.Complete(out recordMetadata);
 
                 if (!testStore.ProcessChainRecord(status, recordMetadata, lap, ref output))
                     break;
@@ -543,11 +543,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public void ReadNoKeySyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, [Values] ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         testStore.Populate(updateOp == UpdateOp.RMW, useAsync: false).GetAwaiter().GetResult();
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -558,17 +558,17 @@ internal class ReadAddressTests
 
             for (int ii = 0; ii < numKeys; ++ii)
             {
-                var keyOrdinal = rng.Next(numKeys);
+                int keyOrdinal = rng.Next(numKeys);
 
                 ReadOptions readOptions = new()
                 {
                     CopyOptions = session.functions.readCopyOptions
                 };
-                var status = session.ReadAtAddress(testStore.InsertAddresses[keyOrdinal], ref input, ref output, ref readOptions, out RecordMetadata recordMetadata, serialNo: maxLap + 1);
+                Status status = session.ReadAtAddress(testStore.InsertAddresses[keyOrdinal], ref input, ref output, ref readOptions, out RecordMetadata recordMetadata, serialNo: maxLap + 1);
                 if (status.IsPending)
                 {
                     // This will wait for each retrieved record; not recommended for performance-critical code or when retrieving multiple records unless necessary.
-                    session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                    session.CompletePendingWithOutputs(out CompletedOutputIterator<Key, Value, Value, Output, Empty> completedOutputs, wait: true);
                     (status, output) = GetSinglePendingResult(completedOutputs);
                 }
 
@@ -589,11 +589,11 @@ internal class ReadAddressTests
     [Category("TsavoriteKV"), Category("Read")]
     public async Task ReadNoKeyAsyncTests(UseReadCache urc, ReadCopyFrom readCopyFrom, ReadCopyTo readCopyTo, UpdateOp updateOp, FlushMode flushMode, ConcurrencyControlMode concurrencyControlMode)
     {
-        var useReadCache = urc == UseReadCache.ReadCache;
+        bool useReadCache = urc == UseReadCache.ReadCache;
         var readCopyOptions = new ReadCopyOptions(readCopyFrom, readCopyTo);
         using var testStore = new TestStore(useReadCache, readCopyOptions, flushMode == FlushMode.OnDisk, concurrencyControlMode);
         await testStore.Populate(updateOp == UpdateOp.RMW, useAsync: true);
-        using var session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
+        using ClientSession<Key, Value, Value, Output, Empty, Functions> session = testStore.store.NewSession<Value, Output, Empty, Functions>(new Functions());
 
         // Two iterations to ensure no issues due to read-caching or copying to tail.
         for (int iteration = 0; iteration < 2; ++iteration)
@@ -604,15 +604,15 @@ internal class ReadAddressTests
 
             for (int ii = 0; ii < numKeys; ++ii)
             {
-                var keyOrdinal = rng.Next(numKeys);
+                int keyOrdinal = rng.Next(numKeys);
 
                 ReadOptions readOptions = new()
                 {
                     CopyOptions = session.functions.readCopyOptions
                 };
 
-                var readAsyncResult = await session.ReadAtAddressAsync(testStore.InsertAddresses[keyOrdinal], ref input, ref readOptions, default, serialNo: maxLap + 1);
-                var (status, output) = readAsyncResult.Complete(out recordMetadata);
+                TsavoriteKV<Key, Value>.ReadAsyncResult<Value, Output, Empty> readAsyncResult = await session.ReadAtAddressAsync(testStore.InsertAddresses[keyOrdinal], ref input, ref readOptions, default, serialNo: maxLap + 1);
+                (Status status, Output output) = readAsyncResult.Complete(out recordMetadata);
 
                 TestStore.ProcessNoKeyRecord(updateOp == UpdateOp.RMW, status, recordMetadata.RecordInfo, ref output, keyOrdinal);
             }
@@ -683,9 +683,9 @@ internal class ReadAddressTests
             },
         };
 
-        for (var ii = 0; ii < merges.Length; ++ii)
+        for (int ii = 0; ii < merges.Length; ++ii)
         {
-            var merge = merges[ii];
+            ReadCopyOptionsMerge merge = merges[ii];
             var options = ReadCopyOptions.Merge(ReadCopyOptions.Merge(merge.store, merge.Session), merge.Read);
             Assert.AreEqual(merge.Expected, options, $"iter {ii}");
         }

@@ -106,7 +106,7 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
 
         while (totalAllocated > 0)
         {
-            while (itemQueue.TryDequeue(out var item))
+            while (itemQueue.TryDequeue(out T item))
             {
                 item.Dispose();
                 Interlocked.Decrement(ref totalAllocated);
@@ -123,7 +123,7 @@ internal sealed class AsyncPool<T> : IDisposable where T : IDisposable
     {
         if (itemQueue.TryDequeue(out item)) return true;
 
-        var _totalAllocated = totalAllocated;
+        int _totalAllocated = totalAllocated;
         while (_totalAllocated < size)
         {
             if (Interlocked.CompareExchange(ref totalAllocated, _totalAllocated + 1, _totalAllocated) == _totalAllocated)

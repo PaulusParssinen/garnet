@@ -55,14 +55,14 @@ internal sealed partial class FailoverSession : IDisposable
         // Initialize connections only when failover is initiated by the primary
         if (!isReplicaSession)
         {
-            var endpoints = hostPort == -1
+            List<(string, int)> endpoints = hostPort == -1
                 ? currentConfig.GetLocalNodePrimaryEndpoints(includeMyPrimaryFirst: true)
                 : hostPort == 0 ? currentConfig.GetLocalNodeReplicaEndpoints() : null;
             clients = endpoints != null ? new GarnetClient[endpoints.Count] : new GarnetClient[1];
 
             if (clients.Length > 1)
             {
-                for (var i = 0; i < endpoints.Count; i++)
+                for (int i = 0; i < endpoints.Count; i++)
                 {
                     clients[i] = new GarnetClient(endpoints[i].Item1, endpoints[i].Item2, clusterProvider.serverOptions.TlsOptions?.TlsClientOptions, authUsername: clusterProvider.ClusterUsername, authPassword: clusterProvider.ClusterPassword, logger: logger);
                 }
@@ -89,7 +89,7 @@ internal sealed partial class FailoverSession : IDisposable
     private void DisposeConnections()
     {
         if (clients != null)
-            foreach (var client in clients)
+            foreach (GarnetClient client in clients)
                 client?.Dispose();
     }
 }

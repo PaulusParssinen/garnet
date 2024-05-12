@@ -217,7 +217,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
 
         try
         {
-            var chainBuilt = chain.Build(certificateToValidate);
+            bool chainBuilt = chain.Build(certificateToValidate);
             if (!chainBuilt)
             {
                 string[] errors = chain.ChainStatus
@@ -232,7 +232,7 @@ public class GarnetTlsOptions : IGarnetTlsOptions
             if (authority != null)
             {
                 // This piece makes sure it actually matches your known root
-                var valid = chain.ChainElements
+                bool valid = chain.ChainElements
                     .Cast<X509ChainElement>()
                     .Any(x => x.Certificate.Thumbprint == authority.Thumbprint);
 

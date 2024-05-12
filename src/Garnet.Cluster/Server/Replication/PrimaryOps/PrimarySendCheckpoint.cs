@@ -35,7 +35,7 @@ internal sealed partial class ReplicationManager : IDisposable
     {
         try
         {
-            if (!replicaSyncSessionTaskStore.TryGetSession(replicaId, out var session))
+            if (!replicaSyncSessionTaskStore.TryGetSession(replicaId, out ReplicaSyncSession session))
             {
                 errorMessage = CmdStrings.RESP_ERR_RETRIEVE_SYNC_SESSION_ERROR;
                 logger?.LogError("{errorMessage}", Encoding.ASCII.GetString(errorMessage));

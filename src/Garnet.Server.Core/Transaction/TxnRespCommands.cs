@@ -54,10 +54,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // start running transaction and setting readHead to first operation
         else if (txnManager.state == TxnState.Started)
         {
-            var _origReadHead = readHead;
+            int _origReadHead = readHead;
             readHead = txnManager.txnStartHead;
 
-            txnManager.GetKeysForValidation(recvBufferPtr, out var keys, out int keyCount, out bool readOnly);
+            txnManager.GetKeysForValidation(recvBufferPtr, out ArgSlice[] keys, out int keyCount, out bool readOnly);
             if (NetworkKeyArraySlotVerify(ref keys, readOnly, keyCount))
             {
                 logger?.LogWarning("Failed CheckClusterTxnKeys");
@@ -98,7 +98,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         ReadOnlySpan<byte> bufSpan = new ReadOnlySpan<byte>(recvBufferPtr, bytesRead);
 
         // Retrieve the meta-data for the command to do basic sanity checking for command arguments
-        if (!RespCommandsInfo.TryGetRespCommandInfo(cmd, out var commandInfo, subCommand, true, logger))
+        if (!RespCommandsInfo.TryGetRespCommandInfo(cmd, out RespCommandsInfo commandInfo, subCommand, true, logger))
         {
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_GENERIC_UNK_CMD, ref dcurr, dend))
                 SendAndReset();
@@ -110,7 +110,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         // Check if input is valid and abort if necessary
         // NOTE: Negative arity means it's an expected minimum of args. Positive means exact.
-        var arity = commandInfo.Arity > 0 ? commandInfo.Arity - 1 : commandInfo.Arity + 1;
+        int arity = commandInfo.Arity > 0 ? commandInfo.Arity - 1 : commandInfo.Arity + 1;
         bool invalidNumArgs = arity > 0 ? count != (arity) : count < -arity;
 
         // Watch not allowed during TXN
@@ -203,19 +203,19 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             for (int c = 0; c < count - 1; c++)
             {
-                var key = GetCommandAsArgSlice(out success);
+                ArgSlice key = GetCommandAsArgSlice(out success);
                 if (!success) return false;
                 keys.Add(key);
             }
 
-            foreach (var key in keys)
+            foreach (ArgSlice key in keys)
                 txnManager.Watch(key, type);
         }
         else
         {
             for (int c = 0; c < count; c++)
             {
-                var key = GetCommandAsArgSlice(out success);
+                ArgSlice key = GetCommandAsArgSlice(out success);
                 if (!success) return false;
                 txnManager.Watch(key, type);
             }
@@ -266,7 +266,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         readHead = (int)(ptr - recvBufferPtr);
 
 
-        var (proc, numParams) = customCommandManagerSession.GetCustomTransactionProcedure(txid, txnManager, scratchBufferManager);
+        (CustomTransactionProcedure proc, int numParams) = customCommandManagerSession.GetCustomTransactionProcedure(txid, txnManager, scratchBufferManager);
         if (count - 1 == numParams)
         {
             TryTransactionProc((byte)txid, start, ptr, proc);

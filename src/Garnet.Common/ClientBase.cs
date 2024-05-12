@@ -92,7 +92,7 @@ public abstract unsafe class ClientBase : IDisposable
     /// </summary>
     public virtual bool CompletePendingRequests(int timeout = -1, CancellationToken token = default)
     {
-        var deadline = timeout == -1 ? DateTime.MaxValue.Ticks : DateTime.Now.AddMilliseconds(timeout).Ticks;
+        long deadline = timeout == -1 ? DateTime.MaxValue.Ticks : DateTime.Now.AddMilliseconds(timeout).Ticks;
         while (numPendingRequests > 0 && DateTime.Now.Ticks < deadline)
         {
             if (token.IsCancellationRequested) return false;

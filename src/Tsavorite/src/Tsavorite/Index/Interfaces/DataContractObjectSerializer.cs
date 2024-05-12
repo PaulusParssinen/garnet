@@ -21,7 +21,7 @@ public sealed class DataContractObjectSerializer<T> : BinaryObjectSerializer<T>
     public override void Deserialize(out T obj)
     {
         int count = reader.ReadInt32();
-        var byteArray = reader.ReadBytes(count);
+        byte[] byteArray = reader.ReadBytes(count);
         using var ms = new MemoryStream(byteArray);
         using var _reader = XmlDictionaryReader.CreateBinaryReader(ms, XmlDictionaryReaderQuotas.Max);
         obj = (T)serializer.ReadObject(_reader);

@@ -25,13 +25,13 @@ public class CredentialManager
     {
         customCreds ??= defaultCreds;
 
-        var aclConfig = "";
-        foreach (var cred in customCreds)
+        string aclConfig = "";
+        foreach (ServerCredential cred in customCreds)
         {
             if (aclConfig.Length > 0) aclConfig += "\r\n";
 
-            var user = cred.user;
-            var password = cred.IsClearText ? cred.password : Convert.ToHexString(cred.hash);
+            string user = cred.user;
+            string password = cred.IsClearText ? cred.password : Convert.ToHexString(cred.hash);
             aclConfig += $"user {user} on " +
                 $"{(cred.IsClearText ? ">" : "#")}{password} " +
                 $"{(cred.IsAdmin ? "+@admin" : "-@admin")}";
@@ -49,7 +49,7 @@ public class CredentialManager
     /// <returns>Returns credential object for specified user if found or an empty object.</returns>
     public ServerCredential GetUserCredentials(string user)
     {
-        foreach (var cred in defaultCreds)
+        foreach (ServerCredential cred in defaultCreds)
             if (cred.user == user)
                 return cred;
         return new ServerCredential();

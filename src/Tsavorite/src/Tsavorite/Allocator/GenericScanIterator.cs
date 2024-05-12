@@ -90,12 +90,12 @@ internal sealed class GenericScanIterator<Key, Value> : ScanIteratorBase, ITsavo
         while (true)
         {
             currentAddress = nextAddress;
-            var stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
+            long stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
             if (currentAddress >= stopAddress)
                 return false;
 
             epoch?.Resume();
-            var headAddress = hlog.HeadAddress;
+            long headAddress = hlog.HeadAddress;
 
             if (currentAddress < hlog.BeginAddress)
                 currentAddress = hlog.BeginAddress;

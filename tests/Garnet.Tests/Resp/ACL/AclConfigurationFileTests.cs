@@ -19,7 +19,7 @@ class AclConfigurationFileTests : AclTest
     public async Task EmptyInput()
     {
         // Create an empty input file
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
         File.CreateText(configurationFile).Close();
 
         // Ensure Garnet starts up with default user only
@@ -41,7 +41,7 @@ class AclConfigurationFileTests : AclTest
     public async Task NoDefaultRule()
     {
         // Create a simple input configuration file
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
         File.WriteAllText(configurationFile, "user testA on >password123 +@admin\r\nuser testB on >passw0rd >password +@admin ");
 
         // Start up Garnet
@@ -67,7 +67,7 @@ class AclConfigurationFileTests : AclTest
     public async Task WithDefaultRule()
     {
         // Create an input with 3 user definitions (including default)
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
         File.WriteAllText(configurationFile, "user testA on >password123 +@admin\r\nuser testB on >passw0rd >password +@admin\r\nuser default on nopass +@admin");
 
         // Start up Garnet with a defined default user password
@@ -106,7 +106,7 @@ class AclConfigurationFileTests : AclTest
         string originalConfigurationFile = "user testA on >password123 +@admin\r\nuser testB on >passw0rd >password +@admin\r\nuser testC on >passw0rd\r\nuser default on nopass +@admin";
         string modifiedConfigurationFile = "user testD on >password123\r\nuser testB on >passw0rd +@admin";
 
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
 
         File.WriteAllText(configurationFile, originalConfigurationFile);
 
@@ -127,7 +127,7 @@ class AclConfigurationFileTests : AclTest
 
         // Check that (1) testB contains two passwords and (2) default user has no password
         users = await c.ExecuteForArrayAsync("ACL", "LIST");
-        foreach (var user in users)
+        foreach (string user in users)
         {
             if (user.StartsWith("user testB"))
             {
@@ -154,7 +154,7 @@ class AclConfigurationFileTests : AclTest
 
         // Ensure that (1) one password was removed from testB and (2) defaut password was set
         users = await c.ExecuteForArrayAsync("ACL", "LIST");
-        foreach (var user in users)
+        foreach (string user in users)
         {
             if (user.StartsWith("user testB"))
             {
@@ -177,7 +177,7 @@ class AclConfigurationFileTests : AclTest
         string originalConfigurationFile = "user testA on >password123 +@admin";
         string modifiedConfigurationFile = $"user testB on nopass\r\nuser testA on >password123 >{DummyPassword} +@admin\r\nuser badinput testC on >passw0rd +@admin";
 
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
 
         File.WriteAllText(configurationFile, originalConfigurationFile);
 
@@ -217,7 +217,7 @@ class AclConfigurationFileTests : AclTest
 
         // Ensure that testA does not contain the dummy password
         users = await c.ExecuteForArrayAsync("ACL", "LIST");
-        foreach (var user in users)
+        foreach (string user in users)
         {
             if (user.StartsWith("user testA"))
             {
@@ -234,7 +234,7 @@ class AclConfigurationFileTests : AclTest
     public async Task DuplicateUserNames()
     {
         // Create a file with two users with name "test"
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
         File.WriteAllText(configurationFile, $"user test on >{DummyPassword} +@admin\r\nuser test off");
 
         server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, useAcl: true, aclFile: configurationFile);
@@ -271,7 +271,7 @@ class AclConfigurationFileTests : AclTest
     public void BadInputNonexistingFile()
     {
         // NOTE: Do not create the configuration file
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
 
         // Garnet should ignore the non-existing configuration file and start up with default user
         Assert.Throws<ACLException>(() => TestUtils.CreateGarnetServer(TestUtils.MethodTestDir, useAcl: true, aclFile: configurationFile));
@@ -284,7 +284,7 @@ class AclConfigurationFileTests : AclTest
     public void BadInputMalformedStatement()
     {
         // Create an empty input file
-        var configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
+        string configurationFile = Path.Join(TestUtils.MethodTestDir, "users.acl");
         File.WriteAllText(configurationFile, "user test on >password123 +@admin\r\nuser testB badinput on >passw0rd >password +@admin ");
 
         // Ensure Garnet starts up and just ignores the malformed statement

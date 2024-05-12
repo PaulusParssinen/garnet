@@ -32,7 +32,7 @@ public sealed unsafe class SpanByteServerSerializer : IServerSerializer<SpanByte
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref SpanByte ReadKeyByRef(ref byte* src)
     {
-        ref var ret = ref Unsafe.AsRef<SpanByte>(src);
+        ref SpanByte ret = ref Unsafe.AsRef<SpanByte>(src);
         src += ret.TotalSize;
         return ref ret;
     }
@@ -41,7 +41,7 @@ public sealed unsafe class SpanByteServerSerializer : IServerSerializer<SpanByte
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref SpanByte ReadValueByRef(ref byte* src)
     {
-        ref var ret = ref Unsafe.AsRef<SpanByte>(src);
+        ref SpanByte ret = ref Unsafe.AsRef<SpanByte>(src);
         src += ret.TotalSize;
         return ref ret;
     }
@@ -50,7 +50,7 @@ public sealed unsafe class SpanByteServerSerializer : IServerSerializer<SpanByte
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref SpanByte ReadInputByRef(ref byte* src)
     {
-        ref var ret = ref Unsafe.AsRef<SpanByte>(src);
+        ref SpanByte ret = ref Unsafe.AsRef<SpanByte>(src);
         src += ret.TotalSize;
         return ref ret;
     }

@@ -26,9 +26,9 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     /// </summary>
     public override IEnumerable<IMessageConsumer> ActiveConsumers()
     {
-        foreach (var kvp in activeHandlers)
+        foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
         {
-            var consumer = kvp.Key.Session;
+            IMessageConsumer consumer = kvp.Key.Session;
             if (consumer != null)
                 yield return consumer;
         }
@@ -39,9 +39,9 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     /// </summary>
     public IEnumerable<IClusterSession> ActiveClusterSessions()
     {
-        foreach (var kvp in activeHandlers)
+        foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
         {
-            var consumer = kvp.Key.Session;
+            IMessageConsumer consumer = kvp.Key.Session;
             if (consumer != null)
                 yield return ((RespServerSession)consumer).clusterSession;
         }
@@ -62,7 +62,7 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
         this.tlsOptions = tlsOptions;
         this.networkSendThrottleMax = networkSendThrottleMax;
         this.networkPool = new LimitedFixedBufferPool(BufferSizeUtils.ServerBufferSize(new MaxSizeSettings()), logger: logger);
-        var ip = string.IsNullOrEmpty(Address) ? IPAddress.Any : IPAddress.Parse(Address);
+        IPAddress ip = string.IsNullOrEmpty(Address) ? IPAddress.Any : IPAddress.Parse(Address);
         servSocket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         acceptEventArg = new SocketAsyncEventArgs();
         acceptEventArg.Completed += AcceptEventArg_Completed;
@@ -85,7 +85,7 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
     /// </summary>
     public override void Start()
     {
-        var ip = Address == null ? IPAddress.Any : IPAddress.Parse(Address);
+        IPAddress ip = Address == null ? IPAddress.Any : IPAddress.Parse(Address);
         var endPoint = new IPEndPoint(ip, Port);
         servSocket.Bind(endPoint);
         servSocket.Listen(512);
@@ -165,9 +165,9 @@ public class GarnetServerTcp : GarnetServerBase, IServerHook
 
         WireFormat protocol = WireFormat.ASCII;
 
-        if (!GetSessionProviders().TryGetValue(protocol, out var provider))
+        if (!GetSessionProviders().TryGetValue(protocol, out ISessionProvider provider))
         {
-            var input = System.Text.Encoding.ASCII.GetString(bytes);
+            string input = System.Text.Encoding.ASCII.GetString(bytes);
             logger?.LogError("Cannot identify wire protocol {bytes}", input);
             throw new Exception($"Unsupported incoming wire format {protocol} {input}");
         }

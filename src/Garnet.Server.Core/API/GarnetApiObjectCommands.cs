@@ -18,7 +18,7 @@ public partial struct GarnetApi<TContext, TObjectContext> : IGarnetApi, IGarnetW
     /// <inheritdoc />
     public GarnetStatus SortedSetAdd(byte[] key, ArgSlice input, out int zaddCount)
     {
-        var status = storageSession.SortedSetAdd(key, input, out var output, ref objectContext);
+        GarnetStatus status = storageSession.SortedSetAdd(key, input, out ObjectOutputHeader output, ref objectContext);
         zaddCount = output.countDone;
         return status;
     }

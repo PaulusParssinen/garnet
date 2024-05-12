@@ -78,7 +78,7 @@ internal struct OperationStackContext<Key, Value>
     /// <inheritdoc/>
     public override string ToString()
     {
-        var delimiter = "    ";  // Environment.NewLine doesn't display in VS
+        string delimiter = "    ";  // Environment.NewLine doesn't display in VS
         return $"hei: {hei}{delimiter}newLA {newLogicalAddress}{delimiter}recSrc: {recSrc}";
     }
 }

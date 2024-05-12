@@ -235,7 +235,7 @@ internal sealed partial class ClusterConfig
         List<(string, int)> replicas = new();
         for (ushort i = 2; i < workers.Length; i++)
         {
-            var replicaOf = workers[i].ReplicaOfNodeId;
+            string replicaOf = workers[i].ReplicaOfNodeId;
             if (replicaOf != null && replicaOf.Equals(workers[1].Nodeid, StringComparison.OrdinalIgnoreCase))
                 replicas.Add((workers[i].Address, workers[i].Port));
         }
@@ -268,7 +268,7 @@ internal sealed partial class ClusterConfig
     /// <returns>List of slots.</returns>
     public List<int> GetLocalPrimarySlots()
     {
-        var primaryId = LocalNodePrimaryId;
+        string primaryId = LocalNodePrimaryId;
         List<int> result = new();
         for (int i = 0; i < MAX_HASH_SLOT_VALUE; i++)
         {
@@ -343,7 +343,7 @@ internal sealed partial class ClusterConfig
     {
         if (nodeId == null)
             return (null, -1);
-        var workerId = GetWorkerIdFromNodeId(nodeId);
+        int workerId = GetWorkerIdFromNodeId(nodeId);
         return workerId == 0 ? (null, -1) : (workers[workerId].Address, workers[workerId].Port);
     }
 
@@ -356,7 +356,7 @@ internal sealed partial class ClusterConfig
     {
         if (nodeId == null)
             return null;
-        var workerId = GetWorkerIdFromNodeId(nodeId);
+        int workerId = GetWorkerIdFromNodeId(nodeId);
         return workerId == 0 ? null : workers[workerId].hostname;
     }
 
@@ -434,7 +434,7 @@ internal sealed partial class ClusterConfig
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (string address, int port) GetEndpointFromSlot(ushort slot)
     {
-        var workerId = GetWorkerIdFromSlot(slot);
+        int workerId = GetWorkerIdFromSlot(slot);
         return (workers[workerId].Address, workers[workerId].Port);
     }
 
@@ -446,7 +446,7 @@ internal sealed partial class ClusterConfig
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (string address, int port) AskEndpointFromSlot(ushort slot)
     {
-        var workerId = slotMap[slot]._workerId;
+        ushort workerId = slotMap[slot]._workerId;
         return (workers[workerId].Address, workers[workerId].Port);
     }
 
@@ -458,7 +458,7 @@ internal sealed partial class ClusterConfig
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (string address, int port) GetEndpointFromNodeId(string nodeid)
     {
-        var workerId = GetWorkerIdFromNodeId(nodeid);
+        int workerId = GetWorkerIdFromNodeId(nodeid);
         return (workers[workerId].Address, workers[workerId].Port);
     }
 
@@ -567,7 +567,7 @@ internal sealed partial class ClusterConfig
     /// <returns>List of worker offsets.</returns>
     public List<int> GetWorkerReplicas(int workerId)
     {
-        var primaryId = workers[workerId].Nodeid;
+        string primaryId = workers[workerId].Nodeid;
         List<int> replicaWorkerIds = new();
         for (ushort i = 1; i <= NumWorkers; i++)
         {
@@ -580,7 +580,7 @@ internal sealed partial class ClusterConfig
 
     private string CreateFormattedNodeInfo(int workerId)
     {
-        var nodeInfo = "*12\r\n";
+        string nodeInfo = "*12\r\n";
         nodeInfo += "$2\r\nid\r\n";
         nodeInfo += $"$40\r\n{workers[workerId].Nodeid}\r\n";
         nodeInfo += "$4\r\nport\r\n";
@@ -598,14 +598,14 @@ internal sealed partial class ClusterConfig
 
     private string CreateFormattedShardInfo(int primaryWorkerId, List<(ushort, ushort)> shardRanges, List<int> replicaWorkerIds)
     {
-        var shardInfo = $"*4\r\n";
+        string shardInfo = $"*4\r\n";
 
         shardInfo += $"$5\r\nslots\r\n";//1
 
         shardInfo += $"*{shardRanges.Count * 2}\r\n";//2
         for (int i = 0; i < shardRanges.Count; i++)
         {
-            var range = shardRanges[i];
+            (ushort, ushort) range = shardRanges[i];
             shardInfo += $":{range.Item1}\r\n";
             shardInfo += $":{range.Item2}\r\n";
         }
@@ -614,7 +614,7 @@ internal sealed partial class ClusterConfig
 
         shardInfo += $"*{1 + replicaWorkerIds.Count}\r\n";//4
         shardInfo += CreateFormattedNodeInfo(primaryWorkerId);
-        foreach (var id in replicaWorkerIds)
+        foreach (int id in replicaWorkerIds)
             shardInfo += CreateFormattedNodeInfo(id);
 
         return shardInfo;
@@ -632,8 +632,8 @@ internal sealed partial class ClusterConfig
         {
             if (workers[i].Role == NodeRole.PRIMARY)
             {
-                var shardRanges = GetShardRanges(i);
-                var replicaWorkerIds = GetWorkerReplicas(i);
+                List<(ushort, ushort)> shardRanges = GetShardRanges(i);
+                List<int> replicaWorkerIds = GetWorkerReplicas(i);
                 shardsInfo += CreateFormattedShardInfo(i, shardRanges, replicaWorkerIds);
                 shardCount++;
             }
@@ -645,17 +645,17 @@ internal sealed partial class ClusterConfig
     private string CreateFormattedSlotInfo(int slotStart, int slotEnd, string address, int port, string nodeid, string hostname, List<string> replicaIds)
     {
         int countA = replicaIds.Count == 0 ? 3 : 3 + replicaIds.Count;
-        var rangeInfo = $"*{countA}\r\n";
+        string rangeInfo = $"*{countA}\r\n";
 
         rangeInfo += $":{slotStart}\r\n";
         rangeInfo += $":{slotEnd}\r\n";
         rangeInfo += $"*4\r\n${address.Length}\r\n{address}\r\n:{port}\r\n${nodeid.Length}\r\n{nodeid}\r\n";
         rangeInfo += $"*2\r\n$8\r\nhostname\r\n${hostname.Length}\r\n{hostname}\r\n";
 
-        foreach (var replicaId in replicaIds)
+        foreach (string replicaId in replicaIds)
         {
-            var (replicaAddress, replicaPort) = GetWorkerAddressFromNodeId(replicaId);
-            var replicaHostname = GetHostNameFromNodeId(replicaId);
+            (string replicaAddress, int replicaPort) = GetWorkerAddressFromNodeId(replicaId);
+            string replicaHostname = GetHostNameFromNodeId(replicaId);
 
             rangeInfo += $"*4\r\n${replicaAddress.Length}\r\n{replicaAddress}\r\n:{replicaPort}\r\n${replicaId.Length}\r\n{replicaId}\r\n";
             rangeInfo += $"*2\r\n$8\r\nhostname\r\n${replicaHostname.Length}\r\n{replicaHostname}\r\n";
@@ -686,11 +686,11 @@ internal sealed partial class ClusterConfig
             }
 
             int currSlotWorkerId = slotMap[slotStart].workerId;
-            var address = workers[currSlotWorkerId].Address;
-            var port = workers[currSlotWorkerId].Port;
-            var nodeid = workers[currSlotWorkerId].Nodeid;
-            var hostname = workers[currSlotWorkerId].hostname;
-            var replicas = GetReplicaIds(nodeid);
+            string address = workers[currSlotWorkerId].Address;
+            int port = workers[currSlotWorkerId].Port;
+            string nodeid = workers[currSlotWorkerId].Nodeid;
+            string hostname = workers[currSlotWorkerId].hostname;
+            List<string> replicas = GetReplicaIds(nodeid);
             slotEnd--;
             completeSlotInfo += CreateFormattedSlotInfo(slotStart, slotEnd, address, port, nodeid, hostname, replicas);
             slotRanges++;
@@ -792,7 +792,7 @@ internal sealed partial class ClusterConfig
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (string address, int port) GetWorkerAddress(ushort workerId)
     {
-        var w = workers[workerId];
+        Worker w = workers[workerId];
         return (w.Address, w.Port);
     }
 
@@ -830,7 +830,7 @@ internal sealed partial class ClusterConfig
         int count = 0;
         for (ushort i = 1; i <= NumWorkers; i++)
         {
-            var w = workers[i];
+            Worker w = workers[i];
             count += w.Role == NodeRole.PRIMARY ? 1 : 0;
         }
         return count;
@@ -846,7 +846,7 @@ internal sealed partial class ClusterConfig
     {
         for (ushort i = 1; i <= NumWorkers; i++)
         {
-            var w = workers[i];
+            Worker w = workers[i];
             if (w.Address == address && w.Port == port)
                 return w.Nodeid;
         }
@@ -868,8 +868,8 @@ internal sealed partial class ClusterConfig
     /// <returns>Cluster config object.</returns>
     public ClusterConfig Merge(ClusterConfig other, ConcurrentDictionary<string, long> workerBanList)
     {
-        var localId = LocalNodeId;
-        var newConfig = this;
+        string localId = LocalNodeId;
+        ClusterConfig newConfig = this;
         for (ushort i = 1; i < other.NumWorkers + 1; i++)
         {
             //Do not update local node config
@@ -937,7 +937,7 @@ internal sealed partial class ClusterConfig
         newWorkers[workerId].ReplicaOfNodeId = replicaOfNodeId;
         newWorkers[workerId].hostname = hostname;
 
-        var newSlotMap = this.slotMap;
+        HashSlot[] newSlotMap = this.slotMap;
         if (slots != null)
         {
             foreach (int slot in slots)
@@ -1030,7 +1030,7 @@ internal sealed partial class ClusterConfig
         newWorkers[1].Role = NodeRole.PRIMARY;
         newWorkers[1].ReplicaOfNodeId = null;
 
-        var slots = GetLocalPrimarySlots();
+        List<int> slots = GetLocalPrimarySlots();
         var newSlotMap = new HashSlot[MAX_HASH_SLOT_VALUE];
         Array.Copy(slotMap, newSlotMap, slotMap.Length);
         foreach (int slot in slots)
@@ -1136,7 +1136,7 @@ internal sealed partial class ClusterConfig
         var newSlotMap = new HashSlot[MAX_HASH_SLOT_VALUE];
         Array.Copy(slotMap, newSlotMap, slotMap.Length);
 
-        foreach (var slot in slots)
+        foreach (int slot in slots)
         {
             newSlotMap[slot]._workerId = (ushort)workerId;
             newSlotMap[slot]._state = state;
@@ -1202,8 +1202,8 @@ internal sealed partial class ClusterConfig
         if (LocalNodeConfigEpoch != other.LocalNodeConfigEpoch)
             return this;
 
-        var remoteNodeId = other.LocalNodeId;
-        var localNodeId = LocalNodeId;
+        string remoteNodeId = other.LocalNodeId;
+        string localNodeId = LocalNodeId;
 
         //if localNodeId is smaller then do nothing
         if (localNodeId.CompareTo(remoteNodeId) <= 0) return this;

@@ -65,7 +65,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             *(long*)pcurr = (long)HashUtils.MurmurHash2x64A(argSlices[i].ptr, argSlices[i].Length);
 
             var o = new SpanByteAndMemory(output, 1);
-            var status = storageApi.HyperLogLogAdd(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+            GarnetStatus status = storageApi.HyperLogLogAdd(ref key, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
             //Invalid HLL Type
             if (*output == (byte)0xFF)
@@ -133,7 +133,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         (*(RespInputHeader*)(pcurr)).cmd = RespCommand.PFCOUNT;
         (*(RespInputHeader*)(pcurr)).flags = 0;
 
-        var status = storageApi.HyperLogLogLength(keys, ref Unsafe.AsRef<SpanByte>(pbCmdInput), out long cardinality, out bool error);
+        GarnetStatus status = storageApi.HyperLogLogLength(keys, ref Unsafe.AsRef<SpanByte>(pbCmdInput), out long cardinality, out bool error);
         if (error)
         {
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_WRONG_TYPE_HLL, ref dcurr, dend))
@@ -169,7 +169,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         if (NetworkKeyArraySlotVerify(ref keys, false))
             return true;
 
-        var status = storageApi.HyperLogLogMerge(keys, out bool error);
+        GarnetStatus status = storageApi.HyperLogLogMerge(keys, out bool error);
         //Invalid Type
         if (error)
         {

@@ -96,21 +96,21 @@ public struct TsavoriteLogRecoveryInfo
         if (version < 0 || version > TsavoriteLogRecoveryVersion)
             throw new TsavoriteException("Invalid version found during commit recovery");
 
-        if (BinaryPrimitives.TryReadInt32LittleEndian(input, out var iteratorCount))
+        if (BinaryPrimitives.TryReadInt32LittleEndian(input, out int iteratorCount))
             input = input.Slice(sizeof(int));
 
         if (iteratorCount > 0)
         {
             Iterators = new Dictionary<string, long>(iteratorCount);
-            for (var i = 0; i < iteratorCount; i++)
+            for (int i = 0; i < iteratorCount; i++)
             {
-                var keyLength = BinaryPrimitives.ReadInt32LittleEndian(input);
+                int keyLength = BinaryPrimitives.ReadInt32LittleEndian(input);
                 input = input.Slice(sizeof(int));
 
-                var iteratorKey = Encoding.UTF8.GetString(input.Slice(0, keyLength));
+                string iteratorKey = Encoding.UTF8.GetString(input.Slice(0, keyLength));
                 input = input.Slice(keyLength);
 
-                var iteratorValue = BinaryPrimitives.ReadInt64LittleEndian(input);
+                long iteratorValue = BinaryPrimitives.ReadInt64LittleEndian(input);
                 input = input.Slice(sizeof(long));
 
                 Iterators.Add(iteratorKey, iteratorValue);
@@ -189,9 +189,9 @@ public struct TsavoriteLogRecoveryInfo
             writer.Write(iteratorCount);
             if (iteratorCount > 0)
             {
-                foreach (var kvp in Iterators)
+                foreach (KeyValuePair<string, long> kvp in Iterators)
                 {
-                    var bytes = Encoding.UTF8.GetBytes(kvp.Key);
+                    byte[] bytes = Encoding.UTF8.GetBytes(kvp.Key);
                     writer.Write(bytes.Length);
                     writer.Write(bytes);
                     writer.Write(kvp.Value);
@@ -210,10 +210,10 @@ public struct TsavoriteLogRecoveryInfo
     /// <returns> size of this recovery info serialized </returns>
     public int SerializedSize()
     {
-        var iteratorSize = sizeof(int);
+        int iteratorSize = sizeof(int);
         if (Iterators != null)
         {
-            foreach (var kvp in Iterators)
+            foreach (KeyValuePair<string, long> kvp in Iterators)
                 iteratorSize += sizeof(int) + Encoding.UTF8.GetByteCount(kvp.Key) + sizeof(long);
         }
 
@@ -230,7 +230,7 @@ public struct TsavoriteLogRecoveryInfo
 
         if (!persistedIterators.IsEmpty)
         {
-            foreach (var kvp in persistedIterators)
+            foreach (KeyValuePair<string, TsavoriteLogScanIterator> kvp in persistedIterators)
             {
                 Iterators.Add(kvp.Key, kvp.Value.requestedCompletedUntilAddress);
             }
@@ -245,7 +245,7 @@ public struct TsavoriteLogRecoveryInfo
     {
         if (Iterators?.Count > 0)
         {
-            foreach (var kvp in Iterators)
+            foreach (KeyValuePair<string, long> kvp in Iterators)
             {
                 if (persistedIterators.TryGetValue(kvp.Key, out TsavoriteLogScanIterator iterator))
                     iterator.UpdateCompletedUntilAddress(kvp.Value);

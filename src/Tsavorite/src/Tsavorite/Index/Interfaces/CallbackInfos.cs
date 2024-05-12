@@ -103,7 +103,7 @@ public struct UpsertInfo
         if (!recordInfo.Filler)
             return;
 
-        var valueAddress = (long)Unsafe.AsPointer(ref recordValue);
+        long valueAddress = (long)Unsafe.AsPointer(ref recordValue);
         int* extraLengthPtr = (int*)(valueAddress + RoundUp(usedValueLength, sizeof(int)));
 
         *extraLengthPtr = 0;

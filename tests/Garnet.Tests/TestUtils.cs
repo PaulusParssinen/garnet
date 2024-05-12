@@ -45,7 +45,7 @@ internal static class TestUtils
     {
         get
         {
-            var container = "Garnet.Tests".Replace('.', '-').ToLowerInvariant();
+            string container = "Garnet.Tests".Replace('.', '-').ToLowerInvariant();
             return container;
         }
     }
@@ -73,7 +73,7 @@ internal static class TestUtils
 
     private static bool TryInitializeCustomCommandsInfo(ILogger logger)
     {
-        if (!TryGetRespCommandsInfo(CustomRespCommandInfoJsonPath, logger, out var tmpCustomCommandsInfo))
+        if (!TryGetRespCommandsInfo(CustomRespCommandInfoJsonPath, logger, out IReadOnlyDictionary<string, RespCommandsInfo> tmpCustomCommandsInfo))
             return false;
 
         RespCustomCommandsInfo = tmpCustomCommandsInfo;
@@ -85,11 +85,11 @@ internal static class TestUtils
     {
         commandsInfo = default;
 
-        var streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
-        var commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
+        IRespCommandsInfoProvider commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
 
-        var importSucceeded = commandsInfoProvider.TryImportRespCommandsInfo(resourcePath,
-            streamProvider, out var tmpCommandsInfo, logger);
+        bool importSucceeded = commandsInfoProvider.TryImportRespCommandsInfo(resourcePath,
+            streamProvider, out IReadOnlyDictionary<string, RespCommandsInfo> tmpCommandsInfo, logger);
 
         if (!importSucceeded) return false;
 
@@ -101,9 +101,9 @@ internal static class TestUtils
     {
         // If Azurite is running, it will run on localhost and listen on port 10000 and/or 10001.
         IPAddress expectedIp = new(new byte[] { 127, 0, 0, 1 });
-        var expectedPorts = new[] { 10000, 10001 };
+        int[] expectedPorts = new[] { 10000, 10001 };
 
-        var activeTcpListeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+        IPEndPoint[] activeTcpListeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
 
         var relevantListeners = activeTcpListeners.Where(t =>
                 expectedPorts.Contains(t.Port) &&
@@ -154,13 +154,13 @@ internal static class TestUtils
     {
         if (UseAzureStorage)
             IgnoreIfNotRunningAzureTests();
-        var _LogDir = logCheckpointDir;
+        string _LogDir = logCheckpointDir;
         if (UseAzureStorage)
             _LogDir = $"{AzureTestContainer}/{AzureTestDirectory}";
 
         if (logCheckpointDir != null && !UseAzureStorage) _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
 
-        var _CheckpointDir = logCheckpointDir;
+        string _CheckpointDir = logCheckpointDir;
         if (UseAzureStorage)
             _CheckpointDir = $"{AzureTestContainer}/{AzureTestDirectory}";
 
@@ -232,7 +232,7 @@ internal static class TestUtils
 
         if (useTestLogger)
         {
-            var loggerFactory = LoggerFactory.Create(builder =>
+            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddProvider(new NUnitLoggerProvider(TestContext.Progress, "GarnetServer", null, false, false, LogLevel.Trace));
                 builder.SetMinimumLevel(LogLevel.Trace);
@@ -303,7 +303,7 @@ internal static class TestUtils
         {
             IPEndPoint endpoint = (IPEndPoint)endpoints[i];
 
-            var opts = GetGarnetServerOptions(
+            GarnetServerOptions opts = GetGarnetServerOptions(
                 checkpointDir,
                 checkpointDir,
                 endpoint.Port,
@@ -380,12 +380,12 @@ internal static class TestUtils
     {
         if (UseAzureStorage)
             IgnoreIfNotRunningAzureTests();
-        var _LogDir = logDir + $"/{Port}";
+        string _LogDir = logDir + $"/{Port}";
         if (UseAzureStorage)
             _LogDir = $"{AzureTestContainer}/{AzureTestDirectory}/{Port}";
         if (logDir != null && !UseAzureStorage) _LogDir = new DirectoryInfo(string.IsNullOrEmpty(_LogDir) ? "." : _LogDir).FullName;
 
-        var _CheckpointDir = checkpointDir + $"/{Port}";
+        string _CheckpointDir = checkpointDir + $"/{Port}";
         if (UseAzureStorage)
             _CheckpointDir = $"{AzureTestContainer}/{AzureTestDirectory}/{Port}";
         if (!UseAzureStorage) _CheckpointDir = new DirectoryInfo(string.IsNullOrEmpty(_CheckpointDir) ? "." : _CheckpointDir).FullName;
@@ -493,7 +493,7 @@ internal static class TestUtils
         string authPassword = null,
         X509CertificateCollection certificates = null)
     {
-        var cmds = RespCommandsInfo.TryGetRespCommandNames(out var names)
+        HashSet<string> cmds = RespCommandsInfo.TryGetRespCommandNames(out IReadOnlySet<string> names)
             ? new HashSet<string>(names)
             : new HashSet<string>();
 
@@ -618,8 +618,8 @@ internal static class TestUtils
     internal static string UnitTestWorkingDir(string category = null, bool includeGuid = false)
     {
         // Include process id to avoid conflicts between parallel test runs
-        var testPath = $"{Environment.ProcessId}_{TestContext.CurrentContext.Test.ClassName}_{TestContext.CurrentContext.Test.MethodName}";
-        var rootPath = Path.Combine(RootTestsProjectPath, ".tmp", testPath);
+        string testPath = $"{Environment.ProcessId}_{TestContext.CurrentContext.Test.ClassName}_{TestContext.CurrentContext.Test.MethodName}";
+        string rootPath = Path.Combine(RootTestsProjectPath, ".tmp", testPath);
 
         if (category != null)
             rootPath = Path.Combine(rootPath, category);
@@ -695,7 +695,7 @@ internal static class TestUtils
         if (sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors)
         {
             // Check chain elements
-            foreach (var itemInChain in chain.ChainElements)
+            foreach (X509ChainElement itemInChain in chain.ChainElements)
             {
                 if (itemInChain.Certificate.Issuer.Contains("CN=Garnet"))
                     return true;

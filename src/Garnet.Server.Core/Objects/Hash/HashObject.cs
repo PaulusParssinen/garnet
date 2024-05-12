@@ -60,8 +60,8 @@ public unsafe partial class HashObject : GarnetObjectBase
         int count = reader.ReadInt32();
         for (int i = 0; i < count; i++)
         {
-            var item = reader.ReadBytes(reader.ReadInt32());
-            var value = reader.ReadBytes(reader.ReadInt32());
+            byte[] item = reader.ReadBytes(reader.ReadInt32());
+            byte[] value = reader.ReadBytes(reader.ReadInt32());
             hash.Add(item, value);
 
             this.UpdateSize(item, value);
@@ -87,7 +87,7 @@ public unsafe partial class HashObject : GarnetObjectBase
 
         int count = hash.Count;
         writer.Write(count);
-        foreach (var kvp in hash)
+        foreach (KeyValuePair<byte[], byte[]> kvp in hash)
         {
             writer.Write(kvp.Key.Length);
             writer.Write(kvp.Key);
@@ -119,7 +119,7 @@ public unsafe partial class HashObject : GarnetObjectBase
                 return true;
             }
 
-            var previousSize = this.Size;
+            long previousSize = this.Size;
             switch (header->HashOp)
             {
                 case HashOperation.HSET:
@@ -168,9 +168,9 @@ public unsafe partial class HashObject : GarnetObjectBase
                     HashRandomField(_input, input.Length, ref output);
                     break;
                 case HashOperation.HSCAN:
-                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out var cursorInput, out var pattern, out var patternLength, out int limitCount, out int bytesDone))
+                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out int cursorInput, out byte* pattern, out int patternLength, out int limitCount, out int bytesDone))
                     {
-                        Scan(cursorInput, out var items, out var cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
+                        Scan(cursorInput, out List<byte[]> items, out long cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
                         ObjectUtils.WriteScanOutput(items, cursorOutput, ref output, bytesDone);
                     }
                     break;
@@ -185,7 +185,7 @@ public unsafe partial class HashObject : GarnetObjectBase
 
     private void UpdateSize(byte[] key, byte[] value, bool add = true)
     {
-        var size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
+        int size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
             + (2 * MemoryUtils.ByteArrayOverhead) + MemoryUtils.DictionaryEntryOverhead;
         this.Size += add ? size : -size;
         Debug.Assert(this.Size >= MemoryUtils.DictionaryOverhead);
@@ -206,7 +206,7 @@ public unsafe partial class HashObject : GarnetObjectBase
         // Hashset has key and value, so count is multiplied by 2
         count *= 2;
         int index = 0;
-        foreach (var item in hash)
+        foreach (KeyValuePair<byte[], byte[]> item in hash)
         {
             if (index < start)
             {

@@ -97,7 +97,7 @@ internal sealed class AofSyncTaskInfo : IBulkLogEntryConsumer, IDisposable
         finally
         {
             garnetClient.Dispose();
-            var (address, port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(remoteNodeId);
+            (string address, int port) = clusterProvider.clusterManager.CurrentConfig.GetWorkerAddressFromNodeId(remoteNodeId);
             logger?.LogWarning("AofSync task terminated; client disposed {remoteNodeId} {address} {port} {currentAddress}", remoteNodeId, address, port, previousAddress);
 
             if (!aofTaskStore.TryRemove(this))

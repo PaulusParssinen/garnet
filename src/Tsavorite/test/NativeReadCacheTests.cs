@@ -36,7 +36,7 @@ public class NativeReadCacheTests
     [Category("Smoke")]
     public void NativeDiskWriteReadCache()
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
         InputStruct input = default;
 
@@ -58,7 +58,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -70,7 +70,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
             Assert.AreEqual(value.vfield2, output.value.vfield2);
@@ -86,7 +86,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -98,7 +98,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
             Assert.AreEqual(value.vfield2, output.value.vfield2);
@@ -118,7 +118,7 @@ public class NativeReadCacheTests
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             input = new InputStruct { ifield1 = 1, ifield2 = 1 };
-            var status = session.RMW(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.RMW(ref key1, ref input, ref output, Empty.Default, 0);
             if (status.IsPending)
             {
                 session.CompletePending(true);
@@ -137,7 +137,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i + 1, vfield2 = i + 2 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
             Assert.AreEqual(value.vfield2, output.value.vfield2);
@@ -148,7 +148,7 @@ public class NativeReadCacheTests
     [Category("TsavoriteKV")]
     public void NativeDiskWriteReadCache2()
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty, Functions> session = store.NewSession<InputStruct, OutputStruct, Empty, Functions>(new Functions());
 
         InputStruct input = default;
 
@@ -170,7 +170,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -182,7 +182,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
             Assert.AreEqual(value.vfield2, output.value.vfield2);
@@ -198,7 +198,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -210,7 +210,7 @@ public class NativeReadCacheTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
             Assert.AreEqual(value.vfield2, output.value.vfield2);

@@ -60,7 +60,7 @@ internal class BlittableIterationTests
              (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 9, SegmentSizeBits = 22 },
              concurrencyControlMode: scanIteratorType == ScanIteratorType.Pull ? ConcurrencyControlMode.None : ConcurrencyControlMode.LockTable);
 
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
         BlittablePushIterationTestFunctions scanIteratorFunctions = new();
 
         const int totalRecords = 500;
@@ -72,8 +72,8 @@ internal class BlittableIterationTests
 
             if (scanIteratorType == ScanIteratorType.Pull)
             {
-                using var iter = session.Iterate();
-                while (iter.GetNext(out var recordInfo))
+                using ITsavoriteScanIterator<KeyStruct, ValueStruct> iter = session.Iterate();
+                while (iter.GetNext(out RecordInfo recordInfo))
                     scanIteratorFunctions.SingleReader(ref iter.GetKey(), ref iter.GetValue(), default, default, out _);
             }
             else
@@ -143,11 +143,11 @@ internal class BlittableIterationTests
         store = new TsavoriteKV<KeyStruct, ValueStruct>
              (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 9, SegmentSizeBits = 22 });
 
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
         BlittablePushIterationTestFunctions scanIteratorFunctions = new();
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void scanAndVerify(int stopAt, bool useScan)
         {
@@ -184,11 +184,11 @@ internal class BlittableIterationTests
              concurrencyControlMode: concurrencyControlMode);
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void LocalScan(int i)
         {
-            using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+            using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
             BlittablePushIterationTestFunctions scanIteratorFunctions = new();
             if (scanMode == ScanMode.Scan)
                 Assert.IsTrue(store.Log.Scan(ref scanIteratorFunctions, start, store.Log.TailAddress), $"Failed to complete push scan; numRecords = {scanIteratorFunctions.numRecords}");
@@ -199,8 +199,8 @@ internal class BlittableIterationTests
 
         void LocalUpdate(int tid)
         {
-            using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
-            for (var iteration = 0; iteration < 2; ++iteration)
+            using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+            for (int iteration = 0; iteration < 2; ++iteration)
             {
                 for (int i = 0; i < totalRecords; i++)
                 {
@@ -212,7 +212,7 @@ internal class BlittableIterationTests
         }
 
         { // Initial population
-            using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+            using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
             for (int i = 0; i < totalRecords; i++)
             {
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
@@ -222,10 +222,10 @@ internal class BlittableIterationTests
         }
 
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
-        var numThreads = scanThreads + updateThreads;
+        int numThreads = scanThreads + updateThreads;
         for (int t = 0; t < numThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (t < scanThreads)
                 tasks.Add(Task.Factory.StartNew(() => LocalScan(tid)));
             else

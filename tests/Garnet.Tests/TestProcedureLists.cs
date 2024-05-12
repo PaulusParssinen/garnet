@@ -20,8 +20,8 @@ sealed class TestProcedureLists : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        var lstKey = GetNextArg(input, ref offset);
-        var lstKeyB = GetNextArg(input, ref offset);
+        ArgSlice lstKey = GetNextArg(input, ref offset);
+        ArgSlice lstKeyB = GetNextArg(input, ref offset);
 
         if (lstKey.Length == 0 || lstKeyB.Length == 0)
             return false;
@@ -38,8 +38,8 @@ sealed class TestProcedureLists : CustomTransactionProcedure
         var elements = new ArgSlice[10];
         bool result = true;
 
-        var lstKey = GetNextArg(input, ref offset);
-        var lstKeyB = GetNextArg(input, ref offset);
+        ArgSlice lstKey = GetNextArg(input, ref offset);
+        ArgSlice lstKeyB = GetNextArg(input, ref offset);
 
         if (lstKey.Length == 0 || lstKeyB.Length == 0)
             result = false;

@@ -62,12 +62,12 @@ public class LocalStorageNamedDeviceFactory : INamedDeviceFactory
 
         if (pathInfo.Exists)
         {
-            foreach (var folder in pathInfo.GetDirectories().OrderByDescending(f => f.LastWriteTime))
+            foreach (DirectoryInfo folder in pathInfo.GetDirectories().OrderByDescending(f => f.LastWriteTime))
             {
                 yield return new FileDescriptor(folder.Name, "");
             }
 
-            foreach (var file in pathInfo.GetFiles().OrderByDescending(f => f.LastWriteTime))
+            foreach (FileInfo file in pathInfo.GetFiles().OrderByDescending(f => f.LastWriteTime))
             {
                 yield return new FileDescriptor("", file.Name);
             }

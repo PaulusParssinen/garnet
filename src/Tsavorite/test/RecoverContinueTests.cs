@@ -66,14 +66,14 @@ internal class RecoverContinueTests
     {
         long sno = 0;
 
-        var firstsession = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first");
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> firstsession = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first");
         IncrementAllValues(ref firstsession, ref sno);
         store1.TryInitiateFullCheckpoint(out _, CheckpointType.Snapshot);
         store1.CompleteCheckpointAsync().AsTask().GetAwaiter().GetResult();
         firstsession.Dispose();
 
         // Check if values after checkpoint are correct
-        var session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         CheckAllValues(ref session1, 1);
         session1.Dispose();
 
@@ -82,12 +82,12 @@ internal class RecoverContinueTests
             await store2.RecoverAsync();
         else
             store2.Recover();
-        var session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session2 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         CheckAllValues(ref session2, 1);
         session2.Dispose();
 
         // Continue and increment values
-        var continuesession = store2.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first", out CommitPoint cp);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> continuesession = store2.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first", out CommitPoint cp);
         long newSno = cp.UntilSerialNo;
         Assert.AreEqual(sno - 1, newSno);
         IncrementAllValues(ref continuesession, ref sno);
@@ -96,7 +96,7 @@ internal class RecoverContinueTests
         continuesession.Dispose();
 
         // Check if values after continue checkpoint are correct
-        var session3 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> session3 = store2.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions());
         CheckAllValues(ref session3, 2);
         session3.Dispose();
 
@@ -106,7 +106,7 @@ internal class RecoverContinueTests
         else
             store3.Recover();
 
-        var nextsession = store3.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first", out cp);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> nextsession = store3.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(new AdSimpleFunctions(), "first", out cp);
         long newSno2 = cp.UntilSerialNo;
         Assert.AreEqual(sno - 1, newSno2);
         CheckAllValues(ref nextsession, 2);
@@ -119,10 +119,10 @@ internal class RecoverContinueTests
     {
         AdInput inputArg = default;
         Output outputArg = default;
-        for (var key = 0; key < numOps; key++)
+        for (int key = 0; key < numOps; key++)
         {
             inputArg.adId.adId = key;
-            var status = store.Read(ref inputArg.adId, ref inputArg, ref outputArg, Empty.Default, store.SerialNo);
+            Status status = store.Read(ref inputArg.adId, ref inputArg, ref outputArg, Empty.Default, store.SerialNo);
 
             if (status.IsPending)
                 store.CompletePending(true);

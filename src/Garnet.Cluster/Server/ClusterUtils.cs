@@ -33,8 +33,8 @@ internal static class ClusterUtils
     public static unsafe void WriteInto(IDevice device, SectorAlignedBufferPool pool, ulong address, byte[] buffer, int size = 0, ILogger logger = null)
     {
         if (size == 0) size = buffer.Length;
-        var _buffer = new byte[size + sizeof(int)];
-        var len = BitConverter.GetBytes(size);
+        byte[] _buffer = new byte[size + sizeof(int)];
+        byte[] len = BitConverter.GetBytes(size);
         Array.Copy(len, _buffer, len.Length);
         Array.Copy(buffer, 0, _buffer, len.Length, size);
         size += len.Length;
@@ -42,7 +42,7 @@ internal static class ClusterUtils
         long numBytesToWrite = size;
         numBytesToWrite = ((numBytesToWrite + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = pool.Get((int)numBytesToWrite);
+        SectorAlignedMemory pbuffer = pool.Get((int)numBytesToWrite);
         fixed (byte* bufferRaw = _buffer)
         {
             Buffer.MemoryCopy(bufferRaw, pbuffer.aligned_pointer, size, size);
@@ -70,7 +70,7 @@ internal static class ClusterUtils
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = pool.Get((int)numBytesToRead);
+        SectorAlignedMemory pbuffer = pool.Get((int)numBytesToRead);
         device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
             (uint)numBytesToRead, logger == null ? IOCallback : logger.IOCallback, semaphore);
         semaphore.Wait();

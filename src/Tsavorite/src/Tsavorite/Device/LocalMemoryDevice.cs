@@ -65,7 +65,7 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
         ioProcessors = new Thread[parallelism];
         for (int i = 0; i != parallelism; i++)
         {
-            var x = i;
+            int x = i;
             ioQueue[x] = new ConcurrentQueue<IORequestLocalMemory>();
             ioProcessors[i] = new Thread(() => ProcessIOQueue(ioQueue[x]));
             ioProcessors[i].Start();
@@ -107,7 +107,7 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
                                  DeviceIOCompletionCallback callback,
                                  object context)
     {
-        var q = ioQueue[segmentId % parallelism];
+        ConcurrentQueue<IORequestLocalMemory> q = ioQueue[segmentId % parallelism];
         var req = new IORequestLocalMemory
         {
             srcAddress = ram_segment_ptrs[segmentId] + sourceAddress,
@@ -142,7 +142,7 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
         // extra buffer space allocated in this device
         HandleCapacity(segmentId + 1);
 
-        var q = ioQueue[segmentId % parallelism];
+        ConcurrentQueue<IORequestLocalMemory> q = ioQueue[segmentId % parallelism];
         var req = new IORequestLocalMemory
         {
             srcAddress = (void*)sourceAddress,
@@ -180,7 +180,7 @@ public sealed unsafe class LocalMemoryDevice : StorageDeviceBase
     /// </summary>
     public override void Dispose()
     {
-        foreach (var q in ioQueue)
+        foreach (ConcurrentQueue<IORequestLocalMemory> q in ioQueue)
             while (!q.IsEmpty) { }
         terminated = true;
         for (int i = 0; i != ioProcessors.Length; i++)

@@ -32,7 +32,7 @@ internal class OverflowBucketLockTableTests
 
         log = Devices.CreateLogDevice(Path.Combine(MethodTestDir, "test.log"), deleteOnClose: false, recoverDevice: false);
 
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is UseSingleBucketComparer)
             {
@@ -63,7 +63,7 @@ internal class OverflowBucketLockTableTests
         PopulateHei(ref hei);
 
         // Check for existing lock
-        var lockState = store.LockTable.GetLockState(ref key, ref hei);
+        LockState lockState = store.LockTable.GetLockState(ref key, ref hei);
         Assert.AreEqual(expectedCurrentReadLocks, lockState.NumLockedShared);
 
         if (transient)
@@ -85,7 +85,7 @@ internal class OverflowBucketLockTableTests
 
     internal void AssertLockCounts(ref HashEntryInfo hei, bool expectedX, long expectedS)
     {
-        var lockState = store.LockTable.GetLockState(ref SingleBucketKey, ref hei);
+        LockState lockState = store.LockTable.GetLockState(ref SingleBucketKey, ref hei);
         Assert.AreEqual(expectedX, lockState.IsLockedExclusive);
         Assert.AreEqual(expectedS, lockState.NumLockedShared);
     }
@@ -97,7 +97,7 @@ internal class OverflowBucketLockTableTests
     {
         HashEntryInfo hei = new(store.comparer.GetHashCode64(ref key));
         PopulateHei(store, ref hei);
-        var lockState = store.LockTable.GetLockState(ref key, ref hei);
+        LockState lockState = store.LockTable.GetLockState(ref key, ref hei);
         Assert.AreEqual(expectedX, lockState.IsLockedExclusive, "XLock mismatch");
         Assert.AreEqual(expectedS, lockState.NumLockedShared, "SLock mismatch");
     }
@@ -119,7 +119,7 @@ internal class OverflowBucketLockTableTests
     {
         HashEntryInfo hei = new(key.KeyHash);
         PopulateHei(store, ref hei);
-        var lockState = store.LockTable.GetLockState(ref key.Key, ref hei);
+        LockState lockState = store.LockTable.GetLockState(ref key.Key, ref hei);
         Assert.AreEqual(expectedX, lockState.IsLockedExclusive, "XLock mismatch");
         Assert.AreEqual(expectedS, lockState.NumLockedShared > 0, "SLock mismatch");
     }
@@ -130,9 +130,9 @@ internal class OverflowBucketLockTableTests
     internal static unsafe void AssertTotalLockCounts(TsavoriteKV<long, long> store, long expectedX, long expectedS)
     {
         HashBucket* buckets = store.state[store.resizeInfo.version].tableAligned;
-        var count = store.LockTable.NumBuckets;
+        long count = store.LockTable.NumBuckets;
         long xcount = 0, scount = 0;
-        for (var ii = 0; ii < count; ++ii)
+        for (int ii = 0; ii < count; ++ii)
         {
             if (HashBucket.IsLatchedExclusive(buckets + ii))
                 ++xcount;
@@ -146,8 +146,8 @@ internal class OverflowBucketLockTableTests
 
     internal static unsafe void AssertBucketLockCount(TsavoriteKV<long, long> store, ref FixedLengthLockableKeyStruct<long> key, long expectedX, long expectedS)
     {
-        var bucketIndex = store.LockTable.GetBucketIndex(key.KeyHash);
-        var bucket = store.state[store.resizeInfo.version].tableAligned + bucketIndex;
+        long bucketIndex = store.LockTable.GetBucketIndex(key.KeyHash);
+        HashBucket* bucket = store.state[store.resizeInfo.version].tableAligned + bucketIndex;
         Assert.AreEqual(expectedX == 1, HashBucket.IsLatchedExclusive(bucket));
         Assert.AreEqual(expectedS, HashBucket.NumLatchedShared(bucket));
     }
@@ -229,7 +229,7 @@ internal class OverflowBucketLockTableTests
     public void ThreadedLockStressTest1Thread()
     {
         List<Task> tasks = new();
-        var lastTid = 0;
+        int lastTid = 0;
         AddThreads(tasks, ref lastTid, numThreads: 1, maxNumKeys: 5, lowKey: 1, highKey: 5, LockType.Exclusive);
         Task.WaitAll(tasks.ToArray());
     }
@@ -239,8 +239,8 @@ internal class OverflowBucketLockTableTests
     public void ThreadedLockStressTestMultiThreadsNoContention([Values(3, 8)] int numThreads)
     {
         List<Task> tasks = new();
-        var lastTid = 0;
-        for (var ii = 0; ii < numThreads; ++ii)
+        int lastTid = 0;
+        for (int ii = 0; ii < numThreads; ++ii)
             AddThreads(tasks, ref lastTid, numThreads: 1, maxNumKeys: 5, lowKey: 1 + 10 * ii, highKey: 5 + 10 * ii, LockType.Exclusive);
         Task.WaitAll(tasks.ToArray());
         AssertTotalLockCounts(0, 0);
@@ -251,7 +251,7 @@ internal class OverflowBucketLockTableTests
     public void ThreadedLockStressTestMultiThreadsFullContention([Values(3, 8)] int numThreads, [Values] LockType lockType)
     {
         List<Task> tasks = new();
-        var lastTid = 0;
+        int lastTid = 0;
         AddThreads(tasks, ref lastTid, numThreads: numThreads, maxNumKeys: 5, lowKey: 1, highKey: 5, lockType);
         Task.WaitAll(tasks.ToArray());
         AssertTotalLockCounts(0, 0);
@@ -262,7 +262,7 @@ internal class OverflowBucketLockTableTests
     public void ThreadedLockStressTestMultiThreadsRandomContention([Values(3, 8)] int numThreads, [Values] LockType lockType)
     {
         List<Task> tasks = new();
-        var lastTid = 0;
+        int lastTid = 0;
         AddThreads(tasks, ref lastTid, numThreads: numThreads, maxNumKeys: 5, lowKey: 1, highKey: 10 * (numThreads / 2), lockType);
         Task.WaitAll(tasks.ToArray());
         AssertTotalLockCounts(0, 0);
@@ -273,7 +273,7 @@ internal class OverflowBucketLockTableTests
         FixedLengthLockableKeyStruct<long> createKey()
         {
             long key = rng.Next(numKeys);
-            var keyHash = store.GetKeyHash(ref key);
+            long keyHash = store.GetKeyHash(ref key);
             return new()
             {
                 Key = key,
@@ -291,9 +291,9 @@ internal class OverflowBucketLockTableTests
         long lastXcode = default;
         LockType lastLockType = default;
 
-        for (var ii = 0; ii < count; ++ii)
+        for (int ii = 0; ii < count; ++ii)
         {
-            ref var key = ref keys[ii];
+            ref FixedLengthLockableKeyStruct<long> key = ref keys[ii];
             if (ii == 0)
             {
                 prevCode = key.KeyHash;
@@ -325,7 +325,7 @@ internal class OverflowBucketLockTableTests
     [Category(LockTestCategory), Category(LockTableTestCategory), Category(SmokeTestCategory)]
     public void FullArraySortTest()
     {
-        var keys = CreateKeys(new Random(101), 100, 1000);
+        FixedLengthLockableKeyStruct<long>[] keys = CreateKeys(new Random(101), 100, 1000);
         store.LockTable.SortKeyHashes(keys);
         AssertSorted(keys, keys.Length);
     }
@@ -334,19 +334,19 @@ internal class OverflowBucketLockTableTests
     [Category(LockTestCategory), Category(LockTableTestCategory), Category(SmokeTestCategory)]
     public void PartialArraySortTest()
     {
-        var numRecords = 1000;
-        var keys = CreateKeys(new Random(101), 100, numRecords);
+        int numRecords = 1000;
+        FixedLengthLockableKeyStruct<long>[] keys = CreateKeys(new Random(101), 100, numRecords);
         const int count = 800;
 
         // Make the later elements invalid.
-        for (var ii = count; ii < numRecords; ++ii)
+        for (int ii = count; ii < numRecords; ++ii)
             keys[ii].KeyHash = -ii;
 
         store.LockTable.SortKeyHashes(keys, 0, count);
         AssertSorted(keys, count);
 
         // Verify later elements were untouched.
-        for (var ii = count; ii < numRecords; ++ii)
+        for (int ii = count; ii < numRecords; ++ii)
             keys[ii].KeyHash = -ii;
     }
 
@@ -367,18 +367,18 @@ internal class OverflowBucketLockTableTests
             {
                 while (true)
                 {
-                    var key = rng.Next(lowKey, highKey + 1);    // +1 because the end # is not included
+                    int key = rng.Next(lowKey, highKey + 1);    // +1 because the end # is not included
                     if (!Array.Exists(threadStructs, it => it.Key == key))
                         return key;
                 }
             }
 
-            for (var iteration = 0; iteration < NumTestIterations; ++iteration)
+            for (int iteration = 0; iteration < NumTestIterations; ++iteration)
             {
                 // Create key structs
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
-                    var key = getNextKey();
+                    long key = getNextKey();
                     threadStructs[ii] = new()   // local var for debugging
                     {
                         Key = key,
@@ -391,7 +391,7 @@ internal class OverflowBucketLockTableTests
 
                 // Sort and lock
                 store.LockTable.SortKeyHashes(threadStructs);
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     HashEntryInfo hei = new(threadStructs[ii].KeyHash);
                     PopulateHei(ref hei);
@@ -403,7 +403,7 @@ internal class OverflowBucketLockTableTests
                 Thread.Sleep(rng.Next(maxSleepMs));
 
                 // Unlock
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     HashEntryInfo hei = new(threadStructs[ii].KeyHash);
                     PopulateHei(ref hei);
@@ -416,7 +416,7 @@ internal class OverflowBucketLockTableTests
 
         for (int t = 1; t <= numThreads; t++)
         {
-            var tid = ++lastTid;
+            int tid = ++lastTid;
             tasks.Add(Task.Factory.StartNew(() => runThread(tid)));
         }
     }

@@ -86,18 +86,18 @@ ClusterRedirectTests.TestFlags testFlags)
             out List<int> slots,
             int restrictToSlot = -1)
         {
-            var setupCmdInstance = (string[])setupCmd?.Clone();
-            var testCmdInstance = testCmd;
-            var cleanupCmdInstance = (string[])cleanupCmd?.Clone();
-            var responseInstance = response;
+            string[] setupCmdInstance = (string[])setupCmd?.Clone();
+            string testCmdInstance = testCmd;
+            string[] cleanupCmdInstance = (string[])cleanupCmd?.Clone();
+            string responseInstance = response;
             arrayResponse = (string[])arrayResponseOrig?.Clone();
 
-            var i = 0;
+            int i = 0;
             slots = [];
             while (true)
             {
-                var key = new byte[keyLen];
-                var value = new byte[valueLen];
+                byte[] key = new byte[keyLen];
+                byte[] value = new byte[valueLen];
                 if (restrictToSlot == -1)
                     clusterTestUtils.RandomBytes(ref key);
                 else
@@ -108,26 +108,26 @@ ClusterRedirectTests.TestFlags testFlags)
                 clusterTestUtils.RandomBytes(ref value);
 
 
-                var successKey = false;
+                bool successKey = false;
                 if (setupCmdInstance != null)
-                    for (var j = 0; j < setupCmdInstance.Length; j++)
+                    for (int j = 0; j < setupCmdInstance.Length; j++)
                         successKey |= ReplaceKey(ref key, setupCmdInstance[j], i, out setupCmdInstance[j]);
                 if (cleanupCmdInstance != null)
-                    for (var j = 0; j < cleanupCmdInstance.Length; j++)
+                    for (int j = 0; j < cleanupCmdInstance.Length; j++)
                         successKey |= ReplaceKey(ref key, cleanupCmdInstance[j], i, out cleanupCmdInstance[j]);
                 successKey |= ReplaceKey(ref key, testCmdInstance, i, out testCmdInstance);
 
-                var successValue = false;
+                bool successValue = false;
                 if (setupCmdInstance != null)
-                    for (var j = 0; j < setupCmdInstance.Length; j++)
+                    for (int j = 0; j < setupCmdInstance.Length; j++)
                         successValue |= ReplaceValue(ref value, setupCmdInstance[j], i, out setupCmdInstance[j]);
                 if (cleanupCmdInstance != null)
-                    for (var j = 0; j < cleanupCmdInstance.Length; j++)
+                    for (int j = 0; j < cleanupCmdInstance.Length; j++)
                         successValue |= ReplaceValue(ref value, cleanupCmdInstance[j], i, out cleanupCmdInstance[j]);
                 successValue |= ReplaceValue(ref value, testCmdInstance, i, out testCmdInstance);
                 successValue |= ReplaceValue(ref value, responseInstance, i, out responseInstance);
                 if (arrayResponse != null)
-                    for (var j = 0; j < arrayResponse.Length; j++)
+                    for (int j = 0; j < arrayResponse.Length; j++)
                         successValue |= ReplaceValue(ref value, arrayResponse[j], i, out arrayResponse[j]);
 
                 if (successValue || successKey)
@@ -477,15 +477,15 @@ ClusterRedirectTests.TestFlags testFlags)
 
     private static (ResponseState, string, string[]) SendToNodeFromSlot(ref LightClientRequest[] connections, string cmd, int slot, string cmdTag, bool checkAssert = true)
     {
-        var nodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)slot);
+        int nodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)slot);
         var result = connections[nodeIndex].SendCommand(cmd);
 
-        var status = ClusterTestUtils.ParseResponseState(
+        ResponseState status = ClusterTestUtils.ParseResponseState(
             result,
             out _,
             out _,
             out _,
-            out var value,
+            out string value,
             out var values);
         if (checkAssert)
             Assert.AreEqual(status, ResponseState.OK, cmdTag);
@@ -494,12 +494,12 @@ ClusterRedirectTests.TestFlags testFlags)
 
     private (ResponseState, string, string[]) SendAndRedirectToNode(ref LightClientRequest[] connections, string cmd, int slot, string cmdTag)
     {
-        var nodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)slot);
-        var otherNodeIndex = context.r.Next(0, connections.Length);
+        int nodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)slot);
+        int otherNodeIndex = context.r.Next(0, connections.Length);
         while (otherNodeIndex == nodeIndex) otherNodeIndex = context.r.Next(0, connections.Length);
 
         var result = connections[otherNodeIndex].SendCommand(cmd);
-        var status = ClusterTestUtils.ParseResponseState(result, out var _slot, out var _address, out var _port, out var _value, out var _values);
+        ResponseState status = ClusterTestUtils.ParseResponseState(result, out var _slot, out var _address, out int _port, out string _value, out var _values);
         Assert.AreEqual(status, ResponseState.MOVED);
         Assert.AreEqual(_slot, slot);
         Assert.AreEqual(_address, connections[nodeIndex].Address);
@@ -519,16 +519,16 @@ ClusterRedirectTests.TestFlags testFlags)
         CommandInfo command,
         int migrateSlot)
     {
-        var (setupCmd, testCmd, cleanCmd, response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out var slots, migrateSlot);
+        (string[] setupCmd, string testCmd, string[] cleanCmd, string response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out List<int> slots, migrateSlot);
         if (CheckFlag(command.testFlags, TestFlags.ASKING))
         {
             ClusterTestUtils.Asking(ref connections[targetNodeIndex]);
             if (setupCmd != null)
             {
-                for (var j = 0; j < setupCmd.Length; j++)
+                for (int j = 0; j < setupCmd.Length; j++)
                 {
                     var resp = connections[targetNodeIndex].SendCommand(setupCmd[j]);
-                    var respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
+                    ResponseState respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
                     Assert.AreEqual(respStatus, ResponseState.OK);
                     ClusterTestUtils.Asking(ref connections[targetNodeIndex]);
                 }
@@ -536,7 +536,7 @@ ClusterRedirectTests.TestFlags testFlags)
         }
 
         var result = connections[targetNodeIndex].SendCommand(testCmd);
-        var status = ClusterTestUtils.ParseResponseState(result, out var _slot, out var _address, out var _port, out var _value, out var _values);
+        ResponseState status = ClusterTestUtils.ParseResponseState(result, out var _slot, out var _address, out int _port, out string _value, out var _values);
 
         if (CheckFlag(command.testFlags, TestFlags.ASKING))
         {
@@ -546,17 +546,17 @@ ClusterRedirectTests.TestFlags testFlags)
             else if (command.arrayResponse != null)
             {
                 Assert.AreEqual(_values.Length, command.arrayResponse.Length);
-                for (var i = 0; i < _values.Length; i++)
+                for (int i = 0; i < _values.Length; i++)
                     Assert.AreEqual(_values[i], command.arrayResponse[i], command.cmdTag);
             }
 
             if (cleanCmd != null)
             {
-                for (var j = 0; j < cleanCmd.Length; j++)
+                for (int j = 0; j < cleanCmd.Length; j++)
                 {
                     ClusterTestUtils.Asking(ref connections[targetNodeIndex]);
                     var resp = connections[targetNodeIndex].SendCommand(cleanCmd[j]);
-                    var respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
+                    ResponseState respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
                     Assert.AreEqual(respStatus, ResponseState.OK);
                 }
             }
@@ -579,7 +579,7 @@ ClusterRedirectTests.TestFlags testFlags)
         CommandInfo command,
         int migrateSlot)
     {
-        var (setupCmd, testCmd, cleanCmd, response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out var slots, migrateSlot);
+        (string[] setupCmd, string testCmd, string[] cleanCmd, string response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out List<int> slots, migrateSlot);
         ResponseState status = default;
         byte[] result;
 
@@ -587,22 +587,22 @@ ClusterRedirectTests.TestFlags testFlags)
         {
             if (setupCmd != null)
             {
-                for (var j = 0; j < setupCmd.Length; j++)
+                for (int j = 0; j < setupCmd.Length; j++)
                 {
                     var resp = connections[sourceNodeIndex].SendCommand(setupCmd[j]);
-                    var respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
+                    ResponseState respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
                     Assert.AreEqual(respStatus, ResponseState.OK);
                 }
             }
         }
 
-        var respMigrating = ClusterTestUtils.SetSlot(ref connections[sourceNodeIndex], migrateSlot, "MIGRATING", targetNodeId);
+        string respMigrating = ClusterTestUtils.SetSlot(ref connections[sourceNodeIndex], migrateSlot, "MIGRATING", targetNodeId);
         Assert.AreEqual(respMigrating, "OK");
 
         result = connections[sourceNodeIndex].SendCommand(testCmd);
-        status = ClusterTestUtils.ParseResponseState(result, out _, out var _address, out var _port, out _, out _);
+        status = ClusterTestUtils.ParseResponseState(result, out _, out string _address, out int _port, out _, out _);
 
-        var respMigratingStable = ClusterTestUtils.SetSlot(ref connections[sourceNodeIndex], migrateSlot, "STABLE", "");
+        string respMigratingStable = ClusterTestUtils.SetSlot(ref connections[sourceNodeIndex], migrateSlot, "STABLE", "");
         Assert.AreEqual(respMigratingStable, "OK");
 
         if (CheckFlag(command.testFlags, (TestFlags.KEY_EXISTS | TestFlags.READONLY)))
@@ -624,10 +624,10 @@ ClusterRedirectTests.TestFlags testFlags)
         {
             if (cleanCmd != null)
             {
-                for (var j = 0; j < cleanCmd.Length; j++)
+                for (int j = 0; j < cleanCmd.Length; j++)
                 {
                     var resp = connections[sourceNodeIndex].SendCommand(cleanCmd[j]);
-                    var respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
+                    ResponseState respStatus = ClusterTestUtils.ParseResponseState(resp, out _, out _, out _, out _, out _);
                     Assert.AreEqual(respStatus, ResponseState.OK);
                 }
             }
@@ -639,26 +639,26 @@ ClusterRedirectTests.TestFlags testFlags)
     public void ClusterSingleKeyRedirectionTests()
     {
         context.logger.LogDebug("0. ClusterSingleKeyRedirectionTests started");
-        var Port = ClusterTestContext.Port;
-        var Shards = context.defaultShards;
+        int Port = ClusterTestContext.Port;
+        int Shards = context.defaultShards;
 
         context.CreateInstances(Shards, cleanClusterConfig: true);
         context.CreateConnection();
 
-        var connections = ClusterTestUtils.CreateLightRequestConnections(Enumerable.Range(Port, Shards).ToArray());
+        LightClientRequest[] connections = ClusterTestUtils.CreateLightRequestConnections(Enumerable.Range(Port, Shards).ToArray());
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
         //1. Regular operation redirect responses
-        foreach (var command in singleKeyCommands)
+        foreach (CommandInfo command in singleKeyCommands)
         {
-            var (setupCmd, testCmd, cleanCmd, response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out var slots);
+            (string[] setupCmd, string testCmd, string[] cleanCmd, string response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out List<int> slots);
             if (setupCmd != null)
-                for (var j = 0; j < setupCmd.Length; j++)
+                for (int j = 0; j < setupCmd.Length; j++)
                     _ = SendToNodeFromSlot(ref connections, setupCmd[j], slots[0], command.cmdTag);
 
             if (testCmd != null)
             {
-                var (status, value, values) = SendAndRedirectToNode(ref connections, testCmd, slots[0], command.cmdTag);
+                (ResponseState status, string value, string[] values) = SendAndRedirectToNode(ref connections, testCmd, slots[0], command.cmdTag);
                 Assert.AreEqual(status, ResponseState.OK, command.cmdTag);
                 if (command.response != null)
                 {
@@ -667,30 +667,30 @@ ClusterRedirectTests.TestFlags testFlags)
                 else if (command.arrayResponse != null)
                 {
                     Assert.AreEqual(values.Length, command.arrayResponse.Length);
-                    for (var i = 0; i < values.Length; i++)
+                    for (int i = 0; i < values.Length; i++)
                         Assert.AreEqual(values[i], command.arrayResponse[i], command.cmdTag);
                 }
             }
 
             if (cleanCmd != null)
-                for (var j = 0; j < cleanCmd.Length; j++)
+                for (int j = 0; j < cleanCmd.Length; j++)
                     _ = SendToNodeFromSlot(ref connections, cleanCmd[j], slots[0], command.cmdTag);
         }
 
         //2. Check response during migration
-        foreach (var command in singleKeyCommands)
+        foreach (CommandInfo command in singleKeyCommands)
         {
-            var migrateSlot = context.r.Next(0, 16384);
-            var sourceNodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)migrateSlot);
-            var targetNodeIndex = context.clusterTestUtils.GetRandomTargetNodeIndex(ref connections, sourceNodeIndex);
-            var sourceNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[sourceNodeIndex]);
-            var targetNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[targetNodeIndex]);
+            int migrateSlot = context.r.Next(0, 16384);
+            int sourceNodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)migrateSlot);
+            int targetNodeIndex = context.clusterTestUtils.GetRandomTargetNodeIndex(ref connections, sourceNodeIndex);
+            string sourceNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[sourceNodeIndex]);
+            string targetNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[targetNodeIndex]);
 
-            var respImporting = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "IMPORTING", sourceNodeId);
+            string respImporting = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "IMPORTING", sourceNodeId);
             Assert.AreEqual(respImporting, "OK");
             SendToImportingNode(ref connections, sourceNodeIndex, targetNodeIndex, command, migrateSlot);
 
-            var respImportingStable = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "STABLE", "");
+            string respImportingStable = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "STABLE", "");
             Assert.AreEqual(respImportingStable, "OK");
             SendToMigratingNode(ref connections, sourceNodeIndex, sourceNodeId, targetNodeIndex, targetNodeId, command, migrateSlot);
         }
@@ -704,31 +704,31 @@ ClusterRedirectTests.TestFlags testFlags)
     public void ClusterMultiKeyRedirectionTests()
     {
         context.logger.LogDebug("0. ClusterMultiKeyRedirectionTests started");
-        var Port = ClusterTestContext.Port;
-        var Shards = context.defaultShards;
+        int Port = ClusterTestContext.Port;
+        int Shards = context.defaultShards;
 
         context.CreateInstances(Shards, cleanClusterConfig: true);
         context.CreateConnection();
 
-        var connections = ClusterTestUtils.CreateLightRequestConnections(Enumerable.Range(Port, Shards).ToArray());
+        LightClientRequest[] connections = ClusterTestUtils.CreateLightRequestConnections(Enumerable.Range(Port, Shards).ToArray());
         _ = context.clusterTestUtils.SimpleSetupCluster(logger: context.logger);
 
         //1. test regular operation redirection
-        foreach (var command in multiKeyCommands)
+        foreach (CommandInfo command in multiKeyCommands)
         {
-            var restrictedSlot = context.r.Next(0, 16384);
-            var (setupCmd, testCmd, cleanCmd, response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out var slots, restrictedSlot);
+            int restrictedSlot = context.r.Next(0, 16384);
+            (string[] setupCmd, string testCmd, string[] cleanCmd, string response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out List<int> slots, restrictedSlot);
 
-            for (var i = 0; i < slots.Count; i++)
+            for (int i = 0; i < slots.Count; i++)
                 Assert.AreEqual(slots[i], restrictedSlot);
 
             if (setupCmd != null)
-                for (var j = 0; j < setupCmd.Length; j++)
+                for (int j = 0; j < setupCmd.Length; j++)
                     _ = SendToNodeFromSlot(ref connections, setupCmd[j], slots[0], command.cmdTag);
 
             if (testCmd != null)
             {
-                var (status, value, values) = SendAndRedirectToNode(ref connections, testCmd, slots[0], command.cmdTag);
+                (ResponseState status, string value, string[] values) = SendAndRedirectToNode(ref connections, testCmd, slots[0], command.cmdTag);
                 Assert.AreEqual(status, ResponseState.OK, command.cmdTag);
                 if (command.response != null)
                 {
@@ -737,42 +737,42 @@ ClusterRedirectTests.TestFlags testFlags)
                 else
                 {
                     Assert.AreEqual(values.Length, command.arrayResponse.Length);
-                    for (var i = 0; i < values.Length; i++)
+                    for (int i = 0; i < values.Length; i++)
                         Assert.AreEqual(values[i], command.arrayResponse[i], command.cmdTag);
                 }
             }
 
             if (cleanCmd != null)
-                for (var j = 0; j < cleanCmd.Length; j++)
+                for (int j = 0; j < cleanCmd.Length; j++)
                     _ = SendToNodeFromSlot(ref connections, cleanCmd[j], slots[0], command.cmdTag);
         }
 
         //2. test crosslot
-        foreach (var command in multiKeyCommands)
+        foreach (CommandInfo command in multiKeyCommands)
         {
-            var (setupCmd, testCmd, cleanCmd, response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out var slots);
+            (string[] setupCmd, string testCmd, string[] cleanCmd, string response) = command.GenerateSingleKeyCmdInstance(ref context.clusterTestUtils, 4, 4, out List<int> slots);
 
             if (testCmd != null)
             {
-                var (status, value, values) = SendToNodeFromSlot(ref connections, testCmd, slots.Last(), command.cmdTag, false);
+                (ResponseState status, string value, string[] values) = SendToNodeFromSlot(ref connections, testCmd, slots.Last(), command.cmdTag, false);
                 Assert.AreEqual(ResponseState.CROSSSLOT, status);
             }
         }
 
         //3. test migrating
-        foreach (var command in multiKeyCommands)
+        foreach (CommandInfo command in multiKeyCommands)
         {
-            var migrateSlot = context.r.Next(0, 16384);
-            var sourceNodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)migrateSlot);
-            var targetNodeIndex = context.clusterTestUtils.GetRandomTargetNodeIndex(ref connections, sourceNodeIndex);
-            var sourceNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[sourceNodeIndex]);
-            var targetNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[targetNodeIndex]);
+            int migrateSlot = context.r.Next(0, 16384);
+            int sourceNodeIndex = ClusterTestUtils.GetSourceNodeIndexFromSlot(ref connections, (ushort)migrateSlot);
+            int targetNodeIndex = context.clusterTestUtils.GetRandomTargetNodeIndex(ref connections, sourceNodeIndex);
+            string sourceNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[sourceNodeIndex]);
+            string targetNodeId = ClusterTestUtils.GetNodeIdFromNode(ref connections[targetNodeIndex]);
 
-            var respImporting = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "IMPORTING", sourceNodeId);
+            string respImporting = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "IMPORTING", sourceNodeId);
             Assert.AreEqual(respImporting, "OK");
             SendToImportingNode(ref connections, sourceNodeIndex, targetNodeIndex, command, migrateSlot);
 
-            var respImportingStable = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "STABLE", "");
+            string respImportingStable = ClusterTestUtils.SetSlot(ref connections[targetNodeIndex], migrateSlot, "STABLE", "");
             Assert.AreEqual(respImportingStable, "OK");
             SendToMigratingNode(ref connections, sourceNodeIndex, sourceNodeId, targetNodeIndex, targetNodeId, command, migrateSlot);
         }

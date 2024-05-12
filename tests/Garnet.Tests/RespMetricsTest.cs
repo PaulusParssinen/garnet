@@ -41,14 +41,14 @@ public class RespMetricsTest
     public void MetricsDisabledTest()
     {
         StartServer();
-        var logger = loggerFactory.CreateLogger(TestContext.CurrentContext.Test.Name);
-        var infoMetrics = server.Metrics.GetInfoMetrics().ToArray();
+        ILogger logger = loggerFactory.CreateLogger(TestContext.CurrentContext.Test.Name);
+        (InfoMetricsType, MetricsItem[])[] infoMetrics = server.Metrics.GetInfoMetrics().ToArray();
 
         Assert.AreNotEqual(null, infoMetrics);
-        foreach (var section in infoMetrics)
+        foreach ((InfoMetricsType, MetricsItem[]) section in infoMetrics)
         {
             logger.LogDebug("<{sectionName}>", section.Item1);
-            foreach (var prop in section.Item2)
+            foreach (MetricsItem prop in section.Item2)
             {
                 if (section.Item1 == InfoMetricsType.STATS)
                 {
@@ -62,7 +62,7 @@ public class RespMetricsTest
             logger.LogDebug("</{sectionName}>", section.Item1);
         }
 
-        var latencyMetrics = server.Metrics.GetLatencyMetrics().ToArray();
+        (LatencyMetricsType, MetricsItem[])[] latencyMetrics = server.Metrics.GetLatencyMetrics().ToArray();
         Assert.AreEqual(Array.Empty<(LatencyMetricsType, MetricsItem[])>(), latencyMetrics);
     }
 
@@ -70,33 +70,33 @@ public class RespMetricsTest
     public void MetricsEnabledTest()
     {
         StartServer(1, true);
-        var logger = loggerFactory.CreateLogger(TestContext.CurrentContext.Test.Name);
+        ILogger logger = loggerFactory.CreateLogger(TestContext.CurrentContext.Test.Name);
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int opCount = 1000;
         for (int i = 0; i < opCount; i++)
         {
             Assert.IsTrue(db.StringSet(i.ToString(), i.ToString()));
-            var result = (string)db.StringGet(i.ToString());
+            string result = (string)db.StringGet(i.ToString());
             Assert.AreEqual(i.ToString(), result);
         }
 
         bool first = true;
     retry:
         Thread.Sleep(2000);
-        var infoMetrics = server.Metrics.GetInfoMetrics().ToArray();
+        (InfoMetricsType, MetricsItem[])[] infoMetrics = server.Metrics.GetInfoMetrics().ToArray();
         Assert.AreNotEqual(null, infoMetrics);
-        foreach (var section in infoMetrics)
+        foreach ((InfoMetricsType, MetricsItem[]) section in infoMetrics)
         {
             logger.LogDebug("<{sectionName}>", section.Item1);
-            foreach (var prop in section.Item2)
+            foreach (MetricsItem prop in section.Item2)
             {
                 if (section.Item1 == InfoMetricsType.STATS)
                 {
                     if (prop.Name.Equals("total_commands_processed"))
                     {
-                        var total_commands_processed = Int32.Parse(prop.Value);
+                        int total_commands_processed = Int32.Parse(prop.Value);
                         if (first && total_commands_processed < opCount)
                         {
                             first = false;
@@ -110,7 +110,7 @@ public class RespMetricsTest
             logger.LogDebug("</{sectionName}>", section.Item1);
         }
 
-        var latencyMetrics = server.Metrics.GetLatencyMetrics(LatencyMetricsType.NET_RS_LAT).ToArray();
+        MetricsItem[] latencyMetrics = server.Metrics.GetLatencyMetrics(LatencyMetricsType.NET_RS_LAT).ToArray();
         while (latencyMetrics.Length == 0)
         {
             Thread.Yield();

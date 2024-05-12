@@ -50,7 +50,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
 
         // Get the key for SortedSet
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         if (NetworkSingleKeySlotVerify(key, false))
@@ -64,10 +64,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
         // Save old values on buffer
-        var save = *inputPtr;
+        ObjectInputHeader save = *inputPtr;
 
         // Prepare length of header in input buffer
-        var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+        int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
         int inputCount = (count - 1) / 2;
 
@@ -120,7 +120,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -136,10 +136,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var rmwInput = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *rmwInput;
+            ObjectInputHeader save = *rmwInput;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)rmwInput);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)rmwInput);
 
             // Prepare header in input buffer
             rmwInput->header.type = GarnetObjectType.SortedSet;
@@ -148,7 +148,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             rmwInput->count = inputCount;
             rmwInput->done = zaddDoneCount;
 
-            var status = storageApi.SortedSetRemove(key, new ArgSlice((byte*)rmwInput, inputLength), out ObjectOutputHeader rmwOutput);
+            GarnetStatus status = storageApi.SortedSetRemove(key, new ArgSlice((byte*)rmwInput, inputLength), out ObjectOutputHeader rmwOutput);
 
             // Reset input buffer
             *rmwInput = save;
@@ -206,7 +206,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -220,10 +220,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -232,7 +232,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 1;
             inputPtr->done = 0;
 
-            var status = storageApi.SortedSetLength(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+            GarnetStatus status = storageApi.SortedSetLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Reset input buffer
             *inputPtr = save;
@@ -273,7 +273,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         //ZRANGE key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] [WITHSCORES]
 
         // Get the key for the Sorted Set
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key,
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key,
             ref ptr, recvBufferPtr + bytesRead))
             return false;
 
@@ -289,7 +289,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         {
             //reset counters and fast forward the rest of the input
             zaddDoneCount = zaddAddCount = 0;
-            var tokens = ReadLeftToken(count - 1, ref ptr);
+            int tokens = ReadLeftToken(count - 1, ref ptr);
             if (tokens < count - 1)
             {
                 //command partially executed
@@ -307,10 +307,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -321,7 +321,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.SortedSetRange(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.SortedSetRange(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             // Reset input buffer
             *inputPtr = save;
@@ -329,7 +329,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             switch (status)
             {
                 case GarnetStatus.OK:
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
                     // Return if ZRANGE is only partially done
                     if (objOutputHeader.bytesDone == 0)
@@ -387,7 +387,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -407,10 +407,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(scoreKeyPtr - sizeof(ObjectInputHeader));
 
             //save values
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -422,7 +422,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.SortedSetScore(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.SortedSetScore(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input
             *inputPtr = save;
@@ -431,7 +431,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     //process output
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
                     break;
                 case GarnetStatus.NOTFOUND:
@@ -467,7 +467,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -481,10 +481,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             //save values
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
             int inputCount = count - 1;
 
             // Prepare header in input buffer
@@ -497,7 +497,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.SortedSetScores(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.SortedSetScores(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input
             *inputPtr = save;
@@ -506,14 +506,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     //process output
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
                     break;
                 case GarnetStatus.NOTFOUND:
                     while (!RespWriteUtils.WriteArrayLength(inputCount, ref dcurr, dend))
                         SendAndReset();
 
-                    for (var c = 0; c < inputCount; c++)
+                    for (int c = 0; c < inputCount; c++)
                         while (!RespWriteUtils.WriteNull(ref dcurr, dend))
                             SendAndReset();
 
@@ -547,7 +547,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -557,7 +557,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return true;
             }
 
-            var popCount = 1;
+            int popCount = 1;
 
             if (count == 2)
             {
@@ -570,10 +570,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             //save values
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -585,7 +585,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(SpanByte.FromPinnedPointer(dcurr, (int)(dend - dcurr))) };
 
-            var status = storageApi.SortedSetPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.SortedSetPop(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input buffer
             *inputPtr = save;
@@ -594,7 +594,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     //process output
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
                     zaddDoneCount += objOutputHeader.countDone;
                     zaddAddCount += objOutputHeader.opsDone;
@@ -634,7 +634,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for the Sorted Set
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -648,10 +648,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -660,7 +660,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 0;
             inputPtr->done = 0;
 
-            var status = storageApi.SortedSetCount(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.SortedSetCount(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             //restore input buffer
             *inputPtr = save;
@@ -683,7 +683,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     ptr += output.bytesDone;
                     break;
                 case GarnetStatus.NOTFOUND:
-                    var tokens = ReadLeftToken(count - 1, ref ptr);
+                    int tokens = ReadLeftToken(count - 1, ref ptr);
                     if (tokens < count - 1)
                         return false;
                     while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_RETURN_VAL_0, ref dcurr, dend))
@@ -723,7 +723,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             bool checkCluster = NetworkSingleKeySlotVerify(key, op != SortedSetOperation.ZREMRANGEBYLEX);
@@ -739,10 +739,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -751,8 +751,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 0;
             inputPtr->done = 0;
 
-            var status = op == SortedSetOperation.ZREMRANGEBYLEX ?
-                         storageApi.SortedSetRemoveRangeByLex(key, new ArgSlice((byte*)inputPtr, inputLength), out var output) :
+            GarnetStatus status = op == SortedSetOperation.ZREMRANGEBYLEX ?
+                         storageApi.SortedSetRemoveRangeByLex(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output) :
                          storageApi.SortedSetLengthByValue(key, new ArgSlice((byte*)inputPtr, inputLength), out output);
 
             //restore input buffer
@@ -776,7 +776,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     ptr += output.bytesDone;
                     break;
                 case GarnetStatus.NOTFOUND:
-                    var tokens = ReadLeftToken(count - 1, ref ptr);
+                    int tokens = ReadLeftToken(count - 1, ref ptr);
                     if (tokens < count - 1)
                         return false;
                     while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_RETURN_VAL_0, ref dcurr, dend))
@@ -811,7 +811,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for the Sorted Set
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -825,9 +825,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -839,7 +839,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.SortedSetIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.SortedSetIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input
             *inputPtr = save;
@@ -851,7 +851,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     //verifying length of outputFooter
                     if (outputFooter.spanByteAndMemory.Length == 0)
                     {
-                        var tokens = ReadLeftToken(count - 1, ref ptr);
+                        int tokens = ReadLeftToken(count - 1, ref ptr);
                         if (tokens < count - 1)
                             return false;
                         errorMessage = "ERR wrong key type used in ZINCRBY command."u8;
@@ -859,7 +859,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     else
                     {
                         //process output
-                        var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                        ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                         //check for partial execution
                         if (objOutputHeader.countDone == int.MinValue)
                             return false;
@@ -906,7 +906,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for SortedSet
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -927,10 +927,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(memberPtr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = memberSize + sizeof(ObjectInputHeader);
+            int inputLength = memberSize + sizeof(ObjectInputHeader);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -939,7 +939,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = memberSize;
             inputPtr->done = 0;
 
-            var status = storageApi.SortedSetRank(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.SortedSetRank(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Reset input buffer
             *inputPtr = save;
@@ -986,7 +986,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -1000,10 +1000,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -1012,7 +1012,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 0;
             inputPtr->done = 0;
 
-            var status = storageApi.SortedSetRemoveRange(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.SortedSetRemoveRange(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             //restore input buffer
             *inputPtr = save;
@@ -1022,7 +1022,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 case GarnetStatus.OK:
                     if (output.countDone == int.MaxValue)
                     {
-                        var errorMessage = op == SortedSetOperation.ZREMRANGEBYRANK ?
+                        ReadOnlySpan<byte> errorMessage = op == SortedSetOperation.ZREMRANGEBYRANK ?
                             "ERR start or stop value is not in an integer or out of range."u8 :
                             "ERR max or min value is not a float value."u8;
 
@@ -1038,7 +1038,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     ptr += output.bytesDone;
                     break;
                 case GarnetStatus.NOTFOUND:
-                    var tokens = ReadLeftToken(count - 1, ref ptr);
+                    int tokens = ReadLeftToken(count - 1, ref ptr);
                     if (tokens < count - 1)
                         return false;
                     while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_RETURN_VAL_0, ref dcurr, dend))
@@ -1069,7 +1069,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for the Sorted Set
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -1079,7 +1079,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return true;
             }
 
-            var paramCount = 0;
+            int paramCount = 0;
             ReadOnlySpan<byte> withScoresSpan = "WITHSCORES"u8;
             Byte[] includeWithScores = default;
 
@@ -1105,10 +1105,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.SortedSet;
@@ -1134,12 +1134,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             switch (status)
             {
                 case GarnetStatus.OK:
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
 
                     break;
                 case GarnetStatus.NOTFOUND:
-                    var respBytes = includedCount ? CmdStrings.RESP_EMPTYLIST : CmdStrings.RESP_ERRNOTFOUND;
+                    ReadOnlySpan<byte> respBytes = includedCount ? CmdStrings.RESP_EMPTYLIST : CmdStrings.RESP_ERRNOTFOUND;
                     while (!RespWriteUtils.WriteDirect(respBytes, ref dcurr, dend))
                         SendAndReset();
                     break;
@@ -1171,7 +1171,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         {
 
             //number of keys
-            if (!RespReadUtils.ReadIntWithLengthHeader(out var nKeys, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadIntWithLengthHeader(out int nKeys, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             ArgSlice key = default;
@@ -1194,7 +1194,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 ArgSlice[] keys = new ArgSlice[nKeys];
                 keys[0] = key;
 
-                var i = nKeys - 1;
+                int i = nKeys - 1;
                 do
                 {
                     keys[i] = default;
@@ -1220,7 +1220,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     return true;
                 }
 
-                storageApi.SortedSetDifference(keys, out var result);
+                storageApi.SortedSetDifference(keys, out Dictionary<byte[], double> result);
 
                 // write the size of the array reply
                 int resultCount = result == null ? 0 : result.Count;
@@ -1229,7 +1229,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
                 if (result != null)
                 {
-                    foreach (var item in result)
+                    foreach (KeyValuePair<byte[], double> item in result)
                     {
                         while (!RespWriteUtils.WriteBulkString(item.Key, ref dcurr, dend))
                             SendAndReset();

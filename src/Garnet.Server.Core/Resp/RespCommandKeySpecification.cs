@@ -61,7 +61,7 @@ public class RespCommandKeySpecification : IRespSerializable
     public string ToRespFormat()
     {
         var sb = new StringBuilder();
-        var elemCount = 0;
+        int elemCount = 0;
 
         if (this.Notes != null)
         {
@@ -75,7 +75,7 @@ public class RespCommandKeySpecification : IRespSerializable
             elemCount += 2;
             sb.Append("$5\r\nflags\r\n");
             sb.Append($"*{this.respFormatFlags.Length}\r\n");
-            foreach (var flag in this.respFormatFlags)
+            foreach (string flag in this.respFormatFlags)
                 sb.Append($"+{flag}\r\n");
         }
 
@@ -429,7 +429,7 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
             throw new JsonException();
         }
 
-        var propertyName = reader.GetString();
+        string propertyName = reader.GetString();
         if (propertyName != "TypeDiscriminator")
         {
             throw new JsonException();
@@ -441,16 +441,16 @@ public class KeySpecConverter : JsonConverter<KeySpecMethodBase>
             throw new JsonException();
         }
 
-        var typeDiscriminator = reader.GetString();
+        string typeDiscriminator = reader.GetString();
 
-        var index = 0;
+        int index = 0;
         string keyword = null;
-        var startFrom = 0;
-        var lastKey = 0;
-        var keyStep = 0;
-        var limit = 0;
-        var keyNumIdx = 0;
-        var firstKey = 0;
+        int startFrom = 0;
+        int lastKey = 0;
+        int keyStep = 0;
+        int limit = 0;
+        int keyNumIdx = 0;
+        int firstKey = 0;
 
         while (reader.Read())
         {

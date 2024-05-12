@@ -33,7 +33,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("READWRITETX", 3, () => new ReadWriteTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string readkey = "readkey";
         string value = "foovalue0";
@@ -42,7 +42,7 @@ public class RespTransactionProcTests
         string writekey1 = "writekey1";
         string writekey2 = "writekey2";
 
-        var result = db.Execute("READWRITETX", readkey, writekey1, writekey2);
+        RedisResult result = db.Execute("READWRITETX", readkey, writekey1, writekey2);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -62,7 +62,7 @@ public class RespTransactionProcTests
         int id = server.Register.NewTransactionProc("READWRITETX", 3, () => new ReadWriteTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string readkey = "readkey";
         string value = "foovalue0";
@@ -71,7 +71,7 @@ public class RespTransactionProcTests
         string writekey1 = "writekey1";
         string writekey2 = "writekey2";
 
-        var result = db.Execute("RUNTXP", id, readkey, writekey1, writekey2);
+        RedisResult result = db.Execute("RUNTXP", id, readkey, writekey1, writekey2);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -90,7 +90,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("SAMPLEUPDATETX", 8, () => new SampleUpdateTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string stringKey = "stringKey";
         string stringValue = "stringValue";
@@ -103,7 +103,7 @@ public class RespTransactionProcTests
         string secondValue = "value200";
         double score2 = 200;
 
-        var result = db.Execute("SAMPLEUPDATETX", stringKey, stringValue,
+        RedisResult result = db.Execute("SAMPLEUPDATETX", stringKey, stringValue,
             sortedSet1key, value1, score, sortedSetSecondkey, secondValue, score2);
 
         Assert.AreEqual("SUCCESS", (string)result);
@@ -125,7 +125,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("SAMPLEDELETETX", 5, () => new SampleDeleteTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string mainStoreKey = "key1";
         db.StringSet(mainStoreKey, "value1");
@@ -140,7 +140,7 @@ public class RespTransactionProcTests
         string sortedSetSecondkey = "sortedSetkey2";
         string secondValue = "value200";
 
-        var result = db.Execute("SAMPLEDELETETX", mainStoreKey,
+        RedisResult result = db.Execute("SAMPLEDELETETX", mainStoreKey,
             sortedSet1key, value, sortedSetSecondkey, secondValue);
 
         Assert.AreEqual("SUCCESS", (string)result);
@@ -162,12 +162,12 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("WRITEWITHEXPIRYTX", 3, () => new WriteWithExpiryTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "key1";
         string value = "value1";
 
-        var result = db.Execute("WRITEWITHEXPIRYTX", key, value, 5);
+        RedisResult result = db.Execute("WRITEWITHEXPIRYTX", key, value, 5);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -188,7 +188,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("OBJECTEXPIRYTX", 2, () => new ObjectExpiryTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "key1";
         string value = "value1";
@@ -197,7 +197,7 @@ public class RespTransactionProcTests
         long size = db.SortedSetLength(key);
 
         Assert.AreEqual(1, size);
-        var result = db.Execute("OBJECTEXPIRYTX", key, 1000);
+        RedisResult result = db.Execute("OBJECTEXPIRYTX", key, 1000);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -222,7 +222,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("SORTEDSETREMOVETX", 2, () => new SortedSetRemoveTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string sortedSetKey = "sortedSetkey";
         double score = 100;
@@ -230,7 +230,7 @@ public class RespTransactionProcTests
 
         db.SortedSetAdd(sortedSetKey, [new SortedSetEntry(value, score)]);
 
-        var result = db.Execute("SORTEDSETREMOVETX", sortedSetKey, value);
+        RedisResult result = db.Execute("SORTEDSETREMOVETX", sortedSetKey, value);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -246,18 +246,18 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("DELETETX", 1, () => new DeleteTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "key1";
         string value = "value1";
 
         db.StringSet(key, value);
 
-        var result = db.Execute("DELETETX", key);
+        RedisResult result = db.Execute("DELETETX", key);
 
         Assert.AreEqual("SUCCESS", (string)result);
 
-        var retValue = db.StringGet(key);
+        RedisValue retValue = db.StringGet(key);
         Assert.IsFalse(retValue.HasValue);
     }
 
@@ -266,12 +266,12 @@ public class RespTransactionProcTests
     {
         server.Register.NewTransactionProc("SORTEDSETPROC", 24, () => new TestProcedureSortedSets());
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string ssA = "ssA";
 
         // Sending zadd pairs
-        var result = db.Execute("SORTEDSETPROC", ssA, 1, "item1", 2, "item2", 3, "item3", 4, "item4", 5, "item5", 6, "item6", 7, "item7", 8, "item8", 9, "item9", 10, "item10", "1", "9", "*em*");
+        RedisResult result = db.Execute("SORTEDSETPROC", ssA, 1, "item1", 2, "item2", 3, "item3", 4, "item4", 5, "item5", 6, "item6", 7, "item7", 8, "item8", 9, "item9", 10, "item10", "1", "9", "*em*");
         Assert.AreEqual("SUCCESS", (string)result);
 
         // Read keys to verify transaction succeeded
@@ -286,12 +286,12 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("LISTPROC", 12, () => new TestProcedureLists());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string lstA = "listA";
         string lstB = "listB";
 
-        var result = db.Execute("LISTPROC", lstA, lstB, "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10");
+        RedisResult result = db.Execute("LISTPROC", lstA, lstB, "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10");
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -309,11 +309,11 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("SETPROC", 12, () => new TestProcedureSet());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string setA = "setA";
 
-        var result = db.Execute("SETPROC", setA, "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10", "item3");
+        RedisResult result = db.Execute("SETPROC", setA, "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10", "item3");
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -329,10 +329,10 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("HASHPROC", 14, () => new TestProcedureHash());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string mh = "myHash";
-        var result = db.Execute("HASHPROC", mh, "field1", "foo", "field2", "faa", "field3", "fii", "field4", "fee", "field5", "foo", "age", "25", "field1");
+        RedisResult result = db.Execute("HASHPROC", mh, "field1", "foo", "field2", "faa", "field3", "fii", "field4", "fee", "field5", "foo", "age", "25", "field1");
 
         Assert.AreEqual("SUCCESS", (string)result);
 
@@ -347,7 +347,7 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("GETTWOKEYSNOTXN", 2, () => new GetTwoKeysNoTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string readkey1 = "readkey1";
         string value1 = "foovalue1";
@@ -357,7 +357,7 @@ public class RespTransactionProcTests
         string value2 = "foovalue2";
         db.StringSet(readkey2, value2);
 
-        var result = db.Execute("GETTWOKEYSNOTXN", readkey1, readkey2);
+        RedisResult result = db.Execute("GETTWOKEYSNOTXN", readkey1, readkey2);
 
         Assert.AreEqual(value1, ((string[])result)[0]);
         Assert.AreEqual(value2, ((string[])result)[1]);
@@ -369,10 +369,10 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("MSETPX", () => new MSetPxTxn());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         const int NumKeys = 5;
 
-        var args = new string[1 + 2 * NumKeys];
+        string[] args = new string[1 + 2 * NumKeys];
 
         // Set expiry to 2 seconds
         args[0] = "2000";
@@ -385,7 +385,7 @@ public class RespTransactionProcTests
         }
 
         // Execute transaction
-        var result = db.Execute("MSETPX", args);
+        RedisResult result = db.Execute("MSETPX", args);
 
         // Verify transaction succeeded
         Assert.AreEqual("OK", (string)result);
@@ -418,11 +418,11 @@ public class RespTransactionProcTests
         server.Register.NewTransactionProc("MGETIFPM", () => new MGetIfPM());
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         const int NumKeys = 15;
         const string prefix = "value1";
 
-        var args1 = new string[1 + 2 * NumKeys];
+        string[] args1 = new string[1 + 2 * NumKeys];
 
         // Set expiry to 600 seconds
         args1[0] = "600000";
@@ -435,7 +435,7 @@ public class RespTransactionProcTests
         }
 
         // Execute transaction
-        var result1 = (string)db.Execute("MSETPX", args1);
+        string result1 = (string)db.Execute("MSETPX", args1);
 
         // Verify transaction succeeded
         Assert.AreEqual("OK", result1);
@@ -449,7 +449,7 @@ public class RespTransactionProcTests
             Assert.AreEqual(value, retValue);
         }
 
-        var args2 = new string[1 + NumKeys];
+        string[] args2 = new string[1 + NumKeys];
 
         // Set prefix
         args2[0] = prefix;
@@ -461,7 +461,7 @@ public class RespTransactionProcTests
         }
 
         // Execute transaction
-        var result2 = (string[])db.Execute("MGETIFPM", args2);
+        string[] result2 = (string[])db.Execute("MGETIFPM", args2);
 
         // Verify results
         int expectedCount = NumKeys - 9; // only values with specified prefix

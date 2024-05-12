@@ -45,7 +45,7 @@ internal class LargeObjectTests
         int maxSize = 100;
         int numOps = 5000;
 
-        var session1 = store1.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(new MyLargeFunctions());
+        ClientSession<MyKey, MyLargeValue, MyInput, MyLargeOutput, Empty, MyLargeFunctions> session1 = store1.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(new MyLargeFunctions());
         Random r = new Random(33);
         for (int key = 0; key < numOps; key++)
         {
@@ -73,11 +73,11 @@ internal class LargeObjectTests
 
         store2.Recover(token);
 
-        var session2 = store2.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(new MyLargeFunctions());
+        ClientSession<MyKey, MyLargeValue, MyInput, MyLargeOutput, Empty, MyLargeFunctions> session2 = store2.NewSession<MyInput, MyLargeOutput, Empty, MyLargeFunctions>(new MyLargeFunctions());
         for (int keycnt = 0; keycnt < numOps; keycnt++)
         {
             var key = new MyKey { key = keycnt };
-            var status = session2.Read(ref key, ref input, ref output, Empty.Default, 0);
+            Status status = session2.Read(ref key, ref input, ref output, Empty.Default, 0);
 
             if (status.IsPending)
                 session2.CompletePending(true);

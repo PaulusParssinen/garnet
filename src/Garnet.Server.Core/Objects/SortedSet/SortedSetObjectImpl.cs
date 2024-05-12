@@ -43,9 +43,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         byte* end = input + length;
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var score, out var parsed, ref ptr, end))
+            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double score, out bool parsed, ref ptr, end))
                 return;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member, ref ptr, end))
                 return;
 
             if (c < _input->done)
@@ -55,7 +55,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
             if (parsed)
             {
-                if (!sortedSetDict.TryGetValue(member, out var _scoreStored))
+                if (!sortedSetDict.TryGetValue(member, out double _scoreStored))
                 {
                     _output->opsDone++;
                     sortedSetDict.Add(member, score);
@@ -66,7 +66,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 else if (_scoreStored != score)
                 {
                     sortedSetDict[member] = score;
-                    var success = sortedSet.Remove((_scoreStored, member));
+                    bool success = sortedSet.Remove((_scoreStored, member));
                     Debug.Assert(success);
                     success = sortedSet.Add((score, member));
                     Debug.Assert(success);
@@ -90,7 +90,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         for (int c = 0; c < count; c++)
         {
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var value, ref ptr, end))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] value, ref ptr, end))
                 return;
 
             if (c < _input->done)
@@ -98,7 +98,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
             _output->countDone++;
 
-            if (sortedSetDict.TryGetValue(value, out var _key))
+            if (sortedSetDict.TryGetValue(value, out double _key))
             {
                 _output->opsDone++;
                 sortedSetDict.Remove(value);
@@ -127,19 +127,19 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
     {
         //ZSCORE key member
         var _input = (ObjectInputHeader*)input;
-        var scoreKey = new Span<byte>(input + sizeof(ObjectInputHeader), _input->count).ToArray();
+        byte[] scoreKey = new Span<byte>(input + sizeof(ObjectInputHeader), _input->count).ToArray();
 
         bool isMemory = false;
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
-            if (!sortedSetDict.TryGetValue(scoreKey, out var score))
+            if (!sortedSetDict.TryGetValue(scoreKey, out double score))
             {
                 while (!RespWriteUtils.WriteNull(ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -175,8 +175,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
 
         byte* ptr = output.SpanByte.ToPointer();
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         byte* input_startptr = input + sizeof(ObjectInputHeader);
         byte* input_currptr = input_startptr;
@@ -189,9 +189,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
             for (int c = 0; c < count; c++)
             {
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var scoreKey, ref input_currptr, input_endptr))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] scoreKey, ref input_currptr, input_endptr))
                     return;
-                if (!sortedSetDict.TryGetValue(scoreKey, out var score))
+                if (!sortedSetDict.TryGetValue(scoreKey, out double score))
                 {
                     while (!RespWriteUtils.WriteNull(ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -224,23 +224,23 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         byte* input_startptr = input + sizeof(ObjectInputHeader);
         byte* input_currptr = input_startptr;
-        var end = input + length;
-        var count = 0;
+        byte* end = input + length;
+        int count = 0;
 
         _output->opsDone = 0;
         _output->countDone = Int32.MinValue;
 
         // read min
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var minParamByteArray, ref input_currptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] minParamByteArray, ref input_currptr, end))
             return;
 
         // read max
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var maxParamByteArray, ref input_currptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] maxParamByteArray, ref input_currptr, end))
             return;
 
         //check if parameters are valid
-        if (!TryParseParameter(minParamByteArray, out var minValue, out var minExclusive) ||
-            !TryParseParameter(maxParamByteArray, out var maxValue, out var maxExclusive))
+        if (!TryParseParameter(minParamByteArray, out double minValue, out bool minExclusive) ||
+            !TryParseParameter(maxParamByteArray, out double maxValue, out bool maxExclusive))
         {
             count = int.MaxValue;
         }
@@ -249,7 +249,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             // get the elements within the score range and write the result
             if (sortedSet.Count > 0)
             {
-                foreach (var item in sortedSet.GetViewBetween((minValue, null), sortedSet.Max))
+                foreach ((double, byte[]) item in sortedSet.GetViewBetween((minValue, null), sortedSet.Max))
                 {
                     if (item.Item1 > maxValue || (maxExclusive && item.Item1 == maxValue)) break;
                     if (minExclusive && item.Item1 == minValue) continue;
@@ -274,8 +274,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -284,15 +284,15 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         try
         {
             // read increment
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var incrementByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] incrementByteArray, ref input_currptr, input + length))
                 return;
 
             // read member
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] memberByteArray, ref input_currptr, input + length))
                 return;
 
             //check if increment value is valid
-            if (!Utf8Parser.TryParse(incrementByteArray, out double incrValue, out var incrBytesConsumed, default) ||
+            if (!Utf8Parser.TryParse(incrementByteArray, out double incrValue, out int incrBytesConsumed, default) ||
                 incrBytesConsumed != incrementByteArray.Length)
             {
                 countDone = int.MaxValue;
@@ -352,18 +352,18 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
             // read min
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var minParamByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] minParamByteArray, ref input_currptr, input + length))
                 return;
 
             // read max
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var maxParamByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] maxParamByteArray, ref input_currptr, input + length))
                 return;
 
             int countDone = 2;
@@ -378,7 +378,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 int i = 0;
                 while (i < count - 2)
                 {
-                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var token, ref input_currptr, input + length))
+                    if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] token, ref input_currptr, input + length))
                         return;
                     switch (Encoding.ASCII.GetString(token).ToUpperInvariant())
                     {
@@ -393,12 +393,12 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                             break;
                         case "LIMIT":
                             // read the next two tokens
-                            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var offset, ref input_currptr, input + length))
+                            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] offset, ref input_currptr, input + length))
                                 return;
-                            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var countLimit, ref input_currptr, input + length))
+                            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] countLimit, ref input_currptr, input + length))
                                 return;
-                            if (TryParseParameter(offset, out var offsetLimit, out _) &&
-                                TryParseParameter(countLimit, out var countLimitNumber, out _))
+                            if (TryParseParameter(offset, out double offsetLimit, out _) &&
+                                TryParseParameter(countLimit, out double countLimitNumber, out _))
                             {
                                 options.Limit = ((int)offsetLimit, (int)countLimitNumber);
                                 options.ValidLimit = true;
@@ -417,8 +417,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
             if (count >= 2 && ((!options.ByScore && !options.ByLex) || options.ByScore))
             {
-                if (!TryParseParameter(minParamByteArray, out var minValue, out var minExclusive) |
-                    !TryParseParameter(maxParamByteArray, out var maxValue, out var maxExclusive))
+                if (!TryParseParameter(minParamByteArray, out double minValue, out bool minExclusive) |
+                    !TryParseParameter(maxParamByteArray, out double maxValue, out bool maxExclusive))
                 {
                     while (!RespWriteUtils.WriteError("ERR max or min value is not a float value."u8, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -429,13 +429,13 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 if (options.ByScore)
                 {
 
-                    var scoredElements = GetElementsInRangeByScore(minValue, maxValue, minExclusive, maxExclusive, options.WithScores, options.Reverse, options.ValidLimit, false, options.Limit);
+                    List<(double, byte[])> scoredElements = GetElementsInRangeByScore(minValue, maxValue, minExclusive, maxExclusive, options.WithScores, options.Reverse, options.ValidLimit, false, options.Limit);
 
                     // write the size of the array reply
                     while (!RespWriteUtils.WriteArrayLength(options.WithScores ? scoredElements.Count * 2 : scoredElements.Count, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    foreach (var item in scoredElements)
+                    foreach ((double, byte[]) item in scoredElements)
                     {
                         while (!RespWriteUtils.WriteBulkString(item.Item2, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -484,14 +484,14 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                         // calculate number of elements
                         int n = maxIndex - minIndex + 1;
 
-                        var iterator = options.Reverse ? sortedSet.Reverse() : sortedSet;
+                        IEnumerable<(double, byte[])> iterator = options.Reverse ? sortedSet.Reverse() : sortedSet;
                         iterator = iterator.Skip(minIndex).Take(n);
 
                         // write the size of the array reply
                         while (!RespWriteUtils.WriteArrayLength(options.WithScores ? n * 2 : n, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                        foreach (var item in iterator)
+                        foreach ((double, byte[]) item in iterator)
                         {
                             while (!RespWriteUtils.WriteBulkString(item.Item2, ref curr, end))
                                 ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -509,7 +509,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             // by Lex
             if (count >= 2 && options.ByLex)
             {
-                var elementsInLex = GetElementsInRangeByLex(minParamByteArray, maxParamByteArray, options.Reverse, options.ValidLimit, false, out int errorCode, options.Limit);
+                List<(double, byte[])> elementsInLex = GetElementsInRangeByLex(minParamByteArray, maxParamByteArray, options.Reverse, options.ValidLimit, false, out int errorCode, options.Limit);
 
                 if (errorCode == int.MaxValue)
                 {
@@ -524,7 +524,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     while (!RespWriteUtils.WriteArrayLength(options.WithScores ? elementsInLex.Count * 2 : elementsInLex.Count, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    foreach (var item in elementsInLex)
+                    foreach ((double, byte[]) item in elementsInLex)
                     {
                         while (!RespWriteUtils.WriteBulkString(item.Item2, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -631,9 +631,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         _output->opsDone = stop - start + 1;
 
         //using to list to avoid modified enumerator exception
-        foreach (var item in sortedSet.Skip(start).Take(stop - start + 1).ToList())
+        foreach ((double, byte[]) item in sortedSet.Skip(start).Take(stop - start + 1).ToList())
         {
-            if (sortedSetDict.TryGetValue(item.Item2, out var _key))
+            if (sortedSetDict.TryGetValue(item.Item2, out double _key))
             {
                 sortedSetDict.Remove(item.Item2);
                 sortedSet.Remove((_key, item.Item2));
@@ -659,21 +659,21 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         _output->countDone = int.MinValue;
 
         // read min
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var minParamByteArray, ref input_currptr, input + length))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] minParamByteArray, ref input_currptr, input + length))
             return;
 
         // read max
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var maxParamByteArray, ref input_currptr, input + length))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] maxParamByteArray, ref input_currptr, input + length))
             return;
 
-        if (!TryParseParameter(minParamByteArray, out var minValue, out var minExclusive) ||
-            !TryParseParameter(maxParamByteArray, out var maxValue, out var maxExclusive))
+        if (!TryParseParameter(minParamByteArray, out double minValue, out bool minExclusive) ||
+            !TryParseParameter(maxParamByteArray, out double maxValue, out bool maxExclusive))
         {
             _output->countDone = int.MaxValue;
         }
         else
         {
-            var rem = GetElementsInRangeByScore(minValue, maxValue, minExclusive, maxExclusive, false, false, false, true);
+            List<(double, byte[])> rem = GetElementsInRangeByScore(minValue, maxValue, minExclusive, maxExclusive, false, false, false, true);
             _output->opsDone = rem.Count;
             _output->countDone = 0;
         }
@@ -705,13 +705,13 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
-            var arrayLength = Math.Abs(withScores ? count * 2 : count);
+            int arrayLength = Math.Abs(withScores ? count * 2 : count);
             if (arrayLength > 1)
             {
                 // The count parameter can have a negative value, but the array length can't
@@ -736,9 +736,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     indexes[i] = RandomNumberGenerator.GetInt32(0, sortedSetDict.Count);
             }
 
-            foreach (var item in indexes)
+            foreach (int item in indexes)
             {
-                var element = sortedSetDict.ElementAt(item);
+                KeyValuePair<byte[], double> element = sortedSetDict.ElementAt(item);
 
                 while (!RespWriteUtils.WriteBulkString(element.Key, ref curr, end))
                     ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
@@ -777,7 +777,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         byte* input_startptr = input + sizeof(ObjectInputHeader);
         byte* input_currptr = input_startptr;
-        var end = input + length;
+        byte* end = input + length;
 
         _output->opsDone = 0;
 
@@ -785,14 +785,14 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         _output->countDone = int.MinValue;
 
         // read min
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var minParamByteArray, ref input_currptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] minParamByteArray, ref input_currptr, end))
             return;
 
         // read max
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var maxParamByteArray, ref input_currptr, end))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] maxParamByteArray, ref input_currptr, end))
             return;
 
-        var rem = GetElementsInRangeByLex(minParamByteArray, maxParamByteArray, false, false, op != SortedSetOperation.ZLEXCOUNT, out int count);
+        List<(double, byte[])> rem = GetElementsInRangeByLex(minParamByteArray, maxParamByteArray, false, false, op != SortedSetOperation.ZLEXCOUNT, out int count);
 
         _output->countDone = count;
         _output->opsDone = rem.Count;
@@ -813,19 +813,19 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         var _input = (ObjectInputHeader*)input;
         var _output = (ObjectOutputHeader*)output;
 
-        var member = new Span<byte>(input + sizeof(ObjectInputHeader), _input->count).ToArray();
+        byte[] member = new Span<byte>(input + sizeof(ObjectInputHeader), _input->count).ToArray();
 
         *_output = default;
 
-        if (!sortedSetDict.TryGetValue(member, out var score))
+        if (!sortedSetDict.TryGetValue(member, out double score))
         {
             _output->opsDone = -1;
             return;
         }
         else
         {
-            var rank = 0;
-            foreach (var item in sortedSet)
+            int rank = 0;
+            foreach ((double, byte[]) item in sortedSet)
             {
                 if (item.Item2.SequenceEqual(member))
                     break;
@@ -851,8 +851,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         var elementsInLex = new List<(double, byte[])>();
 
         // parse boundaries
-        if (!TryParseLexParameter(minParamByteArray, out var minValueChars, out bool minValueExclusive) ||
-            !TryParseLexParameter(maxParamByteArray, out var maxValueChars, out bool maxValueExclusive))
+        if (!TryParseLexParameter(minParamByteArray, out ReadOnlySpan<byte> minValueChars, out bool minValueExclusive) ||
+            !TryParseLexParameter(maxParamByteArray, out ReadOnlySpan<byte> maxValueChars, out bool maxValueExclusive))
         {
             errorCode = int.MaxValue;
             return elementsInLex;
@@ -860,22 +860,22 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         try
         {
-            var iterator = sortedSet.GetViewBetween((sortedSet.Min.Item1, minValueChars.ToArray()), sortedSet.Max);
+            SortedSet<(double, byte[])> iterator = sortedSet.GetViewBetween((sortedSet.Min.Item1, minValueChars.ToArray()), sortedSet.Max);
 
             // using ToList method so we avoid the Invalid operation ex. when removing
-            foreach (var item in iterator.ToList())
+            foreach ((double, byte[]) item in iterator.ToList())
             {
-                var inRange = new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(minValueChars);
+                int inRange = new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(minValueChars);
                 if (inRange < 0 || (inRange == 0 && minValueExclusive))
                     continue;
 
-                var outRange = maxValueChars == default ? -1 : new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(maxValueChars);
+                int outRange = maxValueChars == default ? -1 : new ReadOnlySpan<byte>(item.Item2).SequenceCompareTo(maxValueChars);
                 if (outRange > 0 || (outRange == 0 && maxValueExclusive))
                     break;
 
                 if (rem)
                 {
-                    if (sortedSetDict.TryGetValue(item.Item2, out var _key))
+                    if (sortedSetDict.TryGetValue(item.Item2, out double _key))
                     {
                         sortedSetDict.Remove(item.Item2);
                         sortedSet.Remove((_key, item.Item2));
@@ -928,7 +928,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             return scoredElements;
         }
 
-        foreach (var item in sortedSet.GetViewBetween((minValue, null), sortedSet.Max))
+        foreach ((double, byte[]) item in sortedSet.GetViewBetween((minValue, null), sortedSet.Max))
         {
             if (item.Item1 > maxValue || (maxExclusive && item.Item1 == maxValue)) break;
             if (minExclusive && item.Item1 == minValue) continue;
@@ -945,9 +945,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         if (rem)
         {
-            foreach (var item in scoredElements.ToList())
+            foreach ((double, byte[]) item in scoredElements.ToList())
             {
-                if (sortedSetDict.TryGetValue(item.Item2, out var _key))
+                if (sortedSetDict.TryGetValue(item.Item2, out double _key))
                 {
                     sortedSetDict.Remove(item.Item2);
                     sortedSet.Remove((_key, item.Item2));
@@ -983,11 +983,11 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
-        var inputCount = count;
+        int inputCount = count;
 
         try
         {
@@ -1003,8 +1003,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     count--;
                     continue;
                 }
-                var max = op == SortedSetOperation.ZPOPMAX ? sortedSet.Max : sortedSet.Min;
-                var success = sortedSet.Remove(max);
+                (double, byte[]) max = op == SortedSetOperation.ZPOPMAX ? sortedSet.Max : sortedSet.Min;
+                bool success = sortedSet.Remove(max);
                 success = sortedSetDict.Remove(max.Item2);
 
                 this.UpdateSize(max.Item2, false);
@@ -1060,7 +1060,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             return true;
         }
 
-        var strVal = Encoding.ASCII.GetString(val);
+        string strVal = Encoding.ASCII.GetString(val);
         if (string.Equals("+inf", strVal, StringComparison.OrdinalIgnoreCase))
         {
             valueDouble = double.PositiveInfinity;

@@ -84,7 +84,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // Note: We currently do not await anything here, and we must never do any post-await work inside CompleteAsync; this includes any code in
             // a 'finally' block. All post-await work must be re-initiated by end user on the mono-threaded session.
 
-            if (TryCompleteAsyncState(out var asyncResult))
+            if (TryCompleteAsyncState(out TAsyncResult asyncResult))
                 return new ValueTask<TAsyncResult>(asyncResult);
 
             if (_exception != default)
@@ -127,7 +127,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 && Interlocked.CompareExchange(ref CompletionComputeStatus, Completed, Pending) == Pending)
             {
                 bool hasPendingIO = _asyncOperation.HasPendingIO;
-                var pendingId = _pendingContext.id;     // _pendingContext.id is overwritten if TryCompleteSync enqueues another IO request
+                long pendingId = _pendingContext.id;     // _pendingContext.id is overwritten if TryCompleteSync enqueues another IO request
                 try
                 {
                     if (_exception == default)
@@ -187,7 +187,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // Because we've set pendingContext.IsAsync false, CompletePending() will Wait() on any flushEvent if it encounters OperationStatus.ALLOCATE_FAILED.
             Status status;
             Output output = default;
-            if (!_tsavoriteSession.CompletePendingWithOutputs(out var completedOutputs, wait: true, spinWaitForCommit: false))
+            if (!_tsavoriteSession.CompletePendingWithOutputs(out CompletedOutputIterator<Key, Value, Input, Output, Context> completedOutputs, wait: true, spinWaitForCommit: false))
                 status = new(StatusCode.Error);
             else
             {

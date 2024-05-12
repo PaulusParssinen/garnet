@@ -75,7 +75,7 @@ internal sealed class WorkQueueLIFO<T> : IDisposable
         // Process items in work queue
         while (true)
         {
-            while (_queue.TryPop(out var workItem))
+            while (_queue.TryPop(out T workItem))
             {
                 try
                 {

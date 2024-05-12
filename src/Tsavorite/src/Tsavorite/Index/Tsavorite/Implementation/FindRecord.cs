@@ -26,11 +26,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         // Add 1 to the pendingContext minAddresses because we don't want an inclusive search; we're looking to see if it was added *after*.
         if (UseReadCache)
         {
-            var minRC = IsReadCache(pendingContext.InitialEntryAddress) ? pendingContext.InitialEntryAddress + 1 : Constants.kInvalidAddress;
+            long minRC = IsReadCache(pendingContext.InitialEntryAddress) ? pendingContext.InitialEntryAddress + 1 : Constants.kInvalidAddress;
             if (FindInReadCache(ref key, ref stackCtx, minAddress: minRC))
                 return true;
         }
-        var minLog = pendingContext.InitialLatestLogicalAddress < hlog.HeadAddress ? hlog.HeadAddress : pendingContext.InitialLatestLogicalAddress + 1;
+        long minLog = pendingContext.InitialLatestLogicalAddress < hlog.HeadAddress ? hlog.HeadAddress : pendingContext.InitialLatestLogicalAddress + 1;
         return TryFindRecordInMainLog(ref key, ref stackCtx, minAddress: minLog);
     }
 
@@ -111,7 +111,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     private bool TraceBackForKeyMatch(ref Key key, ref RecordSource<Key, Value> recSrc, long minAddress)
     {
         // PhysicalAddress must already be populated by callers.
-        ref var recordInfo = ref recSrc.GetInfo();
+        ref RecordInfo recordInfo = ref recSrc.GetInfo();
         if (IsValidTracebackRecord(recordInfo) && comparer.Equals(ref key, ref recSrc.GetKey()))
         {
             recSrc.SetHasMainLogSrc();
@@ -136,7 +136,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         {
             foundPhysicalAddress = hlog.GetPhysicalAddress(foundLogicalAddress);
 
-            ref var recordInfo = ref hlog.GetInfo(foundPhysicalAddress);
+            ref RecordInfo recordInfo = ref hlog.GetInfo(foundPhysicalAddress);
             if (IsValidTracebackRecord(recordInfo) && comparer.Equals(ref key, ref hlog.GetKey(foundPhysicalAddress)))
                 return true;
 
@@ -292,13 +292,13 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
         // We have not yet set up recSrc; we're doing that here. We don't know yet if the key matches.
         stackCtx.recSrc.SetPhysicalAddress();
-        ref var srcRecordInfo = ref stackCtx.recSrc.GetInfo();
+        ref RecordInfo srcRecordInfo = ref stackCtx.recSrc.GetInfo();
         internalStatus = OperationStatus.SUCCESS;
 
         // Skip the record only if Invalid, not Sealed; Sealed records with the requested key are significant and must be processed.
         // Note: We do not lock for key comparison; the Key's ITsavoriteEqualityComparer implementation must be robust to the key being disposed while the comparison
         // happens. See for example ByteArrayTsavoriteEqualityComparer.
-        ref var recordKey = ref stackCtx.recSrc.GetKey();
+        ref Key recordKey = ref stackCtx.recSrc.GetKey();
         if (!srcRecordInfo.Invalid && comparer.Equals(ref key, ref recordKey))
         {
             // Success--key matches. If doing RecordIsolation, lock it, then if necessary make sure it's stable. TryLock fails on a Closed record
@@ -343,7 +343,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         {
             stackCtx.recSrc.SetPhysicalAddress();
             long keyHash = comparer.GetHashCode64(ref stackCtx.recSrc.GetKey());
-            var bucketIndex = OverflowBucketLockTable<Key, Value>.GetBucketIndex(keyHash, this);
+            long bucketIndex = OverflowBucketLockTable<Key, Value>.GetBucketIndex(keyHash, this);
             if (bucketIndex != stackCtx.hei.bucketIndex)
             {
                 // Record has been revivified, but we're not waiting for another operation to complete in the initial tag chain, so RETRY_NOW is sufficient.

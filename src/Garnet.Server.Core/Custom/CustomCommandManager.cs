@@ -88,7 +88,7 @@ public class CustomCommandManager
 
     internal int Register(string name, int numParams, CommandType commandType, int objectTypeId, RespCommandsInfo commandInfo)
     {
-        var wrapper = objectCommandMap[objectTypeId];
+        CustomObjectCommandWrapper wrapper = objectCommandMap[objectTypeId];
 
         int subCommand = Interlocked.Increment(ref wrapper.CommandId) - 1;
         if (subCommand >= byte.MaxValue)
@@ -116,7 +116,7 @@ public class CustomCommandManager
             objectCommandMap[objectTypeId] = new CustomObjectCommandWrapper((byte)objectTypeId, factory);
         }
 
-        var wrapper = objectCommandMap[objectTypeId];
+        CustomObjectCommandWrapper wrapper = objectCommandMap[objectTypeId];
 
         int subCommand = Interlocked.Increment(ref wrapper.CommandId) - 1;
         if (subCommand >= byte.MaxValue)
@@ -156,7 +156,7 @@ public class CustomCommandManager
     {
         for (int i = 0; i < ObjectTypeId; i++)
         {
-            var wrapper = objectCommandMap[i];
+            CustomObjectCommandWrapper wrapper = objectCommandMap[i];
             if (wrapper != null)
             {
                 for (int j = 0; j < wrapper.CommandId; j++)

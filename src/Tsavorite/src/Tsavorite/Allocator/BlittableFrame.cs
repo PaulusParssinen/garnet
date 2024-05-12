@@ -26,7 +26,7 @@ internal sealed class BlittableFrame : IDisposable
 
     public unsafe void Allocate(int index)
     {
-        var adjustedSize = pageSize + 2 * sectorSize;
+        int adjustedSize = pageSize + 2 * sectorSize;
 
         byte[] tmp = GC.AllocateArray<byte>(adjustedSize, true);
         long p = (long)Unsafe.AsPointer(ref tmp[0]);

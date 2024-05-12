@@ -45,7 +45,7 @@ class RecordIsolationTests
 
         ReadCacheSettings readCacheSettings = default;
         CheckpointSettings checkpointSettings = default;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ReadCopyDestination dest)
             {
@@ -101,13 +101,13 @@ class RecordIsolationTests
 
         if (store.UseReadCache && store.FindInReadCache(ref key, ref stackCtx, minAddress: Constants.kInvalidAddress))
         {
-            var recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(stackCtx.hei.AbsoluteAddress));
+            RecordInfo recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(stackCtx.hei.AbsoluteAddress));
             Assert.IsFalse(recordInfo.IsLocked);
             store.SkipReadCache(ref stackCtx, out _); // Ignore refresh
         }
         if (store.TryFindRecordInMainLog(ref key, ref stackCtx, store.hlog.BeginAddress))
         {
-            var recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(hei.AbsoluteAddress));
+            RecordInfo recordInfo = store.hlog.GetInfo(store.hlog.GetPhysicalAddress(hei.AbsoluteAddress));
             Assert.IsFalse(recordInfo.IsLocked);
         }
     }
@@ -167,7 +167,7 @@ class RecordIsolationTests
         PrepareRecordLocation(flushMode);
 
         // SetUp also reads this to determine whether to supply ReadCacheSettings. If ReadCache is specified it wins over CopyToTail.
-        var useRMW = updateOp == UpdateOp.RMW;
+        bool useRMW = updateOp == UpdateOp.RMW;
         const int readKey24 = 24, readKey51 = 51;
         long resultKey = readKey24 + readKey51;
         long resultValue = -1;
@@ -178,12 +178,12 @@ class RecordIsolationTests
 
         // Re-get source values, to verify (e.g. they may be in readcache now).
         // We just locked this above, but for FlushMode.OnDisk it will be in the LockTable and will still be PENDING.
-        status = session.Read(readKey24, out var readValue24);
+        status = session.Read(readKey24, out long readValue24);
         if (flushMode == FlushMode.OnDisk)
         {
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
                 Assert.True(completedOutputs.Next());
                 readValue24 = completedOutputs.Current.Output;
                 Assert.False(completedOutputs.Next());
@@ -197,12 +197,12 @@ class RecordIsolationTests
         AssertIsNotLocked(readKey24);
         Assert.AreEqual(24 * valueMult, readValue24);
 
-        status = session.Read(readKey51, out var readValue51);
+        status = session.Read(readKey51, out long readValue51);
         if (flushMode == FlushMode.OnDisk)
         {
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
                 Assert.True(completedOutputs.Next());
                 readValue51 = completedOutputs.Current.Output;
                 Assert.False(completedOutputs.Next());
@@ -226,7 +226,7 @@ class RecordIsolationTests
         {
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
                 Assert.True(completedOutputs.Next());
                 resultValue = completedOutputs.Current.Output;
                 Assert.AreEqual(expectedResult, resultValue);
@@ -277,13 +277,13 @@ class RecordIsolationTests
         AssertIsNotLocked(resultKey);
 
         // Reread the destination to verify
-        status = session.Read(resultKey, out var _);
+        status = session.Read(resultKey, out long _);
         Assert.IsFalse(status.Found, status.ToString());
 
         AssertNoLocks();
 
         // Verify reading the destination from the full session.
-        status = session.Read(resultKey, out var _);
+        status = session.Read(resultKey, out long _);
         Assert.IsFalse(status.Found, status.ToString());
         AssertNoLocks();
     }
@@ -305,14 +305,14 @@ class RecordIsolationTests
         {
             Random rng = new(tid + 101);
 
-            using var localSession = store.NewSession<long, long, Empty, RecordIsolationTestFunctions>(new RecordIsolationTestFunctions());
-            var basicContext = localSession.BasicContext;
+            using ClientSession<long, long, long, long, Empty, RecordIsolationTestFunctions> localSession = store.NewSession<long, long, Empty, RecordIsolationTestFunctions>(new RecordIsolationTestFunctions());
+            BasicContext<long, long, long, long, Empty, RecordIsolationTestFunctions> basicContext = localSession.BasicContext;
 
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var key = baseKey + rng.Next(numIncrement); key < baseKey + numKeys; key += rng.Next(1, numIncrement))
+                for (int key = baseKey + rng.Next(numIncrement); key < baseKey + numKeys; key += rng.Next(1, numIncrement))
                 {
-                    var rand = rng.Next(100);
+                    int rand = rng.Next(100);
                     if (rand < 33)
                         basicContext.Read(key);
                     else if (rand < 66)
@@ -327,7 +327,7 @@ class RecordIsolationTests
         Task[] tasks = new Task[numThreads];   // Task rather than Thread for propagation of exceptions.
         for (int t = 0; t < numThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             tasks[t] = Task.Factory.StartNew(() => runRecordIsolationOpThread(tid));
         }
         Task.WaitAll(tasks);
@@ -338,8 +338,8 @@ class RecordIsolationTests
     void VerifyKeyIsSplicedInAndHasNoLocks(long expectedKey)
     {
         // Scan to the end of the readcache chain and verify we inserted the value.
-        var (_, pa) = ChainTests.SkipReadCacheChain(store, expectedKey);
-        var storedKey = store.hlog.GetKey(pa);
+        (long _, long pa) = ChainTests.SkipReadCacheChain(store, expectedKey);
+        long storedKey = store.hlog.GetKey(pa);
         Assert.AreEqual(expectedKey, storedKey);
 
         // Verify we've no orphaned RecordIsolation lock.
@@ -355,11 +355,11 @@ class RecordIsolationTests
         Populate();
         store.Log.FlushAndEvict(wait: true);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long input = 0, output = 0, key = useExistingKey;
         ReadOptions readOptions = new() { CopyOptions = new(ReadCopyFrom.AllImmutable, ReadCopyTo.MainLog) };
 
-        var status = session.Read(ref key, ref input, ref output, ref readOptions, out _);
+        Status status = session.Read(ref key, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(status.IsPending, status.ToString());
         session.CompletePending(wait: true);
 
@@ -394,11 +394,11 @@ class RecordIsolationTests
     {
         PopulateAndEvict(recordRegion == ChainTests.RecordRegion.Immutable);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         int key = recordRegion == ChainTests.RecordRegion.Immutable || recordRegion == ChainTests.RecordRegion.OnDisk
             ? useExistingKey : useNewKey;
-        var status = session.Upsert(key, key * valueMult);
+        Status status = session.Upsert(key, key * valueMult);
         Assert.IsTrue(status.Record.Created, status.ToString());
 
         VerifyKeyIsSplicedInAndHasNoLocks(key);
@@ -412,15 +412,15 @@ class RecordIsolationTests
         PopulateAndEvict(recordRegion == ChainTests.RecordRegion.Immutable);
         PopulateAndEvict(recordRegion == ChainTests.RecordRegion.Immutable);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         int key = recordRegion == ChainTests.RecordRegion.Immutable || recordRegion == ChainTests.RecordRegion.OnDisk
             ? useExistingKey : useNewKey;
-        var status = session.RMW(key, key * valueMult);
+        Status status = session.RMW(key, key * valueMult);
         if (recordRegion == ChainTests.RecordRegion.OnDisk)
         {
             Assert.IsTrue(status.IsPending, status.ToString());
-            session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
             (status, _) = GetSinglePendingResult(completedOutputs);
             Assert.IsTrue(status.Record.CopyUpdated, status.ToString());
         }
@@ -439,14 +439,14 @@ class RecordIsolationTests
     {
         PopulateAndEvict(recordRegion == ChainTests.RecordRegion.Immutable);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         long key = -1;
 
         if (recordRegion == ChainTests.RecordRegion.Immutable || recordRegion == ChainTests.RecordRegion.OnDisk)
         {
             key = useExistingKey;
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
 
             // Delete does not search outside mutable region so the key will not be found
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
@@ -456,7 +456,7 @@ class RecordIsolationTests
         else
         {
             key = useNewKey;
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
             Assert.IsFalse(status.Found, status.ToString());
 
             // This key was *not* inserted; Delete sees it does not exist so jumps out immediately.
@@ -475,7 +475,7 @@ class RecordIsolationTests
         const int key = 42;
         static int getValue(int key) => key + valueMult;
 
-        var status = updateOp switch
+        Status status = updateOp switch
         {
             UpdateOp.Upsert => session.Upsert(key, getValue(key)),
             UpdateOp.RMW => session.RMW(key, getValue(key)),
@@ -503,7 +503,7 @@ class RecordIsolationTests
         const int key = 42;
         static int getValue(int key) => key + valueMult;
 
-        var status = updateOp switch
+        Status status = updateOp switch
         {
             UpdateOp.Upsert => session.Upsert(key, getValue(key)),
             UpdateOp.RMW => session.RMW(key, getValue(key)),

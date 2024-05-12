@@ -27,10 +27,10 @@ internal sealed partial class ClusterManager : IDisposable
         slotAssigned = -1;
         while (true)
         {
-            var current = currentConfig;
+            ClusterConfig current = currentConfig;
             if (current.NumWorkers == 0) return false;
 
-            if (!currentConfig.TryAddSlots(slots, out var slot, out var newConfig))
+            if (!currentConfig.TryAddSlots(slots, out int slot, out ClusterConfig newConfig))
             {
                 slotAssigned = slot;
                 return false;
@@ -55,10 +55,10 @@ internal sealed partial class ClusterManager : IDisposable
 
         while (true)
         {
-            var current = currentConfig;
+            ClusterConfig current = currentConfig;
             if (current.NumWorkers == 0) return false;
 
-            if (!currentConfig.TryRemoveSlots(slots, out var slot, out var newConfig) &&
+            if (!currentConfig.TryRemoveSlots(slots, out int slot, out ClusterConfig newConfig) &&
                 slot != -1)
             {
                 notLocalSlot = slot;
@@ -85,8 +85,8 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
-            var migratingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
+            ClusterConfig current = currentConfig;
+            int migratingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
 
             if (migratingWorkerId == 0)
             {
@@ -114,7 +114,7 @@ internal sealed partial class ClusterManager : IDisposable
 
             if (current.GetState((ushort)slot) != SlotState.STABLE)
             {
-                var _migratingNodeId = current.GetNodeIdFromSlot((ushort)slot);
+                string _migratingNodeId = current.GetNodeIdFromSlot((ushort)slot);
                 errorMessage = Encoding.ASCII.GetBytes($"ERR Slot already scheduled for migration from {_migratingNodeId}");
                 return false;
             }
@@ -123,7 +123,7 @@ internal sealed partial class ClusterManager : IDisposable
             // Redirection logic should be aware of this and not consider this slot as part of target node until migration completes
             // Cluster status queries should also be aware of this implicit assignment and return this node as the current owner
             // The above is only true for the primary that owns this slot and this configuration change is not propagated through gossip.
-            var newConfig = current.UpdateSlotState(slot, migratingWorkerId, SlotState.MIGRATING);
+            ClusterConfig newConfig = current.UpdateSlotState(slot, migratingWorkerId, SlotState.MIGRATING);
             if (newConfig == null)
             {
                 errorMessage = CmdStrings.RESP_ERR_GENERIC_SLOTSTATE_TRANSITION;
@@ -151,8 +151,8 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
-            var migratingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
+            ClusterConfig current = currentConfig;
+            int migratingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
 
             // Check migrating worker is a known valid worker
             if (migratingWorkerId == 0)
@@ -175,7 +175,7 @@ internal sealed partial class ClusterManager : IDisposable
                 return false;
             }
 
-            foreach (var slot in slots)
+            foreach (int slot in slots)
             {
                 // Check if slot is owned by local node
                 if (!current.IsLocal((ushort)slot))
@@ -187,7 +187,7 @@ internal sealed partial class ClusterManager : IDisposable
                 // Check node state is stable
                 if (current.GetState((ushort)slot) != SlotState.STABLE)
                 {
-                    var _migratingNodeId = current.GetNodeIdFromSlot((ushort)slot);
+                    string _migratingNodeId = current.GetNodeIdFromSlot((ushort)slot);
                     errorMessage = Encoding.ASCII.GetBytes($"ERR Slot already scheduled for migration from {_migratingNodeId}");
                     return false;
                 }
@@ -197,7 +197,7 @@ internal sealed partial class ClusterManager : IDisposable
             // Redirection logic should be aware of this and not consider this slot as part of target node until migration completes
             // Cluster status queries should also be aware of this implicit assignment and return this node as the current owner
             // The above is only true for the primary that owns this slot and this configuration change is not propagated through gossip.
-            var newConfig = currentConfig.UpdateMultiSlotState(slots, migratingWorkerId, SlotState.MIGRATING);
+            ClusterConfig newConfig = currentConfig.UpdateMultiSlotState(slots, migratingWorkerId, SlotState.MIGRATING);
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -219,8 +219,8 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
-            var importingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
+            ClusterConfig current = currentConfig;
+            int importingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
             if (importingWorkerId == 0)
             {
                 errorMessage = Encoding.ASCII.GetBytes($"ERR I don't know about node {nodeid}");
@@ -239,7 +239,7 @@ internal sealed partial class ClusterManager : IDisposable
                 return false;
             }
 
-            var sourceNodeId = current.GetNodeIdFromSlot((ushort)slot);
+            string sourceNodeId = current.GetNodeIdFromSlot((ushort)slot);
             if (sourceNodeId == null || !sourceNodeId.Equals(nodeid, StringComparison.OrdinalIgnoreCase))
             {
                 errorMessage = Encoding.ASCII.GetBytes($"ERR Slot {slot} is not owned by {nodeid}");
@@ -252,7 +252,7 @@ internal sealed partial class ClusterManager : IDisposable
                 return false;
             }
 
-            var newConfig = current.UpdateSlotState(slot, importingWorkerId, SlotState.IMPORTING);
+            ClusterConfig newConfig = current.UpdateSlotState(slot, importingWorkerId, SlotState.IMPORTING);
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -274,8 +274,8 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
-            var importingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
+            ClusterConfig current = currentConfig;
+            int importingWorkerId = current.GetWorkerIdFromNodeId(nodeid);
             // Check importing nodeId is valid
             if (importingWorkerId == 0)
             {
@@ -291,7 +291,7 @@ internal sealed partial class ClusterManager : IDisposable
             }
 
             // Check validity of slots
-            foreach (var slot in slots)
+            foreach (int slot in slots)
             {
                 // Can only import remote slots
                 if (current.IsLocal((ushort)slot, readCommand: false))
@@ -301,7 +301,7 @@ internal sealed partial class ClusterManager : IDisposable
                 }
 
                 // Check if node is owned by node
-                var sourceNodeId = current.GetNodeIdFromSlot((ushort)slot);
+                string sourceNodeId = current.GetNodeIdFromSlot((ushort)slot);
                 if (sourceNodeId == null || !sourceNodeId.Equals(nodeid, StringComparison.OrdinalIgnoreCase))
                 {
                     errorMessage = Encoding.ASCII.GetBytes($"ERR Slot {slot} is not owned by {nodeid}");
@@ -316,7 +316,7 @@ internal sealed partial class ClusterManager : IDisposable
                 }
             }
 
-            var newConfig = currentConfig.UpdateMultiSlotState(slots, importingWorkerId, SlotState.IMPORTING);
+            ClusterConfig newConfig = currentConfig.UpdateMultiSlotState(slots, importingWorkerId, SlotState.IMPORTING);
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -335,8 +335,8 @@ internal sealed partial class ClusterManager : IDisposable
     public bool TryPrepareSlotForOwnershipChange(int slot, string nodeid, out ReadOnlySpan<byte> errorMesage)
     {
         errorMesage = default;
-        var current = currentConfig;
-        var workerId = current.GetWorkerIdFromNodeId(nodeid);
+        ClusterConfig current = currentConfig;
+        int workerId = current.GetWorkerIdFromNodeId(nodeid);
         if (workerId == 0)
         {
             errorMesage = Encoding.ASCII.GetBytes($"ERR I don't know about node {nodeid}");
@@ -349,7 +349,7 @@ internal sealed partial class ClusterManager : IDisposable
             {
                 current = currentConfig;
                 workerId = current.GetWorkerIdFromNodeId(nodeid);
-                var newConfig = currentConfig.UpdateSlotState(slot, workerId, SlotState.STABLE);
+                ClusterConfig newConfig = currentConfig.UpdateSlotState(slot, workerId, SlotState.STABLE);
 
                 if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                     break;
@@ -369,7 +369,7 @@ internal sealed partial class ClusterManager : IDisposable
             while (true)
             {
                 current = currentConfig;
-                var newConfig = currentConfig.UpdateSlotState(slot, 1, SlotState.STABLE);
+                ClusterConfig newConfig = currentConfig.UpdateSlotState(slot, 1, SlotState.STABLE);
                 newConfig = newConfig.BumpLocalNodeConfigEpoch();
 
                 if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
@@ -394,15 +394,15 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
-            var workerId = current.GetWorkerIdFromNodeId(nodeid);
+            ClusterConfig current = currentConfig;
+            int workerId = current.GetWorkerIdFromNodeId(nodeid);
             if (workerId == 0)
             {
                 errorMessage = Encoding.ASCII.GetBytes($"ERR I don't know about node {nodeid}");
                 return false;
             }
 
-            var newConfig = currentConfig.UpdateMultiSlotState(slots, workerId, SlotState.STABLE);
+            ClusterConfig newConfig = currentConfig.UpdateMultiSlotState(slots, workerId, SlotState.STABLE);
             if (current.LocalNodeId.Equals(nodeid, StringComparison.OrdinalIgnoreCase)) newConfig = newConfig.BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
@@ -419,16 +419,16 @@ internal sealed partial class ClusterManager : IDisposable
     /// <param name="slot">Slot id to reset state</param>
     public void ResetSlotState(int slot)
     {
-        var current = currentConfig;
-        var slotState = current.GetState((ushort)slot);
+        ClusterConfig current = currentConfig;
+        SlotState slotState = current.GetState((ushort)slot);
         if (slotState is SlotState.MIGRATING or SlotState.IMPORTING)
         {
             while (true)
             {
                 current = currentConfig;
                 slotState = current.GetState((ushort)slot);
-                var workerId = slotState == SlotState.MIGRATING ? 1 : currentConfig.GetWorkerIdFromSlot((ushort)slot);
-                var newConfig = currentConfig.UpdateSlotState(slot, workerId, SlotState.STABLE);
+                int workerId = slotState == SlotState.MIGRATING ? 1 : currentConfig.GetWorkerIdFromSlot((ushort)slot);
+                ClusterConfig newConfig = currentConfig.UpdateSlotState(slot, workerId, SlotState.STABLE);
                 if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                     break;
             }
@@ -442,7 +442,7 @@ internal sealed partial class ClusterManager : IDisposable
     /// <param name="slots">Slot list</param>
     public void ResetSlotsState(HashSet<int> slots)
     {
-        foreach (var slot in slots)
+        foreach (int slot in slots)
         {
             ResetSlotState(slot);
         }
@@ -455,11 +455,11 @@ internal sealed partial class ClusterManager : IDisposable
     /// <param name="slots">Slot list</param>
     public static unsafe void DeleteKeysInSlotsFromMainStore(BasicGarnetApi BasicGarnetApi, HashSet<int> slots)
     {
-        using var iter = BasicGarnetApi.IterateMainStore();
+        using ITsavoriteScanIterator<SpanByte, SpanByte> iter = BasicGarnetApi.IterateMainStore();
         while (iter.GetNext(out _))
         {
             ref SpanByte key = ref iter.GetKey();
-            var s = NumUtils.HashSlot(key.ToPointer(), key.Length);
+            ushort s = NumUtils.HashSlot(key.ToPointer(), key.Length);
             if (slots.Contains(s))
                 _ = BasicGarnetApi.DELETE(ref key, StoreType.Main);
         }
@@ -472,12 +472,12 @@ internal sealed partial class ClusterManager : IDisposable
     /// <param name="slots">Slot list</param>
     public static unsafe void DeleteKeysInSlotsFromObjectStore(BasicGarnetApi BasicGarnetApi, HashSet<int> slots)
     {
-        using var iterObject = BasicGarnetApi.IterateObjectStore();
+        using ITsavoriteScanIterator<byte[], IGarnetObject> iterObject = BasicGarnetApi.IterateObjectStore();
         while (iterObject.GetNext(out _))
         {
-            ref var key = ref iterObject.GetKey();
-            ref var value = ref iterObject.GetValue();
-            var s = NumUtils.HashSlot(key);
+            ref byte[] key = ref iterObject.GetKey();
+            ref IGarnetObject value = ref iterObject.GetValue();
+            ushort s = NumUtils.HashSlot(key);
             if (slots.Contains(s))
                 _ = BasicGarnetApi.DELETE(key, StoreType.Object);
         }

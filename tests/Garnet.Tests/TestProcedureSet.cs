@@ -20,7 +20,7 @@ sealed class TestProcedureSet : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        var setA = GetNextArg(input, ref offset);
+        ArgSlice setA = GetNextArg(input, ref offset);
 
         if (setA.Length == 0)
             return false;
@@ -35,7 +35,7 @@ sealed class TestProcedureSet : CustomTransactionProcedure
         var elements = new ArgSlice[10];
         bool result = true;
 
-        var setA = GetNextArg(input, ref offset);
+        ArgSlice setA = GetNextArg(input, ref offset);
 
         if (setA.Length == 0)
             result = false;
@@ -68,16 +68,16 @@ sealed class TestProcedureSet : CustomTransactionProcedure
                     api.SetLength(setA, out count);
                     if (count != 5)
                         result = false;
-                    api.SetMembers(setA, out var memberssetA);
+                    api.SetMembers(setA, out ArgSlice[] memberssetA);
                     if (memberssetA.Length != 5)
                         result = false;
-                    api.SetPop(setA, out var _);
-                    api.SetPop(setA, 2, out var _);
+                    api.SetPop(setA, out ArgSlice _);
+                    api.SetPop(setA, 2, out ArgSlice[] _);
                     api.SetLength(setA, out count);
                     if (count != 2)
                         result = false;
                 }
-                api.SetScan(setA, 0, "*", 100, out var setItems);
+                api.SetScan(setA, 0, "*", 100, out ArgSlice[] setItems);
                 if (setItems.Length != 3)
                     result = false;
             }

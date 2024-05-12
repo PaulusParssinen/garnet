@@ -109,7 +109,7 @@ internal sealed class MaxParallelLogCommitPolicy : LogCommitPolicy
     {
         while (true)
         {
-            var cip = commitInProgress;
+            int cip = commitInProgress;
             if (cip == maxCommitInProgress)
             {
                 shouldRetry = commitRequired;
@@ -160,11 +160,11 @@ internal sealed class RateLimitLogCommitPolicy : LogCommitPolicy
     /// <inheritdoc/>
     public override bool AdmitCommit(long currentTail, bool commitRequired)
     {
-        var now = stopwatch.ElapsedMilliseconds;
+        long now = stopwatch.ElapsedMilliseconds;
         while (true)
         {
-            var lastSeenMilli = lastAdmittedMilli;
-            var lastSeenAddress = lastAdmittedAddress;
+            long lastSeenMilli = lastAdmittedMilli;
+            long lastSeenAddress = lastAdmittedAddress;
             if (now - lastSeenMilli < thresholdMilli && currentTail - lastSeenAddress < thresholdRange)
             {
                 // Only allow spawning of task if no other task is already underway

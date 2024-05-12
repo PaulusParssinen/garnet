@@ -173,7 +173,7 @@ public struct RecordInfo
         long expected_word = word;
         if (IsClosedOrLockedWord(expected_word))
             return false;
-        var new_word = expected_word | kSealedBitMask;
+        long new_word = expected_word | kSealedBitMask;
         if (invalidate)
             new_word &= ~kValidBitMask;
         return expected_word == Interlocked.CompareExchange(ref word, new_word, expected_word);
@@ -213,7 +213,7 @@ public struct RecordInfo
         }
 
         // Wait for readers to drain. Another session may hold an SLock on this record and need an epoch refresh to unlock, so limit this to avoid deadlock.
-        for (var ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
+        for (int ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
         {
             if ((word & kSharedLockBitMask) == 0)
             {
@@ -295,7 +295,7 @@ public struct RecordInfo
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryUpdateAddress(long expectedPrevAddress, long newPrevAddress)
     {
-        var expected_word = word;
+        long expected_word = word;
         RecordInfo newRI = new() { word = expected_word };
         if (newRI.PreviousAddress != expectedPrevAddress)
             return false;
@@ -432,8 +432,8 @@ public struct RecordInfo
 
     public override readonly string ToString()
     {
-        var paRC = IsReadCache(PreviousAddress) ? "(rc)" : string.Empty;
-        var locks = $"{(IsLockedExclusive ? "x" : string.Empty)}{NumLockedShared}";
+        string paRC = IsReadCache(PreviousAddress) ? "(rc)" : string.Empty;
+        string locks = $"{(IsLockedExclusive ? "x" : string.Empty)}{NumLockedShared}";
         static string bstr(bool value) => value ? "T" : "F";
         return $"prev {AbsoluteAddress(PreviousAddress)}{paRC}, locks {locks}, valid {bstr(Valid)}, tomb {bstr(Tombstone)}, seal {bstr(IsSealed)},"
              + $" mod {bstr(Modified)}, dirty {bstr(Dirty)}, fill {bstr(Filler)}, Un1 {bstr(Unused1)}, Un2 {bstr(Unused2)}";

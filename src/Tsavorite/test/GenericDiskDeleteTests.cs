@@ -50,7 +50,7 @@ internal class GenericDiskDeleteTests
     public void DiskDeleteBasicTest1()
     {
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         for (int i = 0; i < totalRecords; i++)
         {
             var _key = new MyKey { key = i };
@@ -87,18 +87,18 @@ internal class GenericDiskDeleteTests
             var output = new MyOutput();
             var key1 = new MyKey { key = i };
 
-            var status = session.Read(ref key1, ref input, ref output, 1, 0);
+            Status status = session.Read(ref key1, ref input, ref output, 1, 0);
 
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<MyKey, MyValue, MyInput, MyOutput, int> outputs, wait: true);
                 (status, _) = GetSinglePendingResult(outputs);
             }
             Assert.IsFalse(status.Found);
         }
 
 
-        using var iter = store.Log.Scan(start, store.Log.TailAddress, ScanBufferingMode.SinglePageBuffering);
+        using ITsavoriteScanIterator<MyKey, MyValue> iter = store.Log.Scan(start, store.Log.TailAddress, ScanBufferingMode.SinglePageBuffering);
         int val = 0;
         while (iter.GetNext(out RecordInfo recordInfo, out MyKey key, out MyValue value))
         {
@@ -129,7 +129,7 @@ internal class GenericDiskDeleteTests
 
         var input = new MyInput { value = 1000 };
         var output = new MyOutput();
-        var status = session.Read(ref key100, ref input, ref output, 1, 0);
+        Status status = session.Read(ref key100, ref input, ref output, 1, 0);
         Assert.IsFalse(status.Found, status.ToString());
 
         status = session.Upsert(ref key100, ref value100, 0, 0);

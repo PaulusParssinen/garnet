@@ -11,10 +11,10 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 {
     private bool TryREPLICAOF(int count, byte* ptr)
     {
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var address, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string address, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var portStr, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string portStr, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         readHead = (int)(ptr - recvBufferPtr);
@@ -29,7 +29,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
         else
         {
-            if (!int.TryParse(portStr, out var port))
+            if (!int.TryParse(portStr, out int port))
             {
                 logger?.LogWarning("TryREPLICAOF failed to parse port {port}", portStr);
                 while (!RespWriteUtils.WriteError($"ERR REPLICAOF failed to parse port '{portStr}'", ref dcurr, dend))
@@ -37,7 +37,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 return true;
             }
 
-            var primaryId = clusterProvider.clusterManager.CurrentConfig.GetWorkerNodeIdFromAddress(address, port);
+            string primaryId = clusterProvider.clusterManager.CurrentConfig.GetWorkerNodeIdFromAddress(address, port);
             if (primaryId == null)
             {
                 while (!RespWriteUtils.WriteError($"ERR I don't know about node {address}:{port}.", ref dcurr, dend))
@@ -46,7 +46,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             }
             else
             {
-                if (!clusterProvider.replicationManager.TryBeginReplicate(this, primaryId, background: false, force: true, out var errorMessage))
+                if (!clusterProvider.replicationManager.TryBeginReplicate(this, primaryId, background: false, force: true, out ReadOnlySpan<byte> errorMessage))
                 {
                     while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                         SendAndReset();

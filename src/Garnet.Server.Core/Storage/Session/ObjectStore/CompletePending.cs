@@ -17,8 +17,8 @@ sealed partial class StorageSession
     static void CompletePendingForObjectStoreSession<TContext>(ref Status status, ref GarnetObjectStoreOutput output, ref TContext objectContext)
         where TContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        objectContext.CompletePendingWithOutputs(out var completedOutputs, wait: true);
-        var more = completedOutputs.Next();
+        objectContext.CompletePendingWithOutputs(out CompletedOutputIterator<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long> completedOutputs, wait: true);
+        bool more = completedOutputs.Next();
         Debug.Assert(more);
         status = completedOutputs.Current.Status;
         output = completedOutputs.Current.Output;

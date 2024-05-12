@@ -63,7 +63,7 @@ class CompletePendingTests
 
         internal bool IsFirst()
         {
-            var temp = isFirst;
+            bool temp = isFirst;
             isFirst = false;
             return temp;
         }
@@ -80,16 +80,16 @@ class CompletePendingTests
 
         internal void Process(CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct> completedOutputs, List<(KeyStruct, long)> rmwCopyUpdatedAddresses)
         {
-            var useRMW = rmwCopyUpdatedAddresses is not null;
+            bool useRMW = rmwCopyUpdatedAddresses is not null;
             Assert.AreEqual(CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct>.kInitialAlloc *
                             CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct>.kReallocMultuple, completedOutputs.vector.Length);
             Assert.AreEqual(deferredPending, completedOutputs.maxIndex);
             Assert.AreEqual(-1, completedOutputs.currentIndex);
 
-            var count = 0;
+            int count = 0;
             for (; completedOutputs.Next(); ++count)
             {
-                ref var result = ref completedOutputs.Current;
+                ref CompletedOutput<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct> result = ref completedOutputs.Current;
                 VerifyStructs((int)result.Key.kfield1, ref result.Key, ref result.Input, ref result.Output, ref result.Context, useRMW);
                 if (!useRMW)
                     Assert.AreEqual(keyAddressDict[(int)result.Key.kfield1], result.RecordMetadata.Address);
@@ -125,15 +125,15 @@ class CompletePendingTests
     [Category("TsavoriteKV")]
     public async ValueTask ReadAndCompleteWithPendingOutput([Values] bool useRMW, [Values] bool isAsync)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, ContextStruct, FunctionsWithContext<ContextStruct>>(new FunctionsWithContext<ContextStruct>());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, ContextStruct, FunctionsWithContext<ContextStruct>> session = store.NewSession<InputStruct, OutputStruct, ContextStruct, FunctionsWithContext<ContextStruct>>(new FunctionsWithContext<ContextStruct>());
         Assert.IsNull(session.completedOutputs);    // Do not instantiate until we need it
 
         ProcessPending processPending = new();
 
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
-            var keyStruct = NewKeyStruct(key);
-            var valueStruct = NewValueStruct(key);
+            KeyStruct keyStruct = NewKeyStruct(key);
+            ValueStruct valueStruct = NewValueStruct(key);
             processPending.keyAddressDict[key] = store.Log.TailAddress;
             session.Upsert(ref keyStruct, ref valueStruct);
         }
@@ -143,16 +143,16 @@ class CompletePendingTests
 
         List<(KeyStruct key, long address)> rmwCopyUpdatedAddresses = new();
 
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
-            var keyStruct = NewKeyStruct(key);
-            var inputStruct = NewInputStruct(key);
-            var contextStruct = NewContextStruct(key);
+            KeyStruct keyStruct = NewKeyStruct(key);
+            InputStruct inputStruct = NewInputStruct(key);
+            ContextStruct contextStruct = NewContextStruct(key);
             OutputStruct outputStruct = default;
 
             if ((key % (numRecords / 10)) == 0)
             {
-                var ksUnfound = keyStruct;
+                KeyStruct ksUnfound = keyStruct;
                 ksUnfound.kfield1 += numRecords * 10;
                 if (session.Read(ref ksUnfound, ref inputStruct, ref outputStruct, contextStruct).IsPending)
                 {
@@ -166,7 +166,7 @@ class CompletePendingTests
             }
 
             // We don't use context (though we verify it), and Read does not use input.
-            var status = useRMW
+            Status status = useRMW
                 ? session.RMW(ref keyStruct, ref inputStruct, ref outputStruct, contextStruct)
                 : session.Read(ref keyStruct, ref inputStruct, ref outputStruct, contextStruct);
             if (status.IsPending)
@@ -197,7 +197,7 @@ class CompletePendingTests
         if (useRMW)
             Assert.AreEqual(numRecords - 1, rmwCopyUpdatedAddresses.Count);
 
-        foreach (var (key, address) in rmwCopyUpdatedAddresses)
+        foreach ((KeyStruct key, long address) in rmwCopyUpdatedAddresses)
         {
             // ConcurrentReader does not verify the input struct.
             InputStruct inputStruct = default;
@@ -205,8 +205,8 @@ class CompletePendingTests
             ReadOptions readOptions = default;
 
             // This should not be pending since we've not flushed.
-            var localKey = key;
-            var status = session.Read(ref localKey, ref inputStruct, ref outputStruct, ref readOptions, out RecordMetadata recordMetadata);
+            KeyStruct localKey = key;
+            Status status = session.Read(ref localKey, ref inputStruct, ref outputStruct, ref readOptions, out RecordMetadata recordMetadata);
             Assert.IsFalse(status.IsPending);
             Assert.AreEqual(address, recordMetadata.Address);
         }

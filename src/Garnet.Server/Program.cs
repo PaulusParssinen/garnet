@@ -40,7 +40,7 @@ class Program
     /// </summary>
     static void RegisterExtensions(GarnetServer server)
     {
-        var customCommandsInfo = GetRespCommandsInfo(CustomRespCommandInfoJsonPath);
+        IReadOnlyDictionary<string, RespCommandsInfo> customCommandsInfo = GetRespCommandsInfo(CustomRespCommandInfoJsonPath);
 
         // Register custom command on raw strings (SETIFPM = "set if prefix match")
         server.Register.NewCommand("SETIFPM", 2, CommandType.ReadModifyWrite, new SetIfPMCustomCommand(), customCommandsInfo["SETIFPM"]);
@@ -75,9 +75,9 @@ class Program
 
     private static IReadOnlyDictionary<string, RespCommandsInfo> GetRespCommandsInfo(string path)
     {
-        var streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.Local);
-        var commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
-        commandsInfoProvider.TryImportRespCommandsInfo(path, streamProvider, out var commandsInfo);
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.Local);
+        IRespCommandsInfoProvider commandsInfoProvider = RespCommandsInfoProviderFactory.GetRespCommandsInfoProvider();
+        commandsInfoProvider.TryImportRespCommandsInfo(path, streamProvider, out IReadOnlyDictionary<string, RespCommandsInfo> commandsInfo);
         return commandsInfo;
     }
 }

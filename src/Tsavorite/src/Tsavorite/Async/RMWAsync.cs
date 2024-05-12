@@ -101,7 +101,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 recordMetadata = RecordMetadata;
                 return (Status, Output);
             }
-            var rmwAsyncResult = updateAsyncInternal.CompleteSync();
+            RmwAsyncResult<Input, TOutput, Context> rmwAsyncResult = updateAsyncInternal.CompleteSync();
             recordMetadata = rmwAsyncResult.RecordMetadata;
             return (rmwAsyncResult.Status, rmwAsyncResult.Output);
         }
@@ -119,7 +119,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         try
         {
             Output output = default;
-            var status = CallInternalRMW(tsavoriteSession, ref pcontext, ref key, ref input, ref output, ref rmwOptions, context, serialNo, out diskRequest);
+            Status status = CallInternalRMW(tsavoriteSession, ref pcontext, ref key, ref input, ref output, ref rmwOptions, context, serialNo, out diskRequest);
             if (!status.IsPending)
                 return new ValueTask<RmwAsyncResult<Input, Output, Context>>(new RmwAsyncResult<Input, Output, Context>(status, output, new RecordMetadata(pcontext.recordInfo, pcontext.logicalAddress)));
         }
@@ -138,7 +138,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 ref Key key, ref Input input, ref Output output, ref RMWOptions rmwOptions, Context context, long serialNo, out AsyncIOContext<Key, Value> diskRequest)
     {
         OperationStatus internalStatus;
-        var keyHash = rmwOptions.KeyHash ?? comparer.GetHashCode64(ref key);
+        long keyHash = rmwOptions.KeyHash ?? comparer.GetHashCode64(ref key);
         do
             internalStatus = InternalRMW(ref key, keyHash, ref input, ref output, ref context, ref pcontext, tsavoriteSession, serialNo);
         while (HandleImmediateRetryStatus(internalStatus, tsavoriteSession, ref pcontext));

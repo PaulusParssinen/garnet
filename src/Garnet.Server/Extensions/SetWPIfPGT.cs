@@ -22,14 +22,14 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     /// <inheritdoc />
     public override int GetInitialLength(ReadOnlySpan<byte> input)
     {
-        var newVal = GetFirstArg(input);
+        ReadOnlySpan<byte> newVal = GetFirstArg(input);
         return newVal.Length + 8;
     }
 
     /// <inheritdoc />
     public override int GetLength(ReadOnlySpan<byte> value, ReadOnlySpan<byte> input)
     {
-        var newVal = GetFirstArg(input);
+        ReadOnlySpan<byte> newVal = GetFirstArg(input);
         return newVal.Length + 8;
     }
 
@@ -37,8 +37,8 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     public override bool NeedInitialUpdate(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ref (IMemoryOwner<byte>, int) output)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
         if (prefix.Length != 8)
         {
             WriteError(ref output, PrefixError);
@@ -51,8 +51,8 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     public override bool NeedCopyUpdate(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> oldValue, ref (IMemoryOwner<byte>, int) output)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
         if (prefix.Length != 8)
         {
             WriteError(ref output, PrefixError);
@@ -65,8 +65,8 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     public override bool InitialUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, Span<byte> value, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
 
         prefix.CopyTo(value);
         newVal.CopyTo(value.Slice(8));
@@ -78,8 +78,8 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     public override bool InPlaceUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, Span<byte> value, ref int valueLength, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
 
         if (prefix.Length != 8)
         {
@@ -108,8 +108,8 @@ sealed class SetWPIFPGTCustomCommand : CustomRawStringFunctions
     public override bool CopyUpdater(ReadOnlySpan<byte> key, ReadOnlySpan<byte> input, ReadOnlySpan<byte> oldValue, Span<byte> newValue, ref (IMemoryOwner<byte>, int) output, ref RMWInfo rmwInfo)
     {
         int offset = 0;
-        var newVal = GetNextArg(input, ref offset);
-        var prefix = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> newVal = GetNextArg(input, ref offset);
+        ReadOnlySpan<byte> prefix = GetNextArg(input, ref offset);
 
         prefix.CopyTo(newValue);
         newVal.CopyTo(newValue.Slice(8));

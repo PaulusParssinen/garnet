@@ -35,7 +35,7 @@ sealed class MSetPxTxn : CustomTransactionProcedure
         int offset = 0;
 
         // Read expiry
-        var expiryMs = GetNextArg(input, ref offset);
+        ArgSlice expiryMs = GetNextArg(input, ref offset);
 
         // Read and set key-value pairs with expiry
         ArgSlice key, value;

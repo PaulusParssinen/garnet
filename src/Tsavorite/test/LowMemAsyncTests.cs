@@ -43,12 +43,12 @@ public class LowMemAsyncTests
             tasks[key] = s1.UpsertAsync(ref key, ref key);
         }
 
-        for (var done = false; !done; /* set in loop */)
+        for (bool done = false; !done; /* set in loop */)
         {
             done = true;
             for (long key = 0; key < numOps; key++)
             {
-                var result = await tasks[key].ConfigureAwait(false);
+                TsavoriteKV<long, long>.UpsertAsyncResult<long, long, Empty> result = await tasks[key].ConfigureAwait(false);
                 if (result.Status.IsPending)
                 {
                     done = false;
@@ -67,7 +67,7 @@ public class LowMemAsyncTests
     public async Task LowMemConcurrentUpsertReadAsyncTest()
     {
         await Task.Yield();
-        using var s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
 
         await Populate(s1).ConfigureAwait(false);
 
@@ -78,7 +78,7 @@ public class LowMemAsyncTests
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await readtasks[key].ConfigureAwait(false)).Complete();
+            (Status status, long output) = (await readtasks[key].ConfigureAwait(false)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key, output);
         }
@@ -90,7 +90,7 @@ public class LowMemAsyncTests
     public async Task LowMemConcurrentUpsertRMWReadAsyncTest([Values] bool completeSync)
     {
         await Task.Yield();
-        using var s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> s1 = store1.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>((a, b) => a + b));
 
         await Populate(s1).ConfigureAwait(false);
 
@@ -99,12 +99,12 @@ public class LowMemAsyncTests
         for (long key = 0; key < numOps; key++)
             rmwtasks[key] = s1.RMWAsync(ref key, ref key);
 
-        for (var done = false; !done; /* set in loop */)
+        for (bool done = false; !done; /* set in loop */)
         {
             done = true;
             for (long key = 0; key < numOps; key++)
             {
-                var result = await rmwtasks[key].ConfigureAwait(false);
+                TsavoriteKV<long, long>.RmwAsyncResult<long, long, Empty> result = await rmwtasks[key].ConfigureAwait(false);
                 if (result.Status.IsPending)
                 {
                     if (completeSync)
@@ -125,7 +125,7 @@ public class LowMemAsyncTests
 
         for (long key = 0; key < numOps; key++)
         {
-            var (status, output) = (await readtasks[key].ConfigureAwait(false)).Complete();
+            (Status status, long output) = (await readtasks[key].ConfigureAwait(false)).Complete();
             Assert.IsTrue(status.Found);
             Assert.AreEqual(key + key, output);
         }

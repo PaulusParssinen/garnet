@@ -50,7 +50,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                 ref PendingContext<Input, Output, Context> pendingContext, TsavoriteSession tsavoriteSession, long lsn)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var latchOperation = LatchOperation.None;
+        LatchOperation latchOperation = LatchOperation.None;
 
         OperationStackContext<Key, Value> stackCtx = new(keyHash);
         pendingContext.keyHash = keyHash;
@@ -86,7 +86,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // Check for CPR consistency after checking if source is readcache.
             if (tsavoriteSession.Ctx.phase != Phase.REST)
             {
-                var latchDestination = CheckCPRConsistencyRMW(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
+                LatchDestination latchDestination = CheckCPRConsistencyRMW(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
                 switch (latchDestination)
                 {
                     case LatchDestination.Retry:
@@ -262,11 +262,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                     rmwInfo.UsedValueLength = rmwInfo.FullValueLength = RevivificationManager<Key, Value>.FixedValueLength;
                 else
                 {
-                    var recordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref recordValue, ref srcRecordInfo);
+                    (int usedValueLength, int fullValueLength, int fullRecordLength) recordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref recordValue, ref srcRecordInfo);
                     rmwInfo.FullValueLength = recordLengths.fullValueLength;
 
                     // RMW uses GetInitialRecordSize because it has only the initial Input, not a Value
-                    var (requiredSize, _, _) = hlog.GetRMWInitialRecordSize(ref key, ref input, tsavoriteSession);
+                    (int requiredSize, int _, int _) = hlog.GetRMWInitialRecordSize(ref key, ref input, tsavoriteSession);
                     (ok, rmwInfo.UsedValueLength) = TryReinitializeTombstonedValue<Input, Output, Context, TsavoriteSession>(tsavoriteSession,
                             ref srcRecordInfo, ref key, ref recordValue, requiredSize, recordLengths);
                 }
@@ -463,7 +463,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         }
 
         // Allocate and initialize the new record
-        var (actualSize, allocatedSize, keySize) = doingCU ?
+        (int actualSize, int allocatedSize, int keySize) = doingCU ?
             stackCtx.recSrc.Log.GetRMWCopyDestinationRecordSize(ref key, ref input, ref value, ref srcRecordInfo, tsavoriteSession) :
             hlog.GetRMWInitialRecordSize(ref key, ref input, tsavoriteSession);
 
@@ -591,7 +591,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                     if (stackCtx.recSrc.LogicalAddress >= GetMinRevivifiableAddress())
                     {
                         // We need to re-get the old record's length because rmwInfo has the new record's info. If freelist-add fails, it remains Sealed/Invalidated.
-                        var oldRecordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref hlog.GetValue(stackCtx.recSrc.PhysicalAddress), ref srcRecordInfo);
+                        (int usedValueLength, int fullValueLength, int fullRecordLength) oldRecordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref hlog.GetValue(stackCtx.recSrc.PhysicalAddress), ref srcRecordInfo);
                         TryTransferToFreeList<Input, Output, Context, TsavoriteSession>(tsavoriteSession, ref stackCtx, ref srcRecordInfo, oldRecordLengths);
                     }
                 }
@@ -624,7 +624,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
         // This is called for InPlaceUpdater or CopyUpdater only; CopyUpdater however does not copy an expired record, so we return CreatedRecord.
-        var advancedStatusCode = isIpu ? StatusCode.InPlaceUpdatedRecord : StatusCode.CreatedRecord;
+        StatusCode advancedStatusCode = isIpu ? StatusCode.InPlaceUpdatedRecord : StatusCode.CreatedRecord;
         advancedStatusCode |= StatusCode.Expired;
         if (!tsavoriteSession.NeedInitialUpdate(ref key, ref input, ref output, ref rmwInfo))
         {
@@ -641,8 +641,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         }
 
         // Try to reinitialize in place
-        (var currentSize, _, _) = hlog.GetRecordSize(ref key, ref value);
-        (var requiredSize, _, _) = hlog.GetRMWInitialRecordSize(ref key, ref input, tsavoriteSession);
+        (int currentSize, _, _) = hlog.GetRecordSize(ref key, ref value);
+        (int requiredSize, _, _) = hlog.GetRMWInitialRecordSize(ref key, ref input, tsavoriteSession);
 
         if (currentSize >= requiredSize)
         {

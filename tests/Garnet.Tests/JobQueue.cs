@@ -48,7 +48,7 @@ internal class JobQueue
     /// <param name="success">if false requeue for another attempt</param>
     public async Task Finish(string key, bool success = true)
     {
-        var db = connMultiplexer.GetDatabase(0);
+        IDatabase db = connMultiplexer.GetDatabase(0);
         await db.ListRemoveAsync(_processingQueue, key);
 
         if (success)
@@ -79,10 +79,10 @@ internal class JobQueue
     public void AsManager()
     {
         var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase();
+        IDatabase db = redis.GetDatabase();
         RedisValue[] values = db.ListRange(_processingQueue);
-        var j = from value in values let activeTime = db.HashGet((string)value, "active") where (double)activeTime < 1000 select value;
-        foreach (var value in j)
+        IEnumerable<RedisValue> j = from value in values let activeTime = db.HashGet((string)value, "active") where (double)activeTime < 1000 select value;
+        foreach (RedisValue value in j)
         {
             Finish(value, false).Wait();
         }
@@ -94,7 +94,7 @@ internal class JobQueue
     /// <returns></returns>
     private async Task<Dictionary<RedisValue, RedisValue>> GetJobAsync()
     {
-        var db = connMultiplexer.GetDatabase(0);
+        IDatabase db = connMultiplexer.GetDatabase(0);
         var value = new Dictionary<RedisValue, RedisValue>();
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -131,7 +131,7 @@ internal class JobQueue
 
         _receiving = true;
 
-        var job = await GetJobAsync();
+        Dictionary<RedisValue, RedisValue> job = await GetJobAsync();
         // If a valid job cannot be found, it will return an empty Dictionary
         while (job.Count != 0)
         {
@@ -152,10 +152,10 @@ internal class JobQueue
     {
         if (job.IsNullOrEmpty) return;
 
-        var db = connMultiplexer.GetDatabase(0);
+        IDatabase db = connMultiplexer.GetDatabase(0);
 
-        var id = await db.StringIncrementAsync($"{_jobName}:jobid");
-        var key = $"{_jobName}:{id}";
+        long id = await db.StringIncrementAsync($"{_jobName}:jobid");
+        string key = $"{_jobName}:{id}";
         await db.HashSetAsync(key, "payload", job);
         await db.ListLeftPushAsync(_jobQueue, key);
 

@@ -39,19 +39,19 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             throw new TsavoriteException("Can compact only until Log.SafeReadOnlyAddress");
 
         var lf = new LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>(functions);
-        using var storeSession = NewSession<Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>>(lf);
+        using ClientSession<Key, Value, Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>> storeSession = NewSession<Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>>(lf);
 
-        using (var iter1 = Log.Scan(Log.BeginAddress, untilAddress))
+        using (ITsavoriteScanIterator<Key, Value> iter1 = Log.Scan(Log.BeginAddress, untilAddress))
         {
             long numPending = 0;
-            while (iter1.GetNext(out var recordInfo))
+            while (iter1.GetNext(out RecordInfo recordInfo))
             {
-                ref var key = ref iter1.GetKey();
-                ref var value = ref iter1.GetValue();
+                ref Key key = ref iter1.GetKey();
+                ref Value value = ref iter1.GetValue();
 
                 if (!recordInfo.Tombstone && !cf.IsDeleted(ref key, ref value))
                 {
-                    var status = storeSession.CompactionCopyToTail(ref key, ref input, ref value, ref output, iter1.NextAddress);
+                    Status status = storeSession.CompactionCopyToTail(ref key, ref input, ref value, ref output, iter1.NextAddress);
                     if (status.IsPending && ++numPending > 256)
                     {
                         storeSession.CompletePending(wait: true);
@@ -76,20 +76,20 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
         if (untilAddress > hlog.SafeReadOnlyAddress)
             throw new TsavoriteException("Can compact only until Log.SafeReadOnlyAddress");
 
-        var originalUntilAddress = untilAddress;
+        long originalUntilAddress = untilAddress;
 
         var lf = new LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>(functions);
-        using var storeSession = NewSession<Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>>(lf);
+        using ClientSession<Key, Value, Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>> storeSession = NewSession<Input, Output, Context, LogCompactionFunctions<Key, Value, Input, Output, Context, Functions>>(lf);
 
         using (var tempKv = new TsavoriteKV<Key, Value>(IndexSize, new LogSettings { LogDevice = new NullDevice(), ObjectLogDevice = new NullDevice() }, comparer: Comparer, loggerFactory: loggerFactory))
-        using (var tempKvSession = tempKv.NewSession<Input, Output, Context, Functions>(functions))
+        using (ClientSession<Key, Value, Input, Output, Context, Functions> tempKvSession = tempKv.NewSession<Input, Output, Context, Functions>(functions))
         {
-            using (var iter1 = Log.Scan(hlog.BeginAddress, untilAddress))
+            using (ITsavoriteScanIterator<Key, Value> iter1 = Log.Scan(hlog.BeginAddress, untilAddress))
             {
-                while (iter1.GetNext(out var recordInfo))
+                while (iter1.GetNext(out RecordInfo recordInfo))
                 {
-                    ref var key = ref iter1.GetKey();
-                    ref var value = ref iter1.GetValue();
+                    ref Key key = ref iter1.GetKey();
+                    ref Value value = ref iter1.GetValue();
 
                     if (recordInfo.Tombstone || cf.IsDeleted(ref key, ref value))
                         tempKvSession.Delete(ref key);
@@ -101,13 +101,13 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
             }
 
             // Scan until SafeReadOnlyAddress
-            var scanUntil = hlog.SafeReadOnlyAddress;
+            long scanUntil = hlog.SafeReadOnlyAddress;
             if (untilAddress < scanUntil)
                 ScanImmutableTailToRemoveFromTempKv(ref untilAddress, scanUntil, tempKvSession);
 
-            var numPending = 0;
-            using var iter3 = tempKv.Log.Scan(tempKv.Log.BeginAddress, tempKv.Log.TailAddress);
-            while (iter3.GetNext(out var recordInfo))
+            int numPending = 0;
+            using ITsavoriteScanIterator<Key, Value> iter3 = tempKv.Log.Scan(tempKv.Log.BeginAddress, tempKv.Log.TailAddress);
+            while (iter3.GetNext(out RecordInfo recordInfo))
             {
                 if (recordInfo.Tombstone)
                     continue;
@@ -123,7 +123,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
                 // As long as there's no record of the same key whose address is >= untilAddress (scan boundary), we are safe to copy the old record
                 // to the tail. We don't know the actualAddress of the key in the main kv, but we it will not be below untilAddress.
-                var status = storeSession.CompactionCopyToTail(ref iter3.GetKey(), ref input, ref iter3.GetValue(), ref output, untilAddress - 1);
+                Status status = storeSession.CompactionCopyToTail(ref iter3.GetKey(), ref input, ref iter3.GetValue(), ref output, untilAddress - 1);
                 if (status.IsPending && ++numPending > 256)
                 {
                     storeSession.CompletePending(wait: true);
@@ -140,8 +140,8 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
     private void ScanImmutableTailToRemoveFromTempKv<Input, Output, Context, Functions>(ref long untilAddress, long scanUntil, ClientSession<Key, Value, Input, Output, Context, Functions> tempKvSession)
         where Functions : IFunctions<Key, Value, Input, Output, Context>
     {
-        using var iter = Log.Scan(untilAddress, scanUntil);
-        while (iter.GetNext(out var _))
+        using ITsavoriteScanIterator<Key, Value> iter = Log.Scan(untilAddress, scanUntil);
+        while (iter.GetNext(out RecordInfo _))
         {
             tempKvSession.Delete(ref iter.GetKey(), default, 0);
             untilAddress = iter.NextAddress;

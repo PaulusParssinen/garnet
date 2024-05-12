@@ -40,8 +40,8 @@ internal class OptionValidationAttribute : ValidationAttribute
         if (!IsRequired || value != GetDefault(value) || (value is string strVal && !string.IsNullOrEmpty(strVal)))
             return ValidationResult.Success;
 
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-        var errorMessage = $"{baseError} Required value was not specified.";
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string errorMessage = $"{baseError} Required value was not specified.";
         return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
     }
 
@@ -70,8 +70,8 @@ internal class OptionValidationAttribute : ValidationAttribute
 
         if (value is not T tValue)
         {
-            var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-            var errorMessage = $"{baseError} Invalid type. Expected: {typeof(T)}. Actual: {value?.GetType()}";
+            string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+            string errorMessage = $"{baseError} Invalid type. Expected: {typeof(T)}. Actual: {value?.GetType()}";
             validationResult = new ValidationResult(errorMessage, new[] { validationContext.MemberName });
             return true;
         }
@@ -107,11 +107,11 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
     /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        if (TryInitialValidation<string>(value, validationContext, out var initValidationResult, out var directoryPath))
+        if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string directoryPath))
             return initValidationResult;
 
         DirectoryInfo directoryInfo;
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
 
         try
         {
@@ -119,7 +119,7 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
         }
         catch (Exception e) when (e is SecurityException or PathTooLongException)
         {
-            var errorMessage = $"{baseError} An exception of type {e.GetType()} has occurred while trying to access directory. Directory path: {directoryPath}.";
+            string errorMessage = $"{baseError} An exception of type {e.GetType()} has occurred while trying to access directory. Directory path: {directoryPath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
@@ -133,7 +133,7 @@ internal class DirectoryPathValidationAttribute : OptionValidationAttribute
 
         if (this._mustExist && !directoryInfo.Exists)
         {
-            var errorMessage = $"{baseError} Specified directory does not exist. Directory path: {directoryPath}.";
+            string errorMessage = $"{baseError} Specified directory does not exist. Directory path: {directoryPath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
@@ -165,15 +165,15 @@ internal sealed class DirectoryPathsValidationAttribute : OptionValidationAttrib
     /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        if (TryInitialValidation<IEnumerable<string>>(value, validationContext, out var initValidationResult, out var directoryPaths))
+        if (TryInitialValidation<IEnumerable<string>>(value, validationContext, out ValidationResult initValidationResult, out IEnumerable<string> directoryPaths))
             return initValidationResult;
 
         var errorSb = new StringBuilder();
-        var isValid = true;
+        bool isValid = true;
         var directoryValidator = new DirectoryPathValidationAttribute(this._mustExist, this.IsRequired);
-        foreach (var directoryPath in directoryPaths)
+        foreach (string directoryPath in directoryPaths)
         {
-            var result = directoryValidator.GetValidationResult(directoryPath, validationContext);
+            ValidationResult result = directoryValidator.GetValidationResult(directoryPath, validationContext);
             if (result != null && result != ValidationResult.Success)
             {
                 isValid = false;
@@ -183,7 +183,7 @@ internal sealed class DirectoryPathsValidationAttribute : OptionValidationAttrib
 
         if (!isValid)
         {
-            var errorMessage = $"Error(s) validating one or more directories:{Environment.NewLine}{errorSb}";
+            string errorMessage = $"Error(s) validating one or more directories:{Environment.NewLine}{errorSb}";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
@@ -226,11 +226,11 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
     /// <param name="validationContext">Validation context</param>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        if (TryInitialValidation<string>(value, validationContext, out var initValidationResult, out var filePath))
+        if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string filePath))
             return initValidationResult;
 
         FileInfo fileInfo;
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
 
         try
         {
@@ -238,7 +238,7 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
         }
         catch (Exception e) when (e is SecurityException or UnauthorizedAccessException or NotSupportedException or PathTooLongException)
         {
-            var errorMessage = $"{baseError} An exception of type {e.GetType()} has occurred while trying to access file. File path: {filePath}.";
+            string errorMessage = $"{baseError} An exception of type {e.GetType()} has occurred while trying to access file. File path: {filePath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
@@ -252,19 +252,19 @@ internal class FilePathValidationAttribute : OptionValidationAttribute
 
         if (this._fileMustExist && !fileInfo.Exists)
         {
-            var errorMessage = $"{baseError} Specified file does not exist. File path: {filePath}.";
+            string errorMessage = $"{baseError} Specified file does not exist. File path: {filePath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
         if (this._directoryMustExist && (fileInfo.Directory == null || !fileInfo.Directory.Exists))
         {
-            var errorMessage = $"{baseError} Directory containing specified file does not exist. File path: {filePath}.";
+            string errorMessage = $"{baseError} Directory containing specified file does not exist. File path: {filePath}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
 
         if (this._acceptedFileExtensions != null && !this._acceptedFileExtensions.Any(filePath.EndsWith))
         {
-            var errorMessage =
+            string errorMessage =
                 $"{baseError} Unexpected extension for specified file. Expected: {string.Join(" / ", this._acceptedFileExtensions)}.";
             return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
         }
@@ -293,14 +293,14 @@ internal sealed class IpAddressValidationAttribute : OptionValidationAttribute
     /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        if (TryInitialValidation<string>(value, validationContext, out var initValidationResult, out var ipAddress))
+        if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string ipAddress))
             return initValidationResult;
 
         if (ipAddress.Equals(Localhost, StringComparison.CurrentCultureIgnoreCase) || IPAddress.TryParse(ipAddress, out _))
             return ValidationResult.Success;
 
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-        var errorMessage = $"{baseError} Expected string in IPv4 / IPv6 format (e.g. 127.0.0.1 / 0:0:0:0:0:0:0:1) or 'localhost'. Actual value: {ipAddress}";
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string errorMessage = $"{baseError} Expected string in IPv4 / IPv6 format (e.g. 127.0.0.1 / 0:0:0:0:0:0:0:1) or 'localhost'. Actual value: {ipAddress}";
         return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
     }
 }
@@ -325,14 +325,14 @@ internal sealed class MemorySizeValidationAttribute : OptionValidationAttribute
     /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        if (TryInitialValidation<string>(value, validationContext, out var initValidationResult, out var memorySize))
+        if (TryInitialValidation<string>(value, validationContext, out ValidationResult initValidationResult, out string memorySize))
             return initValidationResult;
 
         if (Regex.IsMatch(memorySize, MemorySizePattern))
             return ValidationResult.Success;
 
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-        var errorMessage = $"{baseError} Expected string in memory size format (e.g. 1k, 1kb, 10m, 10mb, 50g, 50gb etc). Actual value: {memorySize}";
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string errorMessage = $"{baseError} Expected string in memory size format (e.g. 1k, 1kb, 10m, 10mb, 50g, 50gb etc). Actual value: {memorySize}";
         return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
     }
 }
@@ -369,7 +369,7 @@ internal class RangeValidationAttribute : OptionValidationAttribute
 
     internal RangeValidationAttribute(Type rangeType, object min, object max, bool includeMin = true, bool includeMax = true, bool isRequired = true) : base(isRequired)
     {
-        var icType = typeof(IComparable<>).MakeGenericType(rangeType);
+        Type icType = typeof(IComparable<>).MakeGenericType(rangeType);
 
         if (!rangeType.IsAssignableTo(icType))
             throw new ArgumentException($"rangeType parameter is not assignable to {icType}", nameof(rangeType));
@@ -396,23 +396,23 @@ internal class RangeValidationAttribute : OptionValidationAttribute
     /// <returns></returns>
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        var initValParams = new[] { value, validationContext, null, null };
+        object[] initValParams = new[] { value, validationContext, null, null };
         if ((bool)this._tryInitValidationMethod.Invoke(this, initValParams)!)
         {
             return initValParams[2] as ValidationResult;
         }
 
         var icVal = value as IComparable;
-        var minComp = icVal.CompareTo(this._min);
-        var maxComp = icVal.CompareTo(this._max);
+        int minComp = icVal.CompareTo(this._min);
+        int maxComp = icVal.CompareTo(this._max);
         if ((minComp > 0 || (this._includeMin && minComp == 0)) &&
             (maxComp < 0 || (this._includeMax && maxComp == 0)))
         {
             return ValidationResult.Success;
         }
 
-        var baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
-        var errorMessage = $"{baseError} Expected to be in range {(this._includeMin ? "[" : "(")}{this._min}, {this._max}{(this._includeMax ? "]" : ")")}. Actual value: {value}";
+        string baseError = validationContext.MemberName != null ? base.FormatErrorMessage(validationContext.MemberName) : string.Empty;
+        string errorMessage = $"{baseError} Expected to be in range {(this._includeMin ? "[" : "(")}{this._min}, {this._max}{(this._includeMax ? "]" : ")")}. Actual value: {value}";
         return new ValidationResult(errorMessage, new[] { validationContext.MemberName });
     }
 }

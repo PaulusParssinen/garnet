@@ -145,7 +145,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
     {
         while (logHandles.Count > 0)
         {
-            foreach (var handle in logHandles)
+            foreach (KeyValuePair<int, SafeFileHandle> handle in logHandles)
             {
                 logHandles.TryRemove(handle.Key, out _);
                 handle.Value.Dispose();
@@ -212,14 +212,14 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
 
         result.context = context;
         result.callback = callback;
-        var ovNative = result.nativeOverlapped;
+        NativeOverlapped* ovNative = result.nativeOverlapped;
 
         ovNative->OffsetLow = unchecked((int)((ulong)sourceAddress & 0xFFFFFFFF));
         ovNative->OffsetHigh = unchecked((int)(((ulong)sourceAddress >> 32) & 0xFFFFFFFF));
 
         try
         {
-            var logHandle = GetOrAddHandle(segmentId);
+            SafeFileHandle logHandle = GetOrAddHandle(segmentId);
 
             Interlocked.Increment(ref numPending);
 
@@ -279,7 +279,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
 
         result.context = context;
         result.callback = callback;
-        var ovNative = result.nativeOverlapped;
+        NativeOverlapped* ovNative = result.nativeOverlapped;
 
         ovNative->OffsetLow = unchecked((int)(destinationAddress & 0xFFFFFFFF));
         ovNative->OffsetHigh = unchecked((int)((destinationAddress >> 32) & 0xFFFFFFFF));
@@ -288,7 +288,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
         {
             Interlocked.Increment(ref numPending);
 
-            var logHandle = GetOrAddHandle(segmentId);
+            SafeFileHandle logHandle = GetOrAddHandle(segmentId);
 
             bool _result = Native32.WriteFile(logHandle,
                                     sourceAddress,
@@ -348,13 +348,13 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
     public override void Dispose()
     {
         _disposed = true;
-        foreach (var logHandle in logHandles.Values)
+        foreach (SafeFileHandle logHandle in logHandles.Values)
             logHandle.Dispose();
 
         if (useIoCompletionPort)
             new SafeFileHandle(ioCompletionPort, true).Dispose();
 
-        while (results.TryDequeue(out var entry))
+        while (results.TryDequeue(out SimpleAsyncResult entry))
         {
             Overlapped.Free(entry.nativeOverlapped);
         }
@@ -412,7 +412,7 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
         }
 
         string segmentFileName = GetSegmentFilename(fileName, segmentId, omitSegmentId);
-        var logHandle = Native32.CreateFileW(
+        SafeFileHandle logHandle = Native32.CreateFileW(
             segmentFileName,
             fileAccess, fileShare,
             IntPtr.Zero, fileCreation,
@@ -420,8 +420,8 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
 
         if (logHandle.IsInvalid)
         {
-            var error = Marshal.GetLastWin32Error();
-            var message = $"Error creating log file for {segmentFileName}, error: {error} 0x({Native32.MakeHRFromErrorCode(error)})";
+            int error = Marshal.GetLastWin32Error();
+            string message = $"Error creating log file for {segmentFileName}, error: {error} 0x({Native32.MakeHRFromErrorCode(error)})";
             if (error == Native32.ERROR_PATH_NOT_FOUND)
                 message += $" (Path not found; name length = {segmentFileName.Length}, MAX_PATH = {Native32.WIN32_MAX_PATH}";
             throw new IOException(message);
@@ -469,10 +469,10 @@ public unsafe class LocalStorageDevice : StorageDeviceBase
             return h;
         }
         if (_disposed) return null;
-        var result = logHandles.GetOrAdd(_segmentId, CreateHandle);
+        SafeFileHandle result = logHandles.GetOrAdd(_segmentId, CreateHandle);
         if (_disposed)
         {
-            foreach (var logHandle in logHandles.Values)
+            foreach (SafeFileHandle logHandle in logHandles.Values)
                 logHandle.Dispose();
             return null;
         }

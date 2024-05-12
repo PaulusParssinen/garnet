@@ -57,8 +57,8 @@ internal class GenericByteArrayTests
         const int totalRecords = 2000;
         for (int i = 0; i < totalRecords; i++)
         {
-            var _key = GetByteArray(i);
-            var _value = GetByteArray(i);
+            byte[] _key = GetByteArray(i);
+            byte[] _value = GetByteArray(i);
             session.Upsert(ref _key, ref _value, Empty.Default, 0);
         }
         session.CompletePending(true);
@@ -67,8 +67,8 @@ internal class GenericByteArrayTests
         {
             byte[] input = default;
             byte[] output = default;
-            var key = GetByteArray(i);
-            var value = GetByteArray(i);
+            byte[] key = GetByteArray(i);
+            byte[] value = GetByteArray(i);
 
             if (session.Read(ref key, ref input, ref output, Empty.Default, 0).IsPending)
             {

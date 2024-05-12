@@ -243,14 +243,14 @@ public sealed unsafe class LightEpoch
             }
             else
             {
-                var triggerEpoch = drainList[i].epoch;
+                long triggerEpoch = drainList[i].epoch;
 
                 if (triggerEpoch <= SafeToReclaimEpoch)
                 {
                     // This was a slot with an epoch that was safe to reclaim. If it still is, execute its trigger, then assign this action/epoch to the slot.
                     if (Interlocked.CompareExchange(ref drainList[i].epoch, long.MaxValue - 1, triggerEpoch) == triggerEpoch)
                     {
-                        var triggerAction = drainList[i].action;
+                        Action triggerAction = drainList[i].action;
                         drainList[i].action = onDrain;
                         drainList[i].epoch = PriorEpoch;
                         triggerAction();
@@ -381,14 +381,14 @@ public sealed unsafe class LightEpoch
 
         for (int i = 0; i < kDrainListSize; i++)
         {
-            var trigger_epoch = drainList[i].epoch;
+            long trigger_epoch = drainList[i].epoch;
 
             if (trigger_epoch <= SafeToReclaimEpoch)
             {
                 if (Interlocked.CompareExchange(ref drainList[i].epoch, long.MaxValue - 1, trigger_epoch) == trigger_epoch)
                 {
                     // Store off the trigger action, then set epoch to int.MaxValue to mark this slot as "available for use".
-                    var trigger_action = drainList[i].action;
+                    Action trigger_action = drainList[i].action;
                     drainList[i].action = null;
                     drainList[i].epoch = long.MaxValue;
                     Interlocked.Decrement(ref drainCount);

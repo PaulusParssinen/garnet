@@ -169,7 +169,7 @@ public abstract class StorageDeviceBase : IDevice
     /// <param name="context"></param>
     public void ReadAsync(ulong alignedSourceAddress, IntPtr alignedDestinationAddress, uint aligned_read_length, DeviceIOCompletionCallback callback, object context)
     {
-        var segment = segmentSizeBits < 64 ? alignedSourceAddress >> segmentSizeBits : 0;
+        ulong segment = segmentSizeBits < 64 ? alignedSourceAddress >> segmentSizeBits : 0;
 
         ReadAsync(
             (int)segment,

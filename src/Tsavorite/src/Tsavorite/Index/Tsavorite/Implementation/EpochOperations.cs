@@ -15,7 +15,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         TsavoriteSession tsavoriteSession)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var version = sessionCtx.version;
+        long version = sessionCtx.version;
         Debug.Assert(sessionCtx.version == version, $"sessionCtx.version ({sessionCtx.version}) should == version ({version})");
         Debug.Assert(sessionCtx.phase == Phase.PREPARE, $"sessionCtx.phase ({sessionCtx.phase}) should == Phase.PREPARE");
         InternalRefresh<Input, Output, Context, TsavoriteSession>(tsavoriteSession);

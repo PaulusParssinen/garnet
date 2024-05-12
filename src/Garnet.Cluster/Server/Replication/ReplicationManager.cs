@@ -35,7 +35,7 @@ internal sealed partial class ReplicationManager : IDisposable
         {
             // Primary tracks replicationOffset indirectly through AOF tailAddress
             // Replica will adjust replication offset as it receives data from primary (TODO: since AOFs are synced this might obsolete)
-            var role = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
+            NodeRole role = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
             return role == NodeRole.PRIMARY ?
                 (clusterProvider.serverOptions.EnableAOF && storeWrapper.appendOnlyFile.TailAddress > kFirstValidAofAddress ? storeWrapper.appendOnlyFile.TailAddress : kFirstValidAofAddress) :
                 replicationOffset;
@@ -68,21 +68,21 @@ internal sealed partial class ReplicationManager : IDisposable
 
     public long GetRecoveredSafeAofAddress()
     {
-        var storeAofAddress = clusterProvider.replicationManager.GetCkptManager(StoreType.Main).RecoveredSafeAofAddress;
-        var objectStoreAofAddress = clusterProvider.serverOptions.DisableObjects ? clusterProvider.replicationManager.GetCkptManager(StoreType.Main).RecoveredSafeAofAddress : long.MaxValue;
+        long storeAofAddress = clusterProvider.replicationManager.GetCkptManager(StoreType.Main).RecoveredSafeAofAddress;
+        long objectStoreAofAddress = clusterProvider.serverOptions.DisableObjects ? clusterProvider.replicationManager.GetCkptManager(StoreType.Main).RecoveredSafeAofAddress : long.MaxValue;
         return Math.Min(storeAofAddress, objectStoreAofAddress);
     }
 
     public long GetCurrentSafeAofAddress()
     {
-        var storeAofAddress = clusterProvider.replicationManager.GetCkptManager(StoreType.Main).CurrentSafeAofAddress;
-        var objectStoreAofAddress = clusterProvider.serverOptions.DisableObjects ? clusterProvider.replicationManager.GetCkptManager(StoreType.Main).CurrentSafeAofAddress : long.MaxValue;
+        long storeAofAddress = clusterProvider.replicationManager.GetCkptManager(StoreType.Main).CurrentSafeAofAddress;
+        long objectStoreAofAddress = clusterProvider.serverOptions.DisableObjects ? clusterProvider.replicationManager.GetCkptManager(StoreType.Main).CurrentSafeAofAddress : long.MaxValue;
         return Math.Min(storeAofAddress, objectStoreAofAddress);
     }
 
     public ReplicationManager(ClusterProvider clusterProvider, ILogger logger = null)
     {
-        var opts = clusterProvider.serverOptions;
+        GarnetServerOptions opts = clusterProvider.serverOptions;
         this.clusterProvider = clusterProvider;
         this.storeWrapper = clusterProvider.storeWrapper;
         aofProcessor = new AofProcessor(storeWrapper, recordToAof: false, logger: logger);
@@ -104,13 +104,13 @@ internal sealed partial class ReplicationManager : IDisposable
         checkpointStore = new CheckpointStore(storeWrapper, clusterProvider, true, logger);
         aofTaskStore = new(clusterProvider, 1, logger);
 
-        var clusterFolder = "/cluster";
-        var clusterDataPath = opts.CheckpointDir + clusterFolder;
-        var deviceFactory = opts.GetInitializedDeviceFactory(clusterDataPath);
+        string clusterFolder = "/cluster";
+        string clusterDataPath = opts.CheckpointDir + clusterFolder;
+        INamedDeviceFactory deviceFactory = opts.GetInitializedDeviceFactory(clusterDataPath);
         replicationConfigDevice = deviceFactory.Get(new FileDescriptor(directoryName: "", fileName: "replication.conf"));
         pool = new(1, (int)replicationConfigDevice.SectorSize);
 
-        var recoverConfig = replicationConfigDevice.GetFileSize(0) > 0;
+        bool recoverConfig = replicationConfigDevice.GetFileSize(0) > 0;
         if (!recoverConfig)
         {
             InitializeReplicationHistory();
@@ -162,7 +162,7 @@ internal sealed partial class ReplicationManager : IDisposable
     /// </summary>
     public void Recover()
     {
-        var nodeRole = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
+        NodeRole nodeRole = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
 
         switch (nodeRole)
         {
@@ -189,7 +189,7 @@ internal sealed partial class ReplicationManager : IDisposable
         if (clusterProvider.serverOptions.EnableAOF)
         {
             // If recovered checkpoint corresponds to an unavailable AOF address, we initialize AOF to that address
-            var recoveredSafeAofAddress = GetRecoveredSafeAofAddress();
+            long recoveredSafeAofAddress = GetRecoveredSafeAofAddress();
             if (storeWrapper.appendOnlyFile.TailAddress < recoveredSafeAofAddress)
                 storeWrapper.appendOnlyFile.Initialize(recoveredSafeAofAddress, recoveredSafeAofAddress);
             logger?.LogInformation("Recovered AOF: begin address = {beginAddress}, tail address = {tailAddress}", storeWrapper.appendOnlyFile.BeginAddress, storeWrapper.appendOnlyFile.TailAddress);
@@ -223,26 +223,26 @@ internal sealed partial class ReplicationManager : IDisposable
         if (clusterProvider.clusterManager == null)
             return;
 
-        var current = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
 
-        var localNodeRole = current.LocalNodeRole;
-        var replicaOfNodeId = current.LocalNodePrimaryId;
+        NodeRole localNodeRole = current.LocalNodeRole;
+        string replicaOfNodeId = current.LocalNodePrimaryId;
         if (localNodeRole == NodeRole.REPLICA && replicaOfNodeId != null)
         {
             clusterProvider.replicationManager.recovering = true;
             clusterProvider.WaitForConfigTransition();
-            if (!TryReplicateFromPrimary(out var errorMessage))
+            if (!TryReplicateFromPrimary(out ReadOnlySpan<byte> errorMessage))
                 logger?.LogError($"An error occurred at {nameof(ReplicationManager)}.{nameof(Start)} {{error}}", Encoding.ASCII.GetString(errorMessage));
         }
         else if (localNodeRole == NodeRole.PRIMARY && replicaOfNodeId == null)
         {
-            var replicaIds = current.GetLocalNodeReplicaIds();
-            foreach (var replicaId in replicaIds)
+            List<string> replicaIds = current.GetLocalNodeReplicaIds();
+            foreach (string replicaId in replicaIds)
             {
                 // TODO: Initiate AOF sync task correctly when restarting primary
-                if (clusterProvider.replicationManager.TryAddReplicationTask(replicaId, 0, out var aofSyncTaskInfo))
+                if (clusterProvider.replicationManager.TryAddReplicationTask(replicaId, 0, out AofSyncTaskInfo aofSyncTaskInfo))
                 {
-                    if (!TryConnectToReplica(replicaId, 0, aofSyncTaskInfo, out var errorMessage))
+                    if (!TryConnectToReplica(replicaId, 0, aofSyncTaskInfo, out ReadOnlySpan<byte> errorMessage))
                         logger?.LogError(Encoding.ASCII.GetString(errorMessage));
                 }
             }

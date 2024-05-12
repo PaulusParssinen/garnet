@@ -35,7 +35,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         if (mpState is MigrateCmdParseState.SUCCESS)
             return true;
 
-        var errorMessage = mpState switch
+        ReadOnlySpan<byte> errorMessage = mpState switch
         {
             MigrateCmdParseState.CLUSTERDOWN => CmdStrings.RESP_ERR_GENERIC_CLUSTER,
             MigrateCmdParseState.UNKNOWNTARGET => CmdStrings.RESP_ERR_GENERIC_UNKNOWN_ENDPOINT,
@@ -59,30 +59,30 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         // migrate host port <KEY | ""> destination-db timeout [COPY] [REPLACE] [AUTH password] [AUTH2 username password] [[KEYS keys] | [SLOTSRANGE start-slot end-slot [start-slot end-slot]]]]
         #region parseMigrationArguments
         //1. Address
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var targetAddress, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string targetAddress, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         //2. Port
-        if (!RespReadUtils.ReadIntWithLengthHeader(out var targetPort, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadIntWithLengthHeader(out int targetPort, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         //3. Key
         byte* singleKeyPtr = null;
-        var sksize = 0;
+        int sksize = 0;
         if (!RespReadUtils.ReadPtrWithLengthHeader(ref singleKeyPtr, ref sksize, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         //4. Destination DB
-        if (!RespReadUtils.ReadIntWithLengthHeader(out var dbid, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadIntWithLengthHeader(out int dbid, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         //5. Timeout
-        if (!RespReadUtils.ReadIntWithLengthHeader(out var timeout, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadIntWithLengthHeader(out int timeout, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
-        var args = count - 5;
-        var copyOption = false;
-        var replaceOption = false;
+        int args = count - 5;
+        bool copyOption = false;
+        bool replaceOption = false;
         string username = null;
         string passwd = null;
         List<(long, long)> keysWithSize = null;
@@ -91,8 +91,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         ClusterConfig current = null;
         string sourceNodeId = null;
         string targetNodeId = null;
-        var pstate = MigrateCmdParseState.CLUSTERDOWN;
-        var slotParseError = -1;
+        MigrateCmdParseState pstate = MigrateCmdParseState.CLUSTERDOWN;
+        int slotParseError = -1;
         if (clusterProvider.serverOptions.EnableCluster)
         {
             pstate = MigrateCmdParseState.SUCCESS;
@@ -111,7 +111,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
         while (args > 0)
         {
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var option, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string option, ref ptr, recvBufferPtr + bytesRead))
                 return false;
             args--;
 
@@ -139,7 +139,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 while (args > 0)
                 {
                     byte* keyPtr = null;
-                    var ksize = 0;
+                    int ksize = 0;
 
                     if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, recvBufferPtr + bytesRead))
                         return false;
@@ -149,7 +149,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                     if (pstate != MigrateCmdParseState.SUCCESS) continue;
 
                     // Check if all keys are local R/W because we migrate keys and need to be able to delete them
-                    var slot = NumUtils.HashSlot(keyPtr, ksize);
+                    ushort slot = NumUtils.HashSlot(keyPtr, ksize);
                     if (!current.IsLocal(slot, readCommand: false))
                     {
                         pstate = MigrateCmdParseState.SLOTNOTLOCAL;
@@ -178,7 +178,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             {
                 while (args > 0)
                 {
-                    if (!RespReadUtils.ReadIntWithLengthHeader(out var slot, ref ptr, recvBufferPtr + bytesRead))
+                    if (!RespReadUtils.ReadIntWithLengthHeader(out int slot, ref ptr, recvBufferPtr + bytesRead))
                         return false;
                     args--;
 
@@ -217,7 +217,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                     pstate = MigrateCmdParseState.INCOMPLETESLOTSRANGE;
                     while (args > 0)
                     {
-                        if (!RespReadUtils.ReadIntWithLengthHeader(out var slotStart, ref ptr, recvBufferPtr + bytesRead))
+                        if (!RespReadUtils.ReadIntWithLengthHeader(out int slotStart, ref ptr, recvBufferPtr + bytesRead))
                             return false;
                         args--;
                     }
@@ -226,17 +226,17 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 {
                     while (args > 0)
                     {
-                        if (!RespReadUtils.ReadIntWithLengthHeader(out var slotStart, ref ptr, recvBufferPtr + bytesRead))
+                        if (!RespReadUtils.ReadIntWithLengthHeader(out int slotStart, ref ptr, recvBufferPtr + bytesRead))
                             return false;
 
-                        if (!RespReadUtils.ReadIntWithLengthHeader(out var slotEnd, ref ptr, recvBufferPtr + bytesRead))
+                        if (!RespReadUtils.ReadIntWithLengthHeader(out int slotEnd, ref ptr, recvBufferPtr + bytesRead))
                             return false;
                         args -= 2;
 
                         // Skip if previous error encountered
                         if (pstate != MigrateCmdParseState.SUCCESS) continue;
 
-                        for (var slot = slotStart; slot <= slotEnd; slot++)
+                        for (int slot = slotStart; slot <= slotEnd; slot++)
                         {
                             // Check if slot is in valid range
                             if (ClusterConfig.OutOfRange(slot))
@@ -301,7 +301,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             timeout,
             slots,
             keysWithSize,
-            out var mSession))
+            out MigrateSession mSession))
         {
             // Migration task could not be added due to possible conflicting migration tasks
             while (!RespWriteUtils.WriteError(CmdStrings.RESP_ERR_IOERR, ref dcurr, dend))
@@ -310,7 +310,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         else
         {
             //Start migration task
-            if (!mSession.TryStartMigrationTask(out var errorMessage))
+            if (!mSession.TryStartMigrationTask(out ReadOnlySpan<byte> errorMessage))
             {
                 while (!RespWriteUtils.WriteError(errorMessage, ref dcurr, dend))
                     SendAndReset();

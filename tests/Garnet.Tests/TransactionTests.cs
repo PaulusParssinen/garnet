@@ -38,9 +38,9 @@ public class TransactionTests
     public void TxnSetTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var tran = db.CreateTransaction();
+        ITransaction tran = db.CreateTransaction();
         string value1 = "abcdefg1";
         string value2 = "abcdefg2";
 
@@ -59,16 +59,16 @@ public class TransactionTests
     public void TxnGetTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string value1 = "abcdefg1";
         string value2 = "abcdefg2";
         db.StringSet("mykey1", value1);
         db.StringSet("mykey2", value2);
 
-        var tran = db.CreateTransaction();
-        var t1 = tran.StringGetAsync("mykey1");
-        var t2 = tran.StringGetAsync("mykey2");
+        ITransaction tran = db.CreateTransaction();
+        Task<RedisValue> t1 = tran.StringGetAsync("mykey1");
+        Task<RedisValue> t2 = tran.StringGetAsync("mykey2");
         bool committed = tran.Execute();
 
 
@@ -80,15 +80,15 @@ public class TransactionTests
     public void TxnGetSetTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string value1 = "abcdefg1";
         string value2 = "abcdefg2";
         db.StringSet("mykey1", value1);
 
-        var tran = db.CreateTransaction();
-        var t1 = tran.StringGetAsync("mykey1");
-        var t2 = tran.StringSetAsync("mykey2", value2);
+        ITransaction tran = db.CreateTransaction();
+        Task<RedisValue> t1 = tran.StringGetAsync("mykey1");
+        Task<bool> t2 = tran.StringSetAsync("mykey2", value2);
         bool committed = tran.Execute();
 
         string string2 = db.StringGet("mykey2");
@@ -101,7 +101,7 @@ public class TransactionTests
     public void LargeTxn([Values(512, 2048, 8192)] int size)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string value = "abcdefg";
         string key = "mykey";
@@ -109,7 +109,7 @@ public class TransactionTests
             db.StringSet(key + i, value + i);
 
         Task<RedisValue>[] results = new Task<RedisValue>[size];
-        var tran = db.CreateTransaction();
+        ITransaction tran = db.CreateTransaction();
         for (int i = 0; i < size * 2; i++)
         {
             if (i % 2 == 0)
@@ -138,7 +138,7 @@ public class TransactionTests
     public void LargeTxnWatch([Values(512, 2048, 4096)] int size)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string value = "abcdefg";
         string key = "mykey";
@@ -146,7 +146,7 @@ public class TransactionTests
             db.StringSet(key + i, value + i);
 
         Task<RedisValue>[] results = new Task<RedisValue>[size];
-        var tran = db.CreateTransaction();
+        ITransaction tran = db.CreateTransaction();
         for (int i = 0; i < size * 2; i++)
         {
             if (i % 2 == 0)
@@ -260,7 +260,7 @@ public class TransactionTests
         SetUpWithLowMemory();
         using (var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig()))
         {
-            var db = redis.GetDatabase(0);
+            IDatabase db = redis.GetDatabase(0);
             for (int i = 0; i < 1000; i++)
                 db.StringSet("key" + i, "value" + i);
         }
@@ -295,7 +295,7 @@ public class TransactionTests
         lightClientRequest.SendCommand("SET key901 value901_updated");
         res = lightClientRequest.SendCommand("EXEC");
 
-        var buffer_str = System.Text.Encoding.Default.GetString(res);
+        string buffer_str = System.Text.Encoding.Default.GetString(res);
 
         expectedResponse = "*2\r\n$8\r\nvalue900\r\n+OK\r\n";
         Assert.AreEqual(res.AsSpan().Slice(0, expectedResponse.Length).ToArray(), expectedResponse);

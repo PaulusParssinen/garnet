@@ -128,7 +128,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         // Traverse from highestRcAddress to the splice point, invalidating any record matching the key.
         for (bool foundKey = false; /* tested in loop */; /* incremented in loop */)
         {
-            var physicalAddress = readcache.GetPhysicalAddress(AbsoluteAddress(lowestRcAddress));
+            long physicalAddress = readcache.GetPhysicalAddress(AbsoluteAddress(lowestRcAddress));
             ref RecordInfo recordInfo = ref readcache.GetInfo(physicalAddress);
             if (!foundKey && !recordInfo.Invalid && comparer.Equals(ref key, ref readcache.GetKey(physicalAddress)))
             {
@@ -213,8 +213,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 continue;
 
             if (!entry->ReadCache) continue;
-            var logicalAddress = entry->Address;
-            var physicalAddress = readcache.GetPhysicalAddress(AbsoluteAddress(logicalAddress));
+            long logicalAddress = entry->Address;
+            long physicalAddress = readcache.GetPhysicalAddress(AbsoluteAddress(logicalAddress));
 
             while (true)
             {
@@ -237,7 +237,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         if (lowest_rcri.PreviousAddress > highestSearchedAddress)
         {
             // Someone added a new record in the splice region. It won't be readcache; that would've been added at tail. See if it's our key.
-            var minAddress = highestSearchedAddress > hlog.HeadAddress ? highestSearchedAddress : hlog.HeadAddress;
+            long minAddress = highestSearchedAddress > hlog.HeadAddress ? highestSearchedAddress : hlog.HeadAddress;
             if (TraceBackForKeyMatch(ref key, lowest_rcri.PreviousAddress, minAddress + 1, out long prevAddress, out _))
                 success = false;
             else if (prevAddress > highestSearchedAddress && prevAddress < hlog.HeadAddress)
@@ -277,7 +277,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         // Traverse for the key above untilAddress (which may not be in the readcache if there were no readcache records when it was retrieved).
         while (entry.ReadCache && (entry.Address > untilEntry.Address || !untilEntry.ReadCache))
         {
-            var physicalAddress = readcache.GetPhysicalAddress(entry.AbsoluteAddress);
+            long physicalAddress = readcache.GetPhysicalAddress(entry.AbsoluteAddress);
             ref RecordInfo recordInfo = ref readcache.GetInfo(physicalAddress);
             if (!recordInfo.Invalid && comparer.Equals(ref key, ref readcache.GetKey(physicalAddress)))
             {
@@ -295,7 +295,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     void ReadCacheAbandonRecord(long physicalAddress)
     {
         // TODO: We currently don't save readcache allocations for retry, but we could
-        ref var ri = ref readcache.GetInfo(physicalAddress);
+        ref RecordInfo ri = ref readcache.GetInfo(physicalAddress);
         ri.SetInvalid();
         ri.PreviousAddress = Constants.kTempInvalidAddress;     // Necessary for ReadCacheEvict, but cannot be kInvalidAddress or we have recordInfo.IsNull
     }
@@ -305,9 +305,9 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         // Iterate readcache entries in the range rcFrom/ToLogicalAddress, and remove them from the hash chain.
         while (rcLogicalAddress < rcToLogicalAddress)
         {
-            var rcPhysicalAddress = readcache.GetPhysicalAddress(rcLogicalAddress);
-            var (_, rcAllocatedSize) = readcache.GetRecordSize(rcPhysicalAddress);
-            var rcRecordInfo = readcache.GetInfo(rcPhysicalAddress);
+            long rcPhysicalAddress = readcache.GetPhysicalAddress(rcLogicalAddress);
+            (int _, int rcAllocatedSize) = readcache.GetRecordSize(rcPhysicalAddress);
+            RecordInfo rcRecordInfo = readcache.GetInfo(rcPhysicalAddress);
 
             // Check PreviousAddress for null to handle the info.IsNull() "partial record at end of page" case as well as readcache CAS failures
             // (such failed records are not in the hash chain, so we must not process them here). We do process other Invalid records here.
@@ -353,15 +353,15 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         HashBucketEntry entry = new() { word = hei.entry.word };
         while (entry.ReadCache)
         {
-            var la = entry.AbsoluteAddress;
-            var pa = readcache.GetPhysicalAddress(la);
+            long la = entry.AbsoluteAddress;
+            long pa = readcache.GetPhysicalAddress(la);
             ref RecordInfo ri = ref readcache.GetInfo(pa);
 
 #if DEBUG
             // Due to collisions, we can compare the hash code *mask* (i.e. the hash bucket index), not the key
-            var mask = state[resizeInfo.version].size_mask;
-            var rc_mask = hei.hash & mask;
-            var pa_mask = comparer.GetHashCode64(ref readcache.GetKey(pa)) & mask;
+            long mask = state[resizeInfo.version].size_mask;
+            long rc_mask = hei.hash & mask;
+            long pa_mask = comparer.GetHashCode64(ref readcache.GetKey(pa)) & mask;
             Debug.Assert(rc_mask == pa_mask, "The keyHash mask of the hash-chain ReadCache entry does not match the one obtained from the initial readcache address");
 #endif
 

@@ -97,10 +97,10 @@ internal class GenericLogCompactionTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, 0, 0);
+            Status status = session.Read(ref key1, ref input, ref output, 0, 0);
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<MyKey, MyValue, MyInput, MyOutput, int> completedOutputs, wait: true);
                 Assert.IsTrue(completedOutputs.Next());
                 Assert.IsTrue(completedOutputs.Current.Status.Found);
                 output = completedOutputs.Current.Output;
@@ -142,7 +142,7 @@ internal class GenericLogCompactionTests
 
         store.Log.Flush(true);
 
-        var tail = store.Log.TailAddress;
+        long tail = store.Log.TailAddress;
         compactUntil = session.Compact(compactUntil, compactionType);
         store.Log.Truncate();
         Assert.AreEqual(compactUntil, store.Log.BeginAddress);
@@ -155,7 +155,7 @@ internal class GenericLogCompactionTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, 0, 0);
+            Status status = session.Read(ref key1, ref input, ref output, 0, 0);
             if (status.IsPending)
                 session.CompletePending(true);
             else
@@ -207,7 +207,7 @@ internal class GenericLogCompactionTests
 
             int ctx = ((i < 500) && (i % 2 == 0)) ? 1 : 0;
 
-            var status = session.Read(ref key1, ref input, ref output, ctx, 0);
+            Status status = session.Read(ref key1, ref input, ref output, ctx, 0);
             if (status.IsPending)
                 session.CompletePending(true);
             else
@@ -234,9 +234,9 @@ internal class GenericLogCompactionTests
         MyInput input = new();
 
         const int totalRecords = 2000;
-        var compactUntil = 0L;
+        long compactUntil = 0L;
 
-        for (var i = 0; i < totalRecords; i++)
+        for (int i = 0; i < totalRecords; i++)
         {
             if (i == totalRecords / 2)
                 compactUntil = store.Log.TailAddress;
@@ -251,15 +251,15 @@ internal class GenericLogCompactionTests
         Assert.AreEqual(compactUntil, store.Log.BeginAddress);
 
         // Read 2000 keys - all should be present
-        for (var i = 0; i < totalRecords; i++)
+        for (int i = 0; i < totalRecords; i++)
         {
             var output = new MyOutput();
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var ctx = (i < (totalRecords / 2) && (i % 2 != 0)) ? 1 : 0;
+            int ctx = (i < (totalRecords / 2) && (i % 2 != 0)) ? 1 : 0;
 
-            var status = session.Read(ref key1, ref input, ref output, ctx, 0);
+            Status status = session.Read(ref key1, ref input, ref output, ctx, 0);
             if (status.IsPending)
             {
                 session.CompletePending(true);
@@ -288,7 +288,7 @@ internal class GenericLogCompactionTests
         // Update: irrelevant as session compaction no longer uses Copy/CopyInPlace
         // This test checks if CopyInPlace returning false triggers call to Copy
 
-        using var session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, int, MyFunctionsDelete> session = store.NewSession<MyInput, MyOutput, int, MyFunctionsDelete>(new MyFunctionsDelete());
 
         var key = new MyKey { key = 100 };
         var value = new MyValue { value = 20 };
@@ -303,15 +303,15 @@ internal class GenericLogCompactionTests
         store.Log.Flush(true);
 
         var compactionFunctions = new Test2CompactionFunctions();
-        var compactUntil = session.Compact(store.Log.TailAddress, compactionType, compactionFunctions);
+        long compactUntil = session.Compact(store.Log.TailAddress, compactionType, compactionFunctions);
         store.Log.Truncate();
 
         var input = default(MyInput);
         var output = default(MyOutput);
-        var status = session.Read(ref key, ref input, ref output, 0, 0);
+        Status status = session.Read(ref key, ref input, ref output, 0, 0);
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<MyKey, MyValue, MyInput, MyOutput, int> outputs, wait: true);
             (status, output) = GetSinglePendingResult(outputs);
         }
         Assert.IsTrue(status.Found);

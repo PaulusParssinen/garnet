@@ -31,12 +31,12 @@ internal class LogShiftTailStressTest : TsavoriteLogTestBase
             log.Enqueue(entry);
 
         // for comparison, insert some entries without any commit records
-        var referenceTailLength = log.TailAddress;
+        long referenceTailLength = log.TailAddress;
 
         var enqueueDone = new ManualResetEventSlim();
         var commitThreads = new List<Thread>();
         // Make sure to spin up many commit threads to expose lots of interleavings
-        for (var i = 0; i < Math.Max(1, Environment.ProcessorCount / 2); i++)
+        for (int i = 0; i < Math.Max(1, Environment.ProcessorCount / 2); i++)
         {
             commitThreads.Add(new Thread(() =>
             {
@@ -46,7 +46,7 @@ internal class LogShiftTailStressTest : TsavoriteLogTestBase
             }));
         }
 
-        foreach (var t in commitThreads)
+        foreach (Thread t in commitThreads)
             t.Start();
         for (int i = 0; i < 5 * numEntries; i++)
         {
@@ -54,7 +54,7 @@ internal class LogShiftTailStressTest : TsavoriteLogTestBase
         }
         enqueueDone.Set();
 
-        foreach (var t in commitThreads)
+        foreach (Thread t in commitThreads)
             t.Join();
 
         // We expect the test to finish and not get stuck somewhere

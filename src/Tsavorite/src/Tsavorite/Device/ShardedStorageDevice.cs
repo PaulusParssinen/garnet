@@ -119,7 +119,7 @@ class UniformPartitionScheme : IPartitionScheme
     /// <returns></returns>
     public long MapSectorSize(long sectorSize, int shard)
     {
-        var numChunks = sectorSize / chunkSize;
+        long numChunks = sectorSize / chunkSize;
         // ceiling of (a div b) is (a + b - 1) / b where div is mathematical division and / is integer division 
         return (numChunks + Devices.Count - 1) / Devices.Count * chunkSize;
     }

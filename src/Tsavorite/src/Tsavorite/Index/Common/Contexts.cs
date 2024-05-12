@@ -108,7 +108,7 @@ internal static class OperationStatusUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool TryConvertToCompletedStatusCode(OperationStatus advInternalStatus, out Status statusCode)
     {
-        var internalStatus = BasicOpCode(advInternalStatus);
+        OperationStatus internalStatus = BasicOpCode(advInternalStatus);
         if (internalStatus <= OperationStatus.MAX_MAP_TO_COMPLETED_STATUSCODE)
         {
             statusCode = new(advInternalStatus);
@@ -121,7 +121,7 @@ internal static class OperationStatusUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsAppend(OperationStatus internalStatus)
     {
-        var advInternalStatus = internalStatus & OperationStatus.ADVANCED_MASK;
+        OperationStatus advInternalStatus = internalStatus & OperationStatus.ADVANCED_MASK;
         return advInternalStatus == OperationStatus.CREATED_RECORD || advInternalStatus == OperationStatus.COPY_UPDATED_RECORD;
     }
 
@@ -437,13 +437,13 @@ public struct HybridLogRecoveryInfo
         continueTokens = new();
 
         string value = reader.ReadLine();
-        var cversion = int.Parse(value);
+        int cversion = int.Parse(value);
 
         if (cversion != CheckpointVersion)
             throw new TsavoriteException($"Invalid checkpoint version {cversion} encountered, current version is {CheckpointVersion}, cannot recover with this checkpoint");
 
         value = reader.ReadLine();
-        var checksum = long.Parse(value);
+        long checksum = long.Parse(value);
 
         value = reader.ReadLine();
         guid = Guid.Parse(value);
@@ -485,17 +485,17 @@ public struct HybridLogRecoveryInfo
         manualLockingActive = bool.Parse(value);
 
         value = reader.ReadLine();
-        var numSessions = int.Parse(value);
+        int numSessions = int.Parse(value);
 
         for (int i = 0; i < numSessions; i++)
         {
-            var sessionID = int.Parse(reader.ReadLine());
-            var sessionName = reader.ReadLine();
+            int sessionID = int.Parse(reader.ReadLine());
+            string sessionName = reader.ReadLine();
             if (sessionName == "") sessionName = null;
-            var serialno = long.Parse(reader.ReadLine());
+            long serialno = long.Parse(reader.ReadLine());
 
             var exclusions = new List<long>();
-            var exclusionCount = int.Parse(reader.ReadLine());
+            int exclusionCount = int.Parse(reader.ReadLine());
             for (int j = 0; j < exclusionCount; j++)
                 exclusions.Add(long.Parse(reader.ReadLine()));
 
@@ -514,7 +514,7 @@ public struct HybridLogRecoveryInfo
 
         // Read object log segment offsets
         value = reader.ReadLine();
-        var numSegments = int.Parse(value);
+        int numSegments = int.Parse(value);
         if (numSegments > 0)
         {
             objectLogSegmentOffsets = new long[numSegments];
@@ -542,7 +542,7 @@ public struct HybridLogRecoveryInfo
     /// <param name="recoverTo"> specific version to recover to, if using delta log</param>
     internal void Recover(Guid token, ICheckpointManager checkpointManager, DeltaLog deltaLog = null, bool scanDelta = false, long recoverTo = -1)
     {
-        var metadata = checkpointManager.GetLogCheckpointMetadata(token, deltaLog, scanDelta, recoverTo);
+        byte[] metadata = checkpointManager.GetLogCheckpointMetadata(token, deltaLog, scanDelta, recoverTo);
         if (metadata == null)
             throw new TsavoriteException("Invalid log commit metadata for ID " + token.ToString());
         using StreamReader s = new(new MemoryStream(metadata));
@@ -564,7 +564,7 @@ public struct HybridLogRecoveryInfo
 
     internal void Recover(Guid token, ICheckpointManager checkpointManager, out byte[] commitCookie, DeltaLog deltaLog = null, bool scanDelta = false, long recoverTo = -1)
     {
-        var metadata = checkpointManager.GetLogCheckpointMetadata(token, deltaLog, scanDelta, recoverTo);
+        byte[] metadata = checkpointManager.GetLogCheckpointMetadata(token, deltaLog, scanDelta, recoverTo);
         if (metadata == null)
             throw new TsavoriteException("Invalid log commit metadata for ID " + token.ToString());
         using StreamReader s = new(new MemoryStream(metadata));
@@ -574,7 +574,7 @@ public struct HybridLogRecoveryInfo
             // Adjust delta tail address to include the metadata record
             deltaTailAddress = deltaLog.NextAddress;
         }
-        var cookie = s.ReadToEnd();
+        string cookie = s.ReadToEnd();
         commitCookie = cookie.Length == 0 ? null : Convert.FromBase64String(cookie);
     }
 
@@ -605,7 +605,7 @@ public struct HybridLogRecoveryInfo
                 writer.WriteLine(manualLockingActive);
 
                 writer.WriteLine(checkpointTokens.Count);
-                foreach (var kvp in checkpointTokens)
+                foreach (KeyValuePair<int, (string, CommitPoint)> kvp in checkpointTokens)
                 {
                     writer.WriteLine(kvp.Key);
                     writer.WriteLine(kvp.Value.Item1);
@@ -631,9 +631,9 @@ public struct HybridLogRecoveryInfo
 
     private readonly long Checksum(int checkpointTokensCount)
     {
-        var bytes = guid.ToByteArray();
-        var long1 = BitConverter.ToInt64(bytes, 0);
-        var long2 = BitConverter.ToInt64(bytes, 8);
+        byte[] bytes = guid.ToByteArray();
+        long long1 = BitConverter.ToInt64(bytes, 0);
+        long long2 = BitConverter.ToInt64(bytes, 8);
         return long1 ^ long2 ^ version ^ flushedLogicalAddress ^ snapshotStartFlushedLogicalAddress ^ startLogicalAddress ^ finalLogicalAddress ^ snapshotFinalLogicalAddress ^ headAddress ^ beginAddress
             ^ checkpointTokensCount ^ (objectLogSegmentOffsets == null ? 0 : objectLogSegmentOffsets.Length);
     }
@@ -658,7 +658,7 @@ public struct HybridLogRecoveryInfo
         logger?.LogInformation("Manual Locking Active: {manualLockingActive}", manualLockingActive);
         logger?.LogInformation("Num sessions recovered: {continueTokensCount}", continueTokens.Count);
         logger?.LogInformation("Recovered sessions: ");
-        foreach (var sessionInfo in continueTokens.Take(10))
+        foreach (KeyValuePair<int, (string, CommitPoint)> sessionInfo in continueTokens.Take(10))
         {
             logger?.LogInformation("{sessionInfo.Key}: {sessionInfo.Value}", sessionInfo.Key, sessionInfo.Value);
         }
@@ -696,7 +696,7 @@ internal struct HybridLogCheckpointInfo : IDisposable
     public HybridLogCheckpointInfo Transfer()
     {
         // Ownership transfer of handles across struct copies
-        var dest = this;
+        HybridLogCheckpointInfo dest = this;
         dest.snapshotFileDevice = default;
         dest.snapshotFileObjectLogDevice = default;
         deltaLog = default;
@@ -771,10 +771,10 @@ internal struct IndexRecoveryInfo
     public void Initialize(StreamReader reader)
     {
         string value = reader.ReadLine();
-        var cversion = int.Parse(value);
+        int cversion = int.Parse(value);
 
         value = reader.ReadLine();
-        var checksum = long.Parse(value);
+        long checksum = long.Parse(value);
 
         value = reader.ReadLine();
         token = Guid.Parse(value);
@@ -807,7 +807,7 @@ internal struct IndexRecoveryInfo
     public void Recover(Guid guid, ICheckpointManager checkpointManager)
     {
         token = guid;
-        var metadata = checkpointManager.GetIndexCheckpointMetadata(guid);
+        byte[] metadata = checkpointManager.GetIndexCheckpointMetadata(guid);
         if (metadata == null)
             throw new TsavoriteException("Invalid index commit metadata for ID " + guid.ToString());
         using (StreamReader s = new(new MemoryStream(metadata)))
@@ -837,9 +837,9 @@ internal struct IndexRecoveryInfo
 
     private readonly long Checksum()
     {
-        var bytes = token.ToByteArray();
-        var long1 = BitConverter.ToInt64(bytes, 0);
-        var long2 = BitConverter.ToInt64(bytes, 8);
+        byte[] bytes = token.ToByteArray();
+        long long1 = BitConverter.ToInt64(bytes, 0);
+        long long2 = BitConverter.ToInt64(bytes, 8);
         return long1 ^ long2 ^ table_size ^ (long)num_ht_bytes ^ (long)num_ofb_bytes
                     ^ num_buckets ^ startLogicalAddress ^ finalLogicalAddress;
     }

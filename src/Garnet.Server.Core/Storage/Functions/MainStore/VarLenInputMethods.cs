@@ -41,9 +41,9 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     /// <inheritdoc/>
     public int GetRMWInitialValueLength(ref SpanByte input)
     {
-        var inputspan = input.AsSpan();
-        var inputPtr = input.ToPointer();
-        var cmd = inputspan[0];
+        Span<byte> inputspan = input.AsSpan();
+        byte* inputPtr = input.ToPointer();
+        byte cmd = inputspan[0];
         switch ((RespCommand)cmd)
         {
             case RespCommand.SETBIT:
@@ -58,20 +58,20 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                 int length = *(int*)i;//[hll allocated size = 4 byte] + [hll data structure]
                 return sizeof(int) + length;
             case RespCommand.SETRANGE:
-                var offset = *((int*)(inputPtr + RespInputHeader.Size));
-                var newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
+                int offset = *((int*)(inputPtr + RespInputHeader.Size));
+                int newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
                 return sizeof(int) + newValueSize + offset + input.MetadataSize;
 
             case RespCommand.APPEND:
-                var valueLength = *(int*)(inputPtr + RespInputHeader.Size);
+                int valueLength = *(int*)(inputPtr + RespInputHeader.Size);
                 return sizeof(int) + valueLength;
 
             case RespCommand.INCRBY:
-                if (!IsValidNumber(input.LengthWithoutMetadata - RespInputHeader.Size, inputPtr + RespInputHeader.Size, out var next))
+                if (!IsValidNumber(input.LengthWithoutMetadata - RespInputHeader.Size, inputPtr + RespInputHeader.Size, out long next))
                     return sizeof(int);
 
-                var fNeg = false;
-                var ndigits = NumUtils.NumDigitsInLong(next, ref fNeg);
+                bool fNeg = false;
+                int ndigits = NumUtils.NumDigitsInLong(next, ref fNeg);
 
                 return sizeof(int) + ndigits + (fNeg ? 1 : 0);
 
@@ -88,7 +88,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             default:
                 if (cmd >= 200)
                 {
-                    var functions = functionsState.customCommands[cmd - 200].functions;
+                    CustomRawStringFunctions functions = functionsState.customCommands[cmd - 200].functions;
                     // Compute metadata size for result
                     int metadataSize = input.ExtraMetadata switch
                     {
@@ -107,22 +107,22 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
     {
         if (input.Length > 0)
         {
-            var inputspan = input.AsSpan();
-            var inputPtr = input.ToPointer();
-            var cmd = inputspan[0];
+            Span<byte> inputspan = input.AsSpan();
+            byte* inputPtr = input.ToPointer();
+            byte cmd = inputspan[0];
             switch ((RespCommand)cmd)
             {
                 case RespCommand.INCR:
                 case RespCommand.INCRBY:
-                    var datalen = inputspan.Length - RespInputHeader.Size;
-                    var slicedInputData = inputspan.Slice(RespInputHeader.Size, datalen);
+                    int datalen = inputspan.Length - RespInputHeader.Size;
+                    Span<byte> slicedInputData = inputspan.Slice(RespInputHeader.Size, datalen);
 
                     // We don't need to TryParse here because InPlaceUpdater will raise an error before we reach this point
-                    var curr = NumUtils.BytesToLong(t.AsSpan());
-                    var next = curr + NumUtils.BytesToLong(slicedInputData);
+                    long curr = NumUtils.BytesToLong(t.AsSpan());
+                    long next = curr + NumUtils.BytesToLong(slicedInputData);
 
-                    var fNeg = false;
-                    var ndigits = NumUtils.NumDigitsInLong(next, ref fNeg);
+                    bool fNeg = false;
+                    int ndigits = NumUtils.NumDigitsInLong(next, ref fNeg);
                     ndigits += fNeg ? 1 : 0;
 
                     return sizeof(int) + ndigits + t.MetadataSize;
@@ -134,7 +134,7 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
 
                     // We don't need to TryParse here because InPlaceUpdater will raise an error before we reach this point
                     curr = NumUtils.BytesToLong(t.AsSpan());
-                    var decrBy = NumUtils.BytesToLong(slicedInputData);
+                    long decrBy = NumUtils.BytesToLong(slicedInputData);
                     next = curr + (cmd == (byte)RespCommand.DECR ? decrBy : -decrBy);
 
                     fNeg = false;
@@ -174,8 +174,8 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                     return sizeof(int) + t.Length + input.MetadataSize;
 
                 case RespCommand.SETRANGE:
-                    var offset = *((int*)(inputPtr + RespInputHeader.Size));
-                    var newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
+                    int offset = *((int*)(inputPtr + RespInputHeader.Size));
+                    int newValueSize = *((int*)(inputPtr + RespInputHeader.Size + sizeof(int)));
 
                     if (newValueSize + offset > t.LengthWithoutMetadata)
                         return sizeof(int) + newValueSize + offset + t.MetadataSize;
@@ -186,13 +186,13 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
                     break;
 
                 case RespCommand.APPEND:
-                    var valueLength = *((int*)(inputPtr + RespInputHeader.Size));
+                    int valueLength = *((int*)(inputPtr + RespInputHeader.Size));
                     return sizeof(int) + t.Length + valueLength;
 
                 default:
                     if (cmd >= 200)
                     {
-                        var functions = functionsState.customCommands[cmd - 200].functions;
+                        CustomRawStringFunctions functions = functionsState.customCommands[cmd - 200].functions;
                         // compute metadata for result
                         int metadataSize = input.ExtraMetadata switch
                         {

@@ -83,17 +83,17 @@ internal class DefaultRespCommandsInfoProvider : IRespCommandsInfoProvider
 
     public bool TryImportRespCommandsInfo(string path, IStreamProvider streamProvider, out IReadOnlyDictionary<string, RespCommandsInfo> commandsInfo, ILogger logger = null)
     {
-        using var stream = streamProvider.Read(path);
+        using Stream stream = streamProvider.Read(path);
         using var streamReader = new StreamReader(stream);
 
         commandsInfo = default;
 
         try
         {
-            var respCommands = JsonSerializer.Deserialize<RespCommandsInfo[]>(streamReader.ReadToEnd(), SerializerOptions)!;
+            RespCommandsInfo[] respCommands = JsonSerializer.Deserialize<RespCommandsInfo[]>(streamReader.ReadToEnd(), SerializerOptions)!;
 
             var tmpRespCommandsInfo = new Dictionary<string, RespCommandsInfo>(StringComparer.OrdinalIgnoreCase);
-            foreach (var respCommandsInfo in respCommands)
+            foreach (RespCommandsInfo respCommandsInfo in respCommands)
             {
                 tmpRespCommandsInfo.Add(respCommandsInfo.Name, respCommandsInfo);
             }
@@ -113,7 +113,7 @@ internal class DefaultRespCommandsInfoProvider : IRespCommandsInfoProvider
     {
         string jsonSettings;
 
-        var commandsInfoToSerialize = commandsInfo.Values.OrderBy(ci => ci.Name).ToArray();
+        RespCommandsInfo[] commandsInfoToSerialize = commandsInfo.Values.OrderBy(ci => ci.Name).ToArray();
         try
         {
             jsonSettings = JsonSerializer.Serialize(commandsInfoToSerialize, SerializerOptions);
@@ -124,7 +124,7 @@ internal class DefaultRespCommandsInfoProvider : IRespCommandsInfoProvider
             return false;
         }
 
-        var data = Encoding.ASCII.GetBytes(jsonSettings);
+        byte[] data = Encoding.ASCII.GetBytes(jsonSettings);
         streamProvider.Write(path, data);
 
         return true;

@@ -33,7 +33,7 @@ public class RespListJobQueueTests
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         CancellationToken token = tokenSource.Token;
 
-        var nJobs = 10;
+        int nJobs = 10;
         var jb = new JobQueue("jobQueueSample", token);
         jb.OnJobReceived += Jb_OnJobReceived;
 
@@ -41,18 +41,18 @@ public class RespListJobQueueTests
         for (int i = 0; i < nJobs; i++)
         {
             // Add a new job
-            var j = jb.AddJobAsync(new RedisValue($"Job - {i + 1}"));
+            Task j = jb.AddJobAsync(new RedisValue($"Job - {i + 1}"));
             jobsProcess[i] = j;
         }
 
         Task.WaitAll(jobsProcess);
         var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var jobsInProcessingQ = redis.GetDatabase(0).ListRange(jb.JobQueueName);
+        RedisValue[] jobsInProcessingQ = redis.GetDatabase(0).ListRange(jb.JobQueueName);
         Assert.IsTrue(jobsInProcessingQ.Length == nJobs);
 
         //checks jobs were moved to the jobqueue list
         jb.AsConsumer();
-        var jobsInQueue = redis.GetDatabase(0).ListRange(jb.ProcessingQueueName);
+        RedisValue[] jobsInQueue = redis.GetDatabase(0).ListRange(jb.ProcessingQueueName);
         Assert.IsTrue(jobsInQueue.Length == nJobs);
 
         //checks jobs were removed from the processingqueue list

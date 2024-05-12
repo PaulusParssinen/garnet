@@ -38,7 +38,7 @@ internal sealed class FailoverManager(ClusterProvider clusterProvider, ILogger l
     /// <returns></returns>
     public string GetFailoverStatus()
     {
-        var status = currentFailoverSession?.status;
+        FailoverStatus? status = currentFailoverSession?.status;
         return status.HasValue ? FailoverUtils.GetFailoverStatus(status) :
             FailoverUtils.GetFailoverStatus(FailoverStatus.NO_FAILOVER);
     }

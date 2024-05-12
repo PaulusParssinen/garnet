@@ -29,8 +29,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = current.InitializeLocalWorker(nodeId, address, port, configEpoch, currentConfigEpoch, lastVotedConfigEpoch, role, replicaOfNodeId, hostname);
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = current.InitializeLocalWorker(nodeId, address, port, configEpoch, currentConfigEpoch, lastVotedConfigEpoch, role, replicaOfNodeId, hostname);
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -52,7 +52,7 @@ internal sealed partial class ClusterManager : IDisposable
             errorMessage = default;
             while (true)
             {
-                var current = currentConfig;
+                ClusterConfig current = currentConfig;
 
                 if (current.LocalNodeId.Equals(nodeid, StringComparison.OrdinalIgnoreCase))
                 {
@@ -72,8 +72,8 @@ internal sealed partial class ClusterManager : IDisposable
                     return false;
                 }
 
-                var newConfig = current.RemoveWorker(nodeid);
-                var expiry = DateTimeOffset.UtcNow.Ticks + TimeSpan.FromSeconds(expirySeconds).Ticks;
+                ClusterConfig newConfig = current.RemoveWorker(nodeid);
+                long expiry = DateTimeOffset.UtcNow.Ticks + TimeSpan.FromSeconds(expirySeconds).Ticks;
                 _ = workerBanList.AddOrUpdate(nodeid, expiry, (key, oldValue) => expiry);
                 if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                     break;
@@ -98,24 +98,24 @@ internal sealed partial class ClusterManager : IDisposable
         try
         {
             PauseConfigMerge();
-            var resp = CmdStrings.RESP_OK;
+            ReadOnlySpan<byte> resp = CmdStrings.RESP_OK;
 
             while (true)
             {
-                var current = currentConfig;
-                var newNodeId = soft ? current.LocalNodeId : Generator.CreateHexId();
-                var address = current.LocalNodeIp;
-                var port = current.LocalNodePort;
+                ClusterConfig current = currentConfig;
+                string newNodeId = soft ? current.LocalNodeId : Generator.CreateHexId();
+                string address = current.LocalNodeIp;
+                int port = current.LocalNodePort;
 
-                var configEpoch = soft ? current.LocalNodeConfigEpoch : 0;
-                var currentConfigEpoch = soft ? current.LocalNodeCurrentConfigEpoch : 0;
-                var lastVotedConfigEpoch = soft ? current.LocalNodeLastVotedEpoch : 0;
+                long configEpoch = soft ? current.LocalNodeConfigEpoch : 0;
+                long currentConfigEpoch = soft ? current.LocalNodeCurrentConfigEpoch : 0;
+                long lastVotedConfigEpoch = soft ? current.LocalNodeLastVotedEpoch : 0;
 
-                var expiry = DateTimeOffset.UtcNow.Ticks + TimeSpan.FromSeconds(expirySeconds).Ticks;
-                foreach (var nodeId in current.GetRemoteNodeIds())
+                long expiry = DateTimeOffset.UtcNow.Ticks + TimeSpan.FromSeconds(expirySeconds).Ticks;
+                foreach (string nodeId in current.GetRemoteNodeIds())
                     _ = workerBanList.AddOrUpdate(nodeId, expiry, (key, oldValue) => expiry);
 
-                var newConfig = new ClusterConfig().InitializeLocalWorker(
+                ClusterConfig newConfig = new ClusterConfig().InitializeLocalWorker(
                     newNodeId,
                     address,
                     port,
@@ -150,7 +150,7 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = CurrentConfig;
+            ClusterConfig current = CurrentConfig;
             if (current.LocalNodeId.Equals(nodeid, StringComparison.OrdinalIgnoreCase))
             {
                 errorMessage = CmdStrings.RESP_ERR_GENERIC_CANNOT_REPLICATE_SELF;
@@ -172,7 +172,7 @@ internal sealed partial class ClusterManager : IDisposable
                 return false;
             }
 
-            var workerId = current.GetWorkerIdFromNodeId(nodeid);
+            int workerId = current.GetWorkerIdFromNodeId(nodeid);
             if (workerId == 0)
             {
                 errorMessage = Encoding.ASCII.GetBytes($"ERR I don't know about node {nodeid}.");
@@ -188,7 +188,7 @@ internal sealed partial class ClusterManager : IDisposable
             }
 
             recovering = true;
-            var newConfig = currentConfig.MakeReplicaOf(nodeid);
+            ClusterConfig newConfig = currentConfig.MakeReplicaOf(nodeid);
             newConfig = newConfig.BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
@@ -203,7 +203,7 @@ internal sealed partial class ClusterManager : IDisposable
     /// <param name="nodeid"></param>
     public List<string> ListReplicas(string nodeid)
     {
-        var current = CurrentConfig;
+        ClusterConfig current = CurrentConfig;
         return current.GetReplicas(nodeid);
     }
 }

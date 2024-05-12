@@ -75,7 +75,7 @@ internal sealed class WorkQueueFIFO<T> : IDisposable
         // Process items in work queue
         while (true)
         {
-            while (_queue.TryDequeue(out var workItem))
+            while (_queue.TryDequeue(out T workItem))
             {
                 try
                 {

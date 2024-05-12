@@ -15,7 +15,7 @@ public partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
     internal unsafe void TakeIndexFuzzyCheckpoint()
     {
-        var ht_version = resizeInfo.version;
+        int ht_version = resizeInfo.version;
 
         BeginMainIndexCheckpoint(ht_version, _indexCheckpoint.main_ht_device, out ulong ht_num_bytes_written, UseReadCache, SkipReadCacheBucket, ThrottleCheckpointFlushDelayMs);
 
@@ -50,8 +50,8 @@ public partial class TsavoriteBase
     internal async ValueTask IsIndexFuzzyCheckpointCompletedAsync(CancellationToken token = default)
     {
         // Get tasks first to ensure we have captured the semaphore instances synchronously
-        var t1 = IsMainIndexCheckpointCompletedAsync(token);
-        var t2 = overflowBucketsAllocator.IsCheckpointCompletedAsync(token);
+        ValueTask t1 = IsMainIndexCheckpointCompletedAsync(token);
+        ValueTask t2 = overflowBucketsAllocator.IsCheckpointCompletedAsync(token);
         await t1.ConfigureAwait(false);
         await t2.ConfigureAwait(false);
     }
@@ -143,7 +143,7 @@ public partial class TsavoriteBase
 
     private async ValueTask IsMainIndexCheckpointCompletedAsync(CancellationToken token = default)
     {
-        var s = mainIndexCheckpointSemaphore;
+        SemaphoreSlim s = mainIndexCheckpointSemaphore;
         await s.WaitAsync(token).ConfigureAwait(false);
         s.Release();
     }
@@ -151,7 +151,7 @@ public partial class TsavoriteBase
     private unsafe void AsyncPageFlushCallback(uint errorCode, uint numBytes, object context)
     {
         // Set the page status to flushed
-        var mem = ((HashIndexPageAsyncFlushResult)context).mem;
+        SectorAlignedMemory mem = ((HashIndexPageAsyncFlushResult)context).mem;
         mem?.Dispose();
 
         if (errorCode != 0)

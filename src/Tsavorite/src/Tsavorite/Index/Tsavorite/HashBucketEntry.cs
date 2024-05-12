@@ -60,7 +60,7 @@ internal struct HashBucketEntry
 
     public override readonly string ToString()
     {
-        var addrRC = ReadCache ? "(rc)" : string.Empty;
+        string addrRC = ReadCache ? "(rc)" : string.Empty;
         static string bstr(bool value) => value ? "T" : "F";
         return $"addr {AbsoluteAddress}{addrRC}, tag {Tag}, tent {bstr(Tentative)}";
     }

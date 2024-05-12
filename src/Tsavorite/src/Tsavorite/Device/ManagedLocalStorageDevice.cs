@@ -60,7 +60,7 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     {
         while (logHandles.Count > 0)
         {
-            foreach (var entry in logHandles)
+            foreach (KeyValuePair<int, (AsyncPool<Stream>, AsyncPool<Stream>)> entry in logHandles)
             {
                 if (logHandles.TryRemove(entry.Key, out _))
                 {
@@ -355,8 +355,8 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     public override long GetFileSize(int segment)
     {
         if (segmentSize > 0) return segmentSize;
-        var pool = GetOrAddHandle(segment);
-        if (!pool.Item1.TryGet(out var stream))
+        (AsyncPool<Stream>, AsyncPool<Stream>) pool = GetOrAddHandle(segment);
+        if (!pool.Item1.TryGet(out Stream stream))
             stream = pool.Item1.Get();
 
         long size = stream.Length;
@@ -371,7 +371,7 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
     public override void Dispose()
     {
         _disposed = true;
-        foreach (var entry in logHandles)
+        foreach (KeyValuePair<int, (AsyncPool<Stream>, AsyncPool<Stream>)> entry in logHandles)
         {
             entry.Value.Item1.Dispose();
             entry.Value.Item2.Dispose();
@@ -448,16 +448,16 @@ public sealed class ManagedLocalStorageDevice : StorageDeviceBase
 
     private (AsyncPool<Stream>, AsyncPool<Stream>) GetOrAddHandle(int _segmentId)
     {
-        if (logHandles.TryGetValue(_segmentId, out var h))
+        if (logHandles.TryGetValue(_segmentId, out (AsyncPool<Stream>, AsyncPool<Stream>) h))
         {
             return h;
         }
-        var result = logHandles.GetOrAdd(_segmentId, AddHandle);
+        (AsyncPool<Stream>, AsyncPool<Stream>) result = logHandles.GetOrAdd(_segmentId, AddHandle);
 
         if (_disposed)
         {
             // If disposed, dispose the fixed pools and return the (disposed) result
-            foreach (var entry in logHandles)
+            foreach (KeyValuePair<int, (AsyncPool<Stream>, AsyncPool<Stream>)> entry in logHandles)
             {
                 entry.Value.Item1.Dispose();
                 entry.Value.Item2.Dispose();

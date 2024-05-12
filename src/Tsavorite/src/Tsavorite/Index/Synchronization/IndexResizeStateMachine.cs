@@ -22,7 +22,7 @@ internal sealed class IndexResizeTask : ISynchronizationTask
                 break;
             case Phase.IN_PROGRESS_GROW:
                 // Set up the transition to new version of HT
-                var numChunks = (int)(store.state[store.resizeInfo.version].size / Constants.kSizeofChunk);
+                int numChunks = (int)(store.state[store.resizeInfo.version].size / Constants.kSizeofChunk);
                 if (numChunks == 0) numChunks = 1; // at least one chunk
 
                 store.numPendingChunksToBeSplit = numChunks;

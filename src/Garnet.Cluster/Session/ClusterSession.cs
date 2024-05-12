@@ -149,7 +149,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             // Debug.WriteLine("SEND: [" + Encoding.UTF8.GetString(new Span<byte>(d, (int)(dcurr - d))).Replace("\n", "|").Replace("\r", "!") + "]");
             if (clusterProvider.storeWrapper.appendOnlyFile != null && clusterProvider.storeWrapper.serverOptions.WaitForCommit)
             {
-                var task = clusterProvider.storeWrapper.appendOnlyFile.WaitForCommitAsync();
+                ValueTask task = clusterProvider.storeWrapper.appendOnlyFile.WaitForCommitAsync();
                 if (!task.IsCompleted) task.AsTask().GetAwaiter().GetResult();
             }
             int sendBytes = (int)(dcurr - d);
@@ -228,8 +228,8 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     {
         success = false;
 
-        var ptr = recvBufferPtr + readHead;
-        var end = recvBufferPtr + bytesRead;
+        byte* ptr = recvBufferPtr + readHead;
+        byte* end = recvBufferPtr + bytesRead;
 
         // Try to read the command length
         if (!RespReadUtils.ReadLengthHeader(out int length, ref ptr, end))
@@ -252,7 +252,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
         }
 
         success = true;
-        var result = bufSpan.Slice(readHead, length);
+        ReadOnlySpan<byte> result = bufSpan.Slice(readHead, length);
         readHead += length + 2;
 
         return result;

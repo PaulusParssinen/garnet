@@ -22,7 +22,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         if (functionsState.StoredProcMode) return;
         var header = (RespInputHeader*)input.ToPointer();
         header->flags |= RespInputFlags.Deterministic;
-        var valueBytes = GarnetObjectSerializer.Serialize(value);
+        byte[] valueBytes = GarnetObjectSerializer.Serialize(value);
         fixed (byte* ptr = key)
         {
             fixed (byte* valPtr = valueBytes)
@@ -76,7 +76,7 @@ public readonly unsafe partial struct ObjectStoreFunctions : IFunctions<byte[], 
         byte* curr = dst.SpanByte.ToPointer();
         byte* end = curr + dst.SpanByte.Length;
         int totalLen = 0;
-        if (RespWriteUtils.WriteInteger(number, ref curr, end, out var integerLen, out totalLen))
+        if (RespWriteUtils.WriteInteger(number, ref curr, end, out int integerLen, out totalLen))
         {
             dst.SpanByte.Length = (int)(curr - dst.SpanByte.ToPointer());
             return;

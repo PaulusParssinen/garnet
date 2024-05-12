@@ -68,7 +68,7 @@ internal sealed class OverflowPool<T> : IDisposable
     public void Dispose()
     {
         disposed = true;
-        while (itemQueue.TryDequeue(out var item))
+        while (itemQueue.TryDequeue(out T item))
             disposer(item);
     }
 }

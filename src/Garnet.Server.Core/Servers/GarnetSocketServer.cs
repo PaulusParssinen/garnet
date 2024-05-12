@@ -91,7 +91,7 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
         Address = address;
         Port = port;
         networkPool = new LimitedFixedBufferPool(BufferSizeUtils.ServerBufferSize(new MaxSizeSettings()), logger: logger);
-        var ip = string.IsNullOrEmpty(Address) ? IPAddress.Any : IPAddress.Parse(Address);
+        IPAddress ip = string.IsNullOrEmpty(Address) ? IPAddress.Any : IPAddress.Parse(Address);
         servSocket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
         acceptEventArg = new SocketAsyncEventArgs();
@@ -137,9 +137,9 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
     /// </summary>
     public IEnumerable<IMessageConsumer> ActiveConsumers()
     {
-        foreach (var kvp in activeHandlers)
+        foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
         {
-            var consumer = kvp.Key.Session;
+            IMessageConsumer consumer = kvp.Key.Session;
             if (consumer != null)
                 yield return consumer;
         }
@@ -150,9 +150,9 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
     /// </summary>
     public IEnumerable<IClusterSession> ActiveClusterSessions()
     {
-        foreach (var kvp in activeHandlers)
+        foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
         {
-            var consumer = kvp.Key.Session;
+            IMessageConsumer consumer = kvp.Key.Session;
             if (consumer != null)
                 yield return ((RespServerSession)consumer).clusterSession;
         }
@@ -197,9 +197,9 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
         {
             while (activeHandlerCount > 0)
             {
-                foreach (var kvp in activeHandlers)
+                foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
                 {
-                    var _handler = kvp.Key;
+                    INetworkHandler _handler = kvp.Key;
                     _handler?.Dispose();
                 }
                 Thread.Yield();
@@ -230,7 +230,7 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
     /// </summary>
     public void Start()
     {
-        var ip = Address == null ? IPAddress.Any : IPAddress.Parse(Address);
+        IPAddress ip = Address == null ? IPAddress.Any : IPAddress.Parse(Address);
         var endPoint = new IPEndPoint(ip, Port);
         servSocket.Bind(endPoint);
         servSocket.Listen(512);
@@ -310,9 +310,9 @@ public class GarnetSocketServer : IGarnetServer, IServerHook
 
         WireFormat protocol = WireFormat.ASCII;
 
-        if (!GetSessionProviders().TryGetValue(protocol, out var provider))
+        if (!GetSessionProviders().TryGetValue(protocol, out ISessionProvider provider))
         {
-            var input = System.Text.Encoding.ASCII.GetString(bytes);
+            string input = System.Text.Encoding.ASCII.GetString(bytes);
             logger?.LogError("Cannot identify wire protocol {bytes}", input);
             throw new Exception($"Unsupported incoming wire format {protocol} {input}");
         }

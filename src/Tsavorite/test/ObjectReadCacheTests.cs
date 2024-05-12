@@ -43,7 +43,7 @@ internal class ObjectReadCacheTests
     [Category("Smoke")]
     public void ObjectDiskWriteReadCache()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         MyInput input = default;
 
@@ -65,7 +65,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -77,7 +77,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.value, output.value.value);
         }
@@ -92,7 +92,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -104,7 +104,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.value, output.value.value);
         }
@@ -123,7 +123,7 @@ internal class ObjectReadCacheTests
         {
             var key1 = new MyKey { key = i };
             input = new MyInput { value = 1 };
-            var status = session.RMW(ref key1, ref input, Empty.Default, 0);
+            Status status = session.RMW(ref key1, ref input, Empty.Default, 0);
             if (status.IsPending)
                 session.CompletePending(true);
         }
@@ -135,7 +135,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found, $"key = {key1.key}");
             Assert.AreEqual(value.value, output.value.value);
         }
@@ -145,7 +145,7 @@ internal class ObjectReadCacheTests
     [Category("TsavoriteKV")]
     public void ObjectDiskWriteReadCache2()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         MyInput input = default;
 
@@ -167,7 +167,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -179,7 +179,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.value, output.value.value);
         }
@@ -194,7 +194,7 @@ internal class ObjectReadCacheTests
             var key1 = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.IsPending);
             session.CompletePending(true);
         }
@@ -206,7 +206,7 @@ internal class ObjectReadCacheTests
             MyKey key1 = new() { key = i };
             MyValue value = new() { value = i };
 
-            var status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key1, ref input, ref output, Empty.Default, 0);
             Assert.IsTrue(status.Found);
             Assert.AreEqual(value.value, output.value.value);
         }

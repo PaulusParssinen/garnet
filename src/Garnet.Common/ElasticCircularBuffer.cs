@@ -58,7 +58,7 @@ sealed class CircularBuffer<T>
         }
         int oldhead = head;
         head = (head + 1) & DefaultCapacity;
-        var ret = Items[oldhead];
+        T ret = Items[oldhead];
         Items[oldhead] = default;
         return ret;
     }
@@ -112,7 +112,7 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
         if (tail.Value.IsFull())
         {
             tail.Value.Sealed = true;
-            var next = tail.Next;
+            LinkedListNode<CircularBuffer<T>> next = tail.Next;
             if (next == null) next = buffers.First;
             if (next.Value.Sealed)
             {
@@ -151,7 +151,7 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
             if (head == tail)
                 throw new InvalidOperationException("The outer list is empty!");
 
-            var temp = head;
+            LinkedListNode<CircularBuffer<T>> temp = head;
             head = head.Next;
             if (head == null) head = buffers.First;
             temp.Value.Sealed = false;
@@ -171,7 +171,7 @@ public sealed class ElasticCircularBuffer<T> : IEnumerable<T>
             if (head == tail)
                 throw new InvalidOperationException("The list is empty!");
 
-            var temp = head;
+            LinkedListNode<CircularBuffer<T>> temp = head;
             head = head.Next;
             if (head == null) head = buffers.First;
             temp.Value.Sealed = false;

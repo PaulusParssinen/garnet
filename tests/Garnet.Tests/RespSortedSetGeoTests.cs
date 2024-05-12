@@ -142,7 +142,7 @@ public class RespSortedSetGeoTests
     public void CanUseGeoAdd()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         var entries = new GeoEntry[cities.GetLength(0)];
         for (int j = 0; j < cities.GetLength(0); j++)
         {
@@ -151,12 +151,12 @@ public class RespSortedSetGeoTests
                 double.Parse(cities[j, 1], CultureInfo.InvariantCulture),
                 new RedisValue(cities[j, 2]));
         }
-        var response = db.GeoAdd(new RedisKey("cities"), entries, CommandFlags.None);
+        long response = db.GeoAdd(new RedisKey("cities"), entries, CommandFlags.None);
         Assert.AreEqual(23, response);
 
-        var memresponse = db.Execute("MEMORY", "USAGE", "cities");
-        var actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
-        var expectedResponse = 3944;
+        RedisResult memresponse = db.Execute("MEMORY", "USAGE", "cities");
+        int actualValue = ResultType.Integer == memresponse.Type ? int.Parse(memresponse.ToString()) : -1;
+        int expectedResponse = 3944;
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -165,7 +165,7 @@ public class RespSortedSetGeoTests
     public void CanUseGeoAddWhenLTM()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var entries = new GeoEntry[worldcities.GetLength(0)];
         for (int j = 0; j < worldcities.GetLength(0); j++)
@@ -179,10 +179,10 @@ public class RespSortedSetGeoTests
         //Number of objects that will trigger pending status in object store
         for (int j = 0; j < 1300; j++)
         {
-            var response = db.GeoAdd(new RedisKey($"worldcities-{j}"), entries, CommandFlags.None);
+            long response = db.GeoAdd(new RedisKey($"worldcities-{j}"), entries, CommandFlags.None);
         }
 
-        var nkeys = db.Execute("DBSIZE");
+        RedisResult nkeys = db.Execute("DBSIZE");
 
         Assert.IsTrue(((RedisValue)nkeys) == 1300);
     }
@@ -192,15 +192,15 @@ public class RespSortedSetGeoTests
     public void CanUseGeoPos()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.GeoAdd(new RedisKey("Sicily"), 13.361389, 38.115556, new RedisValue("Palermo"), CommandFlags.None);
-        var response = db.GeoPosition(new RedisKey("Sicily"), ["Palermo", "Unknown"]);
+        GeoPosition?[] response = db.GeoPosition(new RedisKey("Sicily"), ["Palermo", "Unknown"]);
         Assert.AreEqual(2, response.Length);
         Assert.AreEqual(default(GeoPosition), response[1]);
 
-        var memresponse = db.Execute("MEMORY", "USAGE", "Sicily");
-        var actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
-        var expectedResponse = 344;
+        RedisResult memresponse = db.Execute("MEMORY", "USAGE", "Sicily");
+        int actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        int expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
 
         db.GeoAdd(new RedisKey("SecondKey"), 13.361389, 38.115556, new RedisValue("Palermo"));
@@ -213,7 +213,7 @@ public class RespSortedSetGeoTests
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var responseHash = db.GeoHash(new RedisKey("SecondKey"), ["Palermo"]);
+        string[] responseHash = db.GeoHash(new RedisKey("SecondKey"), ["Palermo"]);
         Assert.AreEqual(1, responseHash.Length);
         Assert.AreEqual("sqc8b49rnyt", responseHash[0]);
 
@@ -227,7 +227,7 @@ public class RespSortedSetGeoTests
     public void CanValidateUnknownWithNotSupportedOptions()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         var key = new RedisKey("Sicily");
         db.GeoAdd(key, 13.361389, 38.115556, new RedisValue("Palermo"), CommandFlags.None);
         var box = new GeoSearchBox(500, 500, GeoUnit.Kilometers);
@@ -246,7 +246,7 @@ public class RespSortedSetGeoTests
     public void CanUseGeoSearchWithCities(int bytesSent)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         var entries = new GeoEntry[cities.GetLength(0)];
         for (int j = 0; j < cities.GetLength(0); j++)
         {
@@ -255,15 +255,15 @@ public class RespSortedSetGeoTests
                 double.Parse(cities[j, 1], CultureInfo.InvariantCulture),
                 new RedisValue(cities[j, 2]));
         }
-        var response = db.GeoAdd(new RedisKey("cities"), entries, CommandFlags.None);
+        long response = db.GeoAdd(new RedisKey("cities"), entries, CommandFlags.None);
         Assert.AreEqual(23, response);
 
         //TODO: Assert values for latitude and longitude
         //TODO: Review precision to use for all framework versions
         using var lightClientRequest = TestUtils.CreateRequest();
         var responseBuf = lightClientRequest.SendCommands("GEOSEARCH cities FROMMEMBER Washington BYBOX 800 800 km WITHCOORD WITHDIST WITHHASH", "PING", 16);
-        var expectedResponse = "*3\r\n$10\r\nWashington\r\n$1\r\n0\r\n*2\r\n$12\r\n-77.03687042\r\n$10\r\n38.9071919\r\n$12\r\nPhiladelphia\r\n$16\r\n198.424300439725\r\n*2\r\n$11\r\n-75.1652196\r\n$11\r\n39.95258287\r\n$8\r\nNew York\r\n$16\r\n327.676458633557\r\n*2\r\n$12\r\n-74.00594205\r\n$11\r\n40.71278259\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(responseBuf).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*3\r\n$10\r\nWashington\r\n$1\r\n0\r\n*2\r\n$12\r\n-77.03687042\r\n$10\r\n38.9071919\r\n$12\r\nPhiladelphia\r\n$16\r\n198.424300439725\r\n*2\r\n$11\r\n-75.1652196\r\n$11\r\n39.95258287\r\n$8\r\nNew York\r\n$16\r\n327.676458633557\r\n*2\r\n$12\r\n-74.00594205\r\n$11\r\n40.71278259\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(responseBuf).Substring(0, expectedResponse.Length);
         Assert.IsTrue(actualValue.IndexOf("Washington") != -1);
 
         //Send command in chunks
@@ -282,8 +282,8 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("GEOADD Sicily NX 13.361389 38.115556 Palermo 15.087269 37.502669 Catania", bytesSent);
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // Only update elements, return only the elements changed
@@ -303,8 +303,8 @@ public class RespSortedSetGeoTests
         using var lightClientRequest = TestUtils.CreateRequest();
         //only Catania pair is added
         var response = lightClientRequest.SendCommands("GEOADD Sicily 113.361389 338.115556 Palermo 15.087269 37.502669 Catania", "PING");
-        var expectedResponse = ":1\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         //no pairs are added
@@ -322,7 +322,7 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = ":2\r\n+PONG\r\n";
+        string expectedResponse = ":2\r\n+PONG\r\n";
         var response = lightClientRequest.Execute("GEOADD Sicily 13.361389 38.115556 Palermo 15.087269 37.502669 Catania", "PING", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -348,7 +348,7 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = ":2\r\n+PONG\r\n";
+        string expectedResponse = ":2\r\n+PONG\r\n";
         var response = lightClientRequest.Execute("GEOADD Sicily 13.361389 38.115556 Palermo 15.087269 37.502669 Catania", "PING", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -386,8 +386,8 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("GEOADD Sicily 13.361389 38.115556 Palermo 15.087269 37.502669 Catania", bytesSent);
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommands("GEODIST Sicily Palermo Unknown", "PING");
@@ -409,7 +409,7 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(countResponseLength: true);
 
-        var expectedResponse = ":2\r\n+PONG\r\n";
+        string expectedResponse = ":2\r\n+PONG\r\n";
         var response = lightClientRequest.Execute("GEOADD Sicily 13.361389 38.115556 Palermo 15.087269 37.502669 Catania", "PING", expectedResponse.Length, bytesSent);
         Assert.AreEqual(expectedResponse, response);
 
@@ -430,8 +430,8 @@ public class RespSortedSetGeoTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("GEOADD Sicily 13.361389 38.115556", "PING");
-        var expectedResponse = $"-{string.Format(CmdStrings.GenericErrWrongNumArgs, "GEOADD")}\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"-{string.Format(CmdStrings.GenericErrWrongNumArgs, "GEOADD")}\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommandChunks("GEOADD Sicily 13.361389 38.115556", bytesSent);
@@ -449,12 +449,12 @@ public class RespSortedSetGeoTests
         double latitude = 30.5388942218;
         double longitude = 104.0555758833;
 
-        var r = GeoHash.GeoToLongValue(latitude, longitude);
+        long r = GeoHash.GeoToLongValue(latitude, longitude);
         Assert.AreEqual(4024744861876082, r);
-        var coord = GeoHash.GetCoordinatesFromLong(r);
+        (double, double) coord = GeoHash.GetCoordinatesFromLong(r);
 
         //Assert difference is not higher than "0.000001" using fixed point format
-        var diff = (Math.Round(latitude, 9) - Math.Round(coord.Item1, 9)).ToString("F6", CultureInfo.InvariantCulture);
+        string diff = (Math.Round(latitude, 9) - Math.Round(coord.Item1, 9)).ToString("F6", CultureInfo.InvariantCulture);
         Assert.IsTrue(double.Parse(diff, CultureInfo.InvariantCulture) <= 0.000001);
     }
 
@@ -464,11 +464,11 @@ public class RespSortedSetGeoTests
         double latitude = 37.502669;
         double longitude = 15.087269;
 
-        var r = GeoHash.GeoToLongValue(latitude, longitude);
+        long r = GeoHash.GeoToLongValue(latitude, longitude);
         Assert.AreEqual(3476216502357864, r);
 
         // Only check the first 10 chars
-        var geoHash = GeoHash.GetGeoHashCode(r).Substring(0, 9);
+        string geoHash = GeoHash.GetGeoHashCode(r).Substring(0, 9);
         Assert.IsTrue("sqdtr74hyu0".IndexOf(geoHash) == 0);
 
         longitude = 13.361389;

@@ -58,7 +58,7 @@ internal class ThreadSession<K, V, I, O, C, F>
 
         while (true)
         {
-            var cmd = q.DequeueAsync().Result;
+            string cmd = q.DequeueAsync().Result;
             switch (cmd)
             {
                 case "refresh":
@@ -128,7 +128,7 @@ internal class LUCThreadSession<K, V, I, O, C, F>
 
         while (true)
         {
-            var cmd = q.DequeueAsync().Result;
+            string cmd = q.DequeueAsync().Result;
             switch (cmd)
             {
                 case "refresh":

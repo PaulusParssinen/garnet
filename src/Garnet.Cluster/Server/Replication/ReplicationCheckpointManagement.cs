@@ -13,7 +13,7 @@ internal sealed partial class ReplicationManager : IDisposable
     public void InitializeCheckpointStore()
     {
         checkpointStore.Initialize();
-        var cEntry = checkpointStore.GetLatestCheckpointEntryFromMemory();
+        CheckpointEntry cEntry = checkpointStore.GetLatestCheckpointEntryFromMemory();
         aofTaskStore.UpdateTruncatedUntil(cEntry.GetMinAofCoveredAddress());
         cEntry.RemoveReader();
     }

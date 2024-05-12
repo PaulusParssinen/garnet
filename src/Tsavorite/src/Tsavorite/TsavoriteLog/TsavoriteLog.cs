@@ -220,7 +220,7 @@ public sealed class TsavoriteLog : IDisposable
     /// </summary>
     public void Reset()
     {
-        var beginAddress = allocator.GetFirstValidLogicalAddress(0);
+        long beginAddress = allocator.GetFirstValidLogicalAddress(0);
         allocator.Reset();
         CommittedUntilAddress = beginAddress;
         CommittedBeginAddress = beginAddress;
@@ -293,7 +293,7 @@ public sealed class TsavoriteLog : IDisposable
         var log = new TsavoriteLog(logSettings, false);
         if (logSettings.TryRecoverLatest)
         {
-            var (it, cookie) = await log.RestoreLatestAsync(cancellationToken).ConfigureAwait(false);
+            (Dictionary<string, long> it, byte[] cookie) = await log.RestoreLatestAsync(cancellationToken).ConfigureAwait(false);
             log.RecoveredIterators = it;
             log.RecoveredCookie = cookie;
         }
@@ -485,7 +485,7 @@ public sealed class TsavoriteLog : IDisposable
     public unsafe bool TryEnqueue<T>(T entry, out long logicalAddress) where T : ILogEnqueueEntry
     {
         logicalAddress = 0;
-        var length = entry.SerializedLength;
+        int length = entry.SerializedLength;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -502,7 +502,7 @@ public sealed class TsavoriteLog : IDisposable
                 return false;
             }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
         entry.SerializeTo(new Span<byte>((void*)(headerSize + physicalAddress), length));
         SetHeader(length, (byte*)physicalAddress);
         if (AutoRefreshSafeTailAddress) DoAutoRefreshSafeTailAddress();
@@ -523,8 +523,8 @@ public sealed class TsavoriteLog : IDisposable
     {
         logicalAddress = 0;
 
-        var allocatedLength = 0;
-        foreach (var entry in entries)
+        int allocatedLength = 0;
+        foreach (T entry in entries)
         {
             allocatedLength += Align(entry.SerializedLength) + headerSize;
         }
@@ -543,10 +543,10 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
-        foreach (var entry in entries)
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        foreach (T entry in entries)
         {
-            var length = entry.SerializedLength;
+            int length = entry.SerializedLength;
             entry.SerializeTo(new Span<byte>((void*)(headerSize + physicalAddress), length));
             SetHeader(length, (byte*)physicalAddress);
             physicalAddress += Align(length) + headerSize;
@@ -567,7 +567,7 @@ public sealed class TsavoriteLog : IDisposable
     public unsafe bool TryEnqueue(byte[] entry, out long logicalAddress)
     {
         logicalAddress = 0;
-        var length = entry.Length;
+        int length = entry.Length;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -584,7 +584,7 @@ public sealed class TsavoriteLog : IDisposable
                 return false;
             }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
         fixed (byte* bp = entry)
             Buffer.MemoryCopy(bp, (void*)(headerSize + physicalAddress), length, length);
         SetHeader(length, (byte*)physicalAddress);
@@ -625,7 +625,7 @@ public sealed class TsavoriteLog : IDisposable
                 return false;
             }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
         entryBytes.CopyTo(new Span<byte>((byte*)physicalAddress, length));
         if (AutoRefreshSafeTailAddress) DoAutoRefreshSafeTailAddress();
         epoch.Suspend();
@@ -643,7 +643,7 @@ public sealed class TsavoriteLog : IDisposable
     public unsafe bool TryEnqueue(ReadOnlySpan<byte> entry, out long logicalAddress)
     {
         logicalAddress = 0;
-        var length = entry.Length;
+        int length = entry.Length;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -659,7 +659,7 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
         fixed (byte* bp = &entry.GetPinnableReference())
             Buffer.MemoryCopy(bp, (void*)(headerSize + physicalAddress), length, length);
         SetHeader(length, (byte*)physicalAddress);
@@ -678,7 +678,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader);
+        int length = sizeof(THeader);
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -686,7 +686,7 @@ public sealed class TsavoriteLog : IDisposable
 
         logicalAddress = AllocateBlock(allocatedLength);
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         SetHeader(length, physicalAddress);
         if (AutoRefreshSafeTailAddress) DoAutoRefreshSafeTailAddress();
@@ -704,7 +704,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader) + item.TotalSize;
+        int length = sizeof(THeader) + item.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -712,7 +712,7 @@ public sealed class TsavoriteLog : IDisposable
 
         logicalAddress = AllocateBlock(allocatedLength);
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         item.CopyTo(physicalAddress + headerSize + sizeof(THeader));
         SetHeader(length, physicalAddress);
@@ -732,7 +732,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader) + item1.TotalSize + item2.TotalSize;
+        int length = sizeof(THeader) + item1.TotalSize + item2.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -740,7 +740,7 @@ public sealed class TsavoriteLog : IDisposable
 
         logicalAddress = AllocateBlock(allocatedLength);
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         item1.CopyTo(physicalAddress + headerSize + sizeof(THeader));
         item2.CopyTo(physicalAddress + headerSize + sizeof(THeader) + item1.TotalSize);
@@ -762,7 +762,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader) + item1.TotalSize + item2.TotalSize + item3.TotalSize;
+        int length = sizeof(THeader) + item1.TotalSize + item2.TotalSize + item3.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -770,7 +770,7 @@ public sealed class TsavoriteLog : IDisposable
 
         logicalAddress = AllocateBlock(allocatedLength);
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         item1.CopyTo(physicalAddress + headerSize + sizeof(THeader));
         item2.CopyTo(physicalAddress + headerSize + sizeof(THeader) + item1.TotalSize);
@@ -790,7 +790,7 @@ public sealed class TsavoriteLog : IDisposable
     public unsafe void Enqueue(byte userHeader, ref SpanByte item, out long logicalAddress)
     {
         logicalAddress = 0;
-        var length = sizeof(byte) + item.TotalSize;
+        int length = sizeof(byte) + item.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -798,7 +798,7 @@ public sealed class TsavoriteLog : IDisposable
 
         logicalAddress = AllocateBlock(allocatedLength);
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *physicalAddress = userHeader;
         item.CopyTo(physicalAddress + sizeof(byte));
         SetHeader(length, physicalAddress);
@@ -812,8 +812,8 @@ public sealed class TsavoriteLog : IDisposable
     {
         while (true)
         {
-            var flushEvent = allocator.FlushEvent;
-            var logicalAddress = allocator.TryAllocate(recordSize);
+            CompletionEvent flushEvent = allocator.FlushEvent;
+            long logicalAddress = allocator.TryAllocate(recordSize);
             if (logicalAddress > 0)
                 return logicalAddress;
 
@@ -851,7 +851,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader) + item1.TotalSize + item2.TotalSize;
+        int length = sizeof(THeader) + item1.TotalSize + item2.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -865,7 +865,7 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         item1.CopyTo(physicalAddress + headerSize + sizeof(THeader));
         item2.CopyTo(physicalAddress + headerSize + sizeof(THeader) + item1.TotalSize);
@@ -890,7 +890,7 @@ public sealed class TsavoriteLog : IDisposable
         where THeader : unmanaged
     {
         logicalAddress = 0;
-        var length = sizeof(THeader) + item1.TotalSize + item2.TotalSize + item3.TotalSize;
+        int length = sizeof(THeader) + item1.TotalSize + item2.TotalSize + item3.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -904,7 +904,7 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *(THeader*)(physicalAddress + headerSize) = userHeader;
         item1.CopyTo(physicalAddress + headerSize + sizeof(THeader));
         item2.CopyTo(physicalAddress + headerSize + sizeof(THeader) + item1.TotalSize);
@@ -927,7 +927,7 @@ public sealed class TsavoriteLog : IDisposable
     public unsafe bool TryEnqueue(byte userHeader, ref SpanByte item, out long logicalAddress)
     {
         logicalAddress = 0;
-        var length = sizeof(byte) + item.TotalSize;
+        int length = sizeof(byte) + item.TotalSize;
         int allocatedLength = headerSize + Align(length);
         ValidateAllocatedLength(allocatedLength);
 
@@ -941,7 +941,7 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
+        byte* physicalAddress = (byte*)allocator.GetPhysicalAddress(logicalAddress);
         *physicalAddress = userHeader;
         item.CopyTo(physicalAddress + sizeof(byte));
         SetHeader(length, physicalAddress);
@@ -986,7 +986,7 @@ public sealed class TsavoriteLog : IDisposable
         long logicalAddress;
         while (true)
         {
-            var flushEvent = @this.FlushEvent;
+            CompletionEvent flushEvent = @this.FlushEvent;
             if (@this.TryEnqueue(entry, out logicalAddress))
                 break;
             // Wait for *some* flush - failure can be ignored except if the token was signaled (which the caller should handle correctly)
@@ -1021,7 +1021,7 @@ public sealed class TsavoriteLog : IDisposable
         long logicalAddress;
         while (true)
         {
-            var flushEvent = @this.FlushEvent;
+            CompletionEvent flushEvent = @this.FlushEvent;
             if (@this.TryEnqueue(entry.Span, out logicalAddress))
                 break;
             // Wait for *some* flush - failure can be ignored except if the token was signaled (which the caller should handle correctly)
@@ -1056,7 +1056,7 @@ public sealed class TsavoriteLog : IDisposable
         long logicalAddress;
         while (true)
         {
-            var flushEvent = @this.FlushEvent;
+            CompletionEvent flushEvent = @this.FlushEvent;
             if (@this.TryEnqueue(readOnlySpanBatch, out logicalAddress))
                 break;
             // Wait for *some* flush - failure can be ignored except if the token was signaled (which the caller should handle correctly)
@@ -1093,7 +1093,7 @@ public sealed class TsavoriteLog : IDisposable
         long logicalAddress;
         while (true)
         {
-            var flushEvent = @this.FlushEvent;
+            CompletionEvent flushEvent = @this.FlushEvent;
             if (@this.TryEnqueue(entry, out logicalAddress))
                 break;
             // Wait for *some* flush - failure can be ignored except if the token was signaled (which the caller should handle correctly)
@@ -1130,7 +1130,7 @@ public sealed class TsavoriteLog : IDisposable
         long logicalAddress;
         while (true)
         {
-            var flushEvent = @this.FlushEvent;
+            CompletionEvent flushEvent = @this.FlushEvent;
             if (@this.TryEnqueue(entry, out logicalAddress))
                 break;
             // Wait for *some* flush - failure can be ignored except if the token was signaled (which the caller should handle correctly)
@@ -1179,14 +1179,14 @@ public sealed class TsavoriteLog : IDisposable
     public async ValueTask WaitForCommitAsync(long untilAddress = 0, long commitNum = -1, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
-        var task = CommitTask;
-        var tailAddress = untilAddress;
+        Task<LinkedCommitInfo> task = CommitTask;
+        long tailAddress = untilAddress;
         if (tailAddress == 0) tailAddress = allocator.GetTailAddress();
 
         if (commitNum == -1) commitNum = this.commitNum;
         while (CommittedUntilAddress < tailAddress || persistedCommitNum < commitNum)
         {
-            var linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
+            LinkedCommitInfo linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
             task = linkedCommitInfo.NextTask;
         }
     }
@@ -1207,7 +1207,7 @@ public sealed class TsavoriteLog : IDisposable
 
             if (LogCompleted && nextAddress == TailAddress) return false;
 
-            var tcs = refreshUncommittedTcs;
+            TaskCompletionSource<Empty> tcs = refreshUncommittedTcs;
             if (tcs == null)
             {
                 var newTcs = new TaskCompletionSource<Empty>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1240,10 +1240,10 @@ public sealed class TsavoriteLog : IDisposable
     public void Commit(bool spinWait = false)
     {
         // Take a lower-bound of the content of this commit in case our request is filtered but we need to spin
-        var tail = TailAddress;
-        var lastCommit = commitNum;
+        long tail = TailAddress;
+        long lastCommit = commitNum;
 
-        var success = CommitInternal(out var actualTail, out var actualCommitNum, true, null, -1, null);
+        bool success = CommitInternal(out long actualTail, out long actualCommitNum, true, null, -1, null);
         if (!spinWait) return;
         if (success)
             WaitForCommit(actualTail, actualCommitNum);
@@ -1292,17 +1292,17 @@ public sealed class TsavoriteLog : IDisposable
         token.ThrowIfCancellationRequested();
 
         // Take a lower-bound of the content of this commit in case our request is filtered but we need to wait
-        var tail = TailAddress;
-        var lastCommit = commitNum;
+        long tail = TailAddress;
+        long lastCommit = commitNum;
 
-        var task = CommitTask;
-        var success = CommitInternal(out var actualTail, out var actualCommitNum, true, null, -1, null);
+        Task<LinkedCommitInfo> task = CommitTask;
+        bool success = CommitInternal(out long actualTail, out long actualCommitNum, true, null, -1, null);
 
         if (success)
         {
             while (CommittedUntilAddress < actualTail || persistedCommitNum < actualCommitNum)
             {
-                var linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
+                LinkedCommitInfo linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
                 task = linkedCommitInfo.NextTask;
             }
         }
@@ -1310,7 +1310,7 @@ public sealed class TsavoriteLog : IDisposable
         {
             while (CommittedUntilAddress < tail || persistedCommitNum < lastCommit)
             {
-                var linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
+                LinkedCommitInfo linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
                 task = linkedCommitInfo.NextTask;
             }
         }
@@ -1327,19 +1327,19 @@ public sealed class TsavoriteLog : IDisposable
         token.ThrowIfCancellationRequested();
 
         // Take a lower-bound of the content of this commit in case our request is filtered but we need to spin
-        var tail = TailAddress;
-        var lastCommit = commitNum;
+        long tail = TailAddress;
+        long lastCommit = commitNum;
 
         if (prevCommitTask == null) prevCommitTask = CommitTask;
 
-        var success = CommitInternal(out var actualTail, out var actualCommitNum, true, null, -1, null);
+        bool success = CommitInternal(out long actualTail, out long actualCommitNum, true, null, -1, null);
 
 
         if (success)
         {
             while (CommittedUntilAddress < actualTail || persistedCommitNum < actualCommitNum)
             {
-                var linkedCommitInfo = await prevCommitTask.WithCancellationAsync(token).ConfigureAwait(false);
+                LinkedCommitInfo linkedCommitInfo = await prevCommitTask.WithCancellationAsync(token).ConfigureAwait(false);
                 if (linkedCommitInfo.CommitInfo.UntilAddress < actualTail || persistedCommitNum < actualCommitNum)
                     prevCommitTask = linkedCommitInfo.NextTask;
                 else
@@ -1350,7 +1350,7 @@ public sealed class TsavoriteLog : IDisposable
         {
             while (CommittedUntilAddress < tail || persistedCommitNum < lastCommit)
             {
-                var linkedCommitInfo = await prevCommitTask.WithCancellationAsync(token).ConfigureAwait(false);
+                LinkedCommitInfo linkedCommitInfo = await prevCommitTask.WithCancellationAsync(token).ConfigureAwait(false);
                 if (linkedCommitInfo.CommitInfo.UntilAddress < actualTail || persistedCommitNum < actualCommitNum)
                     prevCommitTask = linkedCommitInfo.NextTask;
                 else
@@ -1378,13 +1378,13 @@ public sealed class TsavoriteLog : IDisposable
     public async ValueTask<(bool success, long commitTail, long actualCommitNum)> CommitStronglyAsync(byte[] cookie = null, long proposedCommitNum = -1, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
-        var task = CommitTask;
-        if (!CommitInternal(out var commitTail, out var actualCommitNum, false, cookie, proposedCommitNum, null))
+        Task<LinkedCommitInfo> task = CommitTask;
+        if (!CommitInternal(out long commitTail, out long actualCommitNum, false, cookie, proposedCommitNum, null))
             return (false, commitTail, actualCommitNum);
 
         while (CommittedUntilAddress < commitTail || persistedCommitNum < actualCommitNum)
         {
-            var linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
+            LinkedCommitInfo linkedCommitInfo = await task.WithCancellationAsync(token).ConfigureAwait(false);
             task = linkedCommitInfo.NextTask;
         }
 
@@ -1971,10 +1971,10 @@ public sealed class TsavoriteLog : IDisposable
     {
         if (Utility.MonotonicUpdate(ref SafeTailAddress, tailAddress, out long oldSafeTailAddress))
         {
-            var tcs = refreshUncommittedTcs;
+            TaskCompletionSource<Empty> tcs = refreshUncommittedTcs;
             if (tcs != null && Interlocked.CompareExchange(ref refreshUncommittedTcs, null, tcs) == tcs)
                 tcs.SetResult(Empty.Default);
-            var _callback = SafeTailShiftCallback;
+            Action<long, long> _callback = SafeTailShiftCallback;
             if (_callback != null)
             {
                 // We invoke callback outside epoch protection
@@ -2012,14 +2012,14 @@ public sealed class TsavoriteLog : IDisposable
 
     private unsafe bool TryEnqueueCommitRecord(ref TsavoriteLogRecoveryInfo info)
     {
-        var entryBodySize = info.SerializedSize();
+        int entryBodySize = info.SerializedSize();
 
         int allocatedLength = headerSize + Align(entryBodySize);
         ValidateAllocatedLength(allocatedLength);
 
         epoch.Resume();
 
-        var logicalAddress = allocator.TryAllocateRetryNow(allocatedLength);
+        long logicalAddress = allocator.TryAllocateRetryNow(allocatedLength);
         if (logicalAddress == 0)
         {
             epoch.Suspend();
@@ -2029,9 +2029,9 @@ public sealed class TsavoriteLog : IDisposable
         info.BeginAddress = BeginAddress;
         info.UntilAddress = logicalAddress + allocatedLength;
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
 
-        var entryBody = info.ToByteArray();
+        byte[] entryBody = info.ToByteArray();
         fixed (byte* bp = entryBody)
             Buffer.MemoryCopy(bp, (void*)(headerSize + physicalAddress), entryBody.Length, entryBody.Length);
         SetCommitRecordHeader(entryBody.Length, (byte*)physicalAddress);
@@ -2048,8 +2048,8 @@ public sealed class TsavoriteLog : IDisposable
 
     private void CommitMetadataOnly(ref TsavoriteLogRecoveryInfo info)
     {
-        var fromAddress = CommittedUntilAddress > info.BeginAddress ? CommittedUntilAddress : info.BeginAddress;
-        var untilAddress = FlushedUntilAddress > info.BeginAddress ? FlushedUntilAddress : info.BeginAddress;
+        long fromAddress = CommittedUntilAddress > info.BeginAddress ? CommittedUntilAddress : info.BeginAddress;
+        long untilAddress = FlushedUntilAddress > info.BeginAddress ? FlushedUntilAddress : info.BeginAddress;
 
         CommitCallback(new CommitInfo
         {
@@ -2104,7 +2104,7 @@ public sealed class TsavoriteLog : IDisposable
                 $"Commit of address range [{commitInfo.FromAddress}-{commitInfo.UntilAddress}] failed with error code {commitInfo.ErrorCode}");
             if (tolerateDeviceFailure)
             {
-                var oldCommitTcs = commitTcs;
+                TaskCompletionSource<LinkedCommitInfo> oldCommitTcs = commitTcs;
                 commitTcs = new TaskCompletionSource<LinkedCommitInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
                 oldCommitTcs.TrySetException(exception);
                 // Silently set flushed until past this range
@@ -2125,7 +2125,7 @@ public sealed class TsavoriteLog : IDisposable
         {
             while (ongoingCommitRequests.Count != 0)
             {
-                var (addr, recoveryInfo) = ongoingCommitRequests.Peek();
+                (long addr, TsavoriteLogRecoveryInfo recoveryInfo) = ongoingCommitRequests.Peek();
                 if (addr > commitInfo.UntilAddress) break;
                 coveredCommits.Add(recoveryInfo);
                 ongoingCommitRequests.Dequeue();
@@ -2136,19 +2136,19 @@ public sealed class TsavoriteLog : IDisposable
         // commit task tracking.
         if (coveredCommits.Count == 0) return;
 
-        var latestCommit = coveredCommits[coveredCommits.Count - 1];
+        TsavoriteLogRecoveryInfo latestCommit = coveredCommits[coveredCommits.Count - 1];
         if (fastCommitMode)
         {
             // In fast commit mode, can safely set committed state to the latest flushed and invoke callbacks early
             UpdateCommittedState(latestCommit);
-            foreach (var recoveryInfo in coveredCommits)
+            foreach (TsavoriteLogRecoveryInfo recoveryInfo in coveredCommits)
             {
                 recoveryInfo.Callback?.Invoke();
                 commitPolicy.OnCommitFinished(recoveryInfo);
             }
         }
 
-        foreach (var recoveryInfo in coveredCommits)
+        foreach (TsavoriteLogRecoveryInfo recoveryInfo in coveredCommits)
         {
             // Only write out commit metadata if user cares about this as a distinct recoverable point
             if (!recoveryInfo.FastForwardAllowed) WriteCommitMetadata(recoveryInfo);
@@ -2163,7 +2163,7 @@ public sealed class TsavoriteLog : IDisposable
         if (latestCommit.FastForwardAllowed) WriteCommitMetadata(latestCommit);
 
         // TODO: Can invoke earlier in the case of fast commit
-        var _commitTcs = commitTcs;
+        TaskCompletionSource<LinkedCommitInfo> _commitTcs = commitTcs;
         commitTcs = new TaskCompletionSource<LinkedCommitInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
         var lci = new LinkedCommitInfo
         {
@@ -2175,16 +2175,16 @@ public sealed class TsavoriteLog : IDisposable
 
     private bool IteratorsChanged(ref TsavoriteLogRecoveryInfo info)
     {
-        var _lastPersistedIterators = LastPersistedIterators;
+        Dictionary<string, long> _lastPersistedIterators = LastPersistedIterators;
         if (_lastPersistedIterators == null)
         {
             return info.Iterators != null && info.Iterators.Count != 0;
         }
         if (info.Iterators == null || _lastPersistedIterators.Count != info.Iterators.Count)
             return true;
-        foreach (var item in _lastPersistedIterators)
+        foreach (KeyValuePair<string, long> item in _lastPersistedIterators)
         {
-            if (info.Iterators.TryGetValue(item.Key, out var other))
+            if (info.Iterators.TryGetValue(item.Key, out long other))
             {
                 if (item.Value != other) return true;
             }
@@ -2223,7 +2223,7 @@ public sealed class TsavoriteLog : IDisposable
         // One RecoverReadOnly use case is to allow a TsavoriteLogIterator to continuously read a mirror TsavoriteLog (over the same log storage) of a primary TsavoriteLog.
         // In this scenario, when the iterator arrives at the tail after a previous call to RestoreReadOnly, it will wait asynchronously until more data
         // is committed and read by a subsequent call to RecoverReadOnly. Here, we signal iterators that we have completed recovery.
-        var _commitTcs = commitTcs;
+        TaskCompletionSource<LinkedCommitInfo> _commitTcs = commitTcs;
         if (commitTcs.Task.Status != TaskStatus.Faulted || commitTcs.Task.Exception.InnerException as CommitFailureException != null)
         {
             commitTcs = new TaskCompletionSource<LinkedCommitInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -2240,7 +2240,7 @@ public sealed class TsavoriteLog : IDisposable
 
     private bool LoadCommitMetadata(long commitNum, out TsavoriteLogRecoveryInfo info)
     {
-        var commitInfo = logCommitManager.GetCommitMetadata(commitNum);
+        byte[] commitInfo = logCommitManager.GetCommitMetadata(commitNum);
         if (commitInfo is null)
         {
             info = default;
@@ -2263,7 +2263,7 @@ public sealed class TsavoriteLog : IDisposable
         TsavoriteLogRecoveryInfo info = new();
 
         long scanStart = 0;
-        foreach (var metadataCommit in logCommitManager.ListCommits())
+        foreach (long metadataCommit in logCommitManager.ListCommits())
         {
             try
             {
@@ -2285,7 +2285,7 @@ public sealed class TsavoriteLog : IDisposable
             allocator.HeadAddress = long.MaxValue;
             try
             {
-                using var scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
+                using TsavoriteLogScanIterator scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
                 scanIterator.ScanForwardForCommit(ref info);
             }
             catch { }
@@ -2308,7 +2308,7 @@ public sealed class TsavoriteLog : IDisposable
 
         if (!readOnlyMode)
         {
-            var headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
+            long headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
             if (info.BeginAddress > headAddress)
                 headAddress = info.BeginAddress;
 
@@ -2345,7 +2345,7 @@ public sealed class TsavoriteLog : IDisposable
 
         // Find the closest commit metadata with commit num smaller than requested
         long scanStart = 0;
-        foreach (var metadataCommit in logCommitManager.ListCommits())
+        foreach (long metadataCommit in logCommitManager.ListCommits())
         {
             if (metadataCommit > requestedCommitNum) continue;
             try
@@ -2374,7 +2374,7 @@ public sealed class TsavoriteLog : IDisposable
             allocator.HeadAddress = long.MaxValue;
             try
             {
-                using var scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
+                using TsavoriteLogScanIterator scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
                 if (!scanIterator.ScanForwardForCommit(ref info, requestedCommitNum))
                     throw new TsavoriteException("requested commit num is not available");
             }
@@ -2385,7 +2385,7 @@ public sealed class TsavoriteLog : IDisposable
         Debug.Assert(info.CommitNum == requestedCommitNum);
         if (!readOnlyMode)
         {
-            var headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
+            long headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
             if (info.BeginAddress > headAddress)
                 headAddress = info.BeginAddress;
 
@@ -2419,7 +2419,7 @@ public sealed class TsavoriteLog : IDisposable
         TsavoriteLogRecoveryInfo info = new();
 
         long scanStart = 0;
-        foreach (var metadataCommit in logCommitManager.ListCommits())
+        foreach (long metadataCommit in logCommitManager.ListCommits())
         {
             try
             {
@@ -2441,7 +2441,7 @@ public sealed class TsavoriteLog : IDisposable
             allocator.HeadAddress = long.MaxValue;
             try
             {
-                using var scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
+                using TsavoriteLogScanIterator scanIterator = Scan(info.UntilAddress, long.MaxValue, recover: false);
                 scanIterator.ScanForwardForCommit(ref info);
             }
             catch { }
@@ -2463,7 +2463,7 @@ public sealed class TsavoriteLog : IDisposable
 
         if (!readOnlyMode)
         {
-            var headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
+            long headAddress = info.UntilAddress - allocator.GetOffsetInPage(info.UntilAddress);
             if (info.BeginAddress > headAddress)
                 headAddress = info.BeginAddress;
 
@@ -2472,8 +2472,8 @@ public sealed class TsavoriteLog : IDisposable
             await allocator.RestoreHybridLogAsync(info.BeginAddress, headAddress, info.UntilAddress, info.UntilAddress, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
-        var iterators = CompleteRestoreFromCommit(info);
-        var cookie = info.Cookie;
+        Dictionary<string, long> iterators = CompleteRestoreFromCommit(info);
+        byte[] cookie = info.Cookie;
         commitNum = info.CommitNum;
         beginAddress = allocator.BeginAddress;
         if (readOnlyMode)
@@ -2491,11 +2491,11 @@ public sealed class TsavoriteLog : IDisposable
         SafeTailAddress = info.UntilAddress;
 
         // Fix uncommitted addresses in iterators
-        var recoveredIterators = info.Iterators;
+        Dictionary<string, long> recoveredIterators = info.Iterators;
         if (recoveredIterators != null)
         {
             List<string> keys = recoveredIterators.Keys.ToList();
-            foreach (var key in keys)
+            foreach (string key in keys)
                 if (recoveredIterators[key] > SafeTailAddress)
                     recoveredIterators[key] = SafeTailAddress;
         }
@@ -2535,11 +2535,11 @@ public sealed class TsavoriteLog : IDisposable
             return false;
         }
 
-        var physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
+        long physicalAddress = allocator.GetPhysicalAddress(logicalAddress);
         for (int i = 0; i < totalEntries; i++)
         {
-            var span = readOnlySpanBatch.Get(i);
-            var entryLength = span.Length;
+            ReadOnlySpan<byte> span = readOnlySpanBatch.Get(i);
+            int entryLength = span.Length;
             fixed (byte* bp = &span.GetPinnableReference())
                 Buffer.MemoryCopy(bp, (void*)(headerSize + physicalAddress), entryLength, entryLength);
             SetHeader(entryLength, (byte*)physicalAddress);
@@ -2564,8 +2564,8 @@ public sealed class TsavoriteLog : IDisposable
         }
         else
         {
-            var record = ctx.record.GetValidPointer();
-            var length = GetLength(record);
+            byte* record = ctx.record.GetValidPointer();
+            int length = GetLength(record);
 
             if (length < 0 || length > allocator.PageSize)
             {
@@ -2622,7 +2622,7 @@ public sealed class TsavoriteLog : IDisposable
         int length;
         unsafe
         {
-            var ptr = record.GetValidPointer();
+            byte* ptr = record.GetValidPointer();
             length = GetLength(ptr);
             if (!VerifyChecksum(ptr, length))
             {
@@ -2647,7 +2647,7 @@ public sealed class TsavoriteLog : IDisposable
         int length;
         unsafe
         {
-            var ptr = record.GetValidPointer();
+            byte* ptr = record.GetValidPointer();
             length = GetLength(ptr);
             if (!VerifyChecksum(ptr, length))
             {
@@ -2673,7 +2673,7 @@ public sealed class TsavoriteLog : IDisposable
         int length;
         unsafe
         {
-            var ptr = record.GetValidPointer();
+            byte* ptr = record.GetValidPointer();
             length = GetLength(ptr);
 
             // forego checksum verification since record may not be read in full by AsyncGetHeaderOnlyFromDiskCallback()
@@ -2705,7 +2705,7 @@ public sealed class TsavoriteLog : IDisposable
             Callback = callback,
         };
         info.SnapshotIterators(PersistedIterators);
-        var commitRequired = ShouldCommmitMetadata(ref info) || (commitCoveredAddress < TailAddress);
+        bool commitRequired = ShouldCommmitMetadata(ref info) || (commitCoveredAddress < TailAddress);
         // Only apply commit policy if not a strong commit
         if (fastForwardAllowed && !commitPolicy.AdmitCommit(TailAddress, commitRequired))
             return false;
@@ -2817,7 +2817,7 @@ public sealed class TsavoriteLog : IDisposable
     {
         if (logChecksum == LogChecksumType.PerEntry)
         {
-            var cs = Utility.XorBytes(ptr + 8, length + 4);
+            ulong cs = Utility.XorBytes(ptr + 8, length + 4);
             if (cs != *(ulong*)ptr)
             {
                 return false;

@@ -135,7 +135,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override bool SendResponse(int offset, int size)
     {
-        var _r = responseObject;
+        GarnetSaeaBuffer _r = responseObject;
         if (_r == null) return false;
         responseObject = null;
         try
@@ -192,7 +192,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
         if (throttleCount < ThrottleMax) return;
 
         // We are throttling, so wait for throttle to be released by some ongoing sender
-        var cnt = Interlocked.Increment(ref throttleCount);
+        int cnt = Interlocked.Increment(ref throttleCount);
         if (cnt < 0)
         {
             Interlocked.Decrement(ref cnt);
@@ -209,7 +209,7 @@ public class GarnetTcpNetworkSender : NetworkSenderBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void Send(Socket socket, GarnetSaeaBuffer sendObject, int offset, int size)
     {
-        var cnt = Interlocked.Increment(ref throttleCount);
+        int cnt = Interlocked.Increment(ref throttleCount);
         if (cnt < 0)
         {
             sendObject.socketEventAsyncArgs.UserToken = sendObject;

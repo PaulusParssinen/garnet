@@ -46,7 +46,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                         ref Context userContext, ref PendingContext<Input, Output, Context> pendingContext, TsavoriteSession tsavoriteSession, long lsn)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var latchOperation = LatchOperation.None;
+        LatchOperation latchOperation = LatchOperation.None;
 
         OperationStackContext<Key, Value> stackCtx = new(keyHash);
         pendingContext.keyHash = keyHash;
@@ -80,7 +80,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // Check for CPR consistency after checking if source is readcache.
             if (tsavoriteSession.Ctx.phase != Phase.REST)
             {
-                var latchDestination = CheckCPRConsistencyUpsert(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
+                LatchDestination latchDestination = CheckCPRConsistencyUpsert(tsavoriteSession.Ctx.phase, ref stackCtx, ref status, ref latchOperation);
                 switch (latchDestination)
                 {
                     case LatchDestination.Retry:
@@ -222,11 +222,11 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                     upsertInfo.UsedValueLength = upsertInfo.FullValueLength = RevivificationManager<Key, Value>.FixedValueLength;
                 else
                 {
-                    var recordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref recordValue, ref srcRecordInfo);
+                    (int usedValueLength, int fullValueLength, int fullRecordLength) recordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref recordValue, ref srcRecordInfo);
                     upsertInfo.FullValueLength = recordLengths.fullValueLength;
 
                     // Input is not included in record-length calculations for Upsert
-                    var (requiredSize, _, _) = hlog.GetRecordSize(ref key, ref value);
+                    (int requiredSize, int _, int _) = hlog.GetRecordSize(ref key, ref value);
                     (ok, upsertInfo.UsedValueLength) = TryReinitializeTombstonedValue<Input, Output, Context, TsavoriteSession>(tsavoriteSession,
                             ref srcRecordInfo, ref key, ref recordValue, requiredSize, recordLengths);
                 }
@@ -357,7 +357,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                                                                                          ref OperationStackContext<Key, Value> stackCtx, ref RecordInfo srcRecordInfo)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var (actualSize, allocatedSize, keySize) = hlog.GetRecordSize(ref key, ref value);   // Input is not included in record-length calculations for Upsert
+        (int actualSize, int allocatedSize, int keySize) = hlog.GetRecordSize(ref key, ref value);   // Input is not included in record-length calculations for Upsert
         AllocateOptions allocOptions = new()
         {
             Recycle = true,
@@ -421,7 +421,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 if (stackCtx.recSrc.LogicalAddress >= GetMinRevivifiableAddress())
                 {
                     // We need to re-get the old record's length because upsertInfo has the new record's info. If freelist-add fails, it remains Sealed/Invalidated.
-                    var oldRecordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref hlog.GetValue(stackCtx.recSrc.PhysicalAddress), ref srcRecordInfo);
+                    (int usedValueLength, int fullValueLength, int fullRecordLength) oldRecordLengths = GetRecordLengths(stackCtx.recSrc.PhysicalAddress, ref hlog.GetValue(stackCtx.recSrc.PhysicalAddress), ref srcRecordInfo);
                     TryTransferToFreeList<Input, Output, Context, TsavoriteSession>(tsavoriteSession, ref stackCtx, ref srcRecordInfo, oldRecordLengths);
                 }
             }

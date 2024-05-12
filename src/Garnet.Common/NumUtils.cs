@@ -96,8 +96,8 @@ public static unsafe class NumUtils
     public static long BytesToLong(int length, byte* source)
     {
         bool fNeg = (*source == '-');
-        var beg = fNeg ? source + 1 : source;
-        var end = source + length;
+        byte* beg = fNeg ? source + 1 : source;
+        byte* end = source + length;
         long result = 0;
         while (beg < end)
             result = result * 10 + (*beg++ - '0');
@@ -113,9 +113,9 @@ public static unsafe class NumUtils
     /// <returns>True if sequence contains only numeric digits, otherwise false</returns>
     public static bool TryBytesToLong(int length, byte* source, out long result)
     {
-        var fNeg = *source == '-';
-        var beg = fNeg ? source + 1 : source;
-        var len = fNeg ? length - 1 : length;
+        bool fNeg = *source == '-';
+        byte* beg = fNeg ? source + 1 : source;
+        int len = fNeg ? length - 1 : length;
         result = 0;
 
         // Do not allow leading zeros
@@ -123,7 +123,7 @@ public static unsafe class NumUtils
             return false;
 
         // Parse number and check consumed bytes to avoid alphanumeric strings
-        if (!Utf8Parser.TryParse(new Span<byte>(beg, len), out result, out var bytesConsumed) || bytesConsumed != len)
+        if (!Utf8Parser.TryParse(new Span<byte>(beg, len), out result, out int bytesConsumed) || bytesConsumed != len)
             return false;
 
         // Negate if parsed value has a leading negative sign
@@ -140,8 +140,8 @@ public static unsafe class NumUtils
     public static ulong BytesToULong(int length, byte* source)
     {
         Debug.Assert(*source != '-');
-        var beg = source;
-        var end = source + length;
+        byte* beg = source;
+        byte* end = source + length;
         ulong result = 0;
         while (beg < end)
             result = result * 10 + (ulong)(*beg++ - '0');
@@ -157,8 +157,8 @@ public static unsafe class NumUtils
     public static int BytesToInt(int length, byte* source)
     {
         bool fNeg = (*source == '-');
-        var beg = fNeg ? source + 1 : source;
-        var end = source + length;
+        byte* beg = fNeg ? source + 1 : source;
+        byte* end = source + length;
         int result = 0;
         while (beg < end)
             result = result * 10 + (*beg++ - '0');
@@ -479,7 +479,7 @@ public static unsafe class NumUtils
         ushort result = 0;
 
 #if NET7_0_OR_GREATER
-        ref var crc16Base = ref MemoryMarshal.GetReference(Crc16Table);
+        ref ushort crc16Base = ref MemoryMarshal.GetReference(Crc16Table);
 #else
         ref var crc16Base = ref MemoryMarshal.GetArrayDataReference(Crc16Table);
 #endif
@@ -511,12 +511,12 @@ public static unsafe class NumUtils
     /// <returns></returns>
     public static unsafe ushort HashSlot(byte* keyPtr, int ksize)
     {
-        var startTag = keyPtr;
-        var end = keyPtr + ksize;
+        byte* startTag = keyPtr;
+        byte* end = keyPtr + ksize;
         while (startTag < end && *startTag++ != '{') ;
         if (startTag < end - 1)
         {
-            var endTag = startTag;
+            byte* endTag = startTag;
             while (endTag < end && *endTag++ != '}') ;
             if (endTag <= end && endTag > startTag + 1)
             {
@@ -538,8 +538,8 @@ public static unsafe class NumUtils
     public static unsafe bool TryBytesToInt(byte* source, int len, out int result)
     {
         bool fNeg = (*source == '-');
-        var beg = fNeg ? source + 1 : source;
-        var start = fNeg ? 1 : 0;
+        byte* beg = fNeg ? source + 1 : source;
+        int start = fNeg ? 1 : 0;
         result = 0;
         for (int i = start; i < len; ++i)
         {

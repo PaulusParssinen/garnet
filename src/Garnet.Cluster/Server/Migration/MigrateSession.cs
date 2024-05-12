@@ -251,7 +251,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <returns></returns>
     public bool TryPrepareLocalForMigration()
     {
-        if (!clusterProvider.clusterManager.TryPrepareSlotsForMigration(_sslots, _targetNodeId, out var resp))
+        if (!clusterProvider.clusterManager.TryPrepareSlotsForMigration(_sslots, _targetNodeId, out ReadOnlySpan<byte> resp))
         {
             Status = MigrateState.FAIL;
             logger?.LogError("{errorMsg}", Encoding.ASCII.GetString(resp));
@@ -266,7 +266,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <returns></returns>
     public bool RelinquishOwnership()
     {
-        if (!clusterProvider.clusterManager.TryPrepareSlotsForOwnershipChange(_sslots, _targetNodeId, out var _))
+        if (!clusterProvider.clusterManager.TryPrepareSlotsForOwnershipChange(_sslots, _targetNodeId, out ReadOnlySpan<byte> _))
             return false;
         return true;
     }

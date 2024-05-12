@@ -135,8 +135,8 @@ internal class AdvancedLockTests
         log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "GenericStringTests.log"), deleteOnClose: true);
         var readCacheSettings = new ReadCacheSettings { MemorySizeBits = 15, PageSizeBits = 9 };
 
-        var concurrencyControlMode = ConcurrencyControlMode.None;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.None;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ConcurrencyControlMode ccm)
             {
@@ -165,7 +165,7 @@ internal class AdvancedLockTests
 
     void Populate(bool evict = false)
     {
-        using var session = store.NewSession<Input, int, Empty, Functions>(new Functions());
+        using ClientSession<int, int, Input, int, Empty, Functions> session = store.NewSession<Input, int, Empty, Functions>(new Functions());
 
         for (int key = 0; key < numKeys; key++)
             session.Upsert(key, key + valueAdd);
@@ -185,9 +185,9 @@ internal class AdvancedLockTests
             Debug.WriteLine($"*** Current test iteration: {TestContext.CurrentContext.CurrentRepeatCount + 1} ***");
         Populate(evict: true);
         using Functions functions = new();
-        using var readSession = store.NewSession<Input, int, Empty, Functions>(functions);
-        using var updateSession = store.NewSession<Input, int, Empty, Functions>(functions);
-        var iter = 0;
+        using ClientSession<int, int, Input, int, Empty, Functions> readSession = store.NewSession<Input, int, Empty, Functions>(functions);
+        using ClientSession<int, int, Input, int, Empty, Functions> updateSession = store.NewSession<Input, int, Empty, Functions>(functions);
+        int iter = 0;
 
         // This test ensures that we handle the two cases, which are timing-dependent so we use events to force the sequence. "Update" refers to either
         // Upsert ((Post)SingleWriter) or RMW ((Post)CopyUpdater). Note that "CTT" is loosely used here to refer to both copies to MainLog and to ReadCache.
@@ -217,7 +217,7 @@ internal class AdvancedLockTests
             key =>
             {
                 int output = -1;
-                Input input = createInput(key, out var testMode);
+                Input input = createInput(key, out LockTestMode testMode);
                 Status status;
 
                 bool expectedFound;
@@ -237,7 +237,7 @@ internal class AdvancedLockTests
                     // the test is that we properly handle either the CAS at the tail by retrying, or invalidate the readcache record.
                     if (status.IsPending)
                     {
-                        updateSession.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                        updateSession.CompletePendingWithOutputs(out CompletedOutputIterator<int, int, Input, int, Empty> completedOutputs, wait: true);
                         (status, output) = GetSinglePendingResult(completedOutputs);
                     }
                 }
@@ -249,16 +249,16 @@ internal class AdvancedLockTests
             key =>
             {
                 int output = -2;
-                Input input = createInput(key, out var testMode);
+                Input input = createInput(key, out LockTestMode testMode);
                 ReadOptions readOptions = new() { CopyOptions = new(ReadCopyFrom.Device, readCopyTo) };
 
                 // This will copy to ReadCache or MainLog tail, and the test is trying to cause a race with the above Upsert.
-                var status = readSession.Read(ref key, ref input, ref output, ref readOptions, out _);
+                Status status = readSession.Read(ref key, ref input, ref output, ref readOptions, out _);
 
                 // For this test to work deterministically, the read must go pending
                 Assert.IsTrue(status.IsPending, $"Second action: Key = {key}, status = {status}, testMode {testMode}");
 
-                var expectedOutput = key + valueAdd;
+                int expectedOutput = key + valueAdd;
                 if (testMode == LockTestMode.CTTAfterUpdate)
                 {
                     // We've gone pending on Read; now tell Update to continue and write at tail.
@@ -271,14 +271,14 @@ internal class AdvancedLockTests
                     expectedOutput += valueAdd;
                 }
 
-                readSession.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                readSession.CompletePendingWithOutputs(out CompletedOutputIterator<int, int, Input, int, Empty> completedOutputs, wait: true);
                 (status, output) = GetSinglePendingResult(completedOutputs);
                 Assert.AreEqual(expectedOutput, output, $"Second action: Key = {key}, iter = {iter}, testMode {testMode}");
             },
             key =>
             {
                 int output = -3;
-                var status = readSession.Read(ref key, ref output);
+                Status status = readSession.Read(ref key, ref output);
 
                 // This should not have gone pending, since the Insert or Read updated at the log tail. There should be no valid readcache
                 // record; if there is, the test for updated value will fail.

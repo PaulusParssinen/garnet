@@ -47,7 +47,7 @@ internal sealed class SystemMetrics
         }
         else
         {
-            var gcMemoryInfo = GC.GetGCMemoryInfo();
+            GCMemoryInfo gcMemoryInfo = GC.GetGCMemoryInfo();
             return gcMemoryInfo.TotalAvailableMemoryBytes / units;
         }
     }

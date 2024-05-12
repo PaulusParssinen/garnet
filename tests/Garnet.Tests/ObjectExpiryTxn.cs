@@ -26,8 +26,8 @@ sealed class ObjectExpiryTxn : CustomTransactionProcedure
     public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var key = GetNextArg(input, ref offset);
-        var expiryMs = GetNextArg(input, ref offset);
+        ArgSlice key = GetNextArg(input, ref offset);
+        ArgSlice expiryMs = GetNextArg(input, ref offset);
 
         api.EXPIRE(key, expiryMs, out _, StoreType.Object);
         WriteSimpleString(ref output, "SUCCESS");

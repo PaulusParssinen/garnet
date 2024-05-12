@@ -25,7 +25,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
             {
                 cursorRecordResult = CursorRecordResult.Accept; // default; not used here
-                var s = NumUtils.HashSlot(key.ToPointer(), key.Length);
+                ushort s = NumUtils.HashSlot(key.ToPointer(), key.Length);
 
                 if (slots.Contains(s) && !ClusterSession.Expired(ref value) && !session.WriteOrSendMainStoreKeyValuePair(ref key, ref value))
                     return false;
@@ -52,7 +52,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             public bool SingleReader(ref byte[] key, ref IGarnetObject value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
             {
                 cursorRecordResult = CursorRecordResult.Accept; // default; not used here
-                var slot = NumUtils.HashSlot(key);
+                ushort slot = NumUtils.HashSlot(key);
 
                 if (slots.Contains(slot) && !ClusterSession.Expired(ref value))
                 {
@@ -83,7 +83,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             public bool SingleReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
             {
                 cursorRecordResult = CursorRecordResult.Accept; // default; not used here
-                var s = NumUtils.HashSlot(key.ToPointer(), key.Length);
+                ushort s = NumUtils.HashSlot(key.ToPointer(), key.Length);
                 if (slots.Contains(s))
                     session.Delete(key);
                 return true;

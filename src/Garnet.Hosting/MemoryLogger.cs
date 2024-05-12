@@ -34,7 +34,7 @@ internal class MemoryLogger : ILogger
     /// <param name="dstLogger">The logger to which to flush log entries</param>
     public void FlushLogger(ILogger dstLogger)
     {
-        foreach (var entry in this._memoryLog)
+        foreach ((LogLevel, Exception, string) entry in this._memoryLog)
         {
             dstLogger.Log(entry.Item1, entry.Item2, entry.Item3);
         }

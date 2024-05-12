@@ -36,9 +36,9 @@ public class RespSetTests
     public void CandDoSaddBasic(string key)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var result = db.SetAdd(key, "Hello");
+        bool result = db.SetAdd(key, "Hello");
         Assert.IsTrue(result);
 
         result = db.SetAdd(key, "World");
@@ -52,16 +52,16 @@ public class RespSetTests
     public void CanAddAndListMembers()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var result = db.SetAdd(new RedisKey("user1:set"), ["Hello", "World", "World"]);
+        IDatabase db = redis.GetDatabase(0);
+        long result = db.SetAdd(new RedisKey("user1:set"), ["Hello", "World", "World"]);
         Assert.AreEqual(2, result);
 
-        var members = db.SetMembers(new RedisKey("user1:set"));
+        RedisValue[] members = db.SetMembers(new RedisKey("user1:set"));
         Assert.AreEqual(2, members.Length);
 
-        var response = db.Execute("MEMORY", "USAGE", "user1:set");
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 272;
+        RedisResult response = db.Execute("MEMORY", "USAGE", "user1:set");
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -69,20 +69,20 @@ public class RespSetTests
     public void CanCheckIfMemberExistsInSet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         var key = new RedisKey("user1:set");
 
         db.KeyDelete(key);
 
         db.SetAdd(key, ["Hello", "World"]);
 
-        var existingMemberExists = db.SetContains(key, "Hello");
+        bool existingMemberExists = db.SetContains(key, "Hello");
         Assert.IsTrue(existingMemberExists);
 
-        var nonExistingMemberExists = db.SetContains(key, "NonExistingMember");
+        bool nonExistingMemberExists = db.SetContains(key, "NonExistingMember");
         Assert.IsFalse(nonExistingMemberExists);
 
-        var setDoesNotExist = db.SetContains("NonExistingSet", "AnyMember");
+        bool setDoesNotExist = db.SetContains("NonExistingSet", "AnyMember");
         Assert.IsFalse(setDoesNotExist);
     }
 
@@ -90,9 +90,9 @@ public class RespSetTests
     public void CanAddAndGetAllMembersWithPendingStatus()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var nVals = 100;
+        int nVals = 100;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 100; i++)
         {
@@ -101,11 +101,11 @@ public class RespSetTests
 
         for (int j = 0; j < 25; j++)
         {
-            var nAdded = db.SetAdd($"Set_Test-{j + 1}", values);
+            long nAdded = db.SetAdd($"Set_Test-{j + 1}", values);
             Assert.AreEqual(nVals, nAdded);
         }
 
-        var members = db.SetMembers(new RedisKey("Set_Test-10"));
+        RedisValue[] members = db.SetMembers(new RedisKey("Set_Test-10"));
         Assert.AreEqual(100, members.Length);
     }
 
@@ -113,12 +113,12 @@ public class RespSetTests
     public void CanReturnEmptySet()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         _ = db.SetMembers(new RedisKey("myset"));
 
-        var response = db.Execute("MEMORY", "USAGE", "myset");
-        var actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
-        var expectedResponse = -1;
+        RedisResult response = db.Execute("MEMORY", "USAGE", "myset");
+        int actualValue = ResultType.Integer == response.Type ? int.Parse(response.ToString()) : -1;
+        int expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -126,17 +126,17 @@ public class RespSetTests
     public void CanDoMembersWhenEmptyKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var empty = "";
+        string empty = "";
 
-        var addResult = db.SetAdd(empty, ["one", "two", "three", "four", "five"]);
+        long addResult = db.SetAdd(empty, ["one", "two", "three", "four", "five"]);
         Assert.AreEqual(5, addResult);
 
-        var result = db.SetMembers(empty);
+        RedisValue[] result = db.SetMembers(empty);
         Assert.AreEqual(5, result.Length);
-        var strResult = result.Select(r => r.ToString());
-        var expectedResult = new[] { "one", "two", "three", "four", "five" };
+        IEnumerable<string> strResult = result.Select(r => r.ToString());
+        string[] expectedResult = new[] { "one", "two", "three", "four", "five" };
         Assert.IsTrue(expectedResult.OrderBy(t => t).SequenceEqual(strResult.OrderBy(t => t)));
     }
 
@@ -144,19 +144,19 @@ public class RespSetTests
     public void CanRemoveField()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var result = db.SetAdd(new RedisKey("user1:set"), ["ItemOne", "ItemTwo", "ItemThree", "ItemFour"]);
+        IDatabase db = redis.GetDatabase(0);
+        long result = db.SetAdd(new RedisKey("user1:set"), ["ItemOne", "ItemTwo", "ItemThree", "ItemFour"]);
         Assert.AreEqual(4, result);
 
-        var existingMemberExists = db.SetContains(new RedisKey("user1:set"), "ItemOne");
+        bool existingMemberExists = db.SetContains(new RedisKey("user1:set"), "ItemOne");
         Assert.IsTrue(existingMemberExists, "Existing member 'ItemOne' does not exist in the set.");
 
-        var memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
-        var actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
-        var expectedResponse = 424;
+        RedisResult memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
+        int actualValue = ResultType.Integer == memresponse.Type ? Int32.Parse(memresponse.ToString()) : -1;
+        int expectedResponse = 424;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var response = db.SetRemove(new RedisKey("user1:set"), new RedisValue("ItemOne"));
+        bool response = db.SetRemove(new RedisKey("user1:set"), new RedisValue("ItemOne"));
         Assert.AreEqual(true, response);
 
         memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
@@ -172,7 +172,7 @@ public class RespSetTests
         expectedResponse = 352;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var longResponse = db.SetRemove(new RedisKey("user1:set"), ["ItemTwo", "ItemThree"]);
+        long longResponse = db.SetRemove(new RedisKey("user1:set"), ["ItemTwo", "ItemThree"]);
         Assert.AreEqual(2, longResponse);
 
         memresponse = db.Execute("MEMORY", "USAGE", "user1:set");
@@ -180,7 +180,7 @@ public class RespSetTests
         expectedResponse = 200;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var members = db.SetMembers(new RedisKey("user1:set"));
+        RedisValue[] members = db.SetMembers(new RedisKey("user1:set"));
         Assert.AreEqual(1, members.Length);
     }
 
@@ -188,24 +188,24 @@ public class RespSetTests
     public void CanUseSScanNoParameters()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Use setscan on non existing key
-        var items = db.SetScan(new RedisKey("foo"), new RedisValue("*"), pageSize: 10);
+        IEnumerable<RedisValue> items = db.SetScan(new RedisKey("foo"), new RedisValue("*"), pageSize: 10);
         Assert.IsEmpty(items, "Failed to use SetScan on non existing key");
 
         RedisValue[] entries = ["item-a", "item-b", "item-c", "item-d", "item-e", "item-aaa"];
 
         // Add some items
-        var added = db.SetAdd("myset", entries);
+        long added = db.SetAdd("myset", entries);
         Assert.AreEqual(entries.Length, added);
 
-        var members = db.SetScan(new RedisKey("myset"), new RedisValue("*"));
+        IEnumerable<RedisValue> members = db.SetScan(new RedisKey("myset"), new RedisValue("*"));
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == entries.Length);
 
         int i = 0;
-        foreach (var item in members)
+        foreach (RedisValue item in members)
         {
             Assert.IsTrue(entries[i++].Equals(item));
         }
@@ -220,13 +220,13 @@ public class RespSetTests
     public void CanUseSScanWithMatch()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Add some items
-        var added = db.SetAdd("myset", ["aa", "bb", "cc", "dd", "ee", "aaf"]);
+        long added = db.SetAdd("myset", ["aa", "bb", "cc", "dd", "ee", "aaf"]);
         Assert.AreEqual(6, added);
 
-        var members = db.SetScan(new RedisKey("myset"), new RedisValue("*aa"));
+        IEnumerable<RedisValue> members = db.SetScan(new RedisKey("myset"), new RedisValue("*aa"));
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == 1);
         Assert.IsTrue(members.ElementAt(0).Equals("aa"));
@@ -236,8 +236,8 @@ public class RespSetTests
     public void CanUseSScanWithCollection()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var key = "myset";
+        IDatabase db = redis.GetDatabase(0);
+        string key = "myset";
         // Add some items
         var r = new Random();
 
@@ -247,12 +247,12 @@ public class RespSetTests
 
         for (int i = 0; i < n; i++)
         {
-            var memberId = r.Next(0, 10000000);
+            int memberId = r.Next(0, 10000000);
             entries[i] = new RedisValue($"member:{memberId}");
         }
 
-        var setLen = db.SetAdd(key, entries);
-        var members = db.SetScan(key, new RedisValue("member:*"), (Int32)setLen);
+        long setLen = db.SetAdd(key, entries);
+        IEnumerable<RedisValue> members = db.SetScan(key, new RedisValue("member:*"), (Int32)setLen);
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsTrue(members.Count() == setLen);
     }
@@ -261,9 +261,9 @@ public class RespSetTests
     public void CanDoSScanWithCursor()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "myset";
+        string key = "myset";
 
         // create a new array of Set
         var setEntries = new RedisValue[1000];
@@ -276,14 +276,14 @@ public class RespSetTests
         db.SetAdd(key, setEntries);
 
         int pageSize = 40;
-        var response = db.SetScan(key, "*", pageSize: pageSize, cursor: 0);
+        IEnumerable<RedisValue> response = db.SetScan(key, "*", pageSize: pageSize, cursor: 0);
         var cursor = ((IScanningCursor)response);
-        var j = 0;
+        int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;
 
         // Consume the enumeration
-        foreach (var i in response)
+        foreach (RedisValue i in response)
         {
             // Represents the *active* page of results (not the pending/next page of results as returned by SCAN/HSCAN/ZSCAN/SSCAN)
             pageNumber = cursor.Cursor;
@@ -299,7 +299,7 @@ public class RespSetTests
         // Assert the cursor is at the end of the enumeration
         Assert.AreEqual(pageNumber + pageOffset, setEntries.Length - 1);
 
-        var l = response.LastOrDefault();
+        RedisValue l = response.LastOrDefault();
         Assert.AreEqual(l, $"value:{setEntries.Length - 1}");
     }
 
@@ -307,9 +307,9 @@ public class RespSetTests
     public void CanDoSetUnion()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         var redisValues1 = new RedisValue[] { "item-a", "item-b", "item-c", "item-d" };
-        var result = db.SetAdd(new RedisKey("key1"), redisValues1);
+        long result = db.SetAdd(new RedisKey("key1"), redisValues1);
         Assert.AreEqual(4, result);
 
         result = db.SetAdd(new RedisKey("key2"), ["item-c"]);
@@ -318,7 +318,7 @@ public class RespSetTests
         result = db.SetAdd(new RedisKey("key3"), ["item-a", "item-c", "item-e"]);
         Assert.AreEqual(3, result);
 
-        var members = db.SetCombine(SetOperation.Union, ["key1", "key2", "key3"]);
+        RedisValue[] members = db.SetCombine(SetOperation.Union, ["key1", "key2", "key3"]);
         RedisValue[] entries = ["item-a", "item-b", "item-c", "item-d", "item-e"];
         Assert.AreEqual(5, members.Length);
         // assert two arrays are equal ignoring order
@@ -356,26 +356,26 @@ public class RespSetTests
     public void CanDoSetUnionStore(string key)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key1 = "key1";
+        string key1 = "key1";
         var key1Value = new RedisValue[] { "a", "b", "c" };
 
-        var key2 = "key2";
+        string key2 = "key2";
         var key2Value = new RedisValue[] { "c", "d", "e" };
 
-        var addResult = db.SetAdd(key1, key1Value);
+        long addResult = db.SetAdd(key1, key1Value);
         Assert.AreEqual(3, addResult);
         addResult = db.SetAdd(key2, key2Value);
         Assert.AreEqual(3, addResult);
 
-        var result = (int)db.Execute("SUNIONSTORE", key, key1, key2);
+        int result = (int)db.Execute("SUNIONSTORE", key, key1, key2);
         Assert.AreEqual(5, result);
 
-        var membersResult = db.SetMembers(key);
+        RedisValue[] membersResult = db.SetMembers(key);
         Assert.AreEqual(5, membersResult.Length);
-        var strResult = membersResult.Select(m => m.ToString()).ToArray();
-        var expectedResult = new[] { "a", "b", "c", "d", "e" };
+        string[] strResult = membersResult.Select(m => m.ToString()).ToArray();
+        string[] expectedResult = new[] { "a", "b", "c", "d", "e" };
         Assert.IsTrue(expectedResult.OrderBy(t => t).SequenceEqual(strResult.OrderBy(t => t)));
     }
 
@@ -386,25 +386,25 @@ public class RespSetTests
     public void CanDoSdiff(string key1, string key2)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var key1Value = new RedisValue[] { "a", "b", "c", "d" };
 
         var key2Value = new RedisValue[] { "c" };
 
-        var addResult = db.SetAdd(key1, key1Value);
+        long addResult = db.SetAdd(key1, key1Value);
         Assert.AreEqual(4, addResult);
         addResult = db.SetAdd(key2, key2Value);
         Assert.AreEqual(1, addResult);
 
         var result = (RedisResult[])db.Execute("SDIFF", key1, key2);
         Assert.AreEqual(3, result.Length);
-        var strResult = result.Select(r => r.ToString()).ToArray();
-        var expectedResult = new[] { "a", "b", "d" };
+        string[] strResult = result.Select(r => r.ToString()).ToArray();
+        string[] expectedResult = new[] { "a", "b", "d" };
         Assert.IsTrue(expectedResult.OrderBy(t => t).SequenceEqual(strResult.OrderBy(t => t)));
         Assert.IsFalse(strResult.Contains("c"));
 
-        var key3 = "key3";
+        string key3 = "key3";
         var key3Value = new RedisValue[] { "a", "c", "e" };
 
         addResult = db.SetAdd(key3, key3Value);
@@ -424,34 +424,34 @@ public class RespSetTests
     public void CanDoSdiffStoreOverwrittenKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "key";
+        string key = "key";
 
-        var key1 = "key1";
+        string key1 = "key1";
         var key1Value = new RedisValue[] { "a", "b", "c", "d" };
 
-        var key2 = "key2";
+        string key2 = "key2";
         var key2Value = new RedisValue[] { "c" };
 
-        var addResult = db.SetAdd(key1, key1Value);
+        long addResult = db.SetAdd(key1, key1Value);
         Assert.AreEqual(4, addResult);
         addResult = db.SetAdd(key2, key2Value);
         Assert.AreEqual(1, addResult);
 
-        var result = db.Execute("SDIFFSTORE", key, key1, key2);
+        RedisResult result = db.Execute("SDIFFSTORE", key, key1, key2);
         Assert.AreEqual(3, int.Parse(result.ToString()));
 
-        var membersResult = db.SetMembers("key");
+        RedisValue[] membersResult = db.SetMembers("key");
         Assert.AreEqual(3, membersResult.Length);
-        var strResult = membersResult.Select(m => m.ToString()).ToArray();
-        var expectedResult = new[] { "a", "b", "d" };
+        string[] strResult = membersResult.Select(m => m.ToString()).ToArray();
+        string[] expectedResult = new[] { "a", "b", "d" };
         Assert.IsTrue(expectedResult.OrderBy(t => t).SequenceEqual(strResult.OrderBy(t => t)));
         Assert.IsFalse(Array.Exists(membersResult, t => t.ToString().Equals("c")));
 
-        var key3 = "key3";
+        string key3 = "key3";
         var key3Value = new RedisValue[] { "a", "b", "c" };
-        var key4 = "key4";
+        string key4 = "key4";
         var key4Value = new RedisValue[] { "a", "b" };
 
         addResult = db.SetAdd(key3, key3Value);
@@ -474,9 +474,9 @@ public class RespSetTests
     public void CanDoSmoveBasic(string source, string destination)
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var addResult = db.SetAdd(source, ["one"]);
+        long addResult = db.SetAdd(source, ["one"]);
         Assert.AreEqual(1, addResult);
         addResult = db.SetAdd(source, ["two"]);
         Assert.AreEqual(1, addResult);
@@ -484,14 +484,14 @@ public class RespSetTests
         addResult = db.SetAdd(destination, ["three"]);
         Assert.AreEqual(1, addResult);
 
-        var result = db.SetMove(source, destination, "two");
+        bool result = db.SetMove(source, destination, "two");
         Assert.IsTrue(result);
 
-        var membersResult = db.SetMembers(source);
+        RedisValue[] membersResult = db.SetMembers(source);
         Assert.AreEqual(1, membersResult.Length);
 
-        var strResult = membersResult.Select(r => r.ToString()).ToArray();
-        var expectedResult = new[] { "one" };
+        string[] strResult = membersResult.Select(r => r.ToString()).ToArray();
+        string[] expectedResult = new[] { "one" };
         Assert.IsTrue(expectedResult.OrderBy(t => t).SequenceEqual(strResult.OrderBy(t => t)));
 
         membersResult = db.SetMembers(destination);
@@ -510,8 +510,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SADD myset \"Hello\"");
-        var expectedResponse = ":1\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         response = lightClientRequest.SendCommand("SADD myset \"World\"");
@@ -535,8 +535,8 @@ public class RespSetTests
         using var lightClientRequest = TestUtils.CreateRequest();
 
         var response = lightClientRequest.SendCommand("SADD myset \"Hello\"");
-        var expectedResponse = ":1\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         response = lightClientRequest.SendCommand("SADD myset \"World\"");
@@ -576,8 +576,8 @@ public class RespSetTests
         CreateSet();
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SCARD myset");
-        var expectedResponse = ":2\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -589,8 +589,8 @@ public class RespSetTests
         var response = lightClientRequest.SendCommand("SMEMBERS otherset", 1);
 
         // Empty array
-        var expectedResponse = "*0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -599,8 +599,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SADD myset ItemOne ItemTwo ItemThree ItemFour");
-        var expectedResponse = ":4\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         response = lightClientRequest.SendCommand("SREM myset World");
@@ -624,8 +624,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("SCARD fooset", "PING", 1, 1);
-        var expectedResponse = ":0\r\n+PONG\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n+PONG\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -639,20 +639,20 @@ public class RespSetTests
         using (var lightClientRequest = TestUtils.CreateRequest())
         {
             var response = lightClientRequest.SendCommand("SRANDMEMBER myset", 1);
-            var strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
-            var item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
+            string strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
+            string item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
             Assert.IsTrue(myset.Contains(item));
 
             // Get three random members
             response = lightClientRequest.SendCommand("SRANDMEMBER myset 3", 3);
-            var strResponse = Encoding.ASCII.GetString(response);
+            string strResponse = Encoding.ASCII.GetString(response);
             Assert.AreEqual('*', strResponse[0]);
 
-            var arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
+            int arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
             Assert.IsTrue(arrLenEndIdx > 1);
 
-            var strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
-            Assert.IsTrue(int.TryParse(strArrLen, out var arrLen));
+            string strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
+            Assert.IsTrue(int.TryParse(strArrLen, out int arrLen));
             Assert.AreEqual(3, arrLen);
 
             // Get 6 random members and verify that at least two elements are the same
@@ -662,10 +662,10 @@ public class RespSetTests
             Assert.IsTrue(int.TryParse(strArrLen, out arrLen));
 
             var members = new HashSet<string>();
-            var repeatedMembers = false;
+            bool repeatedMembers = false;
             for (int i = 0; i < arrLen; i++)
             {
-                var member = Encoding.ASCII.GetString(response).Substring(arrLenEndIdx + 2, response.Length - arrLenEndIdx - 5);
+                string member = Encoding.ASCII.GetString(response).Substring(arrLenEndIdx + 2, response.Length - arrLenEndIdx - 5);
                 if (members.Contains(member))
                 {
                     repeatedMembers = true;
@@ -694,13 +694,13 @@ public class RespSetTests
 
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SPOP myset");
-        var strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
-        var item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
+        string strLen = Encoding.ASCII.GetString(response).Substring(1, 1);
+        string item = Encoding.ASCII.GetString(response).Substring(4, Int32.Parse(strLen));
         Assert.IsTrue(myset.Contains(item));
 
         response = lightClientRequest.SendCommand("SCARD myset");
-        var expectedResponse = ":4\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -711,18 +711,18 @@ public class RespSetTests
 
         var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SPOP myset 3", 3);
-        var strResponse = Encoding.ASCII.GetString(response);
+        string strResponse = Encoding.ASCII.GetString(response);
         Assert.AreEqual('*', strResponse[0]);
 
-        var arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
+        int arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
         Assert.IsTrue(arrLenEndIdx > 1);
 
-        var strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
-        Assert.IsTrue(int.TryParse(strArrLen, out var arrLen));
+        string strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
+        Assert.IsTrue(int.TryParse(strArrLen, out int arrLen));
         Assert.AreEqual(3, arrLen);
 
         var secondResponse = lightClientRequest.SendCommands("SCARD myset", "PING", 1, 1);
-        var expectedResponse = ":2\r\n+PONG\r\n";
+        string expectedResponse = ":2\r\n+PONG\r\n";
         strResponse = Encoding.ASCII.GetString(secondResponse).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
@@ -748,19 +748,19 @@ public class RespSetTests
 
         var response = lightClientRequest.SendCommand("SPOP myset 10", 5);
 
-        var strResponse = Encoding.ASCII.GetString(response);
+        string strResponse = Encoding.ASCII.GetString(response);
         Assert.AreEqual('*', strResponse[0]);
 
-        var arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
+        int arrLenEndIdx = strResponse.IndexOf("\r\n", StringComparison.InvariantCultureIgnoreCase);
         Assert.IsTrue(arrLenEndIdx > 1);
 
-        var strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
-        Assert.IsTrue(int.TryParse(strArrLen, out var arrLen));
+        string strArrLen = Encoding.ASCII.GetString(response).Substring(1, arrLenEndIdx - 1);
+        Assert.IsTrue(int.TryParse(strArrLen, out int arrLen));
         Assert.IsTrue(arrLen == 5);
 
         var lightClientRequest2 = TestUtils.CreateRequest();
         var response2 = lightClientRequest2.SendCommand("SADD myset one");
-        var expectedResponse = ":1\r\n";
+        string expectedResponse = ":1\r\n";
         strResponse = Encoding.ASCII.GetString(response2).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
@@ -789,19 +789,19 @@ public class RespSetTests
         lightClientRequest.SendCommand("SADD \"myDestinationSet\" \"fourD\"");
         lightClientRequest.SendCommand("SADD \"myDestinationSet\" \"common\"");
 
-        var expectedSuccessfulResponse = ":1\r\n";
-        var expectedFailureResponse = ":0\r\n";
+        string expectedSuccessfulResponse = ":1\r\n";
+        string expectedFailureResponse = ":0\r\n";
 
         // Successful move
         var response = lightClientRequest.SendCommand("SMOVE \"mySourceSet\" \"myDestinationSet\" \"oneS\"");
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedSuccessfulResponse.Length);
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedSuccessfulResponse.Length);
         Assert.AreEqual(expectedSuccessfulResponse, strResponse);
 
         response = lightClientRequest.SendCommand("SISMEMBER \"mySourceSet\" \"oneS\"");
-        var mySourceSetContainsMember = Encoding.ASCII.GetString(response).Substring(0, expectedFailureResponse.Length);
+        string mySourceSetContainsMember = Encoding.ASCII.GetString(response).Substring(0, expectedFailureResponse.Length);
 
         response = lightClientRequest.SendCommand("SISMEMBER \"myDestinationSet\" \"oneS\"");
-        var myDestinationSetContainsMember = Encoding.ASCII.GetString(response).Substring(0, expectedSuccessfulResponse.Length);
+        string myDestinationSetContainsMember = Encoding.ASCII.GetString(response).Substring(0, expectedSuccessfulResponse.Length);
 
         Assert.AreEqual(expectedFailureResponse, mySourceSetContainsMember);
         Assert.AreEqual(expectedSuccessfulResponse, myDestinationSetContainsMember);
@@ -910,8 +910,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SADD myset ItemOne ItemTwo ItemThree ItemFour");
-        var expectedResponse = ":4\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         response = lightClientRequest.SendCommand("SUNION myset another_set", 5);
@@ -953,7 +953,7 @@ public class RespSetTests
         _ = lightClientRequest.SendCommand("SADD key1 a b c");
         _ = lightClientRequest.SendCommand("SADD key2 c d e");
         var response = lightClientRequest.SendCommand("SUNIONSTORE key key1 key2");
-        var expectedResponse = ":5\r\n";
+        string expectedResponse = ":5\r\n";
         Assert.AreEqual(expectedResponse, response.AsSpan().Slice(0, expectedResponse.Length).ToArray());
 
         var membersResponse = lightClientRequest.SendCommand("SMEMBERS key");
@@ -969,7 +969,7 @@ public class RespSetTests
         lightClientRequest.SendCommand("SADD key2 c");
         lightClientRequest.SendCommand("SADD key3 a c e");
         var response = lightClientRequest.SendCommand("SDIFF key1 key2 key3");
-        var expectedResponse = "*2\r\n$1\r\nb\r\n$1\r\nd\r\n";
+        string expectedResponse = "*2\r\n$1\r\nb\r\n$1\r\nd\r\n";
         Assert.AreEqual(expectedResponse, response.AsSpan().Slice(0, expectedResponse.Length).ToArray());
     }
 
@@ -983,7 +983,7 @@ public class RespSetTests
         _ = lightClientRequest.SendCommand("SADD key2 c");
         _ = lightClientRequest.SendCommand("SADD key3 a c e");
         var response = lightClientRequest.SendCommand($"SDIFFSTORE {key} key1 key2 key3");
-        var expectedResponse = ":2\r\n";
+        string expectedResponse = ":2\r\n";
         Assert.AreEqual(expectedResponse, response.AsSpan().Slice(0, expectedResponse.Length).ToArray());
 
         var membersResponse = lightClientRequest.SendCommand($"SMEMBERS {key}");
@@ -1001,8 +1001,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SCARD fooset");
-        var expectedResponse = ":0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -1011,8 +1011,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SPOP fooset");
-        var expectedResponse = "$-1\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$-1\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -1021,8 +1021,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SMEMBERS foo");
-        var expectedResponse = "*0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -1031,8 +1031,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SDIFF foo");
-        var expectedResponse = "*0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
     }
 
@@ -1041,8 +1041,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SDIFFSTORE key key1 key2 key3");
-        var expectedResponse = ":0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         var membersResponse = lightClientRequest.SendCommand("SMEMBERS key");
@@ -1056,8 +1056,8 @@ public class RespSetTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("SUNIONSTORE key key1 key2 key3");
-        var expectedResponse = ":0\r\n";
-        var strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n";
+        string strResponse = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, strResponse);
 
         var membersResponse = lightClientRequest.SendCommand("SMEMBERS key");

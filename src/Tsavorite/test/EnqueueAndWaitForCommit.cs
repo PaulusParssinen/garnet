@@ -77,7 +77,7 @@ internal class EnqWaitCommitTest
         await currentTask;
 
         // Read the log - Look for the flag so know each entry is unique
-        using var iter = log.Scan(0, 1000);
+        using TsavoriteLogScanIterator iter = log.Scan(0, 1000);
         int currentEntry = 0;
         while (iter.GetNext(out byte[] result, out _, out _))
         {

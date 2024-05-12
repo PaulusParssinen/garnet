@@ -57,7 +57,7 @@ internal class BasicUnsafeContextTests
 
     private (Status status, OutputStruct output) CompletePendingResult()
     {
-        uContext.CompletePendingWithOutputs(out var completedOutputs);
+        uContext.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, Empty> completedOutputs);
         return GetSinglePendingResult(completedOutputs);
     }
 
@@ -78,7 +78,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
 
             AssertCompleted(new(StatusCode.Found), status);
             Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -107,7 +107,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
+            Status status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
             AssertCompleted(new(StatusCode.Found), status);
 
             uContext.Delete(ref key1, Empty.Default, 0);
@@ -170,7 +170,7 @@ internal class BasicUnsafeContextTests
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = 14 };
                 var value = new ValueStruct { vfield1 = i, vfield2 = 24 };
 
-                var status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
+                Status status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
                 AssertCompleted(new(StatusCode.NotFound), status);
 
                 uContext.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -179,7 +179,7 @@ internal class BasicUnsafeContextTests
             for (int i = 0; i < 10 * count; i++)
             {
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = 14 };
-                var status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
+                Status status = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
                 AssertCompleted(new(StatusCode.Found), status);
             }
         }
@@ -210,7 +210,7 @@ internal class BasicUnsafeContextTests
             Random r = new(10);
             for (int c = 0; c < count; c++)
             {
-                var i = r.Next(10000);
+                int i = r.Next(10000);
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
                 uContext.Upsert(ref key1, ref value, Empty.Default, 0);
@@ -220,7 +220,7 @@ internal class BasicUnsafeContextTests
 
             for (int c = 0; c < count; c++)
             {
-                var i = r.Next(10000);
+                int i = r.Next(10000);
                 OutputStruct output = default;
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
@@ -240,7 +240,7 @@ internal class BasicUnsafeContextTests
             r = new Random(10);
             for (int c = 0; c < count; c++)
             {
-                var i = r.Next(10000);
+                int i = r.Next(10000);
                 OutputStruct output = default;
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 Assert.IsFalse(uContext.Read(ref key1, ref input, ref output, Empty.Default, 0).Found);
@@ -272,7 +272,7 @@ internal class BasicUnsafeContextTests
         {
             for (int c = 0; c < NumRecs; c++)
             {
-                var i = r.Next(RandRange);
+                int i = r.Next(RandRange);
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
                 if (syncMode == SyncMode.Sync)
@@ -282,7 +282,7 @@ internal class BasicUnsafeContextTests
                 else
                 {
                     uContext.EndUnsafe();
-                    var status = (await uContext.UpsertAsync(ref key1, ref value)).Complete();
+                    Status status = (await uContext.UpsertAsync(ref key1, ref value)).Complete();
                     uContext.BeginUnsafe();
                     Assert.IsFalse(status.IsPending);
                 }
@@ -293,7 +293,7 @@ internal class BasicUnsafeContextTests
 
             for (int c = 0; c < NumRecs; c++)
             {
-                var i = r.Next(RandRange);
+                int i = r.Next(RandRange);
                 OutputStruct output = default;
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
@@ -334,7 +334,7 @@ internal class BasicUnsafeContextTests
 
             for (int c = 0; c < NumRecs; c++)
             {
-                var i = r.Next(RandRange);
+                int i = r.Next(RandRange);
                 OutputStruct output = default;
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 Status foundStatus = uContext.Read(ref key1, ref input, ref output, Empty.Default, 0);
@@ -382,7 +382,7 @@ internal class BasicUnsafeContextTests
 
         try
         {
-            var nums = Enumerable.Range(0, 1000).ToArray();
+            int[] nums = Enumerable.Range(0, 1000).ToArray();
             var rnd = new Random(11);
             for (int i = 0; i < nums.Length; ++i)
             {
@@ -394,14 +394,14 @@ internal class BasicUnsafeContextTests
 
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
                 uContext.RMW(ref key1, ref input, Empty.Default, 0);
             }
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
                 if (uContext.RMW(ref key1, ref input, ref output, Empty.Default, 0).IsPending)
@@ -420,7 +420,7 @@ internal class BasicUnsafeContextTests
 
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
 
                 key = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 ValueStruct value = new() { vfield1 = i, vfield2 = i + 1 };
@@ -454,7 +454,7 @@ internal class BasicUnsafeContextTests
 
         try
         {
-            var nums = Enumerable.Range(0, 1000).ToArray();
+            int[] nums = Enumerable.Range(0, 1000).ToArray();
             var rnd = new Random(11);
             for (int i = 0; i < nums.Length; ++i)
             {
@@ -466,14 +466,14 @@ internal class BasicUnsafeContextTests
 
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
                 uContext.RMW(ref key1, ref input, Empty.Default, 0);
             }
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
                 var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 input = new InputStruct { ifield1 = i, ifield2 = i + 1 };
                 uContext.RMW(key1, input);  // no ref and do not set any other params
@@ -485,7 +485,7 @@ internal class BasicUnsafeContextTests
 
             for (int j = 0; j < nums.Length; ++j)
             {
-                var i = nums[j];
+                int i = nums[j];
 
                 key = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
                 ValueStruct value = new() { vfield1 = i, vfield2 = i + 1 };
@@ -524,7 +524,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(key1, input, out OutputStruct output, Empty.Default, 111);
+            Status status = uContext.Read(key1, input, out OutputStruct output, Empty.Default, 111);
             AssertCompleted(new(StatusCode.Found), status);
 
             // Verify the read data
@@ -553,7 +553,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(key1, out OutputStruct output, Empty.Default, 1);
+            Status status = uContext.Read(key1, out OutputStruct output, Empty.Default, 1);
             AssertCompleted(new(StatusCode.Found), status);
 
             // Verify the read data
@@ -586,7 +586,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(ref key1, ref output, Empty.Default, 99);
+            Status status = uContext.Read(ref key1, ref output, Empty.Default, 99);
             AssertCompleted(new(StatusCode.Found), status);
 
             // Verify the read data
@@ -622,7 +622,7 @@ internal class BasicUnsafeContextTests
             var value = new ValueStruct { vfield1 = 23, vfield2 = 24 };
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
-            var status = uContext.Read(ref key1, ref input, ref output, Empty.Default);
+            Status status = uContext.Read(ref key1, ref input, ref output, Empty.Default);
             AssertCompleted(new(StatusCode.Found), status);
 
             Assert.AreEqual(value.vfield1, output.value.vfield1);
@@ -652,7 +652,7 @@ internal class BasicUnsafeContextTests
 
             uContext.Upsert(ref key1, ref value, Empty.Default, 0);
 
-            var (status, output) = uContext.Read(key1);
+            (Status status, OutputStruct output) = uContext.Read(key1);
             AssertCompleted(new(StatusCode.Found), status);
 
             Assert.AreEqual(value.vfield1, output.value.vfield1);

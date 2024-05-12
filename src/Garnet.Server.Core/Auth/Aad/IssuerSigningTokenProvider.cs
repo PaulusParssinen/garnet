@@ -51,10 +51,10 @@ public class IssuerSigningTokenProvider : IDisposable
 
     private static IReadOnlyCollection<SecurityKey> RetrieveSigningTokens(string authority)
     {
-        var configUrl = string.Format(OpenIdConfigurationAddressFormat, authority);
+        string configUrl = string.Format(OpenIdConfigurationAddressFormat, authority);
 
         var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(configUrl, new OpenIdConnectConfigurationRetriever(), new HttpDocumentRetriever());
-        var doc = configManager.GetConfigurationAsync().GetAwaiter().GetResult();
+        OpenIdConnectConfiguration doc = configManager.GetConfigurationAsync().GetAwaiter().GetResult();
 
         return doc.SigningKeys.ToList();
     }
@@ -98,7 +98,7 @@ public class IssuerSigningTokenProvider : IDisposable
             throw new Exception("Authority cannot be null");
         }
 
-        var signingTokens = RetrieveSigningTokens(authority);
+        IReadOnlyCollection<SecurityKey> signingTokens = RetrieveSigningTokens(authority);
         return new IssuerSigningTokenProvider(authority, signingTokens, logger);
     }
 }

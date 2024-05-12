@@ -44,7 +44,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -59,12 +59,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - ptr) + sizeof(ObjectInputHeader);
+            int inputLength = (int)(recvBufferPtr + bytesRead - ptr) + sizeof(ObjectInputHeader);
 
-            var inputCount = (count - 1) / 2;
+            int inputCount = (count - 1) / 2;
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -129,7 +129,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -144,10 +144,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             int inputCount = op == HashOperation.HGETALL ? 0 : (op == HashOperation.HRANDFIELD ? count + 1 : count - 1);
             // Prepare header in input buffer
@@ -160,9 +160,9 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = GarnetStatus.NOTFOUND;
+            GarnetStatus status = GarnetStatus.NOTFOUND;
 
-            var includeCountParameter = false;
+            bool includeCountParameter = false;
             if (op == HashOperation.HRANDFIELD)
             {
                 includeCountParameter = inputPtr->count > 2; // 4 tokens are: command key count WITHVALUES
@@ -177,7 +177,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             switch (status)
             {
                 case GarnetStatus.OK:
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     ptr += objOutputHeader.bytesDone;
                     hashItemsDoneCount += objOutputHeader.countDone;
                     hashOpsCount += objOutputHeader.opsDone;
@@ -195,7 +195,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     }
                     else if (op != HashOperation.HMGET)
                     {
-                        var respBytes = (includeCountParameter || op == HashOperation.HGETALL) ? CmdStrings.RESP_EMPTYLIST : CmdStrings.RESP_ERRNOTFOUND;
+                        ReadOnlySpan<byte> respBytes = (includeCountParameter || op == HashOperation.HGETALL) ? CmdStrings.RESP_EMPTYLIST : CmdStrings.RESP_ERRNOTFOUND;
                         while (!RespWriteUtils.WriteDirect(respBytes, ref dcurr, dend))
                             SendAndReset();
                     }
@@ -232,7 +232,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key 
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -247,10 +247,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = sizeof(ObjectInputHeader);
+            int inputLength = sizeof(ObjectInputHeader);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -259,7 +259,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 1;
             inputPtr->done = 0;
 
-            var status = storageApi.HashLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.HashLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Restore input buffer
             *inputPtr = save;
@@ -303,7 +303,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -318,10 +318,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -330,7 +330,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 1;
             inputPtr->done = 0;
 
-            var status = storageApi.HashStrLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
+            GarnetStatus status = storageApi.HashStrLength(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Restore input buffer
             *inputPtr = save;
@@ -376,7 +376,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -387,16 +387,16 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return true;
             }
 
-            var inputCount = count - 1;
+            int inputCount = count - 1;
 
             // Prepare input
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -405,7 +405,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = inputCount;
             inputPtr->done = hashItemsDoneCount;
 
-            var status = storageApi.HashDelete(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+            GarnetStatus status = storageApi.HashDelete(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Restore input buffer
             *inputPtr = save;
@@ -456,7 +456,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, true))
@@ -471,10 +471,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -483,7 +483,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             inputPtr->count = 1;
             inputPtr->done = 0;
 
-            var status = storageApi.HashExists(key, new ArgSlice((byte*)inputPtr, inputLength), out var output);
+            GarnetStatus status = storageApi.HashExists(key, new ArgSlice((byte*)inputPtr, inputLength), out ObjectOutputHeader output);
 
             // Restore input buffer
             *inputPtr = save;
@@ -529,7 +529,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
 
         // Get the key for Hash
-        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+        if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
         if (NetworkSingleKeySlotVerify(key, true))
@@ -544,10 +544,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
         // Save old values on buffer for possible revert
-        var save = *inputPtr;
+        ObjectInputHeader save = *inputPtr;
 
         // Prepare length of header in input buffer
-        var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+        int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
         // Prepare header in input buffer
         inputPtr->header.type = GarnetObjectType.Hash;
@@ -573,7 +573,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         {
             case GarnetStatus.OK:
                 // Process output
-                var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                 ptr += objOutputHeader.bytesDone;
                 // CountDone: how many keys total
                 hashItemsDoneCount = objOutputHeader.countDone;
@@ -618,7 +618,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Get the key for Hash
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (NetworkSingleKeySlotVerify(key, false))
@@ -633,10 +633,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             var inputPtr = (ObjectInputHeader*)(ptr - sizeof(ObjectInputHeader));
 
             // Save old values for possible revert
-            var save = *inputPtr;
+            ObjectInputHeader save = *inputPtr;
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare header in input buffer
             inputPtr->header.type = GarnetObjectType.Hash;
@@ -648,13 +648,13 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
 
-            var status = storageApi.HashIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.HashIncrement(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             // Restore input
             *inputPtr = save;
 
             // Process output
-            var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+            ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
             if (objOutputHeader.opsDone == Int32.MinValue)
             {
                 // Command was partially done

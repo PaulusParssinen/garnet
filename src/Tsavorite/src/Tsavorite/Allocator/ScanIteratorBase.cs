@@ -136,27 +136,27 @@ public abstract class ScanIteratorBase
     {
         for (int i = 0; i < frameSize; i++)
         {
-            var nextPage = currentPage + i;
+            long nextPage = currentPage + i;
 
-            var pageStartAddress = nextPage << logPageSizeBits;
+            long pageStartAddress = nextPage << logPageSizeBits;
             // Cannot load page if it is entirely in memory or beyond the end address
             if (pageStartAddress >= headAddress || pageStartAddress >= endAddress)
                 continue;
 
-            var pageEndAddress = (nextPage + 1) << logPageSizeBits;
+            long pageEndAddress = (nextPage + 1) << logPageSizeBits;
             if (endAddress < pageEndAddress)
                 pageEndAddress = endAddress;
             if (headAddress < pageEndAddress)
                 pageEndAddress = headAddress;
 
-            var nextFrame = (currentFrame + i) % frameSize;
+            long nextFrame = (currentFrame + i) % frameSize;
 
             long val;
             while ((val = nextLoadedPage[nextFrame]) < pageEndAddress || loadedPage[nextFrame] < pageEndAddress)
             {
                 if (val < pageEndAddress && Interlocked.CompareExchange(ref nextLoadedPage[nextFrame], pageEndAddress, val) == val)
                 {
-                    var tmp_i = i;
+                    int tmp_i = i;
                     if (epoch != null)
                     {
                         epoch.BumpCurrentEpoch(() =>
@@ -185,21 +185,21 @@ public abstract class ScanIteratorBase
     {
         for (int i = 0; i < frameSize; i++)
         {
-            var nextPage = currentPage + i;
+            long nextPage = currentPage + i;
 
-            var pageStartAddress = nextPage << logPageSizeBits;
+            long pageStartAddress = nextPage << logPageSizeBits;
 
             // Cannot load page if it is entirely in memory or beyond the end address
             if (pageStartAddress >= headAddress || pageStartAddress >= endAddress)
                 continue;
 
-            var pageEndAddress = (nextPage + 1) << logPageSizeBits;
+            long pageEndAddress = (nextPage + 1) << logPageSizeBits;
             if (endAddress < pageEndAddress)
                 pageEndAddress = endAddress;
             if (headAddress < pageEndAddress)
                 pageEndAddress = headAddress;
 
-            var nextFrame = (currentFrame + i) % frameSize;
+            long nextFrame = (currentFrame + i) % frameSize;
 
             if (nextLoadedPage[nextFrame] < pageEndAddress || loadedPage[nextFrame] < pageEndAddress)
                 return true;

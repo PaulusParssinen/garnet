@@ -15,7 +15,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (count > 0)
         {
-            var param = GetCommand(bufSpan, out bool success1);
+            ReadOnlySpan<byte> param = GetCommand(bufSpan, out bool success1);
             if (!success1) return false;
 
             if (param.SequenceEqual(CmdStrings.HISTOGRAM) || param.SequenceEqual(CmdStrings.histogram))
@@ -25,7 +25,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     return success;
                 }
 
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 HashSet<LatencyMetricsType> events = null;
                 bool invalid = false;
                 string invalidEvent = null;
@@ -34,7 +34,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     events = new();
                     for (int i = 0; i < count - 1; i++)
                     {
-                        if (!RespReadUtils.ReadStringWithLengthHeader(out var eventStr, ref ptr, recvBufferPtr + bytesRead))
+                        if (!RespReadUtils.ReadStringWithLengthHeader(out string eventStr, ref ptr, recvBufferPtr + bytesRead))
                             return false;
 
                         if (Enum.TryParse(eventStr, ignoreCase: true, out LatencyMetricsType eventType))
@@ -58,7 +58,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 }
                 else
                 {
-                    var garnetLatencyMetrics = storeWrapper.monitor?.GlobalMetrics.globalLatencyMetrics;
+                    GarnetLatencyMetrics garnetLatencyMetrics = storeWrapper.monitor?.GlobalMetrics.globalLatencyMetrics;
                     string response = garnetLatencyMetrics != null ? garnetLatencyMetrics.GetRespHistograms(events) : "*0\r\n";
                     while (!RespWriteUtils.WriteAsciiDirect(response, ref dcurr, dend))
                         SendAndReset();
@@ -83,7 +83,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 else
                 {
                     HashSet<LatencyMetricsType> events = null;
-                    var ptr = recvBufferPtr + readHead;
+                    byte* ptr = recvBufferPtr + readHead;
                     bool invalid = false;
                     string invalidEvent = null;
                     if (count - 1 > 0)
@@ -91,7 +91,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                         events = new();
                         for (int i = 0; i < count - 1; i++)
                         {
-                            if (!RespReadUtils.ReadStringWithLengthHeader(out var eventStr, ref ptr, recvBufferPtr + bytesRead))
+                            if (!RespReadUtils.ReadStringWithLengthHeader(out string eventStr, ref ptr, recvBufferPtr + bytesRead))
                                 return false;
 
                             if (Enum.TryParse(eventStr, ignoreCase: true, out LatencyMetricsType eventType))
@@ -117,7 +117,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                     {
                         if (storeWrapper.monitor != null)
                         {
-                            foreach (var e in events)
+                            foreach (LatencyMetricsType e in events)
                                 storeWrapper.monitor.resetLatencyMetrics[e] = true;
                         }
                         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
@@ -129,7 +129,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
             else if (param.SequenceEqual(CmdStrings.HELP) || param.SequenceEqual(CmdStrings.help))
             {
-                var ptr = recvBufferPtr + readHead;
+                byte* ptr = recvBufferPtr + readHead;
                 readHead = (int)(ptr - recvBufferPtr);
                 List<string> latencyCommands = RespLatencyHelp.GetLatencyCommands();
                 while (!RespWriteUtils.WriteArrayLength(latencyCommands.Count, ref dcurr, dend))
@@ -157,7 +157,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (errorFlag && !string.IsNullOrWhiteSpace(errorCmd))
         {
-            var errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
+            string errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, errorCmd);
             while (!RespWriteUtils.WriteError(errorMsg, ref dcurr, dend))
                 SendAndReset();
         }

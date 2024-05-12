@@ -26,7 +26,7 @@ public static class CertificateUtils
             store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
 
-            var certificateCollection = store.Certificates
+            X509Certificate2Collection certificateCollection = store.Certificates
                 .Find(X509FindType.FindBySubjectName, subjectName, false);
 
             if (certificateCollection.Count <= 0)
@@ -35,7 +35,7 @@ public static class CertificateUtils
                     $"Unable to load certificate with subject name {subjectName}");
             }
 
-            var latestMatchingCert = certificateCollection.OfType<X509Certificate2>().OrderByDescending(cert => cert.NotAfter).First();
+            X509Certificate2 latestMatchingCert = certificateCollection.OfType<X509Certificate2>().OrderByDescending(cert => cert.NotAfter).First();
             certificate = new X509Certificate2(latestMatchingCert);
         }
         finally

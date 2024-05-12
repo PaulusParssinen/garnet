@@ -35,11 +35,11 @@ public class RespScanCommandsTests
     public void SeDbsizeTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(new RedisKey("keyOne"), new RedisValue("valueone"));
         db.StringSet(new RedisKey("keyTwo"), new RedisValue("valuetwo"));
         db.SortedSetAdd("keyThree", new RedisValue("valuethree"), 1, CommandFlags.None);
-        var actualResponse = db.Execute("DBSIZE");
+        RedisResult actualResponse = db.Execute("DBSIZE");
         Assert.AreEqual(3, ((ulong)actualResponse));
     }
 
@@ -47,7 +47,7 @@ public class RespScanCommandsTests
     public void SeKeysTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // add keys in main store
         db.StringSet(new RedisKey("keyOne"), new RedisValue("valueone"));
@@ -57,7 +57,7 @@ public class RespScanCommandsTests
         // one key object at object store
         db.SortedSetAdd("keyThree", new RedisValue("OneKey"), 1, CommandFlags.None);
 
-        var actualResponse = db.Execute("KEYS", ["key*"]);
+        RedisResult actualResponse = db.Execute("KEYS", ["key*"]);
         Assert.AreEqual(3, ((RedisResult[])actualResponse).Length);
         var listKeys = new List<string>((string[])actualResponse);
         Assert.IsTrue(listKeys.Contains("keyOne"));
@@ -85,7 +85,7 @@ public class RespScanCommandsTests
     {
         // Test a large number of keys
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // set 10_000 strings
         const int KeyCount = 10_000;
@@ -93,13 +93,13 @@ public class RespScanCommandsTests
             db.StringSet($"try:{i}", i);
 
         // get and count keys using SE Redis, using the default pageSize of 250
-        var server = redis.GetServers()[db.Database];
-        var keyCount1 = server.Keys().ToArray().Length;
+        IServer server = redis.GetServers()[db.Database];
+        int keyCount1 = server.Keys().ToArray().Length;
         Assert.AreEqual(KeyCount, keyCount1, "IServer.Keys()");
 
         // get and count keys using KEYS
-        var res = db.Execute("KEYS", "*");
-        var keyCount2 = ((RedisValue[])res!).Length;
+        RedisResult res = db.Execute("KEYS", "*");
+        int keyCount2 = ((RedisValue[])res!).Length;
         Assert.AreEqual(KeyCount, keyCount2, "KEYS *");
     }
 
@@ -107,7 +107,7 @@ public class RespScanCommandsTests
     public void CanDoMemoryUsage()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // add keys in both stores
         db.StringSet(new RedisKey("keyOne"), new RedisValue("valueone"));
@@ -123,7 +123,7 @@ public class RespScanCommandsTests
             db.HyperLogLogAdd(key, data[i]);
         }
 
-        var r = db.Execute("MEMORY", ["USAGE", "keyOne"]);
+        RedisResult r = db.Execute("MEMORY", ["USAGE", "keyOne"]);
         Assert.AreEqual("40", r.ToString());
 
         r = db.Execute("MEMORY", ["USAGE", "myss"]);
@@ -150,7 +150,7 @@ public class RespScanCommandsTests
     public void CanGetKeyType()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // add keys in both stores
         db.StringSet(new RedisKey("keyOne"), new RedisValue("valueone"));
@@ -159,7 +159,7 @@ public class RespScanCommandsTests
         db.SetAdd(new RedisKey("myset"), new RedisValue("elementone"));
         db.HashSet(new RedisKey("myhash"), [new HashEntry("a", "1")]);
 
-        var r = db.Execute("TYPE", ["keyOne"]);
+        RedisResult r = db.Execute("TYPE", ["keyOne"]);
         Assert.IsTrue(r.ToString() == "string");
 
         r = db.Execute("TYPE", ["myss"]);
@@ -179,7 +179,7 @@ public class RespScanCommandsTests
     public void CanUsePatternsInKeysTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         //h?llo matches hello, hallo and hxllo
         //h*llo matches hllo and heeeello
@@ -192,7 +192,7 @@ public class RespScanCommandsTests
         db.StringSet(new RedisKey("hllo"), new RedisValue("four"));
 
 
-        var actualResponse = db.Execute("KEYS", ["h?llo"]);
+        RedisResult actualResponse = db.Execute("KEYS", ["h?llo"]);
         Assert.AreEqual(3, ((RedisResult[])actualResponse).Length);
         var listKeys = new List<string>((string[])actualResponse);
         Assert.IsTrue(listKeys.Contains("hello"));
@@ -231,11 +231,11 @@ public class RespScanCommandsTests
     public void SeKeysPatternTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(new RedisKey("keyone"), new RedisValue("valueone"));
         db.StringSet(new RedisKey("keytwo"), new RedisValue("valuetwo"));
         db.StringSet(new RedisKey("keythree"), new RedisValue("valuethree"));
-        var actualResponse = db.Execute("KEYS", ["*"]);
+        RedisResult actualResponse = db.Execute("KEYS", ["*"]);
         Assert.AreEqual(3, ((RedisResult[])actualResponse).Length);
     }
 
@@ -244,13 +244,13 @@ public class RespScanCommandsTests
     public void SeKeysPatternMatchingTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(new RedisKey("he**"), new RedisValue("keyvalueone"));
         db.StringSet(new RedisKey(@"he\*\*"), new RedisValue("keyvaluetwo"));
         db.StringSet(new RedisKey(@"he\*\*foo"), new RedisValue("keyvaluethree"));
         db.StringSet(new RedisKey(@"he**foo"), new RedisValue("keyvaluefour"));
 
-        var actualResponse = db.Execute("KEYS", [@"he\*\*"]);
+        RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
         Assert.IsTrue(String.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
 
@@ -267,11 +267,11 @@ public class RespScanCommandsTests
     public void SeKeysPatternMatchingTestVerbatim()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(new RedisKey("he**"), new RedisValue("keyvalueone"));
         db.StringSet(new RedisKey(@"he**foo"), new RedisValue("keyvaluetwo"));
 
-        var actualResponse = db.Execute("KEYS", [@"he\*\*"]);
+        RedisResult actualResponse = db.Execute("KEYS", [@"he\*\*"]);
         Assert.AreEqual(1, ((RedisResult[])actualResponse).Length);
         Assert.IsTrue(String.Equals(@"he**", (((RedisResult[])actualResponse)[0]).ToString()));
 
@@ -295,9 +295,9 @@ public class RespScanCommandsTests
     public void CanUseScanWithEmptyStore()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var result = db.Execute("SCAN", "0");
-        _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out var cursor);
+        IDatabase db = redis.GetDatabase(0);
+        RedisResult result = db.Execute("SCAN", "0");
+        _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out int cursor);
         RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
         Assert.IsTrue(cursor == 0);
         Assert.IsTrue(keysMatch.Length == 0);
@@ -308,10 +308,10 @@ public class RespScanCommandsTests
     public void CanUseScanWithMatch()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.StringSet(new RedisKey("hello"), new RedisValue("keyvalueone"));
         db.StringSet(new RedisKey("foo"), new RedisValue("keyvaluetwo"));
-        var result = db.Execute("SCAN", "0", "MATCH", "*o*", "COUNT", "1000");
+        RedisResult result = db.Execute("SCAN", "0", "MATCH", "*o*", "COUNT", "1000");
         RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
         Assert.True(keysMatch.Contains("foo") && keysMatch.Contains("hello"));
     }
@@ -320,19 +320,19 @@ public class RespScanCommandsTests
     public void CanUseScanAllKeys()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 200;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 200;
         for (int i = 0; i < nKeys; i++)
         {
             db.StringSet(new RedisKey($"key:{i}"), new RedisValue($"keyvalue-{i}"));
         }
 
         int cursor = 0;
-        var recordsReturned = 0;
+        int recordsReturned = 0;
 
         do
         {
-            var result = db.Execute("SCAN", cursor.ToString());
+            RedisResult result = db.Execute("SCAN", cursor.ToString());
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
             RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
             recordsReturned += keysMatch.Length;
@@ -345,8 +345,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysWithCount()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 200;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 200;
         var rnd = new Random();
 
         for (int i = 0; i < nKeys; i++)
@@ -355,12 +355,12 @@ public class RespScanCommandsTests
         }
 
         int cursor = 0;
-        var recordsReturned = 0;
-        var count = rnd.Next(1, 20);
+        int recordsReturned = 0;
+        int count = rnd.Next(1, 20);
 
         do
         {
-            var result = db.Execute("SCAN", cursor.ToString(), "COUNT", count);
+            RedisResult result = db.Execute("SCAN", cursor.ToString(), "COUNT", count);
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
             RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
             recordsReturned += keysMatch.Length;
@@ -374,8 +374,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysWithMatchAndCount()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 200;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 200;
 
         for (int i = 0; i < nKeys; i++)
         {
@@ -383,7 +383,7 @@ public class RespScanCommandsTests
         }
 
         int cursor = 0;
-        var result = db.Execute("SCAN", cursor.ToString(), "MATCH", "*11*", "COUNT", 1000);
+        RedisResult result = db.Execute("SCAN", cursor.ToString(), "MATCH", "*11*", "COUNT", 1000);
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
         RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
         Assert.IsTrue(cursor == 0);
@@ -394,8 +394,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysCountAndStringType()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 100;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 100;
 
         for (int i = 0; i < nKeys; i++)
         {
@@ -403,7 +403,7 @@ public class RespScanCommandsTests
         }
 
         int cursor = 0;
-        var result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
+        RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
         RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
         Assert.IsTrue(cursor == 0);
@@ -414,8 +414,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysCountAndTypeWithObjects()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 100;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 100;
 
         for (int i = 0; i < nKeys; i++)
         {
@@ -438,7 +438,7 @@ public class RespScanCommandsTests
         }
 
         int cursor = 0;
-        var result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
+        RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "string", "COUNT", "100");
         _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
         RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
         Assert.IsTrue(cursor == 0);
@@ -466,8 +466,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysAndObjects()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 100;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 100;
 
         for (int i = 0; i < nKeys; i++)
         {
@@ -489,7 +489,7 @@ public class RespScanCommandsTests
 
         do
         {
-            var result = db.Execute("SCAN", cursor.ToString());
+            RedisResult result = db.Execute("SCAN", cursor.ToString());
             _ = long.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
             RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
             recordsReturned += keysMatch.Length;
@@ -503,8 +503,8 @@ public class RespScanCommandsTests
     public void CanUseScanKeysTypeAndMatch()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var nKeys = 100;
+        IDatabase db = redis.GetDatabase(0);
+        int nKeys = 100;
 
         for (int i = 0; i < nKeys; i++)
         {
@@ -521,7 +521,7 @@ public class RespScanCommandsTests
 
         do
         {
-            var result = db.Execute("SCAN", cursor.ToString(), "TYPE", "HASH", "MATCH", "hs*");
+            RedisResult result = db.Execute("SCAN", cursor.ToString(), "TYPE", "HASH", "MATCH", "hs*");
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
             RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
             recordsReturned += keysMatch.Length;
@@ -533,7 +533,7 @@ public class RespScanCommandsTests
         recordsReturned = 0;
         do
         {
-            var result = db.Execute("SCAN", cursor.ToString(), "type", "hash", "match", "hs*");
+            RedisResult result = db.Execute("SCAN", cursor.ToString(), "type", "hash", "match", "hs*");
             _ = int.TryParse(((RedisValue[])((RedisResult[])result!)[0])[0], out cursor);
             RedisValue[] keysMatch = ((RedisValue[])((RedisResult[])result!)[1]);
             recordsReturned += keysMatch.Length;
@@ -553,7 +553,7 @@ public class RespScanCommandsTests
         server.Register.NewCommand("MYDICTGET", 1, CommandType.Read, factory, respCustomCommandsInfo["MYDICTGET"]);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string keyName = "ccKey";
 
@@ -562,7 +562,7 @@ public class RespScanCommandsTests
             db.Execute("MYDICTSET", keyName, $"fookey-{i}", $"foovalue-{i}");
         }
 
-        var items = db.Execute("CUSTOMOBJECTSCAN", keyName, 0, "COUNT", 5);
+        RedisResult items = db.Execute("CUSTOMOBJECTSCAN", keyName, 0, "COUNT", 5);
         Assert.IsTrue(((RedisResult[])items).Length == 2);
         // Assert Cursor value
         Assert.IsTrue(((RedisResult[])items)[0].ToString() == "5");
@@ -573,7 +573,7 @@ public class RespScanCommandsTests
         var resultAsDictionary = items.ToDictionary();
 
         // First element in the resulting dictionary is the cursor value
-        resultAsDictionary.TryGetValue("0", out var elements);
+        resultAsDictionary.TryGetValue("0", out RedisResult elements);
 
         // Review the elements are correct based on the pattern
         for (int i = 0; i < ((RedisResult[])elements).Length / 2; i++)
@@ -592,9 +592,9 @@ public class RespScanCommandsTests
         lightClientRequest.SendCommand("SET keytwo valuetwo");
         lightClientRequest.SendCommand("SET keythree valuethree");
 
-        var expectedResponse = "*3\r\n$6\r\nkeyone\r\n$6\r\nkeytwo\r\n$8\r\nkeythree\r\n+PONG\r\n";
+        string expectedResponse = "*3\r\n$6\r\nkeyone\r\n$6\r\nkeytwo\r\n$8\r\nkeythree\r\n+PONG\r\n";
         var response = lightClientRequest.SendCommands("KEYS *", "PING", 4);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 

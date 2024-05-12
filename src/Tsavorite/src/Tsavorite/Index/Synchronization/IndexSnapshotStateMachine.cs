@@ -71,12 +71,12 @@ internal sealed class IndexSnapshotTask : ISynchronizationTask
                 break;
             case Phase.WAIT_INDEX_CHECKPOINT:
             case Phase.WAIT_INDEX_ONLY_CHECKPOINT:
-                var notify = store.IsIndexFuzzyCheckpointCompleted();
+                bool notify = store.IsIndexFuzzyCheckpointCompleted();
                 notify = notify || !store.SameCycle(ctx, current);
 
                 if (valueTasks != null && !notify)
                 {
-                    var t = store.IsIndexFuzzyCheckpointCompletedAsync(token);
+                    ValueTask t = store.IsIndexFuzzyCheckpointCompletedAsync(token);
                     if (!store.SameCycle(ctx, current))
                         notify = true;
                     else

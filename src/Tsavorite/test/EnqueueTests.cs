@@ -128,7 +128,7 @@ internal class EnqueueTests
 
         // Read the log - Look for the flag so know each entry is unique
         int currentEntry = 0;
-        using (var iter = log.Scan(0, 100_000_000))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, 100_000_000))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {
@@ -175,9 +175,9 @@ internal class EnqueueTests
         ReadOnlySpanBatch spanBatch = new ReadOnlySpanBatch(5);
         var ientry = new ByteArrayEnqueueEntry();
 
-        var input1 = new byte[] { 0, 1, 2, 3 };
-        var input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
-        var input3 = new byte[] { 11, 12 };
+        byte[] input1 = new byte[] { 0, 1, 2, 3 };
+        byte[] input2 = new byte[] { 4, 5, 6, 7, 8, 9, 10 };
+        byte[] input3 = new byte[] { 11, 12 };
         string readerName = "abc";
 
         await log.EnqueueAsync(input1, cancellationToken);
@@ -190,7 +190,7 @@ internal class EnqueueTests
 
         // Read the log to make sure all entries are put in
         int currentEntry = 1;
-        using (var iter = log.Scan(0, long.MaxValue, readerName))
+        using (TsavoriteLogScanIterator iter = log.Scan(0, long.MaxValue, readerName))
         {
             while (iter.GetNext(out byte[] result, out _, out _))
             {

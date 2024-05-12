@@ -38,7 +38,7 @@ public static class EnumUtils
     /// <returns>Array of descriptions</returns>
     public static string[] GetEnumDescriptions<T>(T value) where T : Enum
     {
-        var nameToDesc = GetEnumNameToDescription<T>();
+        IDictionary<string, string> nameToDesc = GetEnumNameToDescription<T>();
         return value.ToString().Split(',').Select(f => nameToDesc.ContainsKey(f.Trim()) ? nameToDesc[f.Trim()] : f).ToArray();
     }
 
@@ -59,7 +59,7 @@ public static class EnumUtils
         if (!EnumDescriptionToNameCache[typeof(T)].ContainsKey(strVal))
             return false;
 
-        foreach (var enumName in EnumDescriptionToNameCache[typeof(T)][strVal])
+        foreach (string enumName in EnumDescriptionToNameCache[typeof(T)][strVal])
         {
             if (Enum.TryParse(enumName, out T enumVal))
             {
@@ -80,7 +80,7 @@ public static class EnumUtils
     /// <returns>True if successful</returns>
     public static bool TryParseEnumFromDescription<T>(string strVal, out T val) where T : struct, Enum
     {
-        var isSuccessful = TryParseEnumsFromDescription(strVal, out IEnumerable<T> vals);
+        bool isSuccessful = TryParseEnumsFromDescription(strVal, out IEnumerable<T> vals);
         val = isSuccessful ? vals.First() : default;
         return isSuccessful;
     }
@@ -91,7 +91,7 @@ public static class EnumUtils
         var valToDesc = new Dictionary<string, string>();
         var descToVals = new Dictionary<string, List<string>>();
 
-        foreach (var flagFieldInfo in typeof(T).GetFields())
+        foreach (System.Reflection.FieldInfo flagFieldInfo in typeof(T).GetFields())
         {
             var descAttr = (DescriptionAttribute)flagFieldInfo.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault();
             if (descAttr != null)

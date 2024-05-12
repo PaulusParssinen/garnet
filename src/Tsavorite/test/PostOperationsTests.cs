@@ -77,7 +77,7 @@ internal class PostOperationsTests
 
     void Populate()
     {
-        for (var key = 0; key < numRecords; ++key)
+        for (int key = 0; key < numRecords; ++key)
         {
             expectedAddress = store.Log.TailAddress;
             session.Upsert(key, key * 100);
@@ -91,8 +91,8 @@ internal class PostOperationsTests
     internal void CompletePendingAndVerifyInsertedAddress()
     {
         // Note: Only Read and RMW have Pending results.
-        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
-        TestUtils.GetSinglePendingResult(completedOutputs, out var recordMetadata);
+        session.CompletePendingWithOutputs(out CompletedOutputIterator<int, int, int, int, Empty> completedOutputs, wait: true);
+        TestUtils.GetSinglePendingResult(completedOutputs, out RecordMetadata recordMetadata);
         Assert.AreEqual(expectedAddress, recordMetadata.Address);
     }
 

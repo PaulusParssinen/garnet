@@ -27,7 +27,7 @@ internal sealed class PendingFlushList
     {
         lock (list)
         {
-            for (var it = list.First; it != null;)
+            for (LinkedListNode<PageAsyncFlushResult<Empty>> it = list.First; it != null;)
             {
                 request = it.Value;
                 if (request.fromAddress == address)
@@ -49,7 +49,7 @@ internal sealed class PendingFlushList
     {
         lock (list)
         {
-            for (var it = list.First; it != null;)
+            for (LinkedListNode<PageAsyncFlushResult<Empty>> it = list.First; it != null;)
             {
                 request = it.Value;
                 if (request.untilAddress == address)

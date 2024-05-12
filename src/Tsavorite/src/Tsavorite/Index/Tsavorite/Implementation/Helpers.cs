@@ -143,8 +143,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     internal void SetRecordInvalid(long logicalAddress)
     {
         // This is called on exception recovery for a newly-inserted record.
-        var localLog = IsReadCache(logicalAddress) ? readcache : hlog;
-        ref var recordInfo = ref localLog.GetInfo(localLog.GetPhysicalAddress(AbsoluteAddress(logicalAddress)));
+        AllocatorBase<Key, Value> localLog = IsReadCache(logicalAddress) ? readcache : hlog;
+        ref RecordInfo recordInfo = ref localLog.GetInfo(localLog.GetPhysicalAddress(AbsoluteAddress(logicalAddress)));
         recordInfo.SetInvalid();
     }
 
@@ -156,7 +156,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         if (DoRecordIsolation)
             newRecordInfo.InitializeLockExclusive();
 
-        var result = stackCtx.recSrc.LowestReadCachePhysicalAddress == Constants.kInvalidAddress
+        bool result = stackCtx.recSrc.LowestReadCachePhysicalAddress == Constants.kInvalidAddress
             ? stackCtx.hei.TryCAS(newLogicalAddress)
             : SpliceIntoHashChainAtReadCacheBoundary(ref key, ref stackCtx, newLogicalAddress);
         if (result)

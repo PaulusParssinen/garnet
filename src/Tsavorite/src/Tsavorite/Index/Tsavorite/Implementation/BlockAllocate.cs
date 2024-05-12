@@ -54,8 +54,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         status = OperationStatus.SUCCESS;
 
         // MinRevivAddress is also needed for pendingContext-based record reuse.
-        var minMutableAddress = GetMinRevivifiableAddress();
-        var minRevivAddress = minMutableAddress;
+        long minMutableAddress = GetMinRevivifiableAddress();
+        long minRevivAddress = minMutableAddress;
 
         if (options.Recycle && pendingContext.retryNewLogicalAddress != Constants.kInvalidAddress && GetAllocationForRetry(tsavoriteSession, ref pendingContext, minRevivAddress, ref allocatedSize, newKeySize, out newLogicalAddress, out newPhysicalAddress))
             return true;
@@ -65,7 +65,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
                 minRevivAddress = stackCtx.hei.Address;
             if (tsavoriteSession.Ctx.IsInV1)
             {
-                var fuzzyStartAddress = _hybridLogCheckpoint.info.startLogicalAddress;
+                long fuzzyStartAddress = _hybridLogCheckpoint.info.startLogicalAddress;
                 if (fuzzyStartAddress > minRevivAddress)
                     minRevivAddress = fuzzyStartAddress;
             }
@@ -92,10 +92,10 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             }
 
             // In-memory source dropped below HeadAddress during BlockAllocate. Save the record for retry if we can.
-            ref var newRecordInfo = ref hlog.GetInfo(newPhysicalAddress);
+            ref RecordInfo newRecordInfo = ref hlog.GetInfo(newPhysicalAddress);
             if (options.Recycle)
             {
-                ref var newValue = ref hlog.GetValue(newPhysicalAddress);
+                ref Value newValue = ref hlog.GetValue(newPhysicalAddress);
                 hlog.GetAndInitializeValue(newPhysicalAddress, newPhysicalAddress + actualSize);
                 int valueOffset = (int)((long)Unsafe.AsPointer(ref newValue) - newPhysicalAddress);
                 SetExtraValueLength(ref hlog.GetValue(newPhysicalAddress), ref newRecordInfo, actualSize - valueOffset, allocatedSize - valueOffset);
@@ -145,7 +145,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void SaveAllocationForRetry<Input, Output, Context>(ref PendingContext<Input, Output, Context> pendingContext, long logicalAddress, long physicalAddress, int allocatedSize)
     {
-        ref var recordInfo = ref hlog.GetInfo(physicalAddress);
+        ref RecordInfo recordInfo = ref hlog.GetInfo(physicalAddress);
 
         // TryAllocateRecord may stash this before WriteRecordInfo is called, leaving .PreviousAddress set to kInvalidAddress.
         // This is zero, and setting Invalid will result in recordInfo.IsNull being true, which will cause log-scan problems.
@@ -174,9 +174,9 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         }
 
         newPhysicalAddress = hlog.GetPhysicalAddress(newLogicalAddress);
-        ref var recordInfo = ref hlog.GetInfo(newPhysicalAddress);
+        ref RecordInfo recordInfo = ref hlog.GetInfo(newPhysicalAddress);
         Debug.Assert(!recordInfo.IsNull(), "RecordInfo should not be IsNull");
-        ref var recordValue = ref hlog.GetValue(newPhysicalAddress);
+        ref Value recordValue = ref hlog.GetValue(newPhysicalAddress);
         (int usedValueLength, int fullValueLength, int fullRecordLength) = GetRecordLengths(newPhysicalAddress, ref recordValue, ref recordInfo);
 
         // Dispose the record for either reuse or abandonment.

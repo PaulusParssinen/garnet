@@ -20,7 +20,7 @@ sealed class TestProcedureSortedSets : CustomTransactionProcedure
     public override bool Prepare<TGarnetReadApi>(TGarnetReadApi api, ArgSlice input)
     {
         int offset = 0;
-        var ssA = GetNextArg(input, ref offset);
+        ArgSlice ssA = GetNextArg(input, ref offset);
 
         if (ssA.Length == 0)
             return false;
@@ -36,7 +36,7 @@ sealed class TestProcedureSortedSets : CustomTransactionProcedure
         var ssItems = new (ArgSlice score, ArgSlice member)[10];
         var ssMembers = new ArgSlice[10];
 
-        var ssA = GetNextArg(input, ref offset);
+        ArgSlice ssA = GetNextArg(input, ref offset);
 
         for (int i = 0; i < ssItems.Length; i++)
         {
@@ -45,9 +45,9 @@ sealed class TestProcedureSortedSets : CustomTransactionProcedure
             ssMembers[i] = ssItems[i].member;
         }
 
-        var minRange = GetNextArg(input, ref offset);
-        var maxRange = GetNextArg(input, ref offset);
-        var match = GetNextArg(input, ref offset);
+        ArgSlice minRange = GetNextArg(input, ref offset);
+        ArgSlice maxRange = GetNextArg(input, ref offset);
+        ArgSlice match = GetNextArg(input, ref offset);
 
         bool result = true;
         ArgSlice ssB = new ArgSlice();
@@ -63,7 +63,7 @@ sealed class TestProcedureSortedSets : CustomTransactionProcedure
         if (count != 9)
             result = false;
 
-        var strMatch = Encoding.ASCII.GetString(match.ReadOnlySpan);
+        string strMatch = Encoding.ASCII.GetString(match.ReadOnlySpan);
 
         // Exercise SortedSetScan
         api.SortedSetScan(ssA, 0, strMatch, ssItems.Length, out ArgSlice[] itemsInScan);
@@ -93,7 +93,7 @@ sealed class TestProcedureSortedSets : CustomTransactionProcedure
             goto returnToMain;
         }
 
-        var status = api.SortedSetRange(ssA, minRange, maxRange, sortedSetOrderOperation: SortedSetOrderOperation.ByScore, out var elements, out string error, false, false, limit: ("1", 5));
+        GarnetStatus status = api.SortedSetRange(ssA, minRange, maxRange, sortedSetOrderOperation: SortedSetOrderOperation.ByScore, out ArgSlice[] elements, out string error, false, false, limit: ("1", 5));
         if (status == GarnetStatus.OK && error == default)
         {
             if (!elements[0].ReadOnlySpan.SequenceEqual(ssItems[2].member.ReadOnlySpan))

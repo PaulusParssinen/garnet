@@ -36,7 +36,7 @@ public abstract class CustomFunctions
 
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteSimpleString(simpleString, ref curr, ptr + len);
         }
         output.Item2 = len;
@@ -47,7 +47,7 @@ public abstract class CustomFunctions
     /// </summary>
     protected static unsafe void WriteSimpleString(ref MemoryResult<byte> output, ReadOnlySpan<char> simpleString)
     {
-        var _output = (output.MemoryOwner, output.Length);
+        (IMemoryOwner<byte> MemoryOwner, int Length) _output = (output.MemoryOwner, output.Length);
         WriteSimpleString(ref _output, simpleString);
         output.MemoryOwner = _output.MemoryOwner;
         output.Length = _output.Length;
@@ -68,7 +68,7 @@ public abstract class CustomFunctions
 
         fixed (byte* ptr = output.MemoryOwner.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteArrayLength(values.Length, ref curr, ptr + totalLen);
             for (int i = 0; i < values.Length; i++)
                 RespWriteUtils.WriteBulkString(values[i].Span, ref curr, ptr + totalLen);
@@ -90,7 +90,7 @@ public abstract class CustomFunctions
 
         fixed (byte* ptr = output.MemoryOwner.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteArrayLength(values.Count, ref curr, ptr + totalLen);
             for (int i = 0; i < values.Count; i++)
                 RespWriteUtils.WriteBulkString(values[i].Span, ref curr, ptr + totalLen);
@@ -109,7 +109,7 @@ public abstract class CustomFunctions
         output.Item2 = len;
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteBulkString(bulkString, ref curr, ptr + len);
         }
     }
@@ -119,7 +119,7 @@ public abstract class CustomFunctions
     /// </summary>
     protected static unsafe void WriteBulkString(ref MemoryResult<byte> output, Span<byte> bulkString)
     {
-        var _output = (output.MemoryOwner, output.Length);
+        (IMemoryOwner<byte> MemoryOwner, int Length) _output = (output.MemoryOwner, output.Length);
         WriteBulkString(ref _output, bulkString);
         output.MemoryOwner = _output.MemoryOwner;
         output.Length = _output.Length;
@@ -137,7 +137,7 @@ public abstract class CustomFunctions
         output.Item2 = len;
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteNull(ref curr, ptr + len);
         }
     }
@@ -147,7 +147,7 @@ public abstract class CustomFunctions
     /// </summary>
     protected static unsafe void WriteNullBulkString(ref MemoryResult<byte> output)
     {
-        var _output = (output.MemoryOwner, output.Length);
+        (IMemoryOwner<byte> MemoryOwner, int Length) _output = (output.MemoryOwner, output.Length);
         WriteNullBulkString(ref _output);
         output.MemoryOwner = _output.MemoryOwner;
         output.Length = _output.Length;
@@ -164,7 +164,7 @@ public abstract class CustomFunctions
         output.Item1 = MemoryPool.Rent(len);
         fixed (byte* ptr = output.Item1.Memory.Span)
         {
-            var curr = ptr;
+            byte* curr = ptr;
             RespWriteUtils.WriteError(errorMessage, ref curr, ptr + len);
         }
         output.Item2 = len;
@@ -175,7 +175,7 @@ public abstract class CustomFunctions
     /// </summary>
     protected static unsafe void WriteError(ref MemoryResult<byte> output, string errorMessage)
     {
-        var _output = (output.MemoryOwner, output.Length);
+        (IMemoryOwner<byte> MemoryOwner, int Length) _output = (output.MemoryOwner, output.Length);
         WriteError(ref _output, errorMessage);
         output.MemoryOwner = _output.MemoryOwner;
         output.Length = _output.Length;

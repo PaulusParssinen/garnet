@@ -128,7 +128,7 @@ internal sealed class TsavoriteKVIterator<Key, Value, Input, Output, Context, Fu
             {
                 if (mainKvIter.GetNext(out recordInfo))
                 {
-                    ref var key = ref mainKvIter.GetKey();
+                    ref Key key = ref mainKvIter.GetKey();
                     OperationStackContext<Key, Value> stackCtx = default;
                     if (IsTailmostMainKvRecord(ref key, recordInfo, ref stackCtx))
                         return true;
@@ -171,11 +171,11 @@ internal sealed class TsavoriteKVIterator<Key, Value, Input, Output, Context, Fu
             if (iterationPhase == IterationPhase.MainKv)
             {
                 OperationStackContext<Key, Value> stackCtx = default;
-                if (mainKvIter.GetNext(out var recordInfo))
+                if (mainKvIter.GetNext(out RecordInfo recordInfo))
                 {
                     try
                     {
-                        ref var key = ref mainKvIter.GetKey();
+                        ref Key key = ref mainKvIter.GetKey();
                         if (IsTailmostMainKvRecord(ref key, recordInfo, ref stackCtx))
                         {
                             // Push Iter records are in temp storage so do not need locks, but we'll call ConcurrentReader because, for example, GenericAllocator
@@ -209,7 +209,7 @@ internal sealed class TsavoriteKVIterator<Key, Value, Input, Output, Context, Fu
 
             if (iterationPhase == IterationPhase.TempKv)
             {
-                if (tempKvIter.GetNext(out var recordInfo))
+                if (tempKvIter.GetNext(out RecordInfo recordInfo))
                 {
                     if (!recordInfo.Tombstone)
                     {

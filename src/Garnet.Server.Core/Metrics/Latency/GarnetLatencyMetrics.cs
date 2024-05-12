@@ -28,7 +28,7 @@ internal sealed class GarnetLatencyMetrics
     {
         Debug.Assert(defaultLatencyTypes.Length == defaultLatencyTypesTicks.Length);
         metrics = new LatencyMetricsEntry[defaultLatencyTypes.Length];
-        foreach (var cmd in defaultLatencyTypes)
+        foreach (LatencyMetricsType cmd in defaultLatencyTypes)
             metrics[(int)cmd] = new LatencyMetricsEntry();
     }
 
@@ -110,7 +110,7 @@ internal sealed class GarnetLatencyMetrics
         if (metrics[idx].latency.TotalCount == 0)
             return false;
 
-        var p = GetPercentiles(idx);
+        List<MetricsItem> p = GetPercentiles(idx);
         Debug.Assert(p != null);
 
         string cmdType = eventType.ToString();
@@ -138,10 +138,10 @@ internal sealed class GarnetLatencyMetrics
     {
         int cmdCount = 0;
         string response = "";
-        foreach (var eventType in events)
+        foreach (LatencyMetricsType eventType in events)
         {
             int idx = (int)eventType;
-            if (GetRespHistogram(idx, out var cmdHistogram, eventType))
+            if (GetRespHistogram(idx, out string cmdHistogram, eventType))
             {
                 response += cmdHistogram;
                 cmdCount++;
@@ -160,7 +160,7 @@ internal sealed class GarnetLatencyMetrics
     {
         for (int i = 0; i < latencyMetricsTypes.Length; i++)
         {
-            var eventType = latencyMetricsTypes[i];
+            LatencyMetricsType eventType = latencyMetricsTypes[i];
             MetricsItem[] infoItems = GetLatencyMetrics(eventType);
             if (infoItems != null)
                 yield return (eventType, infoItems);

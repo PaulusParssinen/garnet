@@ -76,7 +76,7 @@ public class GarnetServer : IDisposable
             this.initLogger = (MemoryLogger)memLogProvider.CreateLogger("ArgParser");
         }
 
-        if (!ServerSettingsManager.TryParseCommandLineArguments(commandLineArgs, out var serverSettings, out _, this.initLogger))
+        if (!ServerSettingsManager.TryParseCommandLineArguments(commandLineArgs, out Options serverSettings, out _, this.initLogger))
         {
             // Flush logs from memory logger
             FlushMemoryLogger(this.initLogger, "ArgParser", loggerFactory);
@@ -141,9 +141,9 @@ public class GarnetServer : IDisposable
 
         if (!opts.QuietMode)
         {
-            var red = "\u001b[31m";
-            var magenta = "\u001b[35m";
-            var normal = "\u001b[0m";
+            string red = "\u001b[31m";
+            string magenta = "\u001b[35m";
+            string normal = "\u001b[0m";
 
             Console.WriteLine($@"{red}    _________
    /_||___||_\      {normal}Garnet {version} {(IntPtr.Size == 8 ? "64" : "32")} bit; {(opts.EnableCluster ? "cluster" : "standalone")} mode{red}
@@ -178,9 +178,9 @@ public class GarnetServer : IDisposable
         if (!setMax && !ThreadPool.SetMaxThreads(opts.ThreadPoolMaxThreads, opts.ThreadPoolMaxThreads))
             throw new Exception($"Unable to call ThreadPool.SetMaxThreads with {opts.ThreadPoolMaxThreads}");
 
-        opts.GetSettings(out logSettings, out var indexSize, out var revivSettings, out logFactory);
+        opts.GetSettings(out logSettings, out int indexSize, out RevivificationSettings revivSettings, out logFactory);
 
-        var CheckpointDir = opts.CheckpointDir;
+        string CheckpointDir = opts.CheckpointDir;
         if (CheckpointDir == null) CheckpointDir = opts.LogDir;
 
         var checkpointSettings = new CheckpointSettings
@@ -189,7 +189,7 @@ public class GarnetServer : IDisposable
             ThrottleCheckpointFlushDelayMs = opts.CheckpointThrottleFlushDelayMs,
             CheckpointVersionSwitchBarrier = opts.EnableCluster
         };
-        var checkpointFactory = opts.DeviceFactoryCreator();
+        INamedDeviceFactory checkpointFactory = opts.DeviceFactoryCreator();
         if (opts.EnableCluster)
         {
             checkpointSettings.CheckpointManager = clusterFactory.CreateCheckpointManager(checkpointFactory, new DefaultCheckpointNamingScheme(CheckpointDir + "/Store/checkpoints"), true, logger);
@@ -207,14 +207,14 @@ public class GarnetServer : IDisposable
         CacheSizeTracker objectStoreSizeTracker = null;
         if (!opts.DisableObjects)
         {
-            opts.GetObjectStoreSettings(out objLogSettings, out var objRevivSettings, out var objIndexSize, out var objTotalMemorySize);
+            opts.GetObjectStoreSettings(out objLogSettings, out RevivificationSettings objRevivSettings, out int objIndexSize, out long objTotalMemorySize);
 
             var objCheckpointSettings = new CheckpointSettings
             {
                 ThrottleCheckpointFlushDelayMs = opts.CheckpointThrottleFlushDelayMs,
                 CheckpointVersionSwitchBarrier = opts.EnableCluster
             };
-            var objectCheckpointFactory = opts.DeviceFactoryCreator();
+            INamedDeviceFactory objectCheckpointFactory = opts.DeviceFactoryCreator();
             if (opts.EnableCluster)
             {
                 objCheckpointSettings.CheckpointManager = clusterFactory.CreateCheckpointManager(opts.DeviceFactoryCreator(), new DefaultCheckpointNamingScheme(CheckpointDir + "/ObjectStore/checkpoints"), false, logger);
@@ -246,7 +246,7 @@ public class GarnetServer : IDisposable
                     throw new Exception("Need to set CommitFrequencyMs to -1 (manual commits) with MainMemoryReplication");
             }
 
-            opts.GetAofSettings(out var aofSettings);
+            opts.GetAofSettings(out TsavoriteLogSettings aofSettings);
             aofDevice = aofSettings.LogDevice;
             appendOnlyFile = new TsavoriteLog(aofSettings, logger: this.loggerFactory?.CreateLogger("TsavoriteLog [aof]"));
 
@@ -318,7 +318,7 @@ public class GarnetServer : IDisposable
             logFactory?.Delete(new FileDescriptor { directoryName = "" });
             if (opts.CheckpointDir != opts.LogDir && !string.IsNullOrEmpty(opts.CheckpointDir))
             {
-                var ckptdir = opts.DeviceFactoryCreator();
+                INamedDeviceFactory ckptdir = opts.DeviceFactoryCreator();
                 ckptdir.Initialize(opts.CheckpointDir);
                 ckptdir.Delete(new FileDescriptor { directoryName = "" });
             }
@@ -382,7 +382,7 @@ public class GarnetServer : IDisposable
         if (memoryLogger == null) return;
 
         // If no logger factory supplied, create a default console logger
-        var disposeDstLoggerFactory = false;
+        bool disposeDstLoggerFactory = false;
         if (dstLoggerFactory == null)
         {
             dstLoggerFactory = LoggerFactory.Create(builder => builder.AddSimpleConsole(options =>
@@ -394,7 +394,7 @@ public class GarnetServer : IDisposable
         }
 
         // Create the destination logger
-        var dstLogger = dstLoggerFactory.CreateLogger(categoryName);
+        ILogger dstLogger = dstLoggerFactory.CreateLogger(categoryName);
 
         // Flush all entries from the memory logger into the destination logger
         memoryLogger.FlushLogger(dstLogger);

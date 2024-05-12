@@ -30,11 +30,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         else
         {
             // Read key for the scan
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var key, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] key, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             // Get cursor value
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var cursor, ref ptr, recvBufferPtr + bytesRead))
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string cursor, ref ptr, recvBufferPtr + bytesRead))
                 return false;
 
             if (!Int32.TryParse(cursor, out int cursorValue) || cursorValue < 0)
@@ -56,11 +56,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Prepare input
             // Header + size of int for the limitCountInOutput
             var inputPtr = (ObjectInputHeader*)(ptr - ObjectInputHeader.Size - sizeof(int));
-            var ptrToInt = (int*)(ptr - sizeof(int));
+            int* ptrToInt = (int*)(ptr - sizeof(int));
 
             // Save old values on buffer for possible revert
-            var save = *inputPtr;
-            var savePtrToInt = *ptrToInt;
+            ObjectInputHeader save = *inputPtr;
+            int savePtrToInt = *ptrToInt;
 
             // Build the input
             byte* pcurr = (byte*)inputPtr;
@@ -97,11 +97,11 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             pcurr += sizeof(int);
 
             // Prepare length of header in input buffer
-            var inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
+            int inputLength = (int)(recvBufferPtr + bytesRead - (byte*)inputPtr);
 
             // Prepare GarnetObjectStore output
             var outputFooter = new GarnetObjectStoreOutput { spanByteAndMemory = new SpanByteAndMemory(dcurr, (int)(dend - dcurr)) };
-            var status = storageApi.ObjectScan(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
+            GarnetStatus status = storageApi.ObjectScan(key, new ArgSlice((byte*)inputPtr, inputLength), ref outputFooter);
 
             //restore input buffer
             *inputPtr = save;
@@ -111,7 +111,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 case GarnetStatus.OK:
                     // Process output
-                    var objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
+                    ObjectOutputHeader objOutputHeader = ProcessOutputWithHeader(outputFooter.spanByteAndMemory);
                     // Validation for partial input reading or error
                     if (objOutputHeader.countDone == Int32.MinValue)
                         return false;

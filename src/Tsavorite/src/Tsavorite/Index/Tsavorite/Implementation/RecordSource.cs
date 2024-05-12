@@ -294,9 +294,9 @@ internal struct RecordSource<Key, Value>
 
     public override readonly string ToString()
     {
-        var isRC = "(rc)";
-        var llaRC = IsReadCache(LatestLogicalAddress) ? isRC : string.Empty;
-        var laRC = IsReadCache(LogicalAddress) ? isRC : string.Empty;
+        string isRC = "(rc)";
+        string llaRC = IsReadCache(LatestLogicalAddress) ? isRC : string.Empty;
+        string laRC = IsReadCache(LogicalAddress) ? isRC : string.Empty;
         return $"lla {AbsoluteAddress(LatestLogicalAddress)}{llaRC}, la {AbsoluteAddress(LogicalAddress)}{laRC}, lrcla {AbsoluteAddress(LowestReadCacheLogicalAddress)},"
              + $" hasInMemorySrc {InternalStates.ToString(internalState & InternalStates.InMemSrcBits)}, hasLocks {LockStateString()}, InitMinRevivAddr {InitialMinRevivifiableAddress}";
     }

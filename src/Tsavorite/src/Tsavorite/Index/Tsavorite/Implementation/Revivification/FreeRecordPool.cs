@@ -43,7 +43,7 @@ internal struct FreeRecord
     internal bool Set(long address, long recordSize, long minAddress)
     {
         // If the record is empty or the address is below minAddress, set the new address into it.
-        var oldRecord = this;
+        FreeRecord oldRecord = this;
         if (oldRecord.IsSet && oldRecord.Address >= minAddress)
             return false;
 
@@ -70,7 +70,7 @@ internal struct FreeRecord
             SetEmptyAtomic(oldRecord.word);
             return false;
         }
-        var thisSize = oversize ? GetRecordSize(store, oldRecord.Address) : oldRecord.Size;
+        int thisSize = oversize ? GetRecordSize(store, oldRecord.Address) : oldRecord.Size;
         if (thisSize < recordSize)
             return false;
 
@@ -214,7 +214,7 @@ internal unsafe class FreeRecordBin
     {
         // If the record size range is too much for the number of records in the bin, we must allow multiple record sizes per segment.
         // prevBinRecordSize is already verified to be a multiple of 8.
-        var bindefRecordSize = RoundUp(binDef.RecordSize, 8);
+        int bindefRecordSize = RoundUp(binDef.RecordSize, 8);
         if (isFixedLength || bindefRecordSize == prevBinRecordSize + 8)
         {
             bestFitScanLimit = RevivificationBin.UseFirstFit;
@@ -229,7 +229,7 @@ internal unsafe class FreeRecordBin
             bestFitScanLimit = binDef.BestFitScanLimit;
 
             // minRecordSize is already verified to be a multiple of 8.
-            var sizeRange = bindefRecordSize - prevBinRecordSize;
+            int sizeRange = bindefRecordSize - prevBinRecordSize;
 
             segmentCount = sizeRange / 8;
             segmentSize = (int)Math.Ceiling(binDef.NumberOfRecords / (double)segmentCount);
@@ -263,10 +263,10 @@ internal unsafe class FreeRecordBin
     {
         // recordSize and segmentSizeIncrement are rounded up to 8, unless IsFixedLength in which case segmentSizeIncrement is 1.
         // sizeOffset will be negative if we are searching the next-highest bin.
-        var sizeOffset = recordSize - minRecordSize;
+        int sizeOffset = recordSize - minRecordSize;
         if (sizeOffset < 0)
             sizeOffset = 0;
-        var segmentIndex = sizeOffset / segmentRecordSizeIncrement;
+        int segmentIndex = sizeOffset / segmentRecordSizeIncrement;
         Debug.Assert(segmentIndex >= 0 && segmentIndex < segmentCount, $"Internal error: Segment index ({segmentIndex}) must be >= 0 && < segmentCount ({segmentCount})");
         return segmentSize * segmentIndex;
     }
@@ -277,9 +277,9 @@ internal unsafe class FreeRecordBin
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryAdd<Key, Value>(long address, int recordSize, TsavoriteKV<Key, Value> store, long minAddress, ref RevivificationStats revivStats)
     {
-        var segmentStart = GetSegmentStart(recordSize);
+        int segmentStart = GetSegmentStart(recordSize);
 
-        for (var ii = 0; ii < recordCount; ++ii)
+        for (int ii = 0; ii < recordCount; ++ii)
         {
             FreeRecord* record = GetRecord(segmentStart + ii);
             if (record->Set(address, recordSize, minAddress))
@@ -313,13 +313,13 @@ internal unsafe class FreeRecordBin
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryTakeFirstFit<Key, Value>(int recordSize, long minAddress, TsavoriteKV<Key, Value> store, bool oversize, out long address, ref RevivificationStats revivStats)
     {
-        var segmentStart = GetSegmentStart(recordSize);
+        int segmentStart = GetSegmentStart(recordSize);
 
         int retryCount = recordCount;
         FreeRecord.TakeResult takeResult = new();
         while (true)
         {
-            for (var ii = 0; ii < recordCount; ++ii)
+            for (int ii = 0; ii < recordCount; ++ii)
             {
                 FreeRecord* record = GetRecord(segmentStart + ii);
                 if (oversize ? record->TryTakeOversize(recordSize, minAddress, store, out address, ref takeResult) : record->TryTake(recordSize, minAddress, out address, ref takeResult))
@@ -342,7 +342,7 @@ internal unsafe class FreeRecordBin
     {
         // Retry as long as we find a candidate, but reduce the best fit scan limit each retry.
         int localBestFitScanLimit = bestFitScanLimit;
-        var segmentStart = GetSegmentStart(recordSize);
+        int segmentStart = GetSegmentStart(recordSize);
 
         FreeRecord.TakeResult takeResult = new();
         while (true)
@@ -352,11 +352,11 @@ internal unsafe class FreeRecordBin
             int firstFitIndex = int.MaxValue;       // Subtracted from loop control var and tested for >= bestFitScanLimit; int.MaxValue produces a negative result
 
             FreeRecord* record;
-            for (var ii = 0; ii < recordCount; ++ii)
+            for (int ii = 0; ii < recordCount; ++ii)
             {
                 // For best-fit we must peek first without taking.
                 record = GetRecord(segmentStart + ii);
-                if (record->TryPeek(recordSize, store, oversize, minAddress, out var thisRecordSize))
+                if (record->TryPeek(recordSize, store, oversize, minAddress, out int thisRecordSize))
                 {
                     bestFitIndex = ii;      // Found exact match
                     break;
@@ -399,7 +399,7 @@ internal unsafe class FreeRecordBin
     {
         // Add() always sets isEmpty to false and we do not clear isEmpty on Take() because that could lead to more lost "isEmpty = false".
         // So this routine is called only if the bin is marked not-empty.
-        for (var ii = 0; ii < recordCount; ++ii)
+        for (int ii = 0; ii < recordCount; ++ii)
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
@@ -450,7 +450,7 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
 
         // First create the "size index": a cache-aligned vector of int bin sizes. This way searching for the bin
         // for a record size will stay in a single cache line (unless there are more than 16 bins).
-        var sizeIndexCount = RoundUp(settings.FreeRecordBins.Length * sizeof(int), Constants.kCacheLineBytes) / sizeof(int);
+        int sizeIndexCount = RoundUp(settings.FreeRecordBins.Length * sizeof(int), Constants.kCacheLineBytes) / sizeof(int);
 
         // Overallocate the GCHandle by one cache line so we have room to offset the returned pointer to make it cache-aligned.
         sizeIndexArray = GC.AllocateArray<int>(sizeIndexCount + Constants.kCacheLineBytes / sizeof(int), pinned: true);
@@ -463,7 +463,7 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
         // Create the bins.
         List<FreeRecordBin> binList = new();
         int prevBinRecordSize = RevivificationBin.MinRecordSize - 8;      // The minimum record size increment is 8, so the first bin will set this to MinRecordSize or more
-        for (var ii = 0; ii < settings.FreeRecordBins.Length; ++ii)
+        for (int ii = 0; ii < settings.FreeRecordBins.Length; ++ii)
         {
             if (prevBinRecordSize >= settings.FreeRecordBins[ii].RecordSize)
                 continue;
@@ -483,7 +483,7 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
         Debug.Assert(!IsFixedLength, "Should only search bins if !IsFixedLength");
 
         // Sequential search in the sizeIndex for the requested size.
-        for (var ii = 0; ii < numBins; ++ii)
+        for (int ii = 0; ii < numBins; ++ii)
         {
             if (sizeIndex[ii] >= size)
             {
@@ -498,7 +498,7 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryAdd(long logicalAddress, int size, ref RevivificationStats revivStats)
     {
-        var minAddress = store.GetMinRevivifiableAddress();
+        long minAddress = store.GetMinRevivifiableAddress();
         int binIndex = 0;
         if (logicalAddress < minAddress || (!IsFixedLength && !GetBinIndex(size, out binIndex)))
             return false;
@@ -513,13 +513,13 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryAdd(long logicalAddress, long physicalAddress, int allocatedSize, ref RevivificationStats revivStats)
     {
-        var minAddress = store.GetMinRevivifiableAddress();
+        long minAddress = store.GetMinRevivifiableAddress();
         if (logicalAddress < minAddress)
         {
             ++revivStats.failedAdds;
             return false;
         }
-        var recordInfo = store.hlog.GetInfo(physicalAddress);
+        RecordInfo recordInfo = store.hlog.GetInfo(physicalAddress);
         recordInfo.TrySeal(invalidate: true);
         store.SetFreeRecordSize(physicalAddress, ref recordInfo, allocatedSize);
         bool result = TryAdd(logicalAddress, allocatedSize, ref revivStats);
@@ -555,7 +555,7 @@ internal unsafe class FreeRecordPool<Key, Value> : IDisposable
 
     internal void ScanForEmpty(CancellationToken cancellationToken)
     {
-        foreach (var bin in bins)
+        foreach (FreeRecordBin bin in bins)
         {
             if (cancellationToken.IsCancellationRequested)
                 break;

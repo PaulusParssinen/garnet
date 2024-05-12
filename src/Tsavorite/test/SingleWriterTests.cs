@@ -44,7 +44,7 @@ class SingleWriterTests
 
         functions = new SingleWriterTestFunctions();
         LogSettings logSettings = new LogSettings { LogDevice = log, ObjectLogDevice = null, PageSizeBits = 12, MemorySizeBits = 22, ReadCopyOptions = new(ReadCopyFrom.Device, ReadCopyTo.MainLog) };
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ReadCopyDestination dest)
             {
@@ -96,7 +96,7 @@ class SingleWriterTests
         int key = 42;
         WriteReason expectedReason = readCopyDestination == ReadCopyDestination.ReadCache ? WriteReason.CopyToReadCache : WriteReason.CopyToTail;
         int input = (int)expectedReason;
-        var status = session.Read(key, input, out int output);
+        Status status = session.Read(key, input, out int output);
         Assert.IsTrue(status.IsPending);
         session.CompletePending(wait: true);
         Assert.AreEqual(expectedReason, functions.actualReason);
@@ -108,7 +108,7 @@ class SingleWriterTests
         ReadOptions readOptions = new() { CopyOptions = new(ReadCopyFrom.AllImmutable, ReadCopyTo.MainLog) };
         status = session.Read(ref key, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(status.IsPending && !status.IsCompleted);
-        session.CompletePendingWithOutputs(out var outputs, wait: true);
+        session.CompletePendingWithOutputs(out CompletedOutputIterator<int, int, int, int, Empty> outputs, wait: true);
         (status, output) = GetSinglePendingResult(outputs);
         Assert.IsTrue(!status.IsPending && status.IsCompleted && status.IsCompletedSuccessfully);
         Assert.IsTrue(status.Found && !status.NotFound && status.Record.Copied);
@@ -150,8 +150,8 @@ public class StructWithStringTests
         {
             public override void Deserialize(out StructWithString obj)
             {
-                var intField = reader.ReadInt32();
-                var stringField = reader.ReadString();
+                int intField = reader.ReadInt32();
+                string stringField = reader.ReadString();
                 obj = new() { intField = intField, stringField = stringField };
             }
 
@@ -237,10 +237,10 @@ public class StructWithStringTests
         void readKey(int keyInt)
         {
             StructWithString key = new(keyInt, keyPrefix);
-            var (status, output) = session.Read(key);
+            (Status status, StructWithString output) = session.Read(key);
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<StructWithString, StructWithString, StructWithString, StructWithString, Empty> completedOutputs, wait: true);
                 using (completedOutputs)
                     (status, output) = GetSinglePendingResult(completedOutputs);
             }
@@ -256,8 +256,8 @@ public class StructWithStringTests
             readKey(24);
         }
         int count = 0;
-        using var iter = store.Log.Scan(0, store.Log.TailAddress);
-        while (iter.GetNext(out var _))
+        using ITsavoriteScanIterator<StructWithString, StructWithString> iter = store.Log.Scan(0, store.Log.TailAddress);
+        while (iter.GetNext(out RecordInfo _))
         {
             count++;
         }

@@ -110,7 +110,7 @@ public class RevivificationSettings
         }
         if (FreeRecordBins is not null)
         {
-            foreach (var bin in FreeRecordBins)
+            foreach (RevivificationBin bin in FreeRecordBins)
                 bin.Verify(isFixedRecordLength);
         }
     }
@@ -246,7 +246,7 @@ public class PowerOf2BinsRevivificationSettings : RevivificationSettings
         List<RevivificationBin> binList = new();
 
         // Start with the 16-byte bin
-        for (var size = RevivificationBin.MinRecordSize; size <= RevivificationBin.MaxInlineRecordSize; size *= 2)
+        for (int size = RevivificationBin.MinRecordSize; size <= RevivificationBin.MaxInlineRecordSize; size *= 2)
             binList.Add(new RevivificationBin()
             {
                 RecordSize = size,

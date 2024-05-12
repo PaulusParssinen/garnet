@@ -168,7 +168,7 @@ internal abstract class SynchronizationStateMachineBase : ISynchronizationStateM
     public void GlobalBeforeEnteringState<Key, Value>(SystemState next,
         TsavoriteKV<Key, Value> tsavorite)
     {
-        foreach (var task in tasks)
+        foreach (ISynchronizationTask task in tasks)
             task.GlobalBeforeEnteringState(next, tsavorite);
     }
 
@@ -176,7 +176,7 @@ internal abstract class SynchronizationStateMachineBase : ISynchronizationStateM
     public void GlobalAfterEnteringState<Key, Value>(SystemState next,
         TsavoriteKV<Key, Value> tsavorite)
     {
-        foreach (var task in tasks)
+        foreach (ISynchronizationTask task in tasks)
             task.GlobalAfterEnteringState(next, tsavorite);
     }
 
@@ -191,7 +191,7 @@ internal abstract class SynchronizationStateMachineBase : ISynchronizationStateM
         CancellationToken token = default)
         where TsavoriteSession : ITsavoriteSession
     {
-        foreach (var task in tasks)
+        foreach (ISynchronizationTask task in tasks)
         {
             task.OnThreadState(current, prev, tsavorite, ctx, tsavoriteSession, valueTasks, token);
         }

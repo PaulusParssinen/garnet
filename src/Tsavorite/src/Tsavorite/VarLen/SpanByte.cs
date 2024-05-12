@@ -309,7 +309,7 @@ public unsafe struct SpanByte
     /// </summary>
     public (IMemoryOwner<byte> memory, int length) ToMemoryOwner(MemoryPool<byte> pool)
     {
-        var dst = pool.Rent(Length);
+        IMemoryOwner<byte> dst = pool.Rent(Length);
         AsReadOnlySpan().CopyTo(dst.Memory.Span);
         return (dst, Length);
     }
@@ -430,7 +430,7 @@ public unsafe struct SpanByte
             if (dst.Length >= TotalSize)
             {
                 dst.Length = TotalSize;
-                var span = dst.SpanByte.AsSpan();
+                Span<byte> span = dst.SpanByte.AsSpan();
                 fixed (byte* ptr = span)
                     *(int*)ptr = Length;
                 dst.SpanByte.ExtraMetadata = ExtraMetadata;
@@ -469,10 +469,10 @@ public unsafe struct SpanByte
     /// <inheritdoc/>
     public override string ToString()
     {
-        var bytes = AsSpan();
-        var len = Math.Min(Length, bytes.Length);
+        Span<byte> bytes = AsSpan();
+        int len = Math.Min(Length, bytes.Length);
         StringBuilder sb = new($"len: {Length}, mdLen: {MetadataSize}, isSer {Serialized}, ");
-        for (var ii = 0; ii < len; ++ii)
+        for (int ii = 0; ii < len; ++ii)
             sb.Append(bytes[ii].ToString("x2"));
         if (bytes.Length > len)
             sb.Append("...");

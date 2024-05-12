@@ -110,7 +110,7 @@ public partial class TsavoriteKV<Key, Value>
         var intermediate = SystemState.MakeIntermediate(expectedState);
         if (!MakeTransition(expectedState, intermediate)) return;
 
-        var nextState = currentSyncStateMachine.NextState(expectedState);
+        SystemState nextState = currentSyncStateMachine.NextState(expectedState);
 
         if (bumpEpoch)
             epoch.BumpCurrentEpoch(() => MakeTransitionWorker(intermediate, nextState));
@@ -123,10 +123,10 @@ public partial class TsavoriteKV<Key, Value>
         // Execute custom task logic
         currentSyncStateMachine.GlobalBeforeEnteringState(nextState, this);
         // Execute any additional callbacks in critical section
-        foreach (var callback in callbacks)
+        foreach (IStateMachineCallback callback in callbacks)
             callback.BeforeEnteringState(nextState, this);
 
-        var success = MakeTransition(intermediate, nextState);
+        bool success = MakeTransition(intermediate, nextState);
         // Guaranteed to succeed, because other threads will always block while the system is in intermediate.
         Debug.Assert(success);
         currentSyncStateMachine.GlobalAfterEnteringState(nextState, this);
@@ -193,7 +193,7 @@ public partial class TsavoriteKV<Key, Value>
     {
 
         #region Capture current (non-intermediate) system state
-        var currentTask = currentSyncStateMachine;
+        ISynchronizationStateMachine currentTask = currentSyncStateMachine;
         var targetState = SystemState.Copy(ref systemState);
         SystemState.RemoveIntermediate(ref targetState);
 
@@ -205,8 +205,8 @@ public partial class TsavoriteKV<Key, Value>
         }
         #endregion
 
-        var currentState = ctx is null ? targetState : SystemState.Make(ctx.phase, ctx.version);
-        var targetStartState = StartOfCurrentCycle(targetState);
+        SystemState currentState = ctx is null ? targetState : SystemState.Make(ctx.phase, ctx.version);
+        SystemState targetStartState = StartOfCurrentCycle(targetState);
 
         #region Get returning thread to start of current cycle, issuing completion callbacks if needed
         if (ctx is not null)
@@ -217,7 +217,7 @@ public partial class TsavoriteKV<Key, Value>
                 if (ctx.serialNum != -1)
                 {
                     List<long> excludedSerialNos = new();
-                    foreach (var v in ctx.ioPendingRequests.Values)
+                    foreach (PendingContext<Input, Output, Context> v in ctx.ioPendingRequests.Values)
                     {
                         excludedSerialNos.Add(v.serialNum);
                     }
@@ -256,7 +256,7 @@ public partial class TsavoriteKV<Key, Value>
         // We start at either the start point or our previous position in the state machine.
         // If we are calling from somewhere other than an execution thread (e.g. waiting on
         // a checkpoint to complete on a client app thread), we start at current system state
-        var threadState = targetState;
+        SystemState threadState = targetState;
 
         if (ctx is not null)
         {
@@ -271,7 +271,7 @@ public partial class TsavoriteKV<Key, Value>
             }
         }
 
-        var previousState = threadState;
+        SystemState previousState = threadState;
         do
         {
             Debug.Assert(

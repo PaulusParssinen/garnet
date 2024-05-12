@@ -66,7 +66,7 @@ internal class DeviceTypeRecoveryTests
         Setup(deviceType);
         Populate(SeparateCheckpointAction);
 
-        for (var i = 0; i < logTokens.Count; i++)
+        for (int i = 0; i < logTokens.Count; i++)
         {
             if (i >= indexTokens.Count) break;
             PrepareToRecover(deviceType);
@@ -83,7 +83,7 @@ internal class DeviceTypeRecoveryTests
         Setup(deviceType);
         Populate(FullCheckpointAction);
 
-        for (var i = 0; i < logTokens.Count; i++)
+        for (int i = 0; i < logTokens.Count; i++)
         {
             PrepareToRecover(deviceType);
             await RecoverAndTestAsync(i, isAsync);
@@ -107,7 +107,7 @@ internal class DeviceTypeRecoveryTests
         if ((opNum + 1) % checkpointInterval != 0)
             return;
 
-        var checkpointNum = (opNum + 1) / checkpointInterval;
+        long checkpointNum = (opNum + 1) / checkpointInterval;
         Guid token;
         if (checkpointNum % 2 == 1)
         {
@@ -133,7 +133,7 @@ internal class DeviceTypeRecoveryTests
         }
 
         // Register thread with Tsavorite
-        using var session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
+        using ClientSession<AdId, NumClicks, AdInput, Output, Empty, Functions> session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
 
         // Process the batch of input data
         for (int i = 0; i < numOps; i++)
@@ -152,8 +152,8 @@ internal class DeviceTypeRecoveryTests
 
     private async ValueTask RecoverAndTestAsync(int tokenIndex, bool isAsync)
     {
-        var logToken = logTokens[tokenIndex];
-        var indexToken = indexTokens[tokenIndex];
+        Guid logToken = logTokens[tokenIndex];
+        Guid indexToken = indexTokens[tokenIndex];
 
         // Recover
         if (isAsync)
@@ -170,15 +170,15 @@ internal class DeviceTypeRecoveryTests
         }
 
         // Register with thread
-        var session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, Functions> session = store.NewSession<AdInput, Output, Empty, Functions>(new Functions());
 
         AdInput input = default;
         Output output = default;
 
         // Issue read requests
-        for (var i = 0; i < numUniqueKeys; i++)
+        for (int i = 0; i < numUniqueKeys; i++)
         {
-            var status = session.Read(ref inputArray[i].adId, ref input, ref output, Empty.Default, i);
+            Status status = session.Read(ref inputArray[i].adId, ref input, ref output, Empty.Default, i);
             Assert.IsTrue(status.Found, $"At tokenIndex {tokenIndex}, keyIndex {i}, AdId {inputArray[i].adId.adId}");
             inputArray[i].numClicks = output.value;
         }
@@ -199,12 +199,12 @@ internal class DeviceTypeRecoveryTests
 
         // Compute expected array
         long[] expected = new long[numUniqueKeys];
-        foreach (var guid in checkpointInfo.continueTokens.Keys)
+        foreach (int guid in checkpointInfo.continueTokens.Keys)
         {
-            var cp = checkpointInfo.continueTokens[guid].Item2;
+            CommitPoint cp = checkpointInfo.continueTokens[guid].Item2;
             for (long i = 0; i <= cp.UntilSerialNo; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }
@@ -213,10 +213,10 @@ internal class DeviceTypeRecoveryTests
         int numCompleted = threadCount - checkpointInfo.continueTokens.Count;
         for (int t = 0; t < numCompleted; t++)
         {
-            var sno = numOps;
+            long sno = numOps;
             for (long i = 0; i < sno; i++)
             {
-                var id = i % numUniqueKeys;
+                long id = i % numUniqueKeys;
                 expected[id]++;
             }
         }
@@ -339,7 +339,7 @@ public class AllocatorTypeRecoveryTests
 
     private async ValueTask RunTest<TData>(Action<TsavoriteKV<TData, TData>> populateAction, Action<TsavoriteKV<TData, TData>> readAction, Func<TsavoriteKV<TData, TData>, bool, ValueTask> recoverFunc, bool isAsync)
     {
-        var store = Setup<TData>();
+        TsavoriteKV<TData, TData> store = Setup<TData>();
         populateAction(store);
         readAction(store);
         if (smallSector)
@@ -361,7 +361,7 @@ public class AllocatorTypeRecoveryTests
 
     private void Populate(TsavoriteKV<long, long> store)
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         for (int i = 0; i < DeviceTypeRecoveryTests.numOps; i++)
             session.Upsert(i % DeviceTypeRecoveryTests.numUniqueKeys, i);
@@ -372,7 +372,7 @@ public class AllocatorTypeRecoveryTests
 
     private unsafe void Populate(TsavoriteKV<SpanByte, SpanByte> store)
     {
-        using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
         Random rng = new(RandSeed);
 
         // Single alloc outside the loop, to the max length we'll need.
@@ -382,17 +382,17 @@ public class AllocatorTypeRecoveryTests
         for (int i = 0; i < DeviceTypeRecoveryTests.numOps; i++)
         {
             // We must be consistent on length across iterations of each key value
-            var key0 = i % (int)DeviceTypeRecoveryTests.numUniqueKeys;
+            int key0 = i % (int)DeviceTypeRecoveryTests.numUniqueKeys;
             if (key0 == 0)
                 rng = new(RandSeed);
 
             keySpan[0] = key0;
-            var keySpanByte = keySpan.AsSpanByte();
+            SpanByte keySpanByte = keySpan.AsSpanByte();
 
-            var len = GetRandomLength(rng);
+            int len = GetRandomLength(rng);
             for (int j = 0; j < len; j++)
                 valueSpan[j] = i;
-            var valueSpanByte = valueSpan.Slice(0, len).AsSpanByte();
+            SpanByte valueSpanByte = valueSpan.Slice(0, len).AsSpanByte();
 
             session.Upsert(ref keySpanByte, ref valueSpanByte, Empty.Default, 0);
         }
@@ -401,7 +401,7 @@ public class AllocatorTypeRecoveryTests
 
     private unsafe void Populate(TsavoriteKV<MyValue, MyValue> store)
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions2>(new MyFunctions2());
+        using ClientSession<MyValue, MyValue, MyInput, MyOutput, Empty, MyFunctions2> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions2>(new MyFunctions2());
 
         for (int i = 0; i < DeviceTypeRecoveryTests.numOps; i++)
         {
@@ -416,7 +416,7 @@ public class AllocatorTypeRecoveryTests
     {
         if (isAsync)
         {
-            var (success, token) = await store.TakeFullCheckpointAsync(CheckpointType.Snapshot);
+            (bool success, Guid token) = await store.TakeFullCheckpointAsync(CheckpointType.Snapshot);
             Assert.IsTrue(success);
             logToken = token;
         }
@@ -436,11 +436,11 @@ public class AllocatorTypeRecoveryTests
 
     private static void Read(TsavoriteKV<long, long> store)
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
-        for (var i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
+        for (int i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
         {
-            var status = session.Read(i % DeviceTypeRecoveryTests.numUniqueKeys, default, out long output);
+            Status status = session.Read(i % DeviceTypeRecoveryTests.numUniqueKeys, default, out long output);
             Assert.IsTrue(status.Found, $"keyIndex {i}");
             Assert.AreEqual(ExpectedValue(i), output);
         }
@@ -454,21 +454,21 @@ public class AllocatorTypeRecoveryTests
 
     private static void Read(TsavoriteKV<SpanByte, SpanByte> store)
     {
-        using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
 
         Random rng = new(RandSeed);
 
         Span<int> keySpan = stackalloc int[1];
-        var keySpanByte = keySpan.AsSpanByte();
+        SpanByte keySpanByte = keySpan.AsSpanByte();
 
-        for (var i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
+        for (int i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
         {
             keySpan[0] = i;
 
-            var len = GetRandomLength(rng);
+            int len = GetRandomLength(rng);
 
             int[] output = null;
-            var status = session.Read(ref keySpanByte, ref output, Empty.Default, 0);
+            Status status = session.Read(ref keySpanByte, ref output, Empty.Default, 0);
 
             Assert.IsTrue(status.Found);
             for (int j = 0; j < len; j++)
@@ -484,12 +484,12 @@ public class AllocatorTypeRecoveryTests
 
     private static void Read(TsavoriteKV<MyValue, MyValue> store)
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions2>(new MyFunctions2());
+        using ClientSession<MyValue, MyValue, MyInput, MyOutput, Empty, MyFunctions2> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions2>(new MyFunctions2());
 
-        for (var i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
+        for (int i = 0; i < DeviceTypeRecoveryTests.numUniqueKeys; i++)
         {
             var key = new MyValue { value = i };
-            var status = session.Read(key, default, out MyOutput output);
+            Status status = session.Read(key, default, out MyOutput output);
             Assert.IsTrue(status.Found, $"keyIndex {i}");
             Assert.AreEqual(ExpectedValue(i), output.value.value);
         }

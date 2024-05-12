@@ -53,7 +53,7 @@ internal sealed class CheckpointStore
     public void WaitForReplicas()
     {
         if (head == tail) return;
-        var curr = head;
+        CheckpointEntry curr = head;
         while (curr != null)
         {
             while (!curr.TrySuspendReaders()) Thread.Yield();
@@ -83,10 +83,10 @@ internal sealed class CheckpointStore
     /// <param name="indexToken">GUID token for index</param>
     public void PurgeAllCheckpointsExceptTokens(StoreType storeType, Guid logToken, Guid indexToken)
     {
-        var ckptManager = clusterProvider.GetReplicationLogCheckpointManager(storeType);
+        ReplicationLogCheckpointManager ckptManager = clusterProvider.GetReplicationLogCheckpointManager(storeType);
 
         // Delete log checkpoints
-        foreach (var toDeletelogToken in ckptManager.GetLogCheckpointTokens())
+        foreach (Guid toDeletelogToken in ckptManager.GetLogCheckpointTokens())
         {
             if (!toDeletelogToken.Equals(logToken))
             {
@@ -96,7 +96,7 @@ internal sealed class CheckpointStore
         }
 
         // Delete index checkpoints
-        foreach (var toDeleteIndexToken in ckptManager.GetIndexCheckpointTokens())
+        foreach (Guid toDeleteIndexToken in ckptManager.GetIndexCheckpointTokens())
         {
             if (!toDeleteIndexToken.Equals(indexToken))
             {
@@ -119,7 +119,7 @@ internal sealed class CheckpointStore
         //If not full checkpoint index checkpoint will be the one of the previous checkpoint
         if (!fullCheckpoint)
         {
-            var lastEntry = tail;
+            CheckpointEntry lastEntry = tail;
             Debug.Assert(lastEntry != null);
 
             entry.storeIndexToken = lastEntry.storeIndexToken;
@@ -168,7 +168,7 @@ internal sealed class CheckpointStore
         if (head == tail) return;
 
         logger?.LogTrace("Try safe delete in-memory outdated checkpoints");
-        var curr = head;
+        CheckpointEntry curr = head;
         while (curr != null && curr != tail)
         {
             LogCheckpointEntry("Trying to suspend readers for checkpoint entry", curr);
@@ -193,7 +193,7 @@ internal sealed class CheckpointStore
             }
 
             //At least one token can always be deleted thus invalidating the in-memory entry
-            var next = curr.next;
+            CheckpointEntry next = curr.next;
             curr.next = null;
             curr = next;
         }
@@ -214,7 +214,7 @@ internal sealed class CheckpointStore
     /// <returns></returns>
     private bool CanDeleteToken(CheckpointEntry toDelete, CheckpointFileType fileType)
     {
-        var curr = toDelete.next;
+        CheckpointEntry curr = toDelete.next;
         while (curr != null && curr != tail)
         {
             //Token can be deleted when curr entry and toDelete do not share it
@@ -240,7 +240,7 @@ internal sealed class CheckpointStore
     /// <returns></returns>
     public CheckpointEntry GetLatestCheckpointEntryFromMemory()
     {
-        var _tail = tail;
+        CheckpointEntry _tail = tail;
         if (_tail == null)
         {
             var cEntry = new CheckpointEntry()
@@ -270,10 +270,10 @@ internal sealed class CheckpointStore
     {
         Guid objectStoreHLogToken = default;
         Guid objectStoreIndexToken = default;
-        storeWrapper.store.GetLatestCheckpointTokens(out var storeHLogToken, out var storeIndexToken);
+        storeWrapper.store.GetLatestCheckpointTokens(out Guid storeHLogToken, out Guid storeIndexToken);
         storeWrapper.objectStore?.GetLatestCheckpointTokens(out objectStoreHLogToken, out objectStoreIndexToken);
-        var (storeCheckpointCoveredAofAddress, storePrimaryReplId) = GetCheckpointCookieMetadata(StoreType.Main, storeHLogToken);
-        var (objectCheckpointCoveredAofAddress, objectStorePrimaryReplId) = objectStoreHLogToken == default ? (long.MaxValue, null) : GetCheckpointCookieMetadata(StoreType.Object, objectStoreHLogToken);
+        (long storeCheckpointCoveredAofAddress, string storePrimaryReplId) = GetCheckpointCookieMetadata(StoreType.Main, storeHLogToken);
+        (long objectCheckpointCoveredAofAddress, string objectStorePrimaryReplId) = objectStoreHLogToken == default ? (long.MaxValue, null) : GetCheckpointCookieMetadata(StoreType.Object, objectStoreHLogToken);
 
         CheckpointEntry entry = new()
         {
@@ -296,8 +296,8 @@ internal sealed class CheckpointStore
     private (long, string) GetCheckpointCookieMetadata(StoreType storeType, Guid fileToken)
     {
         if (fileToken == default) return (0, null);
-        var ckptManager = clusterProvider.GetReplicationLogCheckpointManager(storeType);
-        var pageSizeBits = storeType == StoreType.Main ? clusterProvider.serverOptions.PageSizeBits() : clusterProvider.serverOptions.ObjectStorePageSizeBits();
+        ReplicationLogCheckpointManager ckptManager = clusterProvider.GetReplicationLogCheckpointManager(storeType);
+        int pageSizeBits = storeType == StoreType.Main ? clusterProvider.serverOptions.PageSizeBits() : clusterProvider.serverOptions.ObjectStorePageSizeBits();
         using (var deltaFileDevice = ckptManager.GetDeltaLogDevice(fileToken))
         {
             if (deltaFileDevice is not null)

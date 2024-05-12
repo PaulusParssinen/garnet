@@ -51,9 +51,9 @@ public class AsyncRecoveryTests
         AdInput inputArg = default;
         Output output = default;
 
-        var s0 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
-        var s1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
-        var s2 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> s0 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> s1 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
+        ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> s2 = store1.NewSession<AdInput, Output, Empty, AdSimpleFunctions>(functions);
 
         for (int key = 0; key < numOps; key++)
         {
@@ -83,13 +83,13 @@ public class AsyncRecoveryTests
 
         store2.Recover(token); // sync, does not require session
 
-        using (var s3 = store2.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(functions, s1.ID, out CommitPoint lsn))
+        using (ClientSession<AdId, NumClicks, AdInput, Output, Empty, AdSimpleFunctions> s3 = store2.ResumeSession<AdInput, Output, Empty, AdSimpleFunctions>(functions, s1.ID, out CommitPoint lsn))
         {
             Assert.AreEqual(numOps - 1, lsn.UntilSerialNo);
 
             for (int key = 0; key < numOps; key++)
             {
-                var status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
+                Status status = s3.Read(ref inputArray[key], ref inputArg, ref output, Empty.Default, s3.SerialNo);
 
                 if (status.IsPending)
                     s3.CompletePending(true, true);

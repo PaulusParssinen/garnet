@@ -28,8 +28,8 @@ sealed class SortedSetRemoveTxn : CustomTransactionProcedure
     public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var subscriptionContainerKey = GetNextArg(input, ref offset);
-        var subscriptionContainerEntry = GetNextArg(input, ref offset);
+        ArgSlice subscriptionContainerKey = GetNextArg(input, ref offset);
+        ArgSlice subscriptionContainerEntry = GetNextArg(input, ref offset);
 
         api.SortedSetRemove(subscriptionContainerKey, subscriptionContainerEntry, out _);
 

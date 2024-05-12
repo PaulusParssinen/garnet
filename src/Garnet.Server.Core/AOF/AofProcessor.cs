@@ -110,7 +110,7 @@ public sealed unsafe partial class AofProcessor
         {
             int count = 0;
             if (untilAddress == -1) untilAddress = storeWrapper.appendOnlyFile.TailAddress;
-            using var scan = storeWrapper.appendOnlyFile.Scan(storeWrapper.appendOnlyFile.BeginAddress, untilAddress);
+            using TsavoriteLogScanIterator scan = storeWrapper.appendOnlyFile.Scan(storeWrapper.appendOnlyFile.BeginAddress, untilAddress);
 
             while (scan.GetNext(out byte[] entry, out int _, out _, out long nextAofAddress))
             {
@@ -248,7 +248,7 @@ public sealed unsafe partial class AofProcessor
                 ObjectStoreDelete(objectStoreSession, entryPtr);
                 break;
             case AofEntryType.StoredProcedure:
-                ref var input = ref Unsafe.AsRef<SpanByte>(entryPtr + sizeof(AofHeader));
+                ref SpanByte input = ref Unsafe.AsRef<SpanByte>(entryPtr + sizeof(AofHeader));
                 respServerSession.RunTransactionProc(header.type, new ArgSlice(ref input), ref output);
                 break;
             default:
@@ -259,9 +259,9 @@ public sealed unsafe partial class AofProcessor
 
     static unsafe void StoreUpsert(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
-        ref var input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
-        ref var value = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize + input.TotalSize);
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        ref SpanByte input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
+        ref SpanByte value = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize + input.TotalSize);
 
         SpanByteAndMemory output = default;
         session.Upsert(ref key, ref input, ref value, ref output);
@@ -272,8 +272,8 @@ public sealed unsafe partial class AofProcessor
     static unsafe void StoreRMW(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
         byte* pbOutput = stackalloc byte[32];
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
-        ref var input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        ref SpanByte input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
         var output = new SpanByteAndMemory(pbOutput, 32);
         if (session.RMW(ref key, ref input, ref output).IsPending)
             session.CompletePending(true);
@@ -283,18 +283,18 @@ public sealed unsafe partial class AofProcessor
 
     static unsafe void StoreDelete(ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> session, byte* ptr)
     {
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
         session.Delete(ref key);
     }
 
     static unsafe void ObjectStoreUpsert(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, GarnetObjectSerializer garnetObjectSerializer, byte* ptr, byte* outputPtr, int outputLength)
     {
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
-        var keyB = key.ToByteArray();
-        ref var input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
-        ref var value = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize + input.TotalSize);
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        byte[] keyB = key.ToByteArray();
+        ref SpanByte input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
+        ref SpanByte value = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize + input.TotalSize);
 
-        var valB = garnetObjectSerializer.Deserialize(value.ToByteArray());
+        IGarnetObject valB = garnetObjectSerializer.Deserialize(value.ToByteArray());
 
         var output = new GarnetObjectStoreOutput { spanByteAndMemory = new(outputPtr, outputLength) };
         session.Upsert(ref keyB, ref valB);
@@ -304,10 +304,10 @@ public sealed unsafe partial class AofProcessor
 
     static unsafe void ObjectStoreRMW(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr, byte* outputPtr, int outputLength)
     {
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
-        var keyB = key.ToByteArray();
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        byte[] keyB = key.ToByteArray();
 
-        ref var input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
+        ref SpanByte input = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader) + key.TotalSize);
         var output = new GarnetObjectStoreOutput { spanByteAndMemory = new(outputPtr, outputLength) };
         if (session.RMW(ref keyB, ref input, ref output).IsPending)
             session.CompletePending(true);
@@ -317,8 +317,8 @@ public sealed unsafe partial class AofProcessor
 
     static unsafe void ObjectStoreDelete(ClientSession<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long, ObjectStoreFunctions> session, byte* ptr)
     {
-        ref var key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
-        var keyB = key.ToByteArray();
+        ref SpanByte key = ref Unsafe.AsRef<SpanByte>(ptr + sizeof(AofHeader));
+        byte[] keyB = key.ToByteArray();
         session.Delete(ref keyB);
     }
 

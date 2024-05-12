@@ -37,12 +37,12 @@ sealed partial class StorageSession : IDisposable
 
         for (int i = 0; i < elements.Length; i++)
         {
-            var bString = Encoding.ASCII.GetBytes(elements[i]);
+            byte[] bString = Encoding.ASCII.GetBytes(elements[i]);
             fixed (byte* ptr = bString)
             {
                 *(long*)pcurr = (long)HashUtils.MurmurHash2x64A(ptr, bString.Length);
                 var o = new SpanByteAndMemory(output, 1);
-                var keySB = key.SpanByte;
+                SpanByte keySB = key.SpanByte;
                 RMW_MainStore(ref keySB, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o, ref context);
             }
 
@@ -97,7 +97,7 @@ sealed partial class StorageSession : IDisposable
         for (int i = 0; i < keys.Length; i++)
         {
             SpanByte srcKey = keys[i].SpanByte;
-            var status = GET(ref srcKey, ref input, ref o, ref context);
+            GarnetStatus status = GET(ref srcKey, ref input, ref o, ref context);
             //Invalid HLL Type
             if (*(long*)(o.SpanByte.ToPointer()) == -1)
             {
@@ -156,7 +156,7 @@ sealed partial class StorageSession : IDisposable
             txnManager.Run(true);
         }
 
-        var lockableContext = txnManager.LockableContext;
+        LockableContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> lockableContext = txnManager.LockableContext;
 
         try
         {
@@ -183,8 +183,8 @@ sealed partial class StorageSession : IDisposable
                 (*(RespInputHeader*)(pcurr)).flags = 0;
 
                 SpanByteAndMemory mergeBuffer = new SpanByteAndMemory(readBuffer, hllBufferSize);
-                var srcKey = keys[i].SpanByte;
-                var status = GET(ref srcKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref mergeBuffer, ref lockableContext);
+                SpanByte srcKey = keys[i].SpanByte;
+                GarnetStatus status = GET(ref srcKey, ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref mergeBuffer, ref lockableContext);
                 //Handle case merging source key does not exist
                 if (status == GarnetStatus.NOTFOUND)
                     continue;

@@ -28,8 +28,8 @@ public class GarnetServerConfigTests
     public void DefaultConfigurationOptionsCoverage()
     {
         string json;
-        var streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
-        using (var stream = streamProvider.Read(ServerSettingsManager.DefaultOptionsEmbeddedFileName))
+        IStreamProvider streamProvider = StreamProviderFactory.GetStreamProvider(FileLocationType.EmbeddedResource, null, Assembly.GetExecutingAssembly());
+        using (Stream stream = streamProvider.Read(ServerSettingsManager.DefaultOptionsEmbeddedFileName))
         {
             using (var streamReader = new StreamReader(stream))
             {
@@ -49,7 +49,7 @@ public class GarnetServerConfigTests
 
         // Check that all properties in Options have a default value in defaults.conf
         Assert.IsNotNull(jsonSettings);
-        foreach (var property in typeof(Options).GetProperties().Where(pi =>
+        foreach (PropertyInfo property in typeof(Options).GetProperties().Where(pi =>
                      pi.GetCustomAttribute<OptionAttribute>() != null &&
                      pi.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>() == null))
         {
@@ -67,7 +67,7 @@ public class GarnetServerConfigTests
 
         // No import path, no command line args
         // Check values match those on defaults.conf
-        var parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(null, out var options, out var invalidOptions);
+        bool parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(null, out Options options, out List<string> invalidOptions);
         Assert.IsTrue(parseSuccessful);
         Assert.AreEqual(invalidOptions.Count, 0);
         Assert.AreEqual("32m", options.PageSize);
@@ -76,7 +76,7 @@ public class GarnetServerConfigTests
         // No import path, include command line args, export to file
         // Check values from command line override values from defaults.conf
         static string GetFullExtensionBinPath(string testProjectName) => Path.GetFullPath(testProjectName, TestUtils.RootTestsProjectPath);
-        var args = new string[] { "--config-export-path", configPath, "-p", "4m", "-m", "8g", "-s", "2g", "--recover", "--port", "53", "--reviv-obj-bin-record-count", "2", "--reviv-fraction", "0.5", "--extension-bin-paths", $"{GetFullExtensionBinPath("Garnet.Tests")},{GetFullExtensionBinPath("Garnet.Cluster.Tests")}" };
+        string[] args = new string[] { "--config-export-path", configPath, "-p", "4m", "-m", "8g", "-s", "2g", "--recover", "--port", "53", "--reviv-obj-bin-record-count", "2", "--reviv-fraction", "0.5", "--extension-bin-paths", $"{GetFullExtensionBinPath("Garnet.Tests")},{GetFullExtensionBinPath("Garnet.Cluster.Tests")}" };
         parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out options, out invalidOptions);
         Assert.IsTrue(parseSuccessful);
         Assert.AreEqual(invalidOptions.Count, 0);
@@ -142,8 +142,8 @@ public class GarnetServerConfigTests
 
         // Import from redis.conf file, no command line args
         // Check values from import path override values from default.conf
-        var args = new[] { "--config-import-path", redisConfigPath, "--config-import-format", "RedisConf" };
-        var parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out var options, out var invalidOptions);
+        string[] args = new[] { "--config-import-path", redisConfigPath, "--config-import-format", "RedisConf" };
+        bool parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out Options options, out List<string> invalidOptions);
         Assert.IsTrue(parseSuccessful);
         Assert.AreEqual(invalidOptions.Count, 0);
         Assert.AreEqual("127.0.0.1", options.Address);
@@ -183,9 +183,9 @@ public class GarnetServerConfigTests
     [Test]
     public void ImportExportConfigAzure()
     {
-        var AzureTestDirectory = $"{TestContext.CurrentContext.Test.MethodName.ToLowerInvariant()}";
-        var configPath = $"{AzureTestDirectory}/test1.config";
-        var AzureEmulatedStorageString = "UseDevelopmentStorage=true;";
+        string AzureTestDirectory = $"{TestContext.CurrentContext.Test.MethodName.ToLowerInvariant()}";
+        string configPath = $"{AzureTestDirectory}/test1.config";
+        string AzureEmulatedStorageString = "UseDevelopmentStorage=true;";
 
         if (TestUtils.IsRunningAzureTests)
         {
@@ -194,13 +194,13 @@ public class GarnetServerConfigTests
             deviceFactory.Initialize(AzureTestDirectory);
             deviceFactory.Delete(new FileDescriptor { directoryName = "" });
 
-            var parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(null, out var options, out var invalidOptions);
+            bool parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(null, out Options options, out List<string> invalidOptions);
             Assert.IsTrue(parseSuccessful);
             Assert.AreEqual(invalidOptions.Count, 0);
             Assert.IsTrue(options.PageSize == "32m");
             Assert.IsTrue(options.MemorySize == "16g");
 
-            var args = new string[] { "--storage-string", AzureEmulatedStorageString, "--use-azure-storage-for-config-export", "true", "--config-export-path", configPath, "-p", "4m", "-m", "8g" };
+            string[] args = new string[] { "--storage-string", AzureEmulatedStorageString, "--use-azure-storage-for-config-export", "true", "--config-export-path", configPath, "-p", "4m", "-m", "8g" };
             parseSuccessful = ServerSettingsManager.TryParseCommandLineArguments(args, out options, out invalidOptions);
             Assert.IsTrue(parseSuccessful);
             Assert.AreEqual(invalidOptions.Count, 0);

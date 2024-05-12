@@ -13,8 +13,8 @@ internal class SimpleVersionSchemeTest
     public void SimpleTest()
     {
         var tested = new EpochProtectedVersionScheme(new LightEpoch());
-        var protectedVal = 0;
-        var v = tested.Enter();
+        int protectedVal = 0;
+        VersionSchemeState v = tested.Enter();
 
         Assert.AreEqual(1, v.Version);
         tested.TryAdvanceVersionWithCriticalSection((_, _) => protectedVal = 1);
@@ -35,9 +35,9 @@ internal class SimpleVersionSchemeTest
     public void SingleThreadTest()
     {
         var tested = new EpochProtectedVersionScheme(new LightEpoch());
-        var protectedVal = 0;
+        int protectedVal = 0;
 
-        var v = tested.Enter();
+        VersionSchemeState v = tested.Enter();
         Assert.AreEqual(1, v.Version);
         tested.Leave();
 
@@ -57,19 +57,19 @@ internal class SimpleVersionSchemeTest
     public void LargeConcurrentTest()
     {
         var tested = new EpochProtectedVersionScheme(new LightEpoch());
-        var protectedVal = 1L;
+        long protectedVal = 1L;
         var termination = new ManualResetEventSlim();
 
         var workerThreads = new List<Thread>();
         int numThreads = Math.Min(8, Environment.ProcessorCount / 2);
         // Force lots of interleavings by having many threads
-        for (var i = 0; i < numThreads; i++)
+        for (int i = 0; i < numThreads; i++)
         {
             var t = new Thread(() =>
             {
                 while (!termination.IsSet)
                 {
-                    var v = tested.Enter();
+                    VersionSchemeState v = tested.Enter();
                     Assert.AreEqual(v.Version, Interlocked.Read(ref protectedVal));
                     tested.Leave();
                 }
@@ -78,7 +78,7 @@ internal class SimpleVersionSchemeTest
             t.Start();
         }
 
-        for (var i = 0; i < 1000; i++)
+        for (int i = 0; i < 1000; i++)
         {
             tested.TryAdvanceVersionWithCriticalSection((vOld, vNew) =>
             {
@@ -91,7 +91,7 @@ internal class SimpleVersionSchemeTest
         }
         termination.Set();
 
-        foreach (var t in workerThreads)
+        foreach (Thread t in workerThreads)
             t.Join();
     }
 }

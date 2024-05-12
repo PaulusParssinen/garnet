@@ -27,66 +27,66 @@ public class RespCommandInfoParser
         if (new ReadOnlySpan<byte>(ptr, 5).SequenceEqual("$-1\r\n"u8)) return true;
 
         // Verify command info array length
-        if (!RespReadUtils.ReadArrayLength(out var infoElemCount, ref ptr, end)
+        if (!RespReadUtils.ReadArrayLength(out int infoElemCount, ref ptr, end)
             || infoElemCount != 10) return false;
 
         // 1) Name
-        if (!RespReadUtils.ReadStringWithLengthHeader(out var name, ref ptr, end)) return false;
+        if (!RespReadUtils.ReadStringWithLengthHeader(out string name, ref ptr, end)) return false;
 
         // 2) Arity
-        if (!RespReadUtils.ReadIntegerAsString(out var strArity, ref ptr, end)
-            || !int.TryParse(strArity, out var arity)) return false;
+        if (!RespReadUtils.ReadIntegerAsString(out string strArity, ref ptr, end)
+            || !int.TryParse(strArity, out int arity)) return false;
 
         // 3) Flags
-        var flags = RespCommandFlags.None;
-        if (!RespReadUtils.ReadArrayLength(out var flagCount, ref ptr, end)) return false;
-        for (var flagIdx = 0; flagIdx < flagCount; flagIdx++)
+        RespCommandFlags flags = RespCommandFlags.None;
+        if (!RespReadUtils.ReadArrayLength(out int flagCount, ref ptr, end)) return false;
+        for (int flagIdx = 0; flagIdx < flagCount; flagIdx++)
         {
-            if (!RespReadUtils.ReadSimpleString(out var strFlag, ref ptr, end)
-                || !EnumUtils.TryParseEnumFromDescription<RespCommandFlags>(strFlag, out var flag))
+            if (!RespReadUtils.ReadSimpleString(out string strFlag, ref ptr, end)
+                || !EnumUtils.TryParseEnumFromDescription<RespCommandFlags>(strFlag, out RespCommandFlags flag))
                 return false;
             flags |= flag;
         }
 
         // 4) First key
-        if (!RespReadUtils.ReadIntegerAsString(out var strFirstKey, ref ptr, end)
-            || !int.TryParse(strFirstKey, out var firstKey)) return false;
+        if (!RespReadUtils.ReadIntegerAsString(out string strFirstKey, ref ptr, end)
+            || !int.TryParse(strFirstKey, out int firstKey)) return false;
 
         // 5) Last key
-        if (!RespReadUtils.ReadIntegerAsString(out var strLastKey, ref ptr, end)
-            || !int.TryParse(strLastKey, out var lastKey)) return false;
+        if (!RespReadUtils.ReadIntegerAsString(out string strLastKey, ref ptr, end)
+            || !int.TryParse(strLastKey, out int lastKey)) return false;
 
         // 6) Step
-        if (!RespReadUtils.ReadIntegerAsString(out var strStep, ref ptr, end)
-            || !int.TryParse(strStep, out var step)) return false;
+        if (!RespReadUtils.ReadIntegerAsString(out string strStep, ref ptr, end)
+            || !int.TryParse(strStep, out int step)) return false;
 
         // 7) ACL categories
-        var aclCategories = RespAclCategories.None;
-        if (!RespReadUtils.ReadArrayLength(out var aclCatCount, ref ptr, end)) return false;
-        for (var aclCatIdx = 0; aclCatIdx < aclCatCount; aclCatIdx++)
+        RespAclCategories aclCategories = RespAclCategories.None;
+        if (!RespReadUtils.ReadArrayLength(out int aclCatCount, ref ptr, end)) return false;
+        for (int aclCatIdx = 0; aclCatIdx < aclCatCount; aclCatIdx++)
         {
-            if (!RespReadUtils.ReadSimpleString(out var strAclCat, ref ptr, end)
-                || !EnumUtils.TryParseEnumFromDescription<RespAclCategories>(strAclCat.TrimStart('@'), out var aclCat))
+            if (!RespReadUtils.ReadSimpleString(out string strAclCat, ref ptr, end)
+                || !EnumUtils.TryParseEnumFromDescription<RespAclCategories>(strAclCat.TrimStart('@'), out RespAclCategories aclCat))
                 return false;
             aclCategories |= aclCat;
         }
 
         // 8) Tips
-        if (!RespReadUtils.ReadStringArrayWithLengthHeader(out var tips, ref ptr, end)) return false;
+        if (!RespReadUtils.ReadStringArrayWithLengthHeader(out string[] tips, ref ptr, end)) return false;
 
         // 9) Key specifications
-        if (!RespReadUtils.ReadArrayLength(out var ksCount, ref ptr, end)) return false;
+        if (!RespReadUtils.ReadArrayLength(out int ksCount, ref ptr, end)) return false;
         var keySpecifications = new RespCommandKeySpecification[ksCount];
-        for (var ksIdx = 0; ksIdx < ksCount; ksIdx++)
+        for (int ksIdx = 0; ksIdx < ksCount; ksIdx++)
         {
-            if (!RespKeySpecificationParser.TryReadFromResp(ref ptr, end, out var keySpec)) return false;
+            if (!RespKeySpecificationParser.TryReadFromResp(ref ptr, end, out RespCommandKeySpecification keySpec)) return false;
             keySpecifications[ksIdx] = keySpec;
         }
 
         // 10) SubCommands
-        if (!RespReadUtils.ReadArrayLength(out var scCount, ref ptr, end)) return false;
+        if (!RespReadUtils.ReadArrayLength(out int scCount, ref ptr, end)) return false;
         var subCommands = new List<RespCommandsInfo>();
-        for (var scIdx = 0; scIdx < scCount; scIdx++)
+        for (int scIdx = 0; scIdx < scCount; scIdx++)
         {
             if (!TryReadFromResp(ref ptr, end, supportedCommands, out commandInfo, name))
                 return false;
@@ -131,15 +131,15 @@ internal class RespKeySpecificationParser
         keySpec = default;
 
         string notes = null;
-        var flags = KeySpecificationFlags.None;
+        KeySpecificationFlags flags = KeySpecificationFlags.None;
         KeySpecMethodBase beginSearch = null;
         KeySpecMethodBase findKeys = null;
 
-        if (!RespReadUtils.ReadArrayLength(out var elemCount, ref ptr, end)) return false;
+        if (!RespReadUtils.ReadArrayLength(out int elemCount, ref ptr, end)) return false;
 
-        for (var elemIdx = 0; elemIdx < elemCount; elemIdx += 2)
+        for (int elemIdx = 0; elemIdx < elemCount; elemIdx += 2)
         {
-            if (!RespReadUtils.ReadStringWithLengthHeader(out var ksKey, ref ptr, end)) return false;
+            if (!RespReadUtils.ReadStringWithLengthHeader(out string ksKey, ref ptr, end)) return false;
 
             if (string.Equals(ksKey, "notes", StringComparison.Ordinal))
             {
@@ -147,11 +147,11 @@ internal class RespKeySpecificationParser
             }
             else if (string.Equals(ksKey, "flags", StringComparison.Ordinal))
             {
-                if (!RespReadUtils.ReadArrayLength(out var flagsCount, ref ptr, end)) return false;
-                for (var flagIdx = 0; flagIdx < flagsCount; flagIdx++)
+                if (!RespReadUtils.ReadArrayLength(out int flagsCount, ref ptr, end)) return false;
+                for (int flagIdx = 0; flagIdx < flagsCount; flagIdx++)
                 {
-                    if (!RespReadUtils.ReadSimpleString(out var strFlag, ref ptr, end)
-                        || !EnumUtils.TryParseEnumFromDescription<KeySpecificationFlags>(strFlag, out var flag))
+                    if (!RespReadUtils.ReadSimpleString(out string strFlag, ref ptr, end)
+                        || !EnumUtils.TryParseEnumFromDescription<KeySpecificationFlags>(strFlag, out KeySpecificationFlags flag))
                         return false;
                     flags |= flag;
                 }
@@ -199,7 +199,7 @@ internal class RespKeySpecificationTypesParser
     {
         keySpecMethod = default;
 
-        if (!TryReadKeySpecHeader(ref ptr, end, out var keySpecType)) return false;
+        if (!TryReadKeySpecHeader(ref ptr, end, out string keySpecType)) return false;
 
         IKeySpecParser parser;
         if (string.Equals(keySpecKey, "begin_search", StringComparison.Ordinal))
@@ -240,12 +240,12 @@ internal class RespKeySpecificationTypesParser
     {
         keySpecType = default;
 
-        if (!RespReadUtils.ReadArrayLength(out var ksTypeElemCount, ref ptr, end)
+        if (!RespReadUtils.ReadArrayLength(out int ksTypeElemCount, ref ptr, end)
             || ksTypeElemCount != 4
-            || !RespReadUtils.ReadStringWithLengthHeader(out var ksTypeStr, ref ptr, end)
+            || !RespReadUtils.ReadStringWithLengthHeader(out string ksTypeStr, ref ptr, end)
             || !string.Equals(ksTypeStr, "type", StringComparison.Ordinal)
-            || !RespReadUtils.ReadStringWithLengthHeader(out var ksType, ref ptr, end)
-            || !RespReadUtils.ReadStringWithLengthHeader(out var ksSpecStr, ref ptr, end)
+            || !RespReadUtils.ReadStringWithLengthHeader(out string ksType, ref ptr, end)
+            || !RespReadUtils.ReadStringWithLengthHeader(out string ksSpecStr, ref ptr, end)
             || !string.Equals(ksSpecStr, "spec", StringComparison.Ordinal)) return false;
 
         keySpecType = ksType;
@@ -292,12 +292,12 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var ksSpecElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int ksSpecElemCount, ref ptr, end)
                 || ksSpecElemCount != 2
-                || !RespReadUtils.ReadStringWithLengthHeader(out var ksArgKey, ref ptr, end)
+                || !RespReadUtils.ReadStringWithLengthHeader(out string ksArgKey, ref ptr, end)
                 || !string.Equals(ksArgKey, "index", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strIndex, ref ptr, end)
-                || !int.TryParse(strIndex, out var index)) return false;
+                || !RespReadUtils.ReadIntegerAsString(out string strIndex, ref ptr, end)
+                || !int.TryParse(strIndex, out int index)) return false;
 
             keySpecMethod = new BeginSearchIndex(index);
 
@@ -331,15 +331,15 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var specElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int specElemCount, ref ptr, end)
                 || specElemCount != 4
-                || !RespReadUtils.ReadStringWithLengthHeader(out var argKey, ref ptr, end)
+                || !RespReadUtils.ReadStringWithLengthHeader(out string argKey, ref ptr, end)
                 || !string.Equals(argKey, "keyword", StringComparison.Ordinal)
-                || !RespReadUtils.ReadStringWithLengthHeader(out var keyword, ref ptr, end)
+                || !RespReadUtils.ReadStringWithLengthHeader(out string keyword, ref ptr, end)
                 || !RespReadUtils.ReadStringWithLengthHeader(out argKey, ref ptr, end)
                 || !string.Equals(argKey, "startfrom", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strStartFrom, ref ptr, end)
-                || !int.TryParse(strStartFrom, out var startFrom)) return false;
+                || !RespReadUtils.ReadIntegerAsString(out string strStartFrom, ref ptr, end)
+                || !int.TryParse(strStartFrom, out int startFrom)) return false;
 
             keySpecMethod = new BeginSearchKeyword(keyword, startFrom);
 
@@ -372,7 +372,7 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var ksSpecElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int ksSpecElemCount, ref ptr, end)
                 || ksSpecElemCount == 0) return false;
 
             keySpecMethod = new BeginSearchUnknown();
@@ -406,20 +406,20 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var specElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int specElemCount, ref ptr, end)
                 || specElemCount != 6
-                || !RespReadUtils.ReadStringWithLengthHeader(out var argKey, ref ptr, end)
+                || !RespReadUtils.ReadStringWithLengthHeader(out string argKey, ref ptr, end)
                 || !string.Equals(argKey, "lastkey", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strLastKey, ref ptr, end)
-                || !int.TryParse(strLastKey, out var lastKey)
+                || !RespReadUtils.ReadIntegerAsString(out string strLastKey, ref ptr, end)
+                || !int.TryParse(strLastKey, out int lastKey)
                 || !RespReadUtils.ReadStringWithLengthHeader(out argKey, ref ptr, end)
                 || !string.Equals(argKey, "keystep", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strKeyStep, ref ptr, end)
-                || !int.TryParse(strKeyStep, out var keyStep)
+                || !RespReadUtils.ReadIntegerAsString(out string strKeyStep, ref ptr, end)
+                || !int.TryParse(strKeyStep, out int keyStep)
                 || !RespReadUtils.ReadStringWithLengthHeader(out argKey, ref ptr, end)
                 || !string.Equals(argKey, "limit", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strLimit, ref ptr, end)
-                || !int.TryParse(strLimit, out var limit)) return false;
+                || !RespReadUtils.ReadIntegerAsString(out string strLimit, ref ptr, end)
+                || !int.TryParse(strLimit, out int limit)) return false;
 
             keySpecMethod = new FindKeysRange(lastKey, keyStep, limit);
 
@@ -453,20 +453,20 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var specElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int specElemCount, ref ptr, end)
                 || specElemCount != 6
-                || !RespReadUtils.ReadStringWithLengthHeader(out var argKey, ref ptr, end)
+                || !RespReadUtils.ReadStringWithLengthHeader(out string argKey, ref ptr, end)
                 || !string.Equals(argKey, "keynumidx", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strKeyNumIdx, ref ptr, end)
-                || !int.TryParse(strKeyNumIdx, out var keyNumIdx)
+                || !RespReadUtils.ReadIntegerAsString(out string strKeyNumIdx, ref ptr, end)
+                || !int.TryParse(strKeyNumIdx, out int keyNumIdx)
                 || !RespReadUtils.ReadStringWithLengthHeader(out argKey, ref ptr, end)
                 || !string.Equals(argKey, "firstkey", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strFirstKey, ref ptr, end)
-                || !int.TryParse(strFirstKey, out var firstKey)
+                || !RespReadUtils.ReadIntegerAsString(out string strFirstKey, ref ptr, end)
+                || !int.TryParse(strFirstKey, out int firstKey)
                 || !RespReadUtils.ReadStringWithLengthHeader(out argKey, ref ptr, end)
                 || !string.Equals(argKey, "keystep", StringComparison.Ordinal)
-                || !RespReadUtils.ReadIntegerAsString(out var strKeyStep, ref ptr, end)
-                || !int.TryParse(strKeyStep, out var keyStep)) return false;
+                || !RespReadUtils.ReadIntegerAsString(out string strKeyStep, ref ptr, end)
+                || !int.TryParse(strKeyStep, out int keyStep)) return false;
 
             keySpecMethod = new FindKeysKeyNum(keyNumIdx, firstKey, keyStep);
 
@@ -499,7 +499,7 @@ internal class RespKeySpecificationTypesParser
         {
             keySpecMethod = default;
 
-            if (!RespReadUtils.ReadArrayLength(out var ksSpecElemCount, ref ptr, end)
+            if (!RespReadUtils.ReadArrayLength(out int ksSpecElemCount, ref ptr, end)
                 || ksSpecElemCount == 0) return false;
 
             keySpecMethod = new FindKeysUnknown();

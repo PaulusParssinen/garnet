@@ -56,11 +56,11 @@ internal class BasicRecoverReadOnly
     {
         using var cts = new CancellationTokenSource();
 
-        var producer = ProducerAsync(log, cts.Token);
-        var commiter = CommitterAsync(log, cts.Token);
+        Task producer = ProducerAsync(log, cts.Token);
+        Task commiter = CommitterAsync(log, cts.Token);
 
         // Run consumer on SEPARATE read-only TsavoriteLog instance
-        var consumer = SeparateConsumerAsync(cts.Token);
+        Task consumer = SeparateConsumerAsync(cts.Token);
 
         //** Give it some time to run a bit
         //** Acceptable use of using sleep for this spot
@@ -87,7 +87,7 @@ internal class BasicRecoverReadOnly
 
     static async Task ProducerAsync(TsavoriteLog log, CancellationToken cancellationToken)
     {
-        var i = 0L;
+        long i = 0L;
         while (!cancellationToken.IsCancellationRequested)
         {
             log.Enqueue(Encoding.UTF8.GetBytes(i.ToString()));
@@ -102,12 +102,12 @@ internal class BasicRecoverReadOnly
     // to the primary TsavoriteLog's commits.
     public async Task SeparateConsumerAsync(CancellationToken cancellationToken)
     {
-        var _ = BeginRecoverReadOnlyLoop(logReadOnly, cancellationToken);
+        Task _ = BeginRecoverReadOnlyLoop(logReadOnly, cancellationToken);
 
         // This enumerator waits asynchronously when we have reached the committed tail of the duplicate TsavoriteLog. When RecoverReadOnly
         // reads new data committed by the primary TsavoriteLog, it signals commit completion to let iter continue to the new tail.
-        using var iter = logReadOnly.Scan(logReadOnly.BeginAddress, long.MaxValue);
-        await foreach (var (result, length, currentAddress, nextAddress) in iter.GetAsyncEnumerable(cancellationToken))
+        using TsavoriteLogScanIterator iter = logReadOnly.Scan(logReadOnly.BeginAddress, long.MaxValue);
+        await foreach ((byte[] result, int length, long currentAddress, long nextAddress) in iter.GetAsyncEnumerable(cancellationToken))
         {
             iter.CompleteUntil(nextAddress);
         }

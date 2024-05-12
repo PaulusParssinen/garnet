@@ -54,7 +54,7 @@ public class AccessControlList
     /// <returns>Matching user object, or null if no user with the given name was found.</returns>
     public User GetUser(string username)
     {
-        if (_users.TryGetValue(username, out var user))
+        if (_users.TryGetValue(username, out User user))
         {
             return user;
         }

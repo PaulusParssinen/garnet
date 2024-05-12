@@ -40,17 +40,17 @@ internal sealed partial class ClusterManager : IDisposable
     public unsafe ClusterManager(ClusterProvider clusterProvider, ILogger logger = null)
     {
         this.clusterProvider = clusterProvider;
-        var opts = clusterProvider.serverOptions;
-        var clusterFolder = "/cluster";
-        var clusterDataPath = opts.CheckpointDir + clusterFolder;
-        var deviceFactory = opts.GetInitializedDeviceFactory(clusterDataPath);
+        GarnetServerOptions opts = clusterProvider.serverOptions;
+        string clusterFolder = "/cluster";
+        string clusterDataPath = opts.CheckpointDir + clusterFolder;
+        INamedDeviceFactory deviceFactory = opts.GetInitializedDeviceFactory(clusterDataPath);
 
         clusterConfigDevice = deviceFactory.Get(new FileDescriptor(directoryName: "", fileName: "nodes.conf"));
         pool = new(1, (int)clusterConfigDevice.SectorSize);
 
-        var address = opts.Address ?? StoreWrapper.GetIp();
+        string address = opts.Address ?? StoreWrapper.GetIp();
         this.logger = logger;
-        var recoverConfig = clusterConfigDevice.GetFileSize(0) > 0 && !opts.CleanClusterConfig;
+        bool recoverConfig = clusterConfigDevice.GetFileSize(0) > 0 && !opts.CleanClusterConfig;
 
         tlsOptions = opts.TlsOptions;
         if (!opts.CleanClusterConfig)
@@ -61,7 +61,7 @@ internal sealed partial class ClusterManager : IDisposable
         if (recoverConfig)
         {
             logger?.LogTrace("Recover cluster config from disk");
-            var config = ClusterUtils.ReadDevice(clusterConfigDevice, pool, logger);
+            byte[] config = ClusterUtils.ReadDevice(clusterConfigDevice, pool, logger);
             currentConfig = ClusterConfig.FromByteArray(config);
             // Used to update endpoint if it change when running inside a container.
             if (address != currentConfig.LocalNodeIp || opts.Port != currentConfig.LocalNodePort)
@@ -138,7 +138,7 @@ internal sealed partial class ClusterManager : IDisposable
     {
         if (recoverConfig)
         {
-            var conf = currentConfig;
+            ClusterConfig conf = currentConfig;
             TryInitializeLocalWorker(
                 conf.LocalNodeId,
                 address,
@@ -167,8 +167,8 @@ internal sealed partial class ClusterManager : IDisposable
 
     public string GetInfo()
     {
-        var current = CurrentConfig;
-        var ClusterInfo = $"" +
+        ClusterConfig current = CurrentConfig;
+        string ClusterInfo = $"" +
             $"cluster_state:ok\r\n" +
             $"cluster_slots_assigned:{current.GetSlotCountForState(SlotState.STABLE)}\r\n" +
             $"cluster_slots_ok:{current.GetSlotCountForState(SlotState.STABLE)}\r\n" +
@@ -185,10 +185,10 @@ internal sealed partial class ClusterManager : IDisposable
 
     private static string GetRange(int[] slots)
     {
-        var range = "> ";
-        var start = slots[0];
-        var end = slots[0];
-        for (var i = 1; i < slots.Length + 1; i++)
+        string range = "> ";
+        int start = slots[0];
+        int end = slots[0];
+        for (int i = 1; i < slots.Length + 1; i++)
         {
             if (i < slots.Length && slots[i] == end + 1)
                 end = slots[i];
@@ -216,14 +216,14 @@ internal sealed partial class ClusterManager : IDisposable
         errorMessage = default;
         while (true)
         {
-            var current = currentConfig;
+            ClusterConfig current = currentConfig;
             if (current.NumWorkers == 0)
             {
                 errorMessage = CmdStrings.RESP_ERR_GENERIC_WORKERS_NOT_INITIALIZED;
                 return false;
             }
 
-            var newConfig = currentConfig.SetLocalWorkerConfigEpoch(configEpoch);
+            ClusterConfig newConfig = currentConfig.SetLocalWorkerConfigEpoch(configEpoch);
             if (newConfig == null)
             {
                 errorMessage = CmdStrings.RESP_ERR_GENERIC_CONFIG_EPOCH_NOT_SET;
@@ -245,8 +245,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = currentConfig.BumpLocalNodeConfigEpoch();
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = currentConfig.BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -262,8 +262,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = current.SetLocalWorkerRole(role).BumpLocalNodeConfigEpoch();
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = current.SetLocalWorkerRole(role).BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -277,8 +277,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = current.MakeReplicaOf(null).SetLocalWorkerRole(NodeRole.PRIMARY).BumpLocalNodeConfigEpoch();
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = current.MakeReplicaOf(null).SetLocalWorkerRole(NodeRole.PRIMARY).BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -294,8 +294,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = current.MakeReplicaOf(replicaId);
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = current.MakeReplicaOf(replicaId);
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
         }
@@ -309,8 +309,8 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
-            var newConfig = current.TakeOverFromPrimary();
+            ClusterConfig current = currentConfig;
+            ClusterConfig newConfig = current.TakeOverFromPrimary();
             newConfig = newConfig.BumpLocalNodeConfigEpoch();
             if (Interlocked.CompareExchange(ref currentConfig, newConfig, current) == current)
                 break;
@@ -337,10 +337,10 @@ internal sealed partial class ClusterManager : IDisposable
     {
         while (true)
         {
-            var current = currentConfig;
+            ClusterConfig current = currentConfig;
 
             //If I am not a primary or I do not have any assigned slots cannot vote
-            var role = current.LocalNodeRole;
+            NodeRole role = current.LocalNodeRole;
             if (role != NodeRole.PRIMARY || current.HasAssignedSlots(1))
                 return false;
 
@@ -349,7 +349,7 @@ internal sealed partial class ClusterManager : IDisposable
                 return false;
 
             //Requesting node has to be a known replica node
-            var requestingNodeWorker = current.GetWorkerFromNodeId(requestingNodeId);
+            Worker requestingNodeWorker = current.GetWorkerFromNodeId(requestingNodeId);
             if (requestingNodeWorker.Role == NodeRole.UNASSIGNED)
                 return false;
 
@@ -362,7 +362,7 @@ internal sealed partial class ClusterManager : IDisposable
             }
 
             //if reached this point try to update last voted epoch with requested epoch
-            var newConfig = currentConfig.SetLocalNodeLastVotedConfigEpoch(requestedEpoch);
+            ClusterConfig newConfig = currentConfig.SetLocalNodeLastVotedConfigEpoch(requestedEpoch);
             //If config has changed in between go back and retry
             //This can happen when another node trying to acquire that epoch succeeded from the perspective of this node
             //If that is the case, when we retry to authorize. If lastVotedEpoch has been captured we return no vote

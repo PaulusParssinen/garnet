@@ -150,7 +150,7 @@ struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     /// <inheritdoc />
     public GarnetStatus SortedSetDifference(ArgSlice[] keys, out Dictionary<byte[], double> pairs)
     {
-        foreach (var key in keys)
+        foreach (ArgSlice key in keys)
         {
             garnetApi.WATCH(key, StoreType.Object);
         }
@@ -252,7 +252,7 @@ struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     /// <inheritdoc />
     public GarnetStatus SetUnion(ArgSlice[] keys, out HashSet<byte[]> output)
     {
-        foreach (var key in keys)
+        foreach (ArgSlice key in keys)
         {
             garnetApi.WATCH(key, StoreType.Object);
         }
@@ -263,7 +263,7 @@ struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     /// <inheritdoc />
     public GarnetStatus SetDiff(ArgSlice[] keys, out HashSet<byte[]> output)
     {
-        foreach (var key in keys)
+        foreach (ArgSlice key in keys)
         {
             garnetApi.WATCH(key, StoreType.Object);
         }
@@ -431,7 +431,7 @@ struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     /// <inheritdoc />
     public GarnetStatus HyperLogLogLength(ArgSlice[] keys, ref SpanByte input, out long count, out bool error)
     {
-        foreach (var key in keys)
+        foreach (ArgSlice key in keys)
         {
             garnetApi.WATCH(key, StoreType.Main);
         }
@@ -441,7 +441,7 @@ struct GarnetWatchApi<TGarnetApi> : IGarnetReadApi
     /// <inheritdoc />
     public GarnetStatus HyperLogLogLength(ArgSlice[] keys, out long count)
     {
-        foreach (var key in keys)
+        foreach (ArgSlice key in keys)
         {
             garnetApi.WATCH(key, StoreType.Main);
         }

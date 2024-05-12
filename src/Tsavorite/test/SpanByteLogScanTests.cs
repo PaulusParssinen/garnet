@@ -36,7 +36,7 @@ internal class SpanByteLogScanTests
     public void Setup()
     {
         ITsavoriteEqualityComparer<SpanByte> comparer = null;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is HashModulo mod && mod == HashModulo.Hundred)
             {
@@ -80,15 +80,15 @@ internal class SpanByteLogScanTests
     {
         const long PageSize = 1L << PageSizeBits;
 
-        using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, ScanFunctions> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
 
         Random rng = new(101);
 
         for (int i = 0; i < totalRecords; i++)
         {
-            var valueFill = new string('x', rng.Next(120));  // Make the record lengths random
-            var key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
-            var value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
+            string valueFill = new string('x', rng.Next(120));  // Make the record lengths random
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
+            ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
 
             fixed (byte* keyPtr = key)
             fixed (byte* valuePtr = value)
@@ -100,13 +100,13 @@ internal class SpanByteLogScanTests
         var scanCursorFuncs = new ScanCursorFuncs(store);
 
         // Normal operations
-        var endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
-        var counts = new long[] { 10, 100, long.MaxValue };
+        long[] endAddresses = new long[] { store.Log.TailAddress, long.MaxValue };
+        long[] counts = new long[] { 10, 100, long.MaxValue };
 
         long cursor = 0;
-        for (var iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
+        for (int iAddr = 0; iAddr < endAddresses.Length; ++iAddr)
         {
-            for (var iCount = 0; iCount < counts.Length; ++iCount)
+            for (int iCount = 0; iCount < counts.Length; ++iCount)
             {
                 scanCursorFuncs.Initialize(verifyKeys: true);
                 while (session.ScanCursor(ref cursor, counts[iCount], scanCursorFuncs, endAddresses[iAddr]))
@@ -130,9 +130,9 @@ internal class SpanByteLogScanTests
         // Add another totalRecords, with keys incremented by totalRecords to remain distinct, and verify we see all keys.
         for (int i = 0; i < totalRecords; i++)
         {
-            var valueFill = new string('x', rng.Next(120));  // Make the record lengths random
-            var key = MemoryMarshal.Cast<char, byte>($"key_{i + totalRecords}".AsSpan());
-            var value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i + totalRecords}".AsSpan());
+            string valueFill = new string('x', rng.Next(120));  // Make the record lengths random
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"key_{i + totalRecords}".AsSpan());
+            ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i + totalRecords}".AsSpan());
 
             fixed (byte* keyPtr = key)
             fixed (byte* valuePtr = value)
@@ -159,10 +159,10 @@ internal class SpanByteLogScanTests
         SpanByte input = default;
         SpanByteAndMemory output = default;
         ReadOptions readOptions = default;
-        var readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
+        Status readStatus = session.ReadAtAddress(store.hlog.HeadAddress, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(readStatus.Found, $"Could not read at HeadAddress; {readStatus}");
-        var keyString = new string(MemoryMarshal.Cast<byte, char>(output.Memory.Memory.Span));
-        var keyOrdinal = int.Parse(keyString.Substring(keyString.IndexOf('_') + 1));
+        string keyString = new string(MemoryMarshal.Cast<byte, char>(output.Memory.Memory.Span));
+        int keyOrdinal = int.Parse(keyString.Substring(keyString.IndexOf('_') + 1));
         output.Memory.Dispose();
 
         scanCursorFuncs.Initialize(verifyKeys);
@@ -180,15 +180,15 @@ internal class SpanByteLogScanTests
     [Category("Smoke")]
     public unsafe void SpanByteScanCursorFilterTest([Values(HashModulo.NoMod, HashModulo.Hundred)] HashModulo hashMod)
     {
-        using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, ScanFunctions> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
 
         Random rng = new(101);
 
         for (int i = 0; i < totalRecords; i++)
         {
-            var valueFill = new string('x', rng.Next(120));  // Make the record lengths random
-            var key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
-            var value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
+            string valueFill = new string('x', rng.Next(120));  // Make the record lengths random
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
+            ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
 
             fixed (byte* keyPtr = key)
             fixed (byte* valuePtr = value)
@@ -220,15 +220,15 @@ internal class SpanByteLogScanTests
     [Category("Smoke")]
     public unsafe void SpanByteScanCursorWithRCUTest([Values(RCULocation.RCUBefore, RCULocation.RCUAfter)] RCULocation rcuLocation, [Values(HashModulo.NoMod, HashModulo.Hundred)] HashModulo hashMod)
     {
-        using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, ScanFunctions> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
 
         Random rng = new(101);
 
         for (int i = 0; i < totalRecords; i++)
         {
-            var valueFill = new string('x', rng.Next(120));  // Make the record lengths random
-            var key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
-            var value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
+            string valueFill = new string('x', rng.Next(120));  // Make the record lengths random
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"key_{i}".AsSpan());
+            ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{i}".AsSpan());
 
             fixed (byte* keyPtr = key)
             fixed (byte* valuePtr = value)
@@ -299,11 +299,11 @@ internal class SpanByteLogScanTests
                 // Must run this on another thread because we are epoch-protected on this one.
                 Task.Run(() =>
                 {
-                    using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
+                    using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, ScanFunctions> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, ScanFunctions>(new ScanFunctions());
 
-                    var valueFill = new string('x', 220);   // Update the specified key with a longer value that requires RCU.
-                    var key = MemoryMarshal.Cast<char, byte>($"key_{rcuRecord}".AsSpan());
-                    var value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{rcuRecord}".AsSpan());
+                    string valueFill = new string('x', 220);   // Update the specified key with a longer value that requires RCU.
+                    ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"key_{rcuRecord}".AsSpan());
+                    ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"v{valueFill}_{rcuRecord}".AsSpan());
 
                     fixed (byte* keyPtr = key)
                     fixed (byte* valuePtr = value)
@@ -321,8 +321,8 @@ internal class SpanByteLogScanTests
 
         public bool ConcurrentReader(ref SpanByte key, ref SpanByte value, RecordMetadata recordMetadata, long numberOfRecords, out CursorRecordResult cursorRecordResult)
         {
-            var keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
-            var kfield1 = int.Parse(keyString.Substring(keyString.IndexOf('_') + 1));
+            string keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
+            int kfield1 = int.Parse(keyString.Substring(keyString.IndexOf('_') + 1));
 
             cursorRecordResult = filter(kfield1) ? CursorRecordResult.Accept : CursorRecordResult.Skip;
             if (cursorRecordResult != CursorRecordResult.Accept)
@@ -366,7 +366,7 @@ internal class SpanByteLogScanTests
         using var log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "test.log"), deleteOnClose: true);
         using var store = new TsavoriteKV<SpanByte, SpanByte>
             (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 20, PageSizeBits = 15 }, concurrencyControlMode: ConcurrencyControlMode.None);
-        using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
+        using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
         const int numRecords = 200;
         const int numTailRecords = 10;
@@ -380,8 +380,8 @@ internal class SpanByteLogScanTests
                 shiftToKey = i;
             }
 
-            var key = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
-            var value = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
+            ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>($"{i}".AsSpan());
 
             fixed (byte* keyPtr = key)
             fixed (byte* valuePtr = value)
@@ -390,11 +390,11 @@ internal class SpanByteLogScanTests
             }
         }
 
-        using var iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
+        using ITsavoriteScanIterator<SpanByte, SpanByte> iter = store.Log.Scan(store.Log.HeadAddress, store.Log.TailAddress);
 
         for (int i = 0; i < 100; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             Assert.AreEqual(i, int.Parse(MemoryMarshal.Cast<byte, char>(iter.GetKey().AsSpan())));
             Assert.AreEqual(i, int.Parse(MemoryMarshal.Cast<byte, char>(iter.GetValue().AsSpan())));
         }
@@ -403,10 +403,10 @@ internal class SpanByteLogScanTests
 
         for (int i = 0; i < numTailRecords; ++i)
         {
-            Assert.IsTrue(iter.GetNext(out var recordInfo));
+            Assert.IsTrue(iter.GetNext(out RecordInfo recordInfo));
             if (i == 0)
                 Assert.AreEqual(store.Log.BeginAddress, iter.CurrentAddress);
-            var expectedKey = numRecords - numTailRecords + i;
+            int expectedKey = numRecords - numTailRecords + i;
             Assert.AreEqual(expectedKey, int.Parse(MemoryMarshal.Cast<byte, char>(iter.GetKey().AsSpan())));
             Assert.AreEqual(expectedKey, int.Parse(MemoryMarshal.Cast<byte, char>(iter.GetValue().AsSpan())));
         }

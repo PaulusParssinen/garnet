@@ -16,15 +16,15 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
     ClusterSlotVerificationResult SingleKeySlotVerify(ArgSlice keySlice, bool readOnly, byte SessionAsking)
     {
-        var config = clusterProvider.clusterManager.CurrentConfig;
+        ClusterConfig config = clusterProvider.clusterManager.CurrentConfig;
         return readOnly ? SingleKeyReadSlotVerify(config, keySlice, SessionAsking) : SingleKeyReadWriteSlotVerify(config, keySlice, SessionAsking);
     }
 
     ClusterSlotVerificationResult SingleKeyReadSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
     {
-        var _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
-        var IsLocal = config.IsLocal(_slot);
-        var state = config.GetState(_slot);
+        ushort _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
+        bool IsLocal = config.IsLocal(_slot);
+        SlotState state = config.GetState(_slot);
 
         // If local, then slot in not stable state
         if (IsLocal)
@@ -73,9 +73,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
     ClusterSlotVerificationResult SingleKeyReadWriteSlotVerify(ClusterConfig config, ArgSlice keySlice, byte SessionAsking, int slot = -1)
     {
-        var _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
-        var IsLocal = config.IsLocal(_slot, readCommand: readWriteSession);
-        var state = config.GetState(_slot);
+        ushort _slot = slot == -1 ? ArgSliceUtils.HashSlot(keySlice) : (ushort)slot;
+        bool IsLocal = config.IsLocal(_slot, readCommand: readWriteSession);
+        SlotState state = config.GetState(_slot);
 
         // Redirect r/w requests towards primary
         if (config.LocalNodeRole == NodeRole.REPLICA)
@@ -118,12 +118,12 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
     static ClusterSlotVerificationResult ArrayCrosslotVerify(int keyCount, ref byte* ptr, byte* endPtr, bool interleavedKeys, out bool retVal, out byte* keyPtr, out int ksize)
     {
         retVal = false;
-        var crossSlot = false;
+        bool crossSlot = false;
         keyPtr = null;
         ksize = 0;
 
         byte* valPtr = null;
-        var vsize = 0;
+        int vsize = 0;
 
         if (!RespReadUtils.ReadPtrWithLengthHeader(ref keyPtr, ref ksize, ref ptr, endPtr))
             return new(SlotVerifiedState.OK, 0);
@@ -133,9 +133,9 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
             if (!RespReadUtils.ReadPtrWithLengthHeader(ref valPtr, ref vsize, ref ptr, endPtr))
                 return new(SlotVerifiedState.OK, 0);
 
-        var slot = NumUtils.HashSlot(keyPtr, ksize);
+        ushort slot = NumUtils.HashSlot(keyPtr, ksize);
 
-        for (var c = 1; c < keyCount; c++)
+        for (int c = 1; c < keyCount; c++)
         {
             keyPtr = null;
             ksize = 0;
@@ -148,7 +148,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
                 if (!RespReadUtils.ReadPtrWithLengthHeader(ref valPtr, ref vsize, ref ptr, endPtr))
                     return new(SlotVerifiedState.OK, 0);
 
-            var _slot = NumUtils.HashSlot(keyPtr, ksize);
+            ushort _slot = NumUtils.HashSlot(keyPtr, ksize);
             crossSlot |= (_slot != slot);
         }
 
@@ -158,7 +158,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
     ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, int keyCount, ref byte* ptr, byte* endPtr, bool readOnly, bool interleavedKeys, byte SessionAsking, out bool retVal)
     {
-        var vres = ArrayCrosslotVerify(keyCount, ref ptr, endPtr, interleavedKeys, out retVal, out byte* keyPtr, out int ksize);
+        ClusterSlotVerificationResult vres = ArrayCrosslotVerify(keyCount, ref ptr, endPtr, interleavedKeys, out retVal, out byte* keyPtr, out int ksize);
         if (!retVal) return new(SlotVerifiedState.OK, 0);
 
         if (vres.state == SlotVerifiedState.CROSSLOT)
@@ -173,14 +173,14 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
     static ClusterSlotVerificationResult ArrayCrossSlotVerify(ref ArgSlice[] keys, int count)
     {
-        var _offset = 0;
-        var _end = count < 0 ? keys.Length : count;
+        int _offset = 0;
+        int _end = count < 0 ? keys.Length : count;
 
-        var slot = ArgSliceUtils.HashSlot(keys[_offset]);
-        var crossSlot = false;
-        for (var i = _offset; i < _end; i++)
+        ushort slot = ArgSliceUtils.HashSlot(keys[_offset]);
+        bool crossSlot = false;
+        for (int i = _offset; i < _end; i++)
         {
-            var _slot = ArgSliceUtils.HashSlot(keys[i]);
+            ushort _slot = ArgSliceUtils.HashSlot(keys[i]);
 
             if (_slot != slot)
             {
@@ -196,7 +196,7 @@ internal sealed unsafe partial class ClusterSession : IClusterSession
 
     ClusterSlotVerificationResult KeyArraySlotVerify(ClusterConfig config, ref ArgSlice[] keys, bool readOnly, byte SessionAsking, int count)
     {
-        var vres = ArrayCrossSlotVerify(ref keys, count);
+        ClusterSlotVerificationResult vres = ArrayCrossSlotVerify(ref keys, count);
         if (vres.state == SlotVerifiedState.CROSSLOT)
             return vres;
         else

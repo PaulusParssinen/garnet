@@ -93,12 +93,12 @@ public sealed class BlittableScanIterator<Key, Value> : ScanIteratorBase, ITsavo
         while (true)
         {
             currentAddress = nextAddress;
-            var stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
+            long stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
             if (currentAddress >= stopAddress)
                 return false;
 
             epoch?.Resume();
-            var headAddress = hlog.HeadAddress;
+            long headAddress = hlog.HeadAddress;
 
             if (currentAddress < hlog.BeginAddress && !forceInMemory)
                 currentAddress = hlog.BeginAddress;
@@ -110,14 +110,14 @@ public sealed class BlittableScanIterator<Key, Value> : ScanIteratorBase, ITsavo
                 throw new TsavoriteException("Iterator address is less than log HeadAddress in memory-scan mode");
             }
 
-            var currentPage = currentAddress >> hlog.LogPageSizeBits;
-            var offset = currentAddress & hlog.PageSizeMask;
+            long currentPage = currentAddress >> hlog.LogPageSizeBits;
+            long offset = currentAddress & hlog.PageSizeMask;
 
             if (currentAddress < headAddress && !forceInMemory)
                 BufferAndLoad(currentAddress, currentPage, currentPage % frameSize, headAddress, stopAddress);
 
             long physicalAddress = GetPhysicalAddress(currentAddress, headAddress, currentPage, offset);
-            var recordSize = hlog.GetRecordSize(physicalAddress).Item2;
+            int recordSize = hlog.GetRecordSize(physicalAddress).Item2;
 
             // If record does not fit on page, skip to the next page.
             if ((currentAddress & hlog.PageSizeMask) + recordSize > hlog.PageSize)
@@ -178,10 +178,10 @@ public sealed class BlittableScanIterator<Key, Value> : ScanIteratorBase, ITsavo
             }
 
             epoch?.Resume();
-            var headAddress = hlog.HeadAddress;
+            long headAddress = hlog.HeadAddress;
 
-            var currentPage = currentAddress >> hlog.LogPageSizeBits;
-            var offset = currentAddress & hlog.PageSizeMask;
+            long currentPage = currentAddress >> hlog.LogPageSizeBits;
+            long offset = currentAddress & hlog.PageSizeMask;
 
             long physicalAddress = GetPhysicalAddress(currentAddress, headAddress, currentPage, offset);
 

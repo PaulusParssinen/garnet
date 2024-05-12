@@ -39,7 +39,7 @@ sealed partial class StorageSession : IDisposable
         *(byte*)(pcurr) = bit ? (byte)0x1 : (byte)0x0;
 
         SpanByteAndMemory output = new(null);
-        var keySp = key.SpanByte;
+        SpanByte keySp = key.SpanByte;
         RMW_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
 
         return GarnetStatus.OK;
@@ -70,14 +70,14 @@ sealed partial class StorageSession : IDisposable
         pcurr += sizeof(long);
 
         SpanByteAndMemory output = new(null);
-        var keySp = key.SpanByte;
-        var status = Read_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
+        SpanByte keySp = key.SpanByte;
+        GarnetStatus status = Read_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
 
         if (status == GarnetStatus.OK && !output.IsSpanByte)
         {
             fixed (byte* outputPtr = output.Memory.Memory.Span)
             {
-                var refPtr = outputPtr;
+                byte* refPtr = outputPtr;
                 if (*refPtr == ':')
                 {
                     refPtr++;
@@ -94,7 +94,7 @@ sealed partial class StorageSession : IDisposable
     {
         int maxBitmapLen = int.MinValue;
         int minBitmapLen = int.MaxValue;
-        var status = GarnetStatus.NOTFOUND;
+        GarnetStatus status = GarnetStatus.NOTFOUND;
 
         int keyCount = keys.Length;
 
@@ -137,13 +137,13 @@ sealed partial class StorageSession : IDisposable
         }
 
         // Perform under unsafe epoch control for pointer safety.
-        var uc = txnManager.LockableUnsafeContext;
+        LockableUnsafeContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, long, MainStoreFunctions> uc = txnManager.LockableUnsafeContext;
 
         try
         {
             uc.BeginUnsafe();
         readFromScratch:
-            var localHeadAddress = HeadAddress;
+            long localHeadAddress = HeadAddress;
             int srcKeyOffset = 0;
 
             for (int i = 1; i < keys.Length; i++)
@@ -247,9 +247,9 @@ sealed partial class StorageSession : IDisposable
         *pcurr = (byte)(useBitInterval ? 1 : 0);
 
         SpanByteAndMemory output = new(null);
-        var keySp = key.SpanByte;
+        SpanByte keySp = key.SpanByte;
 
-        var status = Read_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
+        GarnetStatus status = Read_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
 
         if (status == GarnetStatus.OK)
         {
@@ -257,7 +257,7 @@ sealed partial class StorageSession : IDisposable
             {
                 fixed (byte* outputPtr = output.Memory.Memory.Span)
                 {
-                    var refPtr = outputPtr;
+                    byte* refPtr = outputPtr;
                     RespReadUtils.Read64Int(out result, ref refPtr, refPtr + sizeof(long));
                 }
                 output.Memory.Dispose();
@@ -273,7 +273,7 @@ sealed partial class StorageSession : IDisposable
         int inputSize = sizeof(int) + RespInputHeader.Size + sizeof(byte) + sizeof(byte) + sizeof(long) + sizeof(long) + sizeof(byte);
         byte* input = scratchBufferManager.CreateArgSlice(inputSize).ptr;
         result = new();
-        var keySp = key.SpanByte;
+        SpanByte keySp = key.SpanByte;
 
         byte* pcurr = input;
         *(int*)pcurr = inputSize - sizeof(int);
@@ -301,7 +301,7 @@ sealed partial class StorageSession : IDisposable
             *pcurr = commandArguments[i].overflowType;
 
             var output = new SpanByteAndMemory(null);
-            var status = commandArguments[i].secondaryOpCode == (byte)RespCommand.GET ?
+            GarnetStatus status = commandArguments[i].secondaryOpCode == (byte)RespCommand.GET ?
                 Read_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context) :
                 RMW_MainStore(ref keySp, ref Unsafe.AsRef<SpanByte>(input), ref output, ref context);
 
@@ -319,7 +319,7 @@ sealed partial class StorageSession : IDisposable
                     {
                         fixed (byte* outputPtr = output.Memory.Memory.Span)
                         {
-                            var refPtr = outputPtr;
+                            byte* refPtr = outputPtr;
                             if (!RespReadUtils.Read64Int(out resultCmd, ref refPtr, refPtr + output.Length))
                                 error = true;
                         }
@@ -327,7 +327,7 @@ sealed partial class StorageSession : IDisposable
                     }
                     else
                     {
-                        var refPtr = output.SpanByte.ToPointer();
+                        byte* refPtr = output.SpanByte.ToPointer();
                         if (!RespReadUtils.Read64Int(out resultCmd, ref refPtr, refPtr + output.SpanByte.Length))
                             error = true;
                     }

@@ -56,24 +56,24 @@ class ModifiedBitTests
     void AssertLockandModified(LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
     {
         OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
-        var isM = luContext.IsModified(key);
+        bool isM = luContext.IsModified(key);
         Assert.AreEqual(modified, isM, "modified mismatch");
     }
 
     void AssertLockandModified(LockableContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext, int key, bool xlock, bool slock, bool modified = false)
     {
         OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
-        var isM = luContext.IsModified(key);
+        bool isM = luContext.IsModified(key);
         Assert.AreEqual(modified, isM, "modified mismatch");
     }
 
     void AssertLockandModified(ClientSession<int, int, int, int, Empty, SimpleFunctions<int, int>> session, int key, bool xlock, bool slock, bool modified = false)
     {
-        var luContext = session.LockableUnsafeContext;
+        LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext = session.LockableUnsafeContext;
         luContext.BeginUnsafe();
 
         OverflowBucketLockTableTests.AssertLockCounts(store, ref key, xlock, slock);
-        var isM = luContext.IsModified(key);
+        bool isM = luContext.IsModified(key);
         Assert.AreEqual(modified, isM, "Modified mismatch");
 
         luContext.EndUnsafe();
@@ -88,11 +88,11 @@ class ModifiedBitTests
         int key = r.Next(numRecords);
         session.ResetModified(key);
 
-        var lContext = session.LockableContext;
+        LockableContext<int, int, int, int, Empty, SimpleFunctions<int, int>> lContext = session.LockableContext;
         lContext.BeginLockable();
         AssertLockandModified(lContext, key, xlock: false, slock: false, modified: false);
 
-        var keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, lContext) };
+        FixedLengthLockableKeyStruct<int>[] keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, lContext) };
 
         lContext.Lock(keyVec);
         AssertLockandModified(lContext, key, xlock: true, slock: false, modified: false);
@@ -161,7 +161,7 @@ class ModifiedBitTests
                     Assert.IsTrue(status.NotFound);
                     break;
             }
-            (status, var _) = session.Read(key);
+            (status, int _) = session.Read(key);
             Assert.IsTrue(status.Found || updateOp == UpdateOp.Delete);
         }
 
@@ -180,7 +180,7 @@ class ModifiedBitTests
         int key = numRecords - 500;
         int value = 14;
         session.ResetModified(key);
-        var luContext = session.LockableUnsafeContext;
+        LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext = session.LockableUnsafeContext;
         luContext.BeginUnsafe();
         luContext.BeginLockable();
         AssertLockandModified(luContext, key, xlock: false, slock: false, modified: false);
@@ -195,7 +195,7 @@ class ModifiedBitTests
         luContext.BeginUnsafe();
         luContext.BeginLockable();
 
-        var keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, luContext) };
+        FixedLengthLockableKeyStruct<int>[] keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, luContext) };
 
         luContext.Lock(keyVec);
 
@@ -234,7 +234,7 @@ class ModifiedBitTests
         {
             keyVec[0].LockType = LockType.Shared;
             luContext.Lock(keyVec);
-            (status, var _) = luContext.Read(key);
+            (status, int _) = luContext.Read(key);
             Assert.AreEqual(updateOp != UpdateOp.Delete, status.Found, status.ToString());
             luContext.Unlock(keyVec);
         }
@@ -260,7 +260,7 @@ class ModifiedBitTests
             store.Log.FlushAndEvict(wait: true);
 
         Status status = default;
-        var unsafeContext = session.UnsafeContext;
+        UnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> unsafeContext = session.UnsafeContext;
 
         unsafeContext.BeginUnsafe();
         switch (updateOp)
@@ -289,7 +289,7 @@ class ModifiedBitTests
                     Assert.IsTrue(status.NotFound);
                     break;
             }
-            (status, var _) = unsafeContext.Read(key);
+            (status, int _) = unsafeContext.Read(key);
             Assert.IsTrue(status.Found || updateOp == UpdateOp.Delete);
         }
         unsafeContext.EndUnsafe();
@@ -306,11 +306,11 @@ class ModifiedBitTests
         int key = numRecords - 500;
         int value = 14;
         session.ResetModified(key);
-        var lContext = session.LockableContext;
+        LockableContext<int, int, int, int, Empty, SimpleFunctions<int, int>> lContext = session.LockableContext;
         lContext.BeginLockable();
         AssertLockandModified(lContext, key, xlock: false, slock: false, modified: false);
 
-        var keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, lContext) };
+        FixedLengthLockableKeyStruct<int>[] keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Exclusive, lContext) };
 
         lContext.Lock(keyVec);
 
@@ -354,7 +354,7 @@ class ModifiedBitTests
         {
             keyVec[0].LockType = LockType.Shared;
             lContext.Lock(keyVec);
-            (status, var _) = lContext.Read(key);
+            (status, int _) = lContext.Read(key);
             Assert.AreEqual(updateOp != UpdateOp.Delete, status.Found, status.ToString());
             lContext.Unlock(keyVec);
         }
@@ -370,7 +370,7 @@ class ModifiedBitTests
         Populate();
         store.Log.FlushAndEvict(wait: true);
 
-        var luContext = session.LockableUnsafeContext;
+        LockableUnsafeContext<int, int, int, int, Empty, SimpleFunctions<int, int>> luContext = session.LockableUnsafeContext;
 
         int input = 0, output = 0, key = 200;
         ReadOptions readOptions = new() { CopyOptions = new(ReadCopyFrom.AllImmutable, ReadCopyTo.MainLog) };
@@ -379,13 +379,13 @@ class ModifiedBitTests
         luContext.BeginLockable();
         AssertLockandModified(luContext, key, xlock: false, slock: false, modified: true);
 
-        var keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Shared, luContext) };
+        FixedLengthLockableKeyStruct<int>[] keyVec = new[] { new FixedLengthLockableKeyStruct<int>(key, LockType.Shared, luContext) };
 
         luContext.Lock(keyVec);
         AssertLockandModified(luContext, key, xlock: false, slock: true, modified: true);
 
         // Check Read Copy to Tail resets the modified
-        var status = luContext.Read(ref key, ref input, ref output, ref readOptions, out _);
+        Status status = luContext.Read(ref key, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(status.IsPending, status.ToString());
         luContext.CompletePending(wait: true);
 

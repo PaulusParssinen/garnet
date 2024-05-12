@@ -44,9 +44,9 @@ internal abstract class StreamProviderBase : IStreamProvider
 
     public Stream Read(string path)
     {
-        using var device = GetDevice(path);
+        using IDevice device = GetDevice(path);
         var pool = new SectorAlignedBufferPool(1, (int)device.SectorSize);
-        ReadInto(device, pool, 0, out var buffer, MaxConfigFileSizeAligned);
+        ReadInto(device, pool, 0, out byte[] buffer, MaxConfigFileSizeAligned);
         pool.Free();
 
         // Remove trailing zeros
@@ -57,12 +57,12 @@ internal abstract class StreamProviderBase : IStreamProvider
 
     public unsafe void Write(string path, byte[] data)
     {
-        using var device = GetDevice(path);
-        var bytesToWrite = GetBytesToWrite(data, device);
+        using IDevice device = GetDevice(path);
+        long bytesToWrite = GetBytesToWrite(data, device);
         var pool = new SectorAlignedBufferPool(1, (int)device.SectorSize);
 
         // Get a sector-aligned buffer from the pool and copy _buffer into it.
-        var buffer = pool.Get((int)bytesToWrite);
+        SectorAlignedMemory buffer = pool.Get((int)bytesToWrite);
         fixed (byte* bufferRaw = data)
         {
             Buffer.MemoryCopy(bufferRaw, buffer.aligned_pointer, data.Length, data.Length);
@@ -88,7 +88,7 @@ internal abstract class StreamProviderBase : IStreamProvider
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = pool.Get((int)numBytesToRead);
+        SectorAlignedMemory pbuffer = pool.Get((int)numBytesToRead);
         device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer,
             (uint)numBytesToRead, IOCallback, semaphore);
         semaphore.Wait();
@@ -205,7 +205,7 @@ internal class EmbeddedResourceStreamProvider : IStreamProvider
 
     public Stream Read(string path)
     {
-        var resourceName = assembly.GetManifestResourceNames()
+        string resourceName = assembly.GetManifestResourceNames()
             .FirstOrDefault(rn => rn.EndsWith($".{path}"));
         if (resourceName == null) return null;
 
@@ -214,11 +214,11 @@ internal class EmbeddedResourceStreamProvider : IStreamProvider
 
     public void Write(string path, byte[] data)
     {
-        var resourceName = assembly.GetManifestResourceNames()
+        string resourceName = assembly.GetManifestResourceNames()
             .FirstOrDefault(rn => rn.EndsWith($".{path}"));
         if (resourceName == null) return;
 
-        using var stream = assembly.GetManifestResourceStream(resourceName);
+        using Stream stream = assembly.GetManifestResourceStream(resourceName);
         if (stream != null)
             stream.Write(data, 0, data.Length);
     }

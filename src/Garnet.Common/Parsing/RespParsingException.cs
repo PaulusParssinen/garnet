@@ -27,8 +27,8 @@ public class RespParsingException : GarnetException
     [DoesNotReturn]
     public static void ThrowUnexpectedToken(byte token)
     {
-        var c = (char)token;
-        var escaped = char.IsControl(c) ? $"\\x{token:x2}" : c.ToString();
+        char c = (char)token;
+        string escaped = char.IsControl(c) ? $"\\x{token:x2}" : c.ToString();
         Throw($"Unexpected character '{escaped}'.");
     }
 

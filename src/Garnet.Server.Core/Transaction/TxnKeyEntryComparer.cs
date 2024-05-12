@@ -20,7 +20,7 @@ internal sealed class TxnKeyEntryComparer : IComparer<TxnKeyEntry>
     public int Compare(TxnKeyEntry key1, TxnKeyEntry key2)
     {
         // This sorts by isObject, then calls Tsavorite to sort by lock code and then by lockType.
-        var cmp = key1.isObject.CompareTo(key2.isObject);
+        int cmp = key1.isObject.CompareTo(key2.isObject);
         if (cmp != 0)
             return cmp;
         if (key1.isObject)

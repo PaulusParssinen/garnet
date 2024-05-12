@@ -47,7 +47,7 @@ public class GarnetBitmapTests
     public void BitmapSetBitResponseTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "setResponseTest";
         Assert.IsFalse(db.StringSetBit(key, 7, true));
@@ -100,7 +100,7 @@ public class GarnetBitmapTests
     public void BitmapGetBitResponseTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "getResponseTest";
         for (long i = 0; i < (1 << 5); i++)
@@ -114,7 +114,7 @@ public class GarnetBitmapTests
     public void BitmapSetGetBitResponseTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "setGetResponseTest";
         long span = 1 << 10;
@@ -144,7 +144,7 @@ public class GarnetBitmapTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
 
-        var expectedResponse = ":0\r\n";
+        string expectedResponse = ":0\r\n";
         var response = lightClientRequest.SendCommandChunks("SETBIT mykey 7 1", bytesPerSend);
         Assert.AreEqual(response.AsSpan().Slice(0, expectedResponse.Length).ToArray(), expectedResponse);
 
@@ -167,7 +167,7 @@ public class GarnetBitmapTests
             PageSize: (bitmapBytes << 1).ToString());
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 8;
         int keyIter = 256;
@@ -241,7 +241,7 @@ public class GarnetBitmapTests
     public void BitmapSimpleBitCountTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int maxBitmapLen = 1 << 12;
         int iter = 1024;
@@ -299,7 +299,7 @@ public class GarnetBitmapTests
     public void BitmapBitCountBetweenOffsetsTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "BitCountBetweenOffsetsTest";
 
@@ -363,7 +363,7 @@ public class GarnetBitmapTests
     public void BitmapBitCountBetweenOffsetsTestV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "BitCountBetweenOffsetsTestV2";
 
@@ -396,7 +396,7 @@ public class GarnetBitmapTests
     public void BitmapBitCountNegativeOffsets()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "BitmapBitCountNegativeOffsets";
         int maxBitmapLen = 1 << 12;
@@ -449,7 +449,7 @@ public class GarnetBitmapTests
             PageSize: (bitmapBytes << 1).ToString());
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 64;
         byte[] bitmap = new byte[bitmapBytes];
@@ -484,7 +484,7 @@ public class GarnetBitmapTests
         //*2\r\n$8\r\nBITCOUNT\r\n
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var lightClientRequest = TestUtils.CreateRequest();
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         int maxBitmapLen = 1 << 12;
@@ -541,7 +541,7 @@ public class GarnetBitmapTests
     public void BitmapSimpleBitPosTests()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "SimpleBitPosTests";
 
@@ -592,7 +592,7 @@ public class GarnetBitmapTests
     public void BitmapBitPosOffsetsTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "BitmapBitPosNegativeOffsets";
 
@@ -646,7 +646,7 @@ public class GarnetBitmapTests
             PageSize: (bitmapBytes << 1).ToString());
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 64;
         byte[] bitmap = new byte[bitmapBytes];
@@ -681,7 +681,7 @@ public class GarnetBitmapTests
         //*2\r\n$8\r\nBITCOUNT\r\n
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var lightClientRequest = TestUtils.CreateRequest();
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         int maxBitmapLen = 1 << 12;
@@ -702,7 +702,7 @@ public class GarnetBitmapTests
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var lightClientRequest = TestUtils.CreateRequest();
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int tests = 32;
         string a = "a";
@@ -787,7 +787,7 @@ public class GarnetBitmapTests
     public void BitmapSimpleBitOpTests()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int tests = 128;
         string a = "a";
@@ -892,7 +892,7 @@ public class GarnetBitmapTests
     public void BitmapSimpleVarLenBitOpTests()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int tests = 32;
         string a = "a";
@@ -969,7 +969,7 @@ public class GarnetBitmapTests
     public void BitmapBitOpNotTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         int tests = 32;
 
         string srcKey = "srcKey";
@@ -1001,7 +1001,7 @@ public class GarnetBitmapTests
     public void BitmapSimpleBitOpVarLenGrowingSizeTests()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int tests = 16;
         string a = "a";
@@ -1163,7 +1163,7 @@ public class GarnetBitmapTests
     public void BitmapBitfieldGetTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "BitmapBitFieldGetTest";
 
         byte[] bitmapData = null;
@@ -1218,7 +1218,7 @@ public class GarnetBitmapTests
         var lighClientOnResponseDelegate = new LightClient.OnResponseDelegateUnsafe(SingleBitfieldReceive);
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var lightClientRequest = TestUtils.CreateRequest(lighClientOnResponseDelegate);
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "BitmapBitFieldGetTest";
 
         byte[] bitmapData = null;
@@ -1272,7 +1272,7 @@ public class GarnetBitmapTests
         //PageSize: "32m");
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 16;
         byte[][] bitmapData = new byte[keyCount][];
@@ -1374,7 +1374,7 @@ public class GarnetBitmapTests
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
         using var lightClientRequest = TestUtils.CreateRequest(SingleBitfieldReceive);
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "BitmapBitFieldSetTest";
         int tests = 1024;
 
@@ -1423,7 +1423,7 @@ public class GarnetBitmapTests
     public void BitmapBitfieldSetTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "BitmapBitFieldSetTest";
         int tests = 1024;
 
@@ -1473,7 +1473,7 @@ public class GarnetBitmapTests
         //PageSize: "32m");
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 16;
         byte[][] bitmapData = new byte[keyCount][];
@@ -1619,7 +1619,7 @@ public class GarnetBitmapTests
     {
         using var lightClientRequest = TestUtils.CreateRequest(SingleBitfieldReceive);
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "x";
         int tests = 1 << 10;
 
@@ -1790,7 +1790,7 @@ public class GarnetBitmapTests
     public void BitmapBitfieldSignedIncrTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "x";
         int tests = 1 << 10;
 
@@ -1939,7 +1939,7 @@ public class GarnetBitmapTests
         //PageSize: "32m");
         server.Start();
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 16;
         byte[][] bitmapData = new byte[keyCount][];
@@ -2020,7 +2020,7 @@ public class GarnetBitmapTests
     public void BitmapBitfieldUnsignedIncrTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "x";
         int tests = 1 << 10;
 
@@ -2073,7 +2073,7 @@ public class GarnetBitmapTests
     public void BitmapBitfieldGrowingTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         string key = "x";
         int tests = 1 << 5;
 
@@ -2198,13 +2198,13 @@ public class GarnetBitmapTests
     {
         server.Register.NewTransactionProc("BITMAPPROC", 5, () => new TestProcedureBitmap());
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string bitmapA = "user:Activity";
         string bitmapB = "user:KeyOperation";
         string bitmapC = "bitmapB";
 
-        var result = db.Execute("BITMAPPROC", bitmapA, DateTime.Now.Day, 1, bitmapB, bitmapC);
+        RedisResult result = db.Execute("BITMAPPROC", bitmapA, DateTime.Now.Day, 1, bitmapB, bitmapC);
         Assert.AreEqual("SUCCESS", (string)result);
     }
 
@@ -2213,7 +2213,7 @@ public class GarnetBitmapTests
     public void BitmapBitCountSimpleTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         db.StringSet(key, "foobar");
@@ -2245,7 +2245,7 @@ public class GarnetBitmapTests
     public void BitmapBitPosFixedTests()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string key = "mykey";
         byte[] value = [0x0, 0xff, 0xf0];

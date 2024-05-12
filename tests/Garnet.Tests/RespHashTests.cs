@@ -37,7 +37,7 @@ public class RespHashTests
     public void CanSetAndGetOnePair()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite")]);
         string r = db.HashGet("user:user1", "Title");
         Assert.AreEqual("Tsavorite", r);
@@ -47,8 +47,8 @@ public class RespHashTests
     public void CanSetAndGetOnePairLarge()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var str = new string(new char[150000]);
+        IDatabase db = redis.GetDatabase(0);
+        string str = new string(new char[150000]);
         db.HashSet("user:user1", [new HashEntry("Title", str)]);
         string r = db.HashGet("user:user1", "Title");
         Assert.AreEqual(str, r);
@@ -60,7 +60,7 @@ public class RespHashTests
     public void CanSetAndGetMultiPair()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         for (int i = 0; i < entries.Length; i++)
         {
             var item = new HashEntry($"item-{i + 1}", (i + 1) * 100);
@@ -80,9 +80,9 @@ public class RespHashTests
     public void CanSetAndGetMultiplePairs()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021")]);
-        var result = db.HashGet("user:user1", [new RedisValue("Title"), new RedisValue("Year")]);
+        RedisValue[] result = db.HashGet("user:user1", [new RedisValue("Title"), new RedisValue("Year")]);
         Assert.AreEqual(2, result.Length);
         Assert.AreEqual("Tsavorite", result[0].ToString());
         Assert.AreEqual("2021", result[1].ToString());
@@ -94,9 +94,9 @@ public class RespHashTests
     public void CanDelSingleField()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021")]);
-        var result = db.HashDelete(new RedisKey("user:user1"), new RedisValue("Title"));
+        bool result = db.HashDelete(new RedisKey("user:user1"), new RedisValue("Title"));
         Assert.AreEqual(true, result);
         string resultGet = db.HashGet("user:user1", "Year");
         Assert.AreEqual("2021", resultGet);
@@ -107,9 +107,9 @@ public class RespHashTests
     public void CanDeleleteMultipleFields()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Example", "One")]);
-        var result = db.HashDelete(new RedisKey("user:user1"), [new RedisValue("Title"), new RedisValue("Year")]);
+        long result = db.HashDelete(new RedisKey("user:user1"), [new RedisValue("Title"), new RedisValue("Year")]);
         string resultGet = db.HashGet("user:user1", "Example");
         Assert.AreEqual("One", resultGet);
     }
@@ -118,9 +118,9 @@ public class RespHashTests
     public void CanDeleleteMultipleFieldsWithNonExistingField()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021")]);
-        var result = db.HashDelete(new RedisKey("user:user1"), [new RedisValue("Title"), new RedisValue("Year"), new RedisValue("Unknown")]);
+        long result = db.HashDelete(new RedisKey("user:user1"), [new RedisValue("Title"), new RedisValue("Year"), new RedisValue("Unknown")]);
         Assert.AreEqual(2, result);
     }
 
@@ -128,9 +128,9 @@ public class RespHashTests
     public void CanDoHLen()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Company", "Acme")]);
-        var result = db.HashLength("user:user1");
+        long result = db.HashLength("user:user1");
         Assert.AreEqual(3, result);
     }
 
@@ -138,7 +138,7 @@ public class RespHashTests
     public void CanDoGetAll()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Company", "Acme")]);
         HashEntry[] result = db.HashGetAll("user:user1");
         Assert.AreEqual(3, result.Length);
@@ -149,9 +149,9 @@ public class RespHashTests
     public void CanDoHExists()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Company", "Acme")]);
-        var result = db.HashExists(new RedisKey("user:user1"), new RedisValue("Company"));
+        bool result = db.HashExists(new RedisKey("user:user1"), new RedisValue("Company"));
         Assert.AreEqual(true, result);
 
         result = db.HashExists(new RedisKey("user:userfoo"), "Title");
@@ -162,7 +162,7 @@ public class RespHashTests
     public void CanDoHStrLen()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user.user1", [new HashEntry("Title", "Tsavorite")]);
         long r = db.HashStringLength("user.user1", "Title");
         Assert.AreEqual(9, r, 0);
@@ -176,9 +176,9 @@ public class RespHashTests
     public void CanDoHKeys()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Company", "Acme")]);
-        var result = db.HashKeys("user:user1");
+        RedisValue[] result = db.HashKeys("user:user1");
         Assert.AreEqual(3, result.Length);
 
         Assert.IsTrue(Array.Exists(result, t => t.Equals("Title")));
@@ -191,9 +191,9 @@ public class RespHashTests
     public void CanDoHVals()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Tsavorite"), new HashEntry("Year", "2021"), new HashEntry("Company", "Acme")]);
-        var result = db.HashValues("user:user1");
+        RedisValue[] result = db.HashValues("user:user1");
         Assert.AreEqual(3, result.Length);
 
         Assert.IsTrue(Array.Exists(result, t => t.Equals("Tsavorite")));
@@ -206,16 +206,16 @@ public class RespHashTests
     public void CanDoHIncrBy()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Field1", "StringValue"), new HashEntry("Field2", "1")]);
         Assert.Throws<RedisServerException>(() => db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field1"), 4));
-        var result = db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field2"), -4);
+        long result = db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field2"), -4);
         Assert.AreEqual(-3, result);
         //new Key
         result = db.HashIncrement(new RedisKey("user:user2"), new RedisValue("Field2"), 4);
         Assert.AreEqual(4, result);
         // make sure the new hash object was created
-        var getResult = db.HashGet("user:user2", "Field2");
+        RedisValue getResult = db.HashGet("user:user2", "Field2");
         Assert.AreEqual(4, ((int?)getResult));
     }
 
@@ -223,21 +223,21 @@ public class RespHashTests
     public void CanDoHIncrByLTM()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Create LTM (larger than memory) DB by inserting 100 keys
         for (int i = 0; i < 100; i++)
             db.HashSet("user:user" + i, [new HashEntry("Field1", "StringValue"), new HashEntry("Field2", "1")]);
 
         Assert.Throws<RedisServerException>(() => db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field1"), 4));
-        var result = db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field2"), -4);
+        long result = db.HashIncrement(new RedisKey("user:user1"), new RedisValue("Field2"), -4);
         Assert.AreEqual(-3, result);
 
         // Test new key
         result = db.HashIncrement(new RedisKey("user:user100"), new RedisValue("Field2"), 4);
         Assert.AreEqual(4, result);
         // make sure the new hash object was created
-        var getResult = db.HashGet("user:user100", "Field2");
+        RedisValue getResult = db.HashGet("user:user100", "Field2");
         Assert.AreEqual(4, ((int?)getResult));
     }
 
@@ -245,9 +245,9 @@ public class RespHashTests
     public void CanDoHashDecrement()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Field1", "StringValue"), new HashEntry("Field2", "1")]);
-        var result = db.HashDecrement(new RedisKey("user:user1"), new RedisValue("Field2"), 4);
+        long result = db.HashDecrement(new RedisKey("user:user1"), new RedisValue("Field2"), 4);
         Assert.AreEqual(-3, result);
     }
 
@@ -255,7 +255,7 @@ public class RespHashTests
     public void CanDoHSETNXCommand()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet(new RedisKey("user:user1"), new RedisValue("Field"), new RedisValue("Hello"), When.NotExists);
         string result = db.HashGet("user:user1", "Field");
         Assert.AreEqual("Hello", result);
@@ -268,14 +268,14 @@ public class RespHashTests
     public void HashRandomFieldEmptyHash()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var hashKey = new RedisKey("user:user1");
-        var singleField = db.HashRandomField(hashKey);
-        var multiFields = db.HashRandomFields(hashKey, 3);
+        RedisValue singleField = db.HashRandomField(hashKey);
+        RedisValue[] multiFields = db.HashRandomFields(hashKey, 3);
 
         // this should return an empty array
-        var withValues = db.HashRandomFieldsWithValues(hashKey, 3);
+        HashEntry[] withValues = db.HashRandomFieldsWithValues(hashKey, 3);
 
         Assert.AreEqual(RedisValue.Null, singleField);
         Assert.IsEmpty(multiFields);
@@ -286,10 +286,10 @@ public class RespHashTests
     public void CanDoHashScan()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // HSCAN non existing key
-        var members = db.HashScan("foo");
+        IEnumerable<HashEntry> members = db.HashScan("foo");
         Assert.IsTrue(((IScanningCursor)members).Cursor == 0);
         Assert.IsEmpty(members, "HSCAN non existing key failed.");
 
@@ -320,7 +320,7 @@ public class RespHashTests
     public void CanDoHashScanWithCursor()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Create a new array of HashEntry
         var hashEntries = new HashEntry[1000];
@@ -334,14 +334,14 @@ public class RespHashTests
         db.HashSet("userhs", hashEntries);
 
         int pageSize = 45;
-        var response = db.HashScan("userhs", "*", pageSize: pageSize, cursor: 0);
+        IEnumerable<HashEntry> response = db.HashScan("userhs", "*", pageSize: pageSize, cursor: 0);
         var cursor = ((IScanningCursor)response);
-        var j = 0;
+        int j = 0;
         long pageNumber = 0;
         long pageOffset = 0;
 
         // Consume the enumeration
-        foreach (var i in response)
+        foreach (HashEntry i in response)
         {
             // Represents the *active* page of results (not the pending/next page of results as returned by SCAN/HSCAN/ZSCAN/SSCAN)
             pageNumber = cursor.Cursor;
@@ -357,7 +357,7 @@ public class RespHashTests
         // Assert the cursor is at the end of the enumeration
         Assert.AreEqual(pageNumber + pageOffset, hashEntries.Length - 1);
 
-        var l = response.LastOrDefault();
+        HashEntry l = response.LastOrDefault();
         Assert.AreEqual(l.Name, $"key{hashEntries.Length - 1}");
     }
 
@@ -365,19 +365,19 @@ public class RespHashTests
     public async Task CanDoHMGET()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var hashkey = "testGetMulti";
+        IDatabase db = redis.GetDatabase(0);
+        string hashkey = "testGetMulti";
 
         db.KeyDelete(hashkey, CommandFlags.FireAndForget);
 
         RedisValue[] fields = ["foo", "bar", "blop"];
-        var arr0 = await db.HashGetAsync(hashkey, fields);
+        RedisValue[] arr0 = await db.HashGetAsync(hashkey, fields);
 
         db.HashSet(hashkey, "foo", "abc", flags: CommandFlags.FireAndForget);
         db.HashSet(hashkey, "bar", "def", flags: CommandFlags.FireAndForget);
 
-        var arr1 = await db.HashGetAsync(hashkey, fields);
-        var arr2 = await db.HashGetAsync(hashkey, fields);
+        RedisValue[] arr1 = await db.HashGetAsync(hashkey, fields);
+        RedisValue[] arr2 = await db.HashGetAsync(hashkey, fields);
 
         Assert.AreEqual(3, arr0.Length);
 #nullable enable
@@ -402,20 +402,20 @@ public class RespHashTests
     public async Task CanDoHGETALL()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var hashkey = "testGetAll";
+        IDatabase db = redis.GetDatabase(0);
+        string hashkey = "testGetAll";
 
         _ = await db.KeyDeleteAsync(hashkey);
 
-        var result0 = db.HashGetAllAsync(hashkey);
+        Task<HashEntry[]> result0 = db.HashGetAllAsync(hashkey);
 
         _ = await db.HashSetAsync(hashkey, "foo", "abc");
         _ = await db.HashSetAsync(hashkey, "bar", "def");
 
-        var result1 = db.HashGetAllAsync(hashkey);
+        Task<HashEntry[]> result1 = db.HashGetAllAsync(hashkey);
 
         Assert.IsEmpty(redis.Wait(result0));
-        var result = redis.Wait(result1).ToStringDictionary();
+        Dictionary<string, string> result = redis.Wait(result1).ToStringDictionary();
         Assert.AreEqual(2, result.Count);
         Assert.AreEqual("abc", result["foo"]);
         Assert.AreEqual("def", result["bar"]);
@@ -424,19 +424,19 @@ public class RespHashTests
     public async Task CanDoHMSETMultipleTimes()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var hashKey = "testCanDoHMSET";
-        var hashMapKey = "TestKey";
+        IDatabase db = redis.GetDatabase(0);
+        string hashKey = "testCanDoHMSET";
+        string hashMapKey = "TestKey";
 
         await db.KeyDeleteAsync(hashKey);
 
-        var val0 = await db.HashGetAsync(hashKey, hashMapKey);
+        RedisValue val0 = await db.HashGetAsync(hashKey, hashMapKey);
         await db.HashSetAsync(hashKey, [new HashEntry(hashMapKey, "TestValue1")]);
 
-        var val1 = await db.HashGetAsync(hashKey, hashMapKey);
+        RedisValue val1 = await db.HashGetAsync(hashKey, hashMapKey);
         await db.HashSetAsync(hashKey, [new HashEntry(hashMapKey, "TestValue2")]);
 
-        var val2 = await db.HashGetAsync(hashKey, hashMapKey);
+        RedisValue val2 = await db.HashGetAsync(hashKey, hashMapKey);
 
 #nullable enable
         Assert.Null((string?)val0);
@@ -449,15 +449,15 @@ public class RespHashTests
     public async Task CanDoHSETWhenAlwaysAsync()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var hashkey = "testWhenAlways";
+        IDatabase db = redis.GetDatabase(0);
+        string hashkey = "testWhenAlways";
 
         await db.KeyDeleteAsync(hashkey);
 
-        var result1 = await db.HashSetAsync(hashkey, "foo", "bar", When.Always, CommandFlags.None);
-        var result2 = await db.HashSetAsync(hashkey, "foo2", "bar", When.Always, CommandFlags.None);
-        var result3 = await db.HashSetAsync(hashkey, "foo", "bar", When.Always, CommandFlags.None);
-        var result4 = await db.HashSetAsync(hashkey, "foo", "bar2", When.Always, CommandFlags.None);
+        bool result1 = await db.HashSetAsync(hashkey, "foo", "bar", When.Always, CommandFlags.None);
+        bool result2 = await db.HashSetAsync(hashkey, "foo2", "bar", When.Always, CommandFlags.None);
+        bool result3 = await db.HashSetAsync(hashkey, "foo", "bar", When.Always, CommandFlags.None);
+        bool result4 = await db.HashSetAsync(hashkey, "foo", "bar2", When.Always, CommandFlags.None);
 
         Assert.True(result1, "Initial set key 1");
         Assert.True(result2, "Initial set key 2");
@@ -471,20 +471,20 @@ public class RespHashTests
     public async Task CanDoHashSetWithNX()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
-        var hashkey = "testWhenNotExists";
+        IDatabase db = redis.GetDatabase(0);
+        string hashkey = "testWhenNotExists";
 
-        var del = await db.KeyDeleteAsync(hashkey);
+        bool del = await db.KeyDeleteAsync(hashkey);
 
-        var val0 = await db.HashGetAsync(hashkey, "field");
-        var set0 = await db.HashSetAsync(hashkey, "field", "value1", When.NotExists);
-        var val1 = await db.HashGetAsync(hashkey, "field");
-        var set1 = await db.HashSetAsync(hashkey, "field", "value2", When.NotExists);
-        var val2 = await db.HashGetAsync(hashkey, "field");
+        RedisValue val0 = await db.HashGetAsync(hashkey, "field");
+        bool set0 = await db.HashSetAsync(hashkey, "field", "value1", When.NotExists);
+        RedisValue val1 = await db.HashGetAsync(hashkey, "field");
+        bool set1 = await db.HashSetAsync(hashkey, "field", "value2", When.NotExists);
+        RedisValue val2 = await db.HashGetAsync(hashkey, "field");
 
-        var set2 = await db.HashSetAsync(hashkey, "field-blob", Encoding.UTF8.GetBytes("value3"), When.NotExists);
-        var val3 = await db.HashGetAsync(hashkey, "field-blob");
-        var set3 = await db.HashSetAsync(hashkey, "field-blob", Encoding.UTF8.GetBytes("value3"), When.NotExists);
+        bool set2 = await db.HashSetAsync(hashkey, "field-blob", Encoding.UTF8.GetBytes("value3"), When.NotExists);
+        RedisValue val3 = await db.HashGetAsync(hashkey, "field-blob");
+        bool set3 = await db.HashSetAsync(hashkey, "field-blob", Encoding.UTF8.GetBytes("value3"), When.NotExists);
 
         Assert.IsFalse(del);
 #nullable enable
@@ -515,8 +515,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("HSET myhash field1 myvalue", bytesSent);
-        var expectedResponse = ":1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -529,8 +529,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommandChunks("HSET myhash field1 field1value field2 field2value field3 field3value field4 field4value", bytesSent);
-        var expectedResponse = ":4\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("MEMORY USAGE myhash");
@@ -554,8 +554,8 @@ public class RespHashTests
         using var lightClientRequest = TestUtils.CreateRequest();
 
         var response = lightClientRequest.SendCommandChunks("HSET myhashone field1 field1value field2 field2value", bytesPerSend);
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         var result = lightClientRequest.SendCommandChunks("HGET myhashone field1", bytesPerSend);
@@ -590,8 +590,8 @@ public class RespHashTests
         // this UT shows hset when updating an existing value
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 field1value field2 field2value");
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // only update one field
@@ -607,8 +607,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 field1value field2 field2value");
-        var expectedResponse = ":2\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":2\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("MEMORY USAGE myhash");
@@ -639,8 +639,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 field1value field2 field2value field3 field3value field4 field4value");
-        var expectedResponse = ":4\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":4\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
         //get all keys
         expectedResponse = "*8\r\n$6\r\nfield1\r\n$11\r\nfield1value\r\n$6\r\nfield2\r\n$11\r\nfield2value\r\n$6\r\nfield3\r\n$11\r\nfield3value\r\n$6\r\nfield4\r\n$11\r\nfield4value\r\n";
@@ -654,8 +654,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 myvalue");
-        var expectedResponse = ":1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // get an existing field
@@ -688,8 +688,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 myvalue");
-        var expectedResponse = ":1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // get an existing field
@@ -728,8 +728,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field1 1");
-        var expectedResponse = ":1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("MEMORY USAGE myhash");
@@ -755,8 +755,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash field 10.50");
-        var expectedResponse = ":1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("MEMORY USAGE myhash");
@@ -801,8 +801,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HMSET coin heads obverse tails reverse edge null");
-        var expectedResponse = "+OK\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "+OK\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         // Check correct case when not an integer value in COUNT parameter
@@ -832,7 +832,7 @@ public class RespHashTests
             int startIndexField = s.IndexOf('\n') + 1;
             int endIndexField = s.IndexOf('\n', startIndexField) - 1;
             string fieldValue = s.Substring(startIndexField, endIndexField - startIndexField);
-            var foundInSet = ("heads tails edge").IndexOf(fieldValue, StringComparison.InvariantCultureIgnoreCase);
+            int foundInSet = ("heads tails edge").IndexOf(fieldValue, StringComparison.InvariantCultureIgnoreCase);
             Assert.IsTrue(foundInSet >= 0);
         }
 
@@ -850,8 +850,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HMSET coin heads obverse tails reverse edge null");
-        var expectedResponse = "+OK\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "+OK\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommands("HGET coin nokey", "PING", 1, 1);
@@ -865,8 +865,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HGET foo bar", "PING", 1, 1);
-        var expectedResponse = "$-1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$-1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -938,8 +938,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HRANDFIELD foo -5 WITHVALUES", "PING", 1, 1);
-        var expectedResponse = "*0\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -948,8 +948,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HRANDFIELD foo", "PING", 1, 1);
-        var expectedResponse = "$-1\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "$-1\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -958,8 +958,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HVALS foo", "PING HELLO", 1, 1);
-        var expectedResponse = "*0\r\n$5\r\nHELLO\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*0\r\n$5\r\nHELLO\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -968,8 +968,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HINCRBY foo", "PING HELLO", 1, 1);
-        var expectedResponse = $"{FormatWrongNumOfArgsError("HINCRBY")}$5\r\nHELLO\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"{FormatWrongNumOfArgsError("HINCRBY")}$5\r\nHELLO\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -978,8 +978,8 @@ public class RespHashTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("HINCRBYFLOAT foo", "PING HELLO", 1, 1);
-        var expectedResponse = $"{FormatWrongNumOfArgsError("HINCRBYFLOAT")}$5\r\nHELLO\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"{FormatWrongNumOfArgsError("HINCRBYFLOAT")}$5\r\nHELLO\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 

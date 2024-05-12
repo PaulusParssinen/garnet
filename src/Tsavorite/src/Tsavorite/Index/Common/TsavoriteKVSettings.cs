@@ -186,7 +186,7 @@ public sealed class TsavoriteKVSettings<Key, Value> : IDisposable
     /// <inheritdoc />
     public override string ToString()
     {
-        var retStr = $"index: {Utility.PrettySize(IndexSize)}; log memory: {Utility.PrettySize(MemorySize)}; log page: {Utility.PrettySize(PageSize)}; log segment: {Utility.PrettySize(SegmentSize)}";
+        string retStr = $"index: {Utility.PrettySize(IndexSize)}; log memory: {Utility.PrettySize(MemorySize)}; log page: {Utility.PrettySize(PageSize)}; log segment: {Utility.PrettySize(SegmentSize)}";
         retStr += $"; log device: {(LogDevice == null ? "null" : LogDevice.GetType().Name)}";
         retStr += $"; obj log device: {(ObjectLogDevice == null ? "null" : ObjectLogDevice.GetType().Name)}";
         retStr += $"; mutable fraction: {MutableFraction}; locking mode: {ConcurrencyControlMode}";

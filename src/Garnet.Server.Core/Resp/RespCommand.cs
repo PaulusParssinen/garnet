@@ -190,8 +190,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private RespCommand FastParseCommand(out int count)
     {
-        var ptr = recvBufferPtr + readHead;
-        var remainingBytes = bytesRead - readHead;
+        byte* ptr = recvBufferPtr + readHead;
+        int remainingBytes = bytesRead - readHead;
 
         // Check if the package starts with "*_\r\n$_\r\n" (_ = masked out),
         // i.e. an array with a single-digit length and single-digit first string length.
@@ -203,10 +203,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             Debug.Assert(count is >= 0 and < 9);
 
             // Extract length of the first string header
-            var length = ptr[5] - '0';
+            int length = ptr[5] - '0';
             Debug.Assert(length is > 0 and <= 9);
 
-            var oldReadHead = readHead;
+            int oldReadHead = readHead;
 
             // Ensure that the complete command string is contained in the package. Otherwise exit early.
             // Include 10 bytes to account for array and command string headers, and terminator
@@ -217,7 +217,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 readHead += length + 10;
 
                 // Last 8 byte word of the command name, for quick comparison
-                var lastWord = *(ulong*)(ptr + length + 2);
+                ulong lastWord = *(ulong*)(ptr + length + 2);
 
                 //
                 // Fast path for common commands with fixed numbers of arguments
@@ -319,13 +319,13 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // NOTE: A valid RESP string is at a minimum 7 characters long "$_\r\n_\r\n"
         if (remainingBytes >= 7)
         {
-            var oldReadHead = readHead;
+            int oldReadHead = readHead;
 
             // Check if this is a string with a single-digit length ("$_\r\n" -> _ omitted)
             if ((*(uint*)ptr & 0xFFFF00FF) == MemoryMarshal.Read<uint>("$\0\r\n"u8))
             {
                 // Extract length from string header
-                var length = ptr[1] - '0';
+                int length = ptr[1] - '0';
                 Debug.Assert(length is > 0 and <= 9);
 
                 // Ensure that the complete command string is contained in the package. Otherwise exit early.
@@ -862,7 +862,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             else if ((*(uint*)ptr & 0xFF0000FF) == MemoryMarshal.Read<uint>("$\0\0\r"u8))
             {
                 // Extract length from string header
-                var length = ptr[2] - '0' + 10;
+                int length = ptr[2] - '0' + 10;
                 Debug.Assert(length is >= 10 and <= 19);
 
                 // Ensure that the complete command string is contained in the package. Otherwise exit early.
@@ -985,7 +985,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     {
         // Try to extract the current string from the front of the read head
         ReadOnlySpan<byte> bufSpan = new(recvBufferPtr, bytesRead);
-        var command = GetCommand(bufSpan, out success);
+        ReadOnlySpan<byte> command = GetCommand(bufSpan, out success);
 
         if (!success)
         {
@@ -1199,7 +1199,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 }
 
                 // ... and read the array length; Move the read head
-                var tmp = recvBufferPtr + readHead;
+                byte* tmp = recvBufferPtr + readHead;
                 if (!RespReadUtils.ReadArrayLength(out count, ref tmp, recvBufferPtr + bytesRead))
                 {
                     success = false;

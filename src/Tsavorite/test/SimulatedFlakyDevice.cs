@@ -43,13 +43,13 @@ public class SimulatedFlakyDevice : StorageDeviceBase
         if (permanentlyFailedRangesStart.Count != 0)
         {
             // First failed range that's smaller than requested range start
-            var startIndex = permanentlyFailedRangesStart.BinarySearch(logicalDestStart);
+            int startIndex = permanentlyFailedRangesStart.BinarySearch(logicalDestStart);
             if (startIndex < 0) startIndex = ~startIndex - 1;
             // Start at 0 if smaller
             startIndex = Math.Max(0, startIndex);
 
             // check if there are overlaps
-            for (var i = startIndex; i < permanentlyFailedRangesStart.Count; i++)
+            for (int i = startIndex; i < permanentlyFailedRangesStart.Count; i++)
             {
                 if (permanentlyFailedRangesStart[i] > logicalDestEnd) break;
                 if (permanentlyFailedRangesEnd[i] > logicalDestStart)
@@ -73,7 +73,7 @@ public class SimulatedFlakyDevice : StorageDeviceBase
             callback(42, numBytesToWrite, context);
             versionScheme.TryAdvanceVersionWithCriticalSection((_, _) =>
             {
-                var index = permanentlyFailedRangesStart.BinarySearch(logicalDestStart);
+                int index = permanentlyFailedRangesStart.BinarySearch(logicalDestStart);
                 if (index >= 0)
                     permanentlyFailedRangesEnd[index] =
                         Math.Max(permanentlyFailedRangesEnd[index], logicalDestEnd);
@@ -81,7 +81,7 @@ public class SimulatedFlakyDevice : StorageDeviceBase
                 {
                     // This technically does not correctly merge / stores overlapping ranges, but for failing
                     // segments, it does not matter
-                    var i = ~index;
+                    int i = ~index;
                     permanentlyFailedRangesStart.Insert(i, logicalDestStart);
                     permanentlyFailedRangesEnd.Insert(i, logicalDestEnd);
                 }
@@ -100,13 +100,13 @@ public class SimulatedFlakyDevice : StorageDeviceBase
         if (permanentlyFailedRangesStart.Count != 0)
         {
             // First failed range that's smaller than requested range start
-            var startIndex = permanentlyFailedRangesStart.BinarySearch(logicalSrcStart);
+            int startIndex = permanentlyFailedRangesStart.BinarySearch(logicalSrcStart);
             if (startIndex < 0) startIndex = ~startIndex - 1;
             // Start at 0 if smaller
             startIndex = Math.Max(0, startIndex);
 
             // check if there are overlaps
-            for (var i = startIndex; i < permanentlyFailedRangesStart.Count; i++)
+            for (int i = startIndex; i < permanentlyFailedRangesStart.Count; i++)
             {
                 if (permanentlyFailedRangesStart[i] > logicalSrcEnd) break;
                 if (permanentlyFailedRangesEnd[i] > logicalSrcStart)
@@ -129,13 +129,13 @@ public class SimulatedFlakyDevice : StorageDeviceBase
 
             versionScheme.TryAdvanceVersionWithCriticalSection((_, _) =>
             {
-                var index = permanentlyFailedRangesStart.BinarySearch(logicalSrcStart);
+                int index = permanentlyFailedRangesStart.BinarySearch(logicalSrcStart);
                 if (index >= 0)
                     permanentlyFailedRangesEnd[index] =
                         Math.Max(permanentlyFailedRangesEnd[index], logicalSrcEnd);
                 else
                 {
-                    var i = ~index;
+                    int i = ~index;
                     permanentlyFailedRangesStart.Insert(i, logicalSrcStart);
                     permanentlyFailedRangesEnd.Insert(i, logicalSrcEnd);
                 }

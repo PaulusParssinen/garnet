@@ -19,10 +19,10 @@ public struct Record<Key, Value>
 
     public override string ToString()
     {
-        var keyString = key?.ToString() ?? "null";
+        string keyString = key?.ToString() ?? "null";
         if (keyString.Length > 20)
             keyString = keyString.Substring(0, 20) + "...";
-        var valueString = value?.ToString() ?? "null"; ;
+        string valueString = value?.ToString() ?? "null"; ;
         if (valueString.Length > 20)
             valueString = valueString.Substring(0, 20) + "...";
         return $"{keyString} | {valueString} | {info}";
@@ -223,7 +223,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     internal override bool TryComplete()
     {
         var b1 = objectLogDevice.TryComplete();
-        var b2 = base.TryComplete();
+        bool b2 = base.TryComplete();
         return b1 || b2;
     }
 
@@ -279,7 +279,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     {
         IncrementAllocatedPageCount();
 
-        if (overflowPagePool.TryGet(out var item))
+        if (overflowPagePool.TryGet(out Record<Key, Value>[] item))
             return item;
 
         return new Record<Key, Value>[(PageSize + RecordSize - 1) / RecordSize];
@@ -374,8 +374,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         ClearPage(page, 0);
 
         // Close segments
-        var thisCloseSegment = page >> (LogSegmentSizeBits - LogPageSizeBits);
-        var nextCloseSegment = (page + 1) >> (LogSegmentSizeBits - LogPageSizeBits);
+        long thisCloseSegment = page >> (LogSegmentSizeBits - LogPageSizeBits);
+        long nextCloseSegment = (page + 1) >> (LogSegmentSizeBits - LogPageSizeBits);
 
         if (thisCloseSegment != nextCloseSegment)
         {
@@ -414,7 +414,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             localSegmentOffsets = segmentOffsets;
 
         // This is the in-memory buffer page to be written
-        var src = values[flushPage % BufferSize];
+        Record<Key, Value>[] src = values[flushPage % BufferSize];
 
         // We create a shadow copy of the page if we are under epoch protection.
         // This copy ensures that object references are kept valid even if the original page is reclaimed.
@@ -431,7 +431,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         {
             // Temporary storage to hold the image "template" we'll write to disk: It will have RecordInfos and object pointers that will be overwritten by addresses
             // when writing to the main log (both object pointers and addresses are 8 bytes).
-            var buffer = bufferPool.Get((int)numBytesToWrite);
+            SectorAlignedMemory buffer = bufferPool.Get((int)numBytesToWrite);
 
             if (aligned_start < start && (KeyHasObjects() || ValueHasObjects()))
             {
@@ -498,7 +498,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                 byte* recordPtr = buffer.aligned_pointer + i * RecordSize;
 
                 // Retrieve reference to record struct
-                ref var record = ref Unsafe.AsRef<Record<Key, Value>>(recordPtr);
+                ref Record<Key, Value> record = ref Unsafe.AsRef<Record<Key, Value>>(recordPtr);
                 AddressInfo* key_address = null, value_address = null;
 
                 // Zero out object reference addresses (AddressInfo) in the planned disk image
@@ -517,7 +517,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                 if (!record.info.Invalid)
                 {
                     // Calculate the logical address of the 'values' page currently being written.
-                    var address = (flushPage << LogPageSizeBits) + i * RecordSize;
+                    long address = (flushPage << LogPageSizeBits) + i * RecordSize;
 
                     // Do not write v+1 records (e.g. during a checkpoint)
                     if (address < fuzzyStartLogicalAddress || !record.info.IsInNewVersion)
@@ -556,8 +556,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                 // If this record's serialized size surpassed ObjectBlockSize or it's the last record to be written, write to the object log.
                 if (endPosition > ObjectBlockSize || i == (end / RecordSize) - 1)
                 {
-                    var memoryStreamActualLength = ms.Position;
-                    var memoryStreamTotalLength = (int)endPosition;
+                    long memoryStreamActualLength = ms.Position;
+                    int memoryStreamTotalLength = (int)endPosition;
                     endPosition = 0;
 
                     if (KeyHasObjects())
@@ -567,10 +567,10 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                     ms.Close();
 
                     // Get the total serialized length rounded up to sectorSize
-                    var _alignedLength = (memoryStreamTotalLength + (sectorSize - 1)) & ~(sectorSize - 1);
+                    int _alignedLength = (memoryStreamTotalLength + (sectorSize - 1)) & ~(sectorSize - 1);
 
                     // Reserve the current address in the object log segment offsets for this chunk's write operation.
-                    var _objAddr = Interlocked.Add(ref localSegmentOffsets[(long)(alignedDestinationAddress >> LogSegmentSizeBits) % SegmentBufferSize], _alignedLength) - _alignedLength;
+                    long _objAddr = Interlocked.Add(ref localSegmentOffsets[(long)(alignedDestinationAddress >> LogSegmentSizeBits) % SegmentBufferSize], _alignedLength) - _alignedLength;
 
                     // Allocate the object-log buffer to build the image we'll write to disk, then copy to it from the memory stream.
                     SectorAlignedMemory _objBuffer = null;
@@ -583,7 +583,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                     }
 
                     // Each address we calculated above is now an offset to objAddr; convert to the actual address.
-                    foreach (var address in addr)
+                    foreach (long address in addr)
                         ((AddressInfo*)address)->Address += _objAddr;
 
                     // If we have not written all records, prepare for the next chunk of records to be written.
@@ -632,13 +632,13 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             if (asyncResult.partial)
             {
                 // We're writing only a subset of the page, so update our count of bytes to write.
-                var aligned_end = (int)(asyncResult.untilAddress - (asyncResult.page << LogPageSizeBits));
+                int aligned_end = (int)(asyncResult.untilAddress - (asyncResult.page << LogPageSizeBits));
                 aligned_end = (aligned_end + (sectorSize - 1)) & ~(sectorSize - 1);
                 numBytesToWrite = (uint)(aligned_end - aligned_start);
             }
 
             // Round up the number of byte to write to sector alignment.
-            var alignedNumBytesToWrite = (uint)((numBytesToWrite + (sectorSize - 1)) & ~(sectorSize - 1));
+            uint alignedNumBytesToWrite = (uint)((numBytesToWrite + (sectorSize - 1)) & ~(sectorSize - 1));
 
             // Finally write the hlog page
             device.WriteAsync((IntPtr)buffer.aligned_pointer + aligned_start, alignedDestinationAddress + (ulong)aligned_start,
@@ -764,7 +764,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         if (alignedLength > int.MaxValue)
             throw new TsavoriteException("Unable to read object page, total size greater than 2GB: " + alignedLength);
 
-        var objBuffer = bufferPool.Get((int)alignedLength);
+        SectorAlignedMemory objBuffer = bufferPool.Get((int)alignedLength);
         result.freeBuffer2 = objBuffer;
 
         // Request objects from objlog
@@ -791,7 +791,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
         uint alignedReadLength = (uint)((long)fileOffset + numBytes - (long)alignedFileOffset);
         alignedReadLength = (uint)((alignedReadLength + (sectorSize - 1)) & ~(sectorSize - 1));
 
-        var record = bufferPool.Get((int)alignedReadLength);
+        SectorAlignedMemory record = bufferPool.Get((int)alignedReadLength);
         record.valid_offset = (int)(fileOffset - alignedFileOffset);
         record.available_bytes = (int)(alignedReadLength - (fileOffset - alignedFileOffset));
         record.required_bytes = numBytes;
@@ -918,7 +918,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             {
                 if (KeyHasObjects())
                 {
-                    var key_addr = GetKeyAddressInfo((long)raw + ptr);
+                    AddressInfo* key_addr = GetKeyAddressInfo((long)raw + ptr);
                     if (start_addr == -1) start_addr = key_addr->Address & ~((long)sectorSize - 1);
                     if (stream.Position != streamStartPos + key_addr->Address - start_addr)
                     {
@@ -936,7 +936,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
                 {
                     if (ValueHasObjects())
                     {
-                        var value_addr = GetValueAddressInfo((long)raw + ptr);
+                        AddressInfo* value_addr = GetValueAddressInfo((long)raw + ptr);
                         if (start_addr == -1) start_addr = value_addr->Address & ~((long)sectorSize - 1);
                         if (stream.Position != streamStartPos + value_addr->Address - start_addr)
                         {
@@ -986,8 +986,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             {
                 if (KeyHasObjects())
                 {
-                    var key_addr = GetKeyAddressInfo((long)raw + ptr);
-                    var addr = key_addr->Address;
+                    AddressInfo* key_addr = GetKeyAddressInfo((long)raw + ptr);
+                    long addr = key_addr->Address;
 
                     if (addr < minObjAddress) minObjAddress = addr;
                     addr += key_addr->Size;
@@ -1001,8 +1001,8 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
                 if (ValueHasObjects() && !record.info.Tombstone)
                 {
-                    var value_addr = GetValueAddressInfo((long)raw + ptr);
-                    var addr = value_addr->Address;
+                    AddressInfo* value_addr = GetValueAddressInfo((long)raw + ptr);
+                    long addr = value_addr->Address;
 
                     if (addr < minObjAddress) minObjAddress = addr;
                     addr += value_addr->Size;
@@ -1060,14 +1060,14 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
             long endAddress = -1;
             if (KeyHasObjects())
             {
-                var x = GetKeyAddressInfo((long)record);
+                AddressInfo* x = GetKeyAddressInfo((long)record);
                 startAddress = x->Address;
                 endAddress = x->Address + x->Size;
             }
 
             if (ValueHasObjects() && !GetInfoFromBytePointer(record).Tombstone)
             {
-                var x = GetValueAddressInfo((long)record);
+                AddressInfo* x = GetValueAddressInfo((long)record);
                 if (startAddress == -1)
                     startAddress = x->Address;
                 endAddress = x->Address + x->Size;
@@ -1090,7 +1090,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
         if (KeyHasObjects())
         {
-            var keySerializer = SerializerSettings.keySerializer();
+            IObjectSerializer<Key> keySerializer = SerializerSettings.keySerializer();
             keySerializer.BeginDeserialize(ms);
             keySerializer.Deserialize(out ctx.key);
             keySerializer.EndDeserialize();
@@ -1098,7 +1098,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
 
         if (ValueHasObjects() && !GetInfoFromBytePointer(record).Tombstone)
         {
-            var valueSerializer = SerializerSettings.valueSerializer();
+            IObjectSerializer<Value> valueSerializer = SerializerSettings.valueSerializer();
             valueSerializer.BeginDeserialize(ms);
             valueSerializer.Deserialize(out ctx.value);
             valueSerializer.EndDeserialize();
@@ -1192,7 +1192,7 @@ internal sealed unsafe class GenericAllocator<Key, Value> : AllocatorBase<Key, V
     /// <inheritdoc />
     internal override void MemoryPageScan(long beginAddress, long endAddress, IObserver<ITsavoriteScanIterator<Key, Value>> observer)
     {
-        var page = (beginAddress >> LogPageSizeBits) % BufferSize;
+        long page = (beginAddress >> LogPageSizeBits) % BufferSize;
         long pageStartAddress = beginAddress & ~PageSizeMask;
         int start = (int)(beginAddress & PageSizeMask) / RecordSize;
         int count = (int)(endAddress - beginAddress) / RecordSize;

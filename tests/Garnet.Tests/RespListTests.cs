@@ -34,19 +34,19 @@ class RespListTests
     public void BasicLPUSHAndLPOP()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var val = "Value-0";
+        string key = "List_Test";
+        string val = "Value-0";
 
         int nVals = 1;
         //a entry added to the list
-        var nAdded = db.ListLeftPush(key, val);
+        long nAdded = db.ListLeftPush(key, val);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 184;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 184;
         Assert.AreEqual(expectedResponse, actualValue);
 
         string popval = db.ListLeftPop(key);
@@ -62,21 +62,21 @@ class RespListTests
     public void MultiLPUSHAndLTRIM()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var nVals = 10;
+        string key = "List_Test";
+        int nVals = 10;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListLeftPush(key, values);
+        long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 904;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
         long nLen = db.ListLength(key);
@@ -104,7 +104,7 @@ class RespListTests
         nLen1 = db.ListLength(key);
         Assert.AreEqual(3, nLen1);
 
-        var vals = db.ListRange(key, 0, -1);
+        RedisValue[] vals = db.ListRange(key, 0, -1);
         Assert.AreEqual("val_8", vals[0].ToString());
         Assert.AreEqual("val_7", vals[1].ToString());
         Assert.AreEqual("val_6", vals[2].ToString());
@@ -114,9 +114,9 @@ class RespListTests
     public void MultiLPUSHAndLLENWithPendingStatus()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var nVals = 100;
+        int nVals = 100;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 100; i++)
         {
@@ -125,7 +125,7 @@ class RespListTests
 
         for (int j = 0; j < 25; j++)
         {
-            var nAdded = db.ListLeftPush($"List_Test-{j + 1}", values);
+            long nAdded = db.ListLeftPush($"List_Test-{j + 1}", values);
             Assert.AreEqual(nVals, nAdded);
         }
 
@@ -137,14 +137,14 @@ class RespListTests
     public void BasicLPUSHAndLTRIM()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var val = "Value-0";
+        string key = "List_Test";
+        string val = "Value-0";
 
         int nVals = 1;
         //a entry added to the list
-        var nAdded = db.ListLeftPush(key, val);
+        long nAdded = db.ListLeftPush(key, val);
         Assert.AreEqual(nVals, nAdded);
 
         long nLen = db.ListLength(key);
@@ -162,20 +162,20 @@ class RespListTests
     public void BasicLPUSHAndLRANGE()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var nVals = 3;
+        string key = "List_Test";
+        int nVals = 3;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListLeftPush(key, values);
+        long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
         long nLen = db.ListLength(key);
-        var vals = db.ListRange(key, 0, 0);
+        RedisValue[] vals = db.ListRange(key, 0, 0);
         Assert.AreEqual(1, vals.Length);
 
         vals = null;
@@ -195,21 +195,21 @@ class RespListTests
     public void BasicRPUSHAndLINDEX()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var nVals = 3;
+        string key = "List_Test";
+        int nVals = 3;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListRightPush(key, values);
+        long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
         long nLen = db.ListLength(key);
         int nIndex = -1;
-        var val = db.ListGetByIndex(key, nIndex);
+        RedisValue val = db.ListGetByIndex(key, nIndex);
         Assert.AreEqual(val, values[nVals + nIndex]);
 
         nIndex = 2;
@@ -225,30 +225,30 @@ class RespListTests
     public void BasicRPUSHAndLINSERT()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var nVals = 3;
+        string key = "List_Test";
+        int nVals = 3;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListRightPush(key, values);
+        long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 344;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 344;
         Assert.AreEqual(expectedResponse, actualValue);
 
         long nLen = db.ListLength(key);
-        var insert_val = "val_test1";
+        string insert_val = "val_test1";
         // test before
-        var ret = db.ListInsertBefore(key, "val_1", insert_val);
+        long ret = db.ListInsertBefore(key, "val_1", insert_val);
 
         nLen = db.ListLength(key);
-        var val = db.ListGetByIndex(key, 1);
+        RedisValue val = db.ListGetByIndex(key, 1);
         Assert.AreEqual(val, insert_val);
 
         result = db.Execute("MEMORY", "USAGE", key);
@@ -272,10 +272,10 @@ class RespListTests
     public void BasicRPUSHAndLREM()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
-        var nVals = 6;
+        string key = "List_Test";
+        int nVals = 6;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < nVals; i += 2)
         {
@@ -283,16 +283,16 @@ class RespListTests
             values[i + 1] = ("val_" + i.ToString());
 
         }
-        var nAdded = db.ListRightPush(key, values);
+        long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 584;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 584;
         Assert.AreEqual(expectedResponse, actualValue);
 
         long nLen = db.ListLength(key);
-        var ret = db.ListRemove(key, "val_0", 2);
+        long ret = db.ListRemove(key, "val_0", 2);
         Assert.AreEqual(ret, 2);
 
         result = db.Execute("MEMORY", "USAGE", key);
@@ -314,22 +314,22 @@ class RespListTests
     public void MultiLPUSHAndLPOPV1()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
+        string key = "List_Test";
 
-        var nVals = 10;
+        int nVals = 10;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListLeftPush(key, values);
+        long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 904;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
         long nLen = db.ListLength(key);
@@ -359,26 +359,26 @@ class RespListTests
     public void MultiLPUSHAndLPOPV2()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
+        string key = "List_Test";
 
-        var nVals = 10;
+        int nVals = 10;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListLeftPush(key, values);
+        long nAdded = db.ListLeftPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 904;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
         long nLen = db.ListLength(key);
-        var ret = db.Execute("LPOP", key, "2");
+        RedisResult ret = db.Execute("LPOP", key, "2");
         nLen = db.ListLength(key);
         Assert.AreEqual(nLen, 8);
 
@@ -392,22 +392,22 @@ class RespListTests
     public void MultiRPUSHAndRPOP()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
+        string key = "List_Test";
 
-        var nVals = 10;
+        int nVals = 10;
         RedisValue[] values = new RedisValue[nVals];
         for (int i = 0; i < 10; i++)
         {
             values[i] = ("val_" + i.ToString());
         }
-        var nAdded = db.ListRightPush(key, values);
+        long nAdded = db.ListRightPush(key, values);
         Assert.AreEqual(nVals, nAdded);
 
-        var result = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
-        var expectedResponse = 904;
+        RedisResult result = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == result.Type ? Int32.Parse(result.ToString()) : -1;
+        int expectedResponse = 904;
         Assert.AreEqual(expectedResponse, actualValue);
 
         string popval = string.Empty;
@@ -441,13 +441,13 @@ class RespListTests
     public void BasicRPUSHAndRPOP()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "List_Test";
+        string key = "List_Test";
 
         int nVals = 1;
         //a entry added to the list
-        var nAdded = db.ListRightPush(key, "Value-0");
+        long nAdded = db.ListRightPush(key, "Value-0");
         Assert.AreEqual(nVals, nAdded);
     }
 
@@ -455,22 +455,22 @@ class RespListTests
     public void CanDoRPopLPush()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mylist";
+        string key = "mylist";
         db.ListRightPush(key, "Value-one");
         db.ListRightPush(key, "Value-two");
         db.ListRightPush(key, "Value-three");
 
-        var result = db.ListRightPopLeftPush("mylist", "myotherlist");
+        RedisValue result = db.ListRightPopLeftPush("mylist", "myotherlist");
         Assert.AreEqual("Value-three", result.ToString());
 
-        var response = db.Execute("MEMORY", "USAGE", key);
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = 272;
+        RedisResult response = db.Execute("MEMORY", "USAGE", key);
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = 272;
         Assert.AreEqual(expectedResponse, actualValue);
 
-        var lrange = db.ListRange(key, 0, -1);
+        RedisValue[] lrange = db.ListRange(key, 0, -1);
         Assert.AreEqual(2, lrange.Length);
         Assert.AreEqual("Value-one", lrange[0].ToString());
         Assert.AreEqual("Value-two", lrange[1].ToString());
@@ -497,14 +497,14 @@ class RespListTests
     public void CanDoLRANGEbasic()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mylist";
+        string key = "mylist";
         _ = db.ListRightPush(key, "one");
         _ = db.ListRightPush(key, "two");
         _ = db.ListRightPush(key, "three");
 
-        var result = db.ListRange(key, 0, 0);
+        RedisValue[] result = db.ListRange(key, 0, 0);
         Assert.AreEqual(1, result.Length);
         Assert.IsTrue(Array.Exists(result, t => t.ToString().Equals("one")));
 
@@ -528,9 +528,9 @@ class RespListTests
     public void CanDoLRANGEcorrect()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mylist";
+        string key = "mylist";
         _ = db.ListRightPush(key, "a");
         _ = db.ListRightPush(key, "b");
         _ = db.ListRightPush(key, "c");
@@ -539,7 +539,7 @@ class RespListTests
         _ = db.ListRightPush(key, "f");
         _ = db.ListRightPush(key, "g");
 
-        var result = db.ListRange(key, -10, -7);
+        RedisValue[] result = db.ListRange(key, -10, -7);
         Assert.AreEqual(1, result.Length);
         Assert.IsTrue(result[0].ToString().Equals("a"));
 
@@ -592,20 +592,20 @@ class RespListTests
     public void CanDoLSETbasic()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
-        var key = "mylist";
+        string key = "mylist";
         var values = new RedisValue[] { "one", "two", "three" };
-        var pushResult = db.ListRightPush(key, values);
+        long pushResult = db.ListRightPush(key, values);
         Assert.AreEqual(3, pushResult);
 
         db.ListSetByIndex(key, 0, "four");
         db.ListSetByIndex(key, -2, "five");
 
-        var result = db.ListRange(key, 0, -1);
-        var strResult = result.Select(r => r.ToString()).ToArray();
+        RedisValue[] result = db.ListRange(key, 0, -1);
+        string[] strResult = result.Select(r => r.ToString()).ToArray();
         Assert.AreEqual(3, result.Length);
-        var expected = new[] { "four", "five", "three" };
+        string[] expected = new[] { "four", "five", "three" };
         Assert.IsTrue(expected.SequenceEqual(strResult));
     }
 
@@ -629,7 +629,7 @@ class RespListTests
         Assert.AreEqual("three", response);
 
         var responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", ["mylist", "0", "-1"]);
-        var expectedResponseArray = new string[] { "one", "two" };
+        string[] expectedResponseArray = new string[] { "one", "two" };
         Assert.AreEqual(expectedResponseArray, responseArray);
 
         responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", ["myotherlist", "0", "-1"]);
@@ -655,7 +655,7 @@ class RespListTests
         db.Connect();
 
         // Test for Operation direction error.
-        var exception = Assert.ThrowsAsync<Exception>(async () =>
+        Exception exception = Assert.ThrowsAsync<Exception>(async () =>
         {
             await db.ExecuteForStringResultAsync("LMOVE", new string[] { "mylist", "myotherlist", "right", "lef" });
         });
@@ -673,7 +673,7 @@ class RespListTests
         Assert.AreEqual("three", response);
 
         var responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", ["mylist", "0", "-1"]);
-        var expectedResponseArray = new string[] { "one", "two" };
+        string[] expectedResponseArray = new string[] { "one", "two" };
         Assert.AreEqual(expectedResponseArray, responseArray);
 
         responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", ["myotherlist", "0", "-1"]);
@@ -718,7 +718,7 @@ class RespListTests
         Assert.AreEqual("three", response);
 
         var responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", new string[] { "mylist", "0", "-1" });
-        var expectedResponseArray = new string[] { "one", "two" };
+        string[] expectedResponseArray = new string[] { "one", "two" };
         Assert.AreEqual(expectedResponseArray, responseArray);
 
         responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", new string[] { "myotherlist", "0", "-1" });
@@ -748,13 +748,13 @@ class RespListTests
         await db.ExecuteForStringResultAsync("RPUSH", ["mylist", "three"]);
 
         var tokenSource = new CancellationTokenSource();
-        var token = tokenSource.Token;
+        CancellationToken token = tokenSource.Token;
         var response = await db.ExecuteForStringResultWithCancellationAsync("LMOVE", ["mylist", "myotherlist", "RIGHT", "LEFT"], token);
         Assert.AreEqual("three", response);
 
         //check contents of mylist sorted set
         var responseArray = await db.ExecuteForStringArrayResultAsync("LRANGE", ["mylist", "0", "-1"]);
-        var expectedResponseArray = new string[] { "one", "two" };
+        string[] expectedResponseArray = new string[] { "one", "two" };
         Assert.AreEqual(expectedResponseArray, responseArray);
 
         //Assert the cancellation is seen
@@ -778,8 +778,8 @@ class RespListTests
         lightClientRequest.SendCommands("RPUSH mylist bar", "PING", 1, 1);
 
         var response = lightClientRequest.SendCommands("LRANGE mylist 0 -1", "PING", 4, 1);
-        var expectedResponse = "*3\r\n$5\r\nHello\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "*3\r\n$5\r\nHello\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommands("LRANGE mylist 5 10", "PING", 1, 1);
@@ -794,8 +794,8 @@ class RespListTests
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("LINSERT mykey BEFORE \"hola\" \"bye\"", "PING", 1, 1);
         //0 if key does not exist
-        var expectedResponse = ":0\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -804,8 +804,8 @@ class RespListTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommands("LINSERT mykey", "PING", 1, 1);
-        var expectedResponse = $"-{string.Format(CmdStrings.GenericErrWrongNumArgs, "LINSERT")}\r\n+PONG\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = $"-{string.Format(CmdStrings.GenericErrWrongNumArgs, "LINSERT")}\r\n+PONG\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -816,8 +816,8 @@ class RespListTests
         lightClientRequest.SendCommand("RPUSH mylist one");
         lightClientRequest.SendCommand("RPUSH mylist two");
         var response = lightClientRequest.SendCommand("RPUSH mylist three");
-        var expectedResponse = ":3\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":3\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("LTRIM mylist 1 -1");
@@ -839,8 +839,8 @@ class RespListTests
         lightClientRequest.SendCommand("RPUSH mylist World");
         // Use Before
         var response = lightClientRequest.SendCommand("LINSERT mylist BEFORE World There");
-        var expectedResponse = ":3\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":3\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("LRANGE mylist 0 -1", 4);
@@ -868,8 +868,8 @@ class RespListTests
         lightClientRequest.SendCommand("RPUSH mylist World");
         // Use Before
         var response = lightClientRequest.SendCommand("LINSERT mylist BEFORE There Today");
-        var expectedResponse = ":-1\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":-1\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -879,8 +879,8 @@ class RespListTests
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("HSET myhash onekey onepair");
         lightClientRequest.SendCommand("LINSERT myhash BEFORE one two");
-        var expectedResponse = "-ERR wrong key type used in LINSERT command.\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR wrong key type used in LINSERT command.\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -890,8 +890,8 @@ class RespListTests
         using var lightClientRequest = TestUtils.CreateRequest();
         _ = lightClientRequest.SendCommand("RPUSH mylist one two three");
         var response = lightClientRequest.SendCommand("LSET mylist 0 four");
-        var expectedResponse = "+OK\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "+OK\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -900,8 +900,8 @@ class RespListTests
     {
         using var lightClientRequest = TestUtils.CreateRequest();
         var response = lightClientRequest.SendCommand("LSET mylist 0 four");
-        var expectedResponse = "-ERR no such key\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR no such key\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -911,8 +911,8 @@ class RespListTests
         using var lightClientRequest = TestUtils.CreateRequest();
         _ = lightClientRequest.SendCommand("RPUSH mylist one two three");
         var response = lightClientRequest.SendCommand("LSET mylist a four");
-        var expectedResponse = "-ERR value is not an integer or out of range.\r\n";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR value is not an integer or out of range.\r\n";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -923,8 +923,8 @@ class RespListTests
         _ = lightClientRequest.SendCommand("RPUSH mylist one two three");
         var response = lightClientRequest.SendCommand("LSET mylist 10 four");
         // 
-        var expectedResponse = "-ERR index out of range";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR index out of range";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         response = lightClientRequest.SendCommand("LSET mylist -100 four");
@@ -939,8 +939,8 @@ class RespListTests
         using var lightClientRequest = TestUtils.CreateRequest();
         _ = lightClientRequest.SendCommand("RPUSH mylist one two three");
         var response = lightClientRequest.SendCommand("LSET mylist a");
-        var expectedResponse = "-ERR wrong number of arguments for 'LSET'";
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string expectedResponse = "-ERR wrong number of arguments for 'LSET'";
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 
@@ -950,22 +950,22 @@ class RespListTests
     public void CanHandleNoPrexistentKey()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int iter = 100;
-        var key = "lkey";
+        string key = "lkey";
 
         for (int i = 0; i < iter; i++)
         {
             //LLEN
-            var count = db.ListLength(key);
+            long count = db.ListLength(key);
             Assert.AreEqual(0, count);
             count = db.ListLength(key);
             Assert.AreEqual(0, count);
             Assert.IsFalse(db.KeyExists(key));
 
             //LPOP
-            var result = db.ListLeftPop(key);
+            RedisValue result = db.ListLeftPop(key);
             Assert.IsTrue(result.IsNull);
             result = db.ListLeftPop(key);
             Assert.IsTrue(result.IsNull);
@@ -979,7 +979,7 @@ class RespListTests
             Assert.IsFalse(db.KeyExists(key));
 
             //LPOP count
-            var resultArray = db.ListLeftPop(key, 100);
+            RedisValue[] resultArray = db.ListLeftPop(key, 100);
             Assert.AreEqual(Array.Empty<RedisValue>(), resultArray);
             resultArray = db.ListLeftPop(key, 100);
             Assert.AreEqual(Array.Empty<RedisValue>(), resultArray);
@@ -1026,7 +1026,7 @@ class RespListTests
     public void ListPushPopStressTest()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         int keyCount = 10;
         int ppCount = 100;
@@ -1037,24 +1037,24 @@ class RespListTests
 
         Assert.AreEqual(keyCount, keys.Count, "Unique key initialization failed!");
 
-        var keyArray = keys.ToArray();
+        string[] keyArray = keys.ToArray();
         Task[] tasks = new Task[keyArray.Length << 1];
         for (int i = 0; i < tasks.Length; i += 2)
         {
             int idx = i;
             tasks[i] = Task.Run(async () =>
             {
-                var key = keyArray[idx >> 1];
+                string key = keyArray[idx >> 1];
                 for (int j = 0; j < ppCount; j++)
                     await db.ListLeftPushAsync(key, j);
             });
 
             tasks[i + 1] = Task.Run(() =>
             {
-                var key = keyArray[idx >> 1];
+                string key = keyArray[idx >> 1];
                 for (int j = 0; j < ppCount; j++)
                 {
-                    var value = db.ListRightPop(key);
+                    RedisValue value = db.ListRightPop(key);
                     while (value.IsNull)
                     {
                         Thread.Yield();
@@ -1066,9 +1066,9 @@ class RespListTests
         }
         Task.WaitAll(tasks);
 
-        foreach (var key in keyArray)
+        foreach (string key in keyArray)
         {
-            var count = db.ListLength(key);
+            long count = db.ListLength(key);
             Assert.AreEqual(0, count);
         }
     }
@@ -1085,9 +1085,9 @@ class RespListTests
         lightClientRequest.SendCommandChunks("RPUSH mylist value-two", bytesPerSend);
         lightClientRequest.SendCommandChunks("RPUSH mylist value-three", bytesPerSend);
 
-        var expectedResponse = "$11\r\nvalue-three\r\n";
+        string expectedResponse = "$11\r\nvalue-three\r\n";
         var response = lightClientRequest.SendCommandChunks("RPOPLPUSH mylist myotherlist", bytesPerSend);
-        var actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
+        string actualValue = Encoding.ASCII.GetString(response).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
 
         expectedResponse = "*2\r\n$9\r\nvalue-one\r\n$9\r\nvalue-two\r\n";
@@ -1101,7 +1101,7 @@ class RespListTests
     public void CanDoLPopMultipleValues()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var vals = new RedisValue[10];
 
@@ -1118,7 +1118,7 @@ class RespListTests
     public void CanDoLPushXRpushX()
     {
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         var vals = new RedisValue[10];
 
@@ -1128,12 +1128,12 @@ class RespListTests
         }
 
         //this should not create any list
-        var result = db.ListLeftPush("mylist", vals, When.Exists);
+        long result = db.ListLeftPush("mylist", vals, When.Exists);
         Assert.IsTrue(result == 0);
 
-        var response = db.Execute("MEMORY", "USAGE", "mylist");
-        var actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
-        var expectedResponse = -1;
+        RedisResult response = db.Execute("MEMORY", "USAGE", "mylist");
+        int actualValue = ResultType.Integer == response.Type ? Int32.Parse(response.ToString()) : -1;
+        int expectedResponse = -1;
         Assert.AreEqual(expectedResponse, actualValue);
 
         // this should create the list
@@ -1177,8 +1177,8 @@ class RespListTests
         lightClientRequest.SendCommand("RPUSHX mylist value-one");
         var len = lightClientRequest.SendCommand("LLEN mylist");
 
-        var expectedResponse = ":0\r\n";
-        var actualValue = Encoding.ASCII.GetString(len).Substring(0, expectedResponse.Length);
+        string expectedResponse = ":0\r\n";
+        string actualValue = Encoding.ASCII.GetString(len).Substring(0, expectedResponse.Length);
         Assert.AreEqual(expectedResponse, actualValue);
     }
 }

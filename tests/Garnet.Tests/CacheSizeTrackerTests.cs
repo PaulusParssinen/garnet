@@ -38,7 +38,7 @@ public class CacheSizeTrackerTests
         Assert.AreEqual(0, cacheSizeTracker.mainLogTracker.LogHeapSizeBytes);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Faster")]);
         string r = db.HashGet("user:user1", "Title");
         Assert.AreEqual("Faster", r);
@@ -57,7 +57,7 @@ public class CacheSizeTrackerTests
         Assert.AreEqual(0, cacheSizeTracker.mainLogTracker.logAccessor.EmptyPageCount);
 
         using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.HashSet("user:user1", [new HashEntry("Title", "Faster")]);
         string r = db.HashGet("user:user1", "Title");
         Assert.AreEqual("Faster", r);

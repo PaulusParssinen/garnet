@@ -55,7 +55,7 @@ internal abstract class HybridLogCheckpointOrchestrationTask : ISynchronizationT
     {
         // Collect object log offsets only after flushes
         // are completed
-        var seg = store.hlog.GetSegmentOffsets();
+        long[] seg = store.hlog.GetSegmentOffsets();
         if (seg != null)
         {
             store._hybridLogCheckpoint.info.objectLogSegmentOffsets = new long[seg.Length];
@@ -69,7 +69,7 @@ internal abstract class HybridLogCheckpointOrchestrationTask : ISynchronizationT
             List<int> toDelete = null;
 
             // write dormant sessions to checkpoint
-            foreach (var kvp in store._activeSessions)
+            foreach (KeyValuePair<int, SessionInfo> kvp in store._activeSessions)
             {
                 kvp.Value.session.AtomicSwitch(next.Version - 1);
                 if (!kvp.Value.isActive)
@@ -82,13 +82,13 @@ internal abstract class HybridLogCheckpointOrchestrationTask : ISynchronizationT
             // delete any sessions that ended during checkpoint cycle
             if (toDelete != null)
             {
-                foreach (var key in toDelete)
+                foreach (int key in toDelete)
                     store._activeSessions.Remove(key);
             }
         }
 
         // Make sure previous recoverable sessions are re-checkpointed
-        foreach (var item in store.RecoverableSessions)
+        foreach ((int, string, CommitPoint) item in store.RecoverableSessions)
         {
             store._hybridLogCheckpoint.info.checkpointTokens.TryAdd(item.Item1, (item.Item2, item.Item3));
         }
@@ -150,7 +150,7 @@ internal sealed class FoldOverCheckpointTask : HybridLogCheckpointOrchestrationT
 
         if (next.Phase != Phase.WAIT_FLUSH) return;
 
-        store.hlog.ShiftReadOnlyToTail(out var tailAddress,
+        store.hlog.ShiftReadOnlyToTail(out long tailAddress,
             out store._hybridLogCheckpoint.flushedSemaphore);
         store._hybridLogCheckpoint.info.finalLogicalAddress = tailAddress;
     }
@@ -171,9 +171,9 @@ internal sealed class FoldOverCheckpointTask : HybridLogCheckpointOrchestrationT
 
         if (ctx is null || !ctx.prevCtx.markers[EpochPhaseIdx.WaitFlush])
         {
-            var s = store._hybridLogCheckpoint.flushedSemaphore;
+            SemaphoreSlim s = store._hybridLogCheckpoint.flushedSemaphore;
 
-            var notify = store.hlog.FlushedUntilAddress >= store._hybridLogCheckpoint.info.finalLogicalAddress;
+            bool notify = store.hlog.FlushedUntilAddress >= store._hybridLogCheckpoint.info.finalLogicalAddress;
             notify = notify || !store.SameCycle(ctx, current) || s == null;
 
             if (valueTasks != null && !notify)
@@ -275,9 +275,9 @@ internal sealed class SnapshotCheckpointTask : HybridLogCheckpointOrchestrationT
 
         if (ctx is null || !ctx.prevCtx.markers[EpochPhaseIdx.WaitFlush])
         {
-            var s = store._hybridLogCheckpoint.flushedSemaphore;
+            SemaphoreSlim s = store._hybridLogCheckpoint.flushedSemaphore;
 
-            var notify = s != null && s.CurrentCount > 0;
+            bool notify = s != null && s.CurrentCount > 0;
             notify = notify || !store.SameCycle(ctx, current) || s == null;
 
             if (valueTasks != null && !notify)
@@ -369,9 +369,9 @@ internal sealed class IncrementalSnapshotCheckpointTask : HybridLogCheckpointOrc
 
         if (ctx is null || !ctx.prevCtx.markers[EpochPhaseIdx.WaitFlush])
         {
-            var s = store._hybridLogCheckpoint.flushedSemaphore;
+            SemaphoreSlim s = store._hybridLogCheckpoint.flushedSemaphore;
 
-            var notify = s != null && s.CurrentCount > 0;
+            bool notify = s != null && s.CurrentCount > 0;
             notify = notify || !store.SameCycle(ctx, current) || s == null;
 
             if (valueTasks != null && !notify)

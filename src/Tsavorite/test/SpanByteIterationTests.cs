@@ -43,8 +43,8 @@ internal class SpanByteIterationTests
             cursorRecordResult = CursorRecordResult.Accept; // default; not used here
             if (keyMultToValue > 0)
             {
-                var keyItem = key.AsSpan<long>()[0];
-                var valueItem = value.AsSpan<int>()[0];
+                long keyItem = key.AsSpan<long>()[0];
+                int valueItem = value.AsSpan<int>()[0];
                 Assert.AreEqual(keyItem * keyMultToValue, valueItem);
             }
             return stopAt != ++numRecords;
@@ -68,7 +68,7 @@ internal class SpanByteIterationTests
              (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 9, SegmentSizeBits = 22 },
              concurrencyControlMode: scanIteratorType == ScanIteratorType.Pull ? ConcurrencyControlMode.None : ConcurrencyControlMode.LockTable);
 
-        using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
         SpanBytePushIterationTestFunctions scanIteratorFunctions = new();
 
         const int totalRecords = 500;
@@ -80,8 +80,8 @@ internal class SpanByteIterationTests
 
             if (scanIteratorType == ScanIteratorType.Pull)
             {
-                using var iter = session.Iterate();
-                while (iter.GetNext(out var recordInfo))
+                using ITsavoriteScanIterator<SpanByte, SpanByte> iter = session.Iterate();
+                while (iter.GetNext(out RecordInfo recordInfo))
                     scanIteratorFunctions.SingleReader(ref iter.GetKey(), ref iter.GetValue(), default, default, out _);
             }
             else
@@ -93,8 +93,8 @@ internal class SpanByteIterationTests
         // Note: We only have a single value element; we are not exercising the "Variable Length" aspect here.
         Span<long> keySpan = stackalloc long[1];
         Span<int> valueSpan = stackalloc int[1];
-        var key = keySpan.AsSpanByte();
-        var value = valueSpan.AsSpanByte();
+        SpanByte key = keySpan.AsSpanByte();
+        SpanByte value = valueSpan.AsSpanByte();
 
         // Initial population
         for (int i = 0; i < totalRecords; i++)
@@ -157,11 +157,11 @@ internal class SpanByteIterationTests
         store = new TsavoriteKV<SpanByte, SpanByte>
              (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 9, SegmentSizeBits = 22 });
 
-        using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+        using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
         SpanBytePushIterationTestFunctions scanIteratorFunctions = new();
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void scanAndVerify(int stopAt, bool useScan)
         {
@@ -177,8 +177,8 @@ internal class SpanByteIterationTests
         // Note: We only have a single value element; we are not exercising the "Variable Length" aspect here.
         Span<long> keySpan = stackalloc long[1];
         Span<int> valueSpan = stackalloc int[1];
-        var key = keySpan.AsSpanByte();
-        var value = valueSpan.AsSpanByte();
+        SpanByte key = keySpan.AsSpanByte();
+        SpanByte value = valueSpan.AsSpanByte();
 
         // Initial population
         for (int i = 0; i < totalRecords; i++)
@@ -203,11 +203,11 @@ internal class SpanByteIterationTests
              (1L << 20, new LogSettings { LogDevice = log, MemorySizeBits = 25, PageSizeBits = 19, SegmentSizeBits = 22 });
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
 
         void LocalScan(int i)
         {
-            using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+            using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
             SpanBytePushIterationTestFunctions scanIteratorFunctions = new();
             if (scanMode == ScanMode.Scan)
                 Assert.IsTrue(store.Log.Scan(ref scanIteratorFunctions, start, store.Log.TailAddress), $"Failed to complete push scan; numRecords = {scanIteratorFunctions.numRecords}");
@@ -221,10 +221,10 @@ internal class SpanByteIterationTests
             // Note: We only have a single value element; we are not exercising the "Variable Length" aspect here.
             Span<long> keySpan = stackalloc long[1];
             Span<int> valueSpan = stackalloc int[1];
-            var key = keySpan.AsSpanByte();
-            var value = valueSpan.AsSpanByte();
+            SpanByte key = keySpan.AsSpanByte();
+            SpanByte value = valueSpan.AsSpanByte();
 
-            using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+            using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
             for (int i = 0; i < totalRecords; i++)
             {
                 keySpan[0] = i;
@@ -238,10 +238,10 @@ internal class SpanByteIterationTests
             // Note: We only have a single value element; we are not exercising the "Variable Length" aspect here.
             Span<long> keySpan = stackalloc long[1];
             Span<int> valueSpan = stackalloc int[1];
-            var key = keySpan.AsSpanByte();
-            var value = valueSpan.AsSpanByte();
+            SpanByte key = keySpan.AsSpanByte();
+            SpanByte value = valueSpan.AsSpanByte();
 
-            using var session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
+            using ClientSession<SpanByte, SpanByte, SpanByte, int[], Empty, VLVectorFunctions> session = store.NewSession<SpanByte, int[], Empty, VLVectorFunctions>(new VLVectorFunctions());
             for (int i = 0; i < totalRecords; i++)
             {
                 keySpan[0] = i;
@@ -251,10 +251,10 @@ internal class SpanByteIterationTests
         }
 
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
-        var numThreads = scanThreads + updateThreads;
+        int numThreads = scanThreads + updateThreads;
         for (int t = 0; t < numThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (t < scanThreads)
                 tasks.Add(Task.Factory.StartNew(() => LocalScan(tid)));
             else

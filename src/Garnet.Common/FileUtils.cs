@@ -24,8 +24,8 @@ public static class FileUtils
     /// <returns>True if successfully enumerated all directories</returns>
     public static bool TryGetFiles(IEnumerable<string> paths, out IEnumerable<string> files, out string errorMessage, string[] extensions = null, SearchOption searchOption = SearchOption.TopDirectoryOnly)
     {
-        var validExtensionPattern = "^\\.[A-Za-z0-9]+$";
-        var anyExtension = false;
+        string validExtensionPattern = "^\\.[A-Za-z0-9]+$";
+        bool anyExtension = false;
 
         errorMessage = string.Empty;
         var sbErrorMessage = new StringBuilder();
@@ -38,7 +38,7 @@ public static class FileUtils
         }
         else
         {
-            foreach (var extension in extensions)
+            foreach (string extension in extensions)
             {
                 if (!Regex.IsMatch(extension, validExtensionPattern))
                 {
@@ -55,7 +55,7 @@ public static class FileUtils
 
         var tmpFiles = new HashSet<string>();
 
-        foreach (var path in paths)
+        foreach (string path in paths)
         {
             if (File.Exists(path))
             {
@@ -86,7 +86,7 @@ public static class FileUtils
                 break;
             }
 
-            foreach (var filePath in filePaths)
+            foreach (string filePath in filePaths)
             {
                 if (anyExtension || Regex.IsMatch(filePath, extensionPattern))
                 {
@@ -112,7 +112,7 @@ public static class FileUtils
     public static bool IsFileInDirectory(string filePath, string dirPath)
     {
         var fileInfo = new FileInfo(filePath);
-        var fileDirInfo = fileInfo.Directory;
+        DirectoryInfo fileDirInfo = fileInfo.Directory;
         var dirInfo = new DirectoryInfo(dirPath);
 
         while (fileDirInfo != null)
@@ -140,12 +140,12 @@ public static class FileUtils
         loadedAssemblies = null;
 
         var tmpAssemblies = new List<Assembly>();
-        foreach (var path in assemblyPaths)
+        foreach (string path in assemblyPaths)
         {
             Assembly assembly;
             try
             {
-                var data = File.ReadAllBytes(path);
+                byte[] data = File.ReadAllBytes(path);
                 assembly = Assembly.Load(data);
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException ||

@@ -41,7 +41,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             if (!DrainCommands(bufSpan, count))
                 return false;
 
-            var errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, "ACL");
+            string errorMsg = string.Format(CmdStrings.GenericErrWrongNumArgs, "ACL");
             while (!RespWriteUtils.WriteError(errorMsg, ref dcurr, dend))
                 SendAndReset();
 
@@ -51,7 +51,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         GarnetACLAuthenticator aclAuthenticator = (GarnetACLAuthenticator)_authenticator;
 
         // Mandatory: <subcommand>
-        var subcommandSpan = GetCommand(bufSpan, out bool success1);
+        ReadOnlySpan<byte> subcommandSpan = GetCommand(bufSpan, out bool success1);
         if (!success1) return false;
 
         string subcommand = Encoding.ASCII.GetString(subcommandSpan);
@@ -64,10 +64,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return success;
             }
 
-            var users = aclAuthenticator.GetAccessControlList().GetUsers();
+            IReadOnlyDictionary<string, User> users = aclAuthenticator.GetAccessControlList().GetUsers();
             RespWriteUtils.WriteArrayLength(users.Count, ref dcurr, dend);
 
-            foreach (var user in users)
+            foreach (KeyValuePair<string, User> user in users)
             {
                 RespWriteUtils.WriteAsciiBulkString(user.Value.DescribeUser(), ref dcurr, dend);
             }
@@ -81,10 +81,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return success;
             }
 
-            var users = aclAuthenticator.GetAccessControlList().GetUsers();
+            IReadOnlyDictionary<string, User> users = aclAuthenticator.GetAccessControlList().GetUsers();
             RespWriteUtils.WriteArrayLength(users.Count, ref dcurr, dend);
 
-            foreach (var user in users)
+            foreach (KeyValuePair<string, User> user in users)
             {
                 RespWriteUtils.WriteAsciiBulkString(user.Key, ref dcurr, dend);
             }
@@ -93,10 +93,10 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // Subcommand: CAT
         else if (subcommand.Equals("CAT", StringComparison.OrdinalIgnoreCase) && (count == 1))
         {
-            var categories = CommandCategory.ListCategories();
+            IReadOnlyCollection<string> categories = CommandCategory.ListCategories();
             RespWriteUtils.WriteArrayLength(categories.Count, ref dcurr, dend);
 
-            foreach (var category in categories)
+            foreach (string category in categories)
             {
                 RespWriteUtils.WriteAsciiBulkString(category, ref dcurr, dend);
             }
@@ -111,12 +111,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
 
             // REQUIRED: username
-            var usernameSpan = GetCommand(bufSpan, out success);
+            ReadOnlySpan<byte> usernameSpan = GetCommand(bufSpan, out success);
             if (!success) return false;
 
             // Modify or create the user with the given username
             // FIXME: This step should be atomic in the future. This will prevent partial execution of faulty ACL strings.
-            var username = Encoding.ASCII.GetString(usernameSpan);
+            string username = Encoding.ASCII.GetString(usernameSpan);
             ACL.User user = aclAuthenticator.GetAccessControlList().GetUser(username);
 
             int opsParsed = 0;
@@ -131,7 +131,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 // Remaining parameters are ACL operations
                 for (; opsParsed < count - 2; opsParsed++)
                 {
-                    var op = GetCommand(bufSpan, out bool successOp);
+                    ReadOnlySpan<byte> op = GetCommand(bufSpan, out bool successOp);
                     Debug.Assert(successOp);
 
                     ACLParser.ApplyACLOpToUser(ref user, Encoding.ASCII.GetString(op));
@@ -169,7 +169,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 // Attempt to delete the users with the given names
                 for (; attemptedDeletes < count - 1; attemptedDeletes++)
                 {
-                    var username = GetCommand(bufSpan, out success);
+                    ReadOnlySpan<byte> username = GetCommand(bufSpan, out success);
                     if (!success) return false;
 
                     if (aclAuthenticator.GetAccessControlList().DeleteUser(Encoding.ASCII.GetString(username)))

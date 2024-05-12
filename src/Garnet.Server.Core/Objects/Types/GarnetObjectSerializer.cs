@@ -43,7 +43,7 @@ public sealed class GarnetObjectSerializer : BinaryObjectSerializer<IGarnetObjec
     private IGarnetObject DeserializeInternal(BinaryReader binaryReader)
     {
         var type = (GarnetObjectType)binaryReader.ReadByte();
-        var obj = type switch
+        IGarnetObject obj = type switch
         {
             GarnetObjectType.Null => null,
             GarnetObjectType.SortedSet => new SortedSetObject(binaryReader),

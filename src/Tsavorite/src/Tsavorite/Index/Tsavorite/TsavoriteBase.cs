@@ -121,10 +121,10 @@ public unsafe partial class TsavoriteBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool FindTag(ref HashEntryInfo hei)
     {
-        var target_entry_word = default(long);
+        long target_entry_word = default(long);
         var entry_slot_bucket = default(HashBucket*);
-        var version = resizeInfo.version;
-        var masked_entry_word = hei.hash & state[version].size_mask;
+        int version = resizeInfo.version;
+        long masked_entry_word = hei.hash & state[version].size_mask;
         hei.firstBucket = hei.bucket = state[version].tableAligned + masked_entry_word;
         hei.slot = Constants.kInvalidEntrySlot;
         hei.entry = default;
@@ -163,8 +163,8 @@ public unsafe partial class TsavoriteBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void FindOrCreateTag(ref HashEntryInfo hei, long BeginAddress)
     {
-        var version = resizeInfo.version;
-        var masked_entry_word = hei.hash & state[version].size_mask;
+        int version = resizeInfo.version;
+        long masked_entry_word = hei.hash & state[version].size_mask;
         hei.bucketIndex = masked_entry_word;
 
         while (true)
@@ -185,8 +185,8 @@ public unsafe partial class TsavoriteBase
             if (0 == Interlocked.CompareExchange(ref hei.bucket->bucket_entries[hei.slot], hei.entry.word, 0))
             {
                 // Make sure this tag isn't in a different slot already; if it is, make this slot 'available' and continue the search loop.
-                var orig_bucket = state[version].tableAligned + masked_entry_word;  // TODO local var not used; use or change to byval param
-                var orig_slot = Constants.kInvalidEntrySlot;                        // TODO local var not used; use or change to byval param
+                HashBucket* orig_bucket = state[version].tableAligned + masked_entry_word;  // TODO local var not used; use or change to byval param
+                int orig_slot = Constants.kInvalidEntrySlot;                        // TODO local var not used; use or change to byval param
 
                 if (FindOtherSlotForThisTagMaybeTentativeInternal(hei.tag, ref orig_bucket, ref orig_slot, hei.bucket, hei.slot))
                 {
@@ -211,7 +211,7 @@ public unsafe partial class TsavoriteBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool FindTagOrFreeInternal(ref HashEntryInfo hei, long BeginAddress = 0)
     {
-        var target_entry_word = default(long);
+        long target_entry_word = default(long);
         var entry_slot_bucket = default(HashBucket*);
 
         do
@@ -261,7 +261,7 @@ public unsafe partial class TsavoriteBase
                 if (hei.slot == Constants.kInvalidEntrySlot)
                 {
                     // Allocate new bucket
-                    var logicalBucketAddress = overflowBucketsAllocator.Allocate();
+                    long logicalBucketAddress = overflowBucketsAllocator.Allocate();
                     var physicalBucketAddress = (HashBucket*)overflowBucketsAllocator.GetPhysicalAddress(logicalBucketAddress);
                     long compare_word = target_entry_word;
                     target_entry_word = logicalBucketAddress;
@@ -306,7 +306,7 @@ public unsafe partial class TsavoriteBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool FindOtherSlotForThisTagMaybeTentativeInternal(ushort tag, ref HashBucket* bucket, ref int slot, HashBucket* except_bucket, int except_entry_slot)
     {
-        var target_entry_word = default(long);
+        long target_entry_word = default(long);
         var entry_slot_bucket = default(HashBucket*);
 
         do

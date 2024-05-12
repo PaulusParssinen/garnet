@@ -18,12 +18,12 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
         if (value.MetadataSize != 0 && CheckExpiry(ref value))
             return false;
 
-        var cmd = ((RespInputHeader*)input.ToPointer())->cmd;
+        RespCommand cmd = ((RespInputHeader*)input.ToPointer())->cmd;
         if ((byte)cmd >= CustomCommandManager.StartOffset)
         {
             int valueLength = value.LengthWithoutMetadata;
             (IMemoryOwner<byte> Memory, int Length) outp = (dst.Memory, 0);
-            var ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
+            bool ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
             Debug.Assert(valueLength <= value.LengthWithoutMetadata);
             dst.Memory = outp.Memory;
             dst.Length = outp.Length;
@@ -48,12 +48,12 @@ public readonly unsafe partial struct MainStoreFunctions : IFunctions<SpanByte, 
             return false;
         }
 
-        var cmd = ((RespInputHeader*)input.ToPointer())->cmd;
+        RespCommand cmd = ((RespInputHeader*)input.ToPointer())->cmd;
         if ((byte)cmd >= CustomCommandManager.StartOffset)
         {
             int valueLength = value.LengthWithoutMetadata;
             (IMemoryOwner<byte> Memory, int Length) outp = (dst.Memory, 0);
-            var ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
+            bool ret = functionsState.customCommands[(byte)cmd - CustomCommandManager.StartOffset].functions.Reader(key.AsReadOnlySpan(), input.AsReadOnlySpan()[RespInputHeader.Size..], value.AsReadOnlySpan(), ref outp, ref readInfo);
             Debug.Assert(valueLength <= value.LengthWithoutMetadata);
             dst.Memory = outp.Memory;
             dst.Length = outp.Length;

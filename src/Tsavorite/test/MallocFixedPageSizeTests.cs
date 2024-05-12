@@ -24,22 +24,22 @@ internal class MallocFixedPageSizeTests
 
         var allocator = new MallocFixedPageSize<HashBucket>();
         Assert.IsTrue(MallocFixedPageSize<HashBucket>.IsBlittable);  // HashBucket is a blittable struct, so it can be pinned
-        var chunkSize = allocMode == AllocMode.Single ? 1 : MallocFixedPageSize<IHeapContainer<Value>>.AllocateChunkSize;
-        var numChunks = 2 * allocator.GetPageSize() / chunkSize;
+        int chunkSize = allocMode == AllocMode.Single ? 1 : MallocFixedPageSize<IHeapContainer<Value>>.AllocateChunkSize;
+        int numChunks = 2 * allocator.GetPageSize() / chunkSize;
 
-        for (var iter = 0; iter < 2; ++iter)
+        for (int iter = 0; iter < 2; ++iter)
         {
             long getEntryValue(long recordAddress, int iEntry) => recordAddress * Constants.kOverflowBucketIndex * 10 + iEntry;
 
             // Populate; the second iteration should go through the freelist.
-            var chunkAddresses = new long[numChunks];
+            long[] chunkAddresses = new long[numChunks];
             for (int iChunk = 0; iChunk < numChunks; iChunk++)
             {
                 long chunkAddress = allocator.Allocate();
                 chunkAddresses[iChunk] = chunkAddress;
-                for (var iRecord = 0; iRecord < chunkSize; ++iRecord)
+                for (int iRecord = 0; iRecord < chunkSize; ++iRecord)
                 {
-                    var recordAddress = chunkAddress + iRecord;
+                    long recordAddress = chunkAddress + iRecord;
                     var bucket = (HashBucket*)allocator.GetPhysicalAddress(recordAddress);
                     for (int iEntry = 0; iEntry < Constants.kOverflowBucketIndex; iEntry++)
                         bucket->bucket_entries[iEntry] = getEntryValue(recordAddress, iEntry);
@@ -50,9 +50,9 @@ internal class MallocFixedPageSizeTests
             for (int iChunk = 0; iChunk < numChunks; iChunk++)
             {
                 long chunkAddress = chunkAddresses[iChunk];
-                for (var iRecord = 0; iRecord < chunkSize; ++iRecord)
+                for (int iRecord = 0; iRecord < chunkSize; ++iRecord)
                 {
-                    var recordAddress = chunkAddress + iRecord;
+                    long recordAddress = chunkAddress + iRecord;
                     var bucketPointer = (HashBucket*)allocator.GetPhysicalAddress(recordAddress);
                     for (int iEntry = 0; iEntry < Constants.kOverflowBucketIndex; iEntry++)
                         Assert.AreEqual(getEntryValue(recordAddress, iEntry), bucketPointer->bucket_entries[iEntry], $"iter {iter}, iChunk {iChunk}, iEntry {iEntry}");
@@ -86,20 +86,20 @@ internal class MallocFixedPageSizeTests
 
         var allocator = new MallocFixedPageSize<IHeapContainer<Value>>();
         Assert.IsFalse(MallocFixedPageSize<IHeapContainer<Value>>.IsBlittable); // IHeapContainer itself prevents pinning, regardless of its <T>
-        var chunkSize = allocMode == AllocMode.Single ? 1 : MallocFixedPageSize<IHeapContainer<Value>>.AllocateChunkSize;
-        var numChunks = 2 * allocator.GetPageSize() / chunkSize;
+        int chunkSize = allocMode == AllocMode.Single ? 1 : MallocFixedPageSize<IHeapContainer<Value>>.AllocateChunkSize;
+        int numChunks = 2 * allocator.GetPageSize() / chunkSize;
 
-        for (var iter = 0; iter < 2; ++iter)
+        for (int iter = 0; iter < 2; ++iter)
         {
             // Populate; the second iteration should go through the freelist.
-            var chunkAddresses = new long[numChunks];
+            long[] chunkAddresses = new long[numChunks];
             for (int iChunk = 0; iChunk < numChunks; iChunk++)
             {
                 long chunkAddress = allocMode == AllocMode.Single ? allocator.Allocate() : allocator.BulkAllocate();
                 chunkAddresses[iChunk] = chunkAddress;
-                for (var iRecord = 0; iRecord < chunkSize; ++iRecord)
+                for (int iRecord = 0; iRecord < chunkSize; ++iRecord)
                 {
-                    var recordAddress = chunkAddress + iRecord;
+                    long recordAddress = chunkAddress + iRecord;
                     var vector = new Value(recordAddress);
                     var heapContainer = new StandardHeapContainer<Value>(ref vector) as IHeapContainer<Value>;
                     allocator.Set(recordAddress, ref heapContainer);
@@ -110,10 +110,10 @@ internal class MallocFixedPageSizeTests
             for (int iChunk = 0; iChunk < numChunks; iChunk++)
             {
                 long chunkAddress = chunkAddresses[iChunk];
-                for (var iRecord = 0; iRecord < chunkSize; ++iRecord)
+                for (int iRecord = 0; iRecord < chunkSize; ++iRecord)
                 {
-                    var recordAddress = chunkAddress + iRecord;
-                    ref var valueRef = ref allocator.Get(recordAddress);
+                    long recordAddress = chunkAddress + iRecord;
+                    ref IHeapContainer<Value> valueRef = ref allocator.Get(recordAddress);
                     Assert.AreEqual(recordAddress, valueRef.Get().value);
                 }
                 allocator.Free(chunkAddress);

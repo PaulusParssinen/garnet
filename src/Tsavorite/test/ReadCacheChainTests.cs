@@ -52,8 +52,8 @@ class ChainTests
         var readCacheSettings = new ReadCacheSettings { MemorySizeBits = 15, PageSizeBits = 9 };
         log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "NativeReadCacheTests.log"), deleteOnClose: true);
 
-        var concurrencyControlMode = ConcurrencyControlMode.None;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.None;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ConcurrencyControlMode ccm)
             {
@@ -81,7 +81,7 @@ class ChainTests
 
     void PopulateAndEvict(RecordRegion recordRegion = RecordRegion.OnDisk)
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         if (recordRegion != RecordRegion.Immutable)
         {
@@ -107,19 +107,19 @@ class ChainTests
 
     void CreateChain(RecordRegion recordRegion = RecordRegion.OnDisk)
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long output = -1;
         bool expectPending(long key) => recordRegion == RecordRegion.OnDisk || (recordRegion == RecordRegion.Immutable && key < immutableSplitKey);
 
         // Pass1: PENDING reads and populate the cache
         for (long ii = 0; ii < chainLen; ++ii)
         {
-            var key = lowChainKey + ii * mod;
-            var status = session.Read(key, out _);
+            long key = lowChainKey + ii * mod;
+            Status status = session.Read(key, out _);
             if (expectPending(key))
             {
                 Assert.IsTrue(status.IsPending, status.ToString());
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
                 Assert.IsTrue(status.Record.CopiedToReadCache, status.ToString());
             }
@@ -129,22 +129,22 @@ class ChainTests
         }
 
         // Pass2: non-PENDING reads from the cache
-        for (var ii = 0; ii < chainLen; ++ii)
+        for (int ii = 0; ii < chainLen; ++ii)
         {
-            var status = session.Read(lowChainKey + ii * mod, out _);
+            Status status = session.Read(lowChainKey + ii * mod, out _);
             Assert.IsTrue(!status.IsPending && status.Found, status.ToString());
         }
 
         // Pass 3: Put in bunch of extra keys into the cache so when we FlushAndEvict we get all the ones of interest.
-        for (var key = 0; key < numKeys; ++key)
+        for (int key = 0; key < numKeys; ++key)
         {
             if ((key % mod) != 0)
             {
-                var status = session.Read(key, out _);
+                Status status = session.Read(key, out _);
                 if (expectPending(key))
                 {
                     Assert.IsTrue(status.IsPending);
-                    session.CompletePendingWithOutputs(out var outputs, wait: true);
+                    session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> outputs, wait: true);
                     (status, output) = GetSinglePendingResult(outputs);
                     Assert.IsTrue(status.Record.CopiedToReadCache, status.ToString());
                 }
@@ -157,7 +157,7 @@ class ChainTests
     unsafe bool GetRecordInInMemoryHashChain(long key, out bool isReadCache)
     {
         // returns whether the key was found before we'd go pending
-        var (la, pa) = GetHashChain(store, key, out long recordKey, out bool invalid, out isReadCache);
+        (long la, long pa) = GetHashChain(store, key, out long recordKey, out bool invalid, out isReadCache);
         while (isReadCache || la >= store.hlog.HeadAddress)
         {
             if (recordKey == key && !invalid)
@@ -182,12 +182,12 @@ class ChainTests
 
     internal static (long logicalAddress, long physicalAddress) GetHashChain(TsavoriteKV<long, long> store, long key, out long recordKey, out bool invalid, out bool isReadCache)
     {
-        var tagExists = store.FindHashBucketEntryForKey(ref key, out var entry);
+        bool tagExists = store.FindHashBucketEntryForKey(ref key, out HashBucketEntry entry);
         Assert.IsTrue(tagExists);
 
         isReadCache = entry.ReadCache;
-        var log = isReadCache ? store.readcache : store.hlog;
-        var pa = log.GetPhysicalAddress(entry.Address & ~Constants.kReadCacheBitMask);
+        AllocatorBase<long, long> log = isReadCache ? store.readcache : store.hlog;
+        long pa = log.GetPhysicalAddress(entry.Address & ~Constants.kReadCacheBitMask);
         recordKey = log.GetKey(pa);
         invalid = log.GetInfo(pa).Invalid;
 
@@ -199,14 +199,14 @@ class ChainTests
 
     internal static (long logicalAddress, long physicalAddress) NextInChain(TsavoriteKV<long, long> store, long physicalAddress, out long recordKey, out bool invalid, ref bool isReadCache)
     {
-        var log = isReadCache ? store.readcache : store.hlog;
-        var info = log.GetInfo(physicalAddress);
-        var la = info.PreviousAddress;
+        AllocatorBase<long, long> log = isReadCache ? store.readcache : store.hlog;
+        RecordInfo info = log.GetInfo(physicalAddress);
+        long la = info.PreviousAddress;
 
         isReadCache = new HashBucketEntry { word = la }.ReadCache;
         log = isReadCache ? store.readcache : store.hlog;
         la &= ~Constants.kReadCacheBitMask;
-        var pa = log.GetPhysicalAddress(la);
+        long pa = log.GetPhysicalAddress(la);
         recordKey = log.GetKey(pa);
         invalid = log.GetInfo(pa).Invalid;
         return (la, pa);
@@ -216,8 +216,8 @@ class ChainTests
     {
         omitted ??= Array.Empty<long>();
 
-        var (la, pa) = GetHashChain(store, lowChainKey, out long actualKey, out bool invalid, out bool isReadCache);
-        for (var expectedKey = highChainKey; expectedKey >= lowChainKey; expectedKey -= mod)
+        (long la, long pa) = GetHashChain(store, lowChainKey, out long actualKey, out bool invalid, out bool isReadCache);
+        for (long expectedKey = highChainKey; expectedKey >= lowChainKey; expectedKey -= mod)
         {
             // We evict from readcache only to just below midChainKey
             if (!evicted || expectedKey >= midChainKey)
@@ -247,7 +247,7 @@ class ChainTests
 
     internal static (long logicalAddress, long physicalAddress) SkipReadCacheChain(TsavoriteKV<long, long> store, long key)
     {
-        var (la, pa) = GetHashChain(store, key, out _, out _, out bool isReadCache);
+        (long la, long pa) = GetHashChain(store, key, out _, out _, out bool isReadCache);
         while (isReadCache)
             (la, pa) = NextInChain(store, pa, out _, out _, ref isReadCache);
         return (la, pa);
@@ -256,8 +256,8 @@ class ChainTests
     void VerifySplicedInKey(long expectedKey)
     {
         // Scan to the end of the readcache chain and verify we inserted the value.
-        var (_, pa) = SkipReadCacheChain(expectedKey);
-        var storedKey = store.hlog.GetKey(pa);
+        (long _, long pa) = SkipReadCacheChain(expectedKey);
+        long storedKey = store.hlog.GetKey(pa);
         Assert.AreEqual(expectedKey, storedKey);
     }
 
@@ -290,14 +290,14 @@ class ChainTests
     {
         PopulateAndEvict();
         CreateChain();
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         void doTest(long key)
         {
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
 
-            status = session.Read(key, out var value);
+            status = session.Read(key, out long value);
             Assert.IsFalse(status.Found, status.ToString());
         }
 
@@ -318,14 +318,14 @@ class ChainTests
     {
         PopulateAndEvict();
         CreateChain();
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         void doTest(long key)
         {
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
 
-            status = session.Read(key, out var value);
+            status = session.Read(key, out long value);
             Assert.IsFalse(status.Found, status.ToString());
         }
 
@@ -338,7 +338,7 @@ class ChainTests
         Assert.IsTrue(isReadCache);
 
         // Delete all keys in the readcache chain below midChainKey.
-        for (var ii = lowChainKey; ii < midChainKey; ++ii)
+        for (long ii = lowChainKey; ii < midChainKey; ++ii)
             doTest(ii);
 
         // LowChainKey should not be found in the readcache after deletion to just below midChainKey, but mid- and highChainKey should not be affected.
@@ -384,11 +384,11 @@ class ChainTests
     {
         PopulateAndEvict();
         CreateChain();
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
 
         void doTest(long key)
         {
-            var status = session.Read(key, out var value);
+            Status status = session.Read(key, out long value);
             Assert.IsTrue(status.Found, status.ToString());
 
             if (useRMW)
@@ -429,11 +429,11 @@ class ChainTests
         PopulateAndEvict();
         CreateChain();
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long input = 0, output = 0, key = lowChainKey - mod; // key must be in evicted region for this test
         ReadOptions readOptions = new() { CopyOptions = new(ReadCopyFrom.AllImmutable, ReadCopyTo.MainLog) };
 
-        var status = session.Read(ref key, ref input, ref output, ref readOptions, out _);
+        Status status = session.Read(ref key, ref input, ref output, ref readOptions, out _);
         Assert.IsTrue(status.IsPending, status.ToString());
         session.CompletePending(wait: true);
 
@@ -449,19 +449,19 @@ class ChainTests
         PopulateAndEvict(recordRegion);
         CreateChain(recordRegion);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long key = -1;
 
         if (recordRegion == RecordRegion.Immutable || recordRegion == RecordRegion.OnDisk)
         {
             key = spliceInExistingKey;
-            var status = session.Upsert(key, key + valueAdd);
+            Status status = session.Upsert(key, key + valueAdd);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
         }
         else
         {
             key = spliceInNewKey;
-            var status = session.Upsert(key, key + valueAdd);
+            Status status = session.Upsert(key, key + valueAdd);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
         }
 
@@ -477,14 +477,14 @@ class ChainTests
         PopulateAndEvict(recordRegion);
         CreateChain(recordRegion);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long key = -1, output = -1;
 
         if (recordRegion == RecordRegion.Immutable || recordRegion == RecordRegion.OnDisk)
         {
             // Existing key
             key = spliceInExistingKey;
-            var status = session.RMW(key, key + valueAdd);
+            Status status = session.RMW(key, key + valueAdd);
 
             // If OnDisk, this used the readcache entry for its source and then invalidated it.
             Assert.IsTrue(status.Found && status.Record.CopyUpdated, status.ToString());
@@ -500,7 +500,7 @@ class ChainTests
 
                 // This NOTFOUND key will return PENDING because we have to trace back through the collisions.
                 Assert.IsTrue(status.IsPending, status.ToString());
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
                 Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
             }
@@ -508,7 +508,7 @@ class ChainTests
         else
         {
             key = spliceInNewKey;
-            var status = session.RMW(key, key + valueAdd);
+            Status status = session.RMW(key, key + valueAdd);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
         }
 
@@ -524,19 +524,19 @@ class ChainTests
         PopulateAndEvict(recordRegion);
         CreateChain(recordRegion);
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
         long key = -1;
 
         if (recordRegion == RecordRegion.Immutable || recordRegion == RecordRegion.OnDisk)
         {
             key = spliceInExistingKey;
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
         }
         else
         {
             key = spliceInNewKey;
-            var status = session.Delete(key);
+            Status status = session.Delete(key);
             Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
         }
 
@@ -552,10 +552,10 @@ class ChainTests
         PopulateAndEvict();
         CreateChain();
 
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
-        var luContext = session.LockableUnsafeContext;
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long>>(new SimpleFunctions<long, long>());
+        LockableUnsafeContext<long, long, long, long, Empty, SimpleFunctions<long, long>> luContext = session.LockableUnsafeContext;
 
-        var keys = new[]
+        FixedLengthLockableKeyStruct<long>[] keys = new[]
         {
             new FixedLengthLockableKeyStruct<long>(lowChainKey, LockType.Exclusive, luContext),
             new FixedLengthLockableKeyStruct<long>(midChainKey, LockType.Shared, luContext),
@@ -575,7 +575,7 @@ class ChainTests
             store.ReadCache.FlushAndEvict(wait: true);
 
             int xlocks = 0, slocks = 0;
-            foreach (var idx in LockableUnsafeContextTests.EnumActionKeyIndices(keys, LockableUnsafeContextTests.LockOperationType.Unlock))
+            foreach (int idx in LockableUnsafeContextTests.EnumActionKeyIndices(keys, LockableUnsafeContextTests.LockOperationType.Unlock))
             {
                 if (keys[idx].LockType == LockType.Exclusive)
                     ++xlocks;
@@ -584,13 +584,13 @@ class ChainTests
             }
             AssertTotalLockCounts(xlocks, slocks);
 
-            foreach (var idx in LockableUnsafeContextTests.EnumActionKeyIndices(keys, LockableUnsafeContextTests.LockOperationType.Unlock))
+            foreach (int idx in LockableUnsafeContextTests.EnumActionKeyIndices(keys, LockableUnsafeContextTests.LockOperationType.Unlock))
             {
-                ref var key = ref keys[idx];
+                ref FixedLengthLockableKeyStruct<long> key = ref keys[idx];
                 HashEntryInfo hei = new(store.comparer.GetHashCode64(ref key.Key));
                 OverflowBucketLockTableTests.PopulateHei(store, ref hei);
 
-                var lockState = store.LockTable.GetLockState(ref key.Key, ref hei);
+                LockState lockState = store.LockTable.GetLockState(ref key.Key, ref hei);
                 Assert.IsTrue(lockState.IsFound);
                 Assert.AreEqual(key.LockType == LockType.Exclusive, lockState.IsLockedExclusive);
                 Assert.AreEqual(key.LockType != LockType.Exclusive, lockState.NumLockedShared > 0);
@@ -647,7 +647,7 @@ class LongStressChainTests
         DeleteDirectory(MethodTestDir, wait: true);
 
         string filename = Path.Join(MethodTestDir, $"{GetType().Name}.log");
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is DeviceType deviceType)
             {
@@ -662,7 +662,7 @@ class LongStressChainTests
         var logSettings = new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 10, ReadCacheSettings = readCacheSettings };
 
         HashModulo modRange = HashModulo.NoMod;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is HashModulo cr)
             {
@@ -725,12 +725,12 @@ class LongStressChainTests
 
     unsafe void PopulateAndEvict()
     {
-        using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long, Empty>>(new SimpleFunctions<long, long, Empty>());
+        using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long, Empty>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long, Empty>>(new SimpleFunctions<long, long, Empty>());
 
         for (long ii = 0; ii < numKeys; ii++)
         {
             long key = ii;
-            var status = session.Upsert(ref key, ref key);
+            Status status = session.Upsert(ref key, ref key);
             Assert.IsFalse(status.IsPending);
             Assert.IsTrue(status.Record.Created, $"key {key}, status {status}");
         }
@@ -760,20 +760,20 @@ class LongStressChainTests
         const int numIterations = 1;
         unsafe void runReadThread(int tid)
         {
-            using var session = store.NewSession<long, long, Empty, SimpleFunctions<long, long, Empty>>(new SimpleFunctions<long, long, Empty>());
+            using ClientSession<long, long, long, long, Empty, SimpleFunctions<long, long, Empty>> session = store.NewSession<long, long, Empty, SimpleFunctions<long, long, Empty>>(new SimpleFunctions<long, long, Empty>());
 
             Random rng = new(tid * 101);
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     long key = ii, output = 0;
-                    var status = session.Read(ref key, ref output);
+                    Status status = session.Read(ref key, ref output);
                     bool wasPending = status.IsPending;
                     if (wasPending)
                     {
-                        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
-                        (status, output) = GetSinglePendingResult(completedOutputs, out var recordMetadata);
+                        session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
+                        (status, output) = GetSinglePendingResult(completedOutputs, out RecordMetadata recordMetadata);
                         Assert.AreEqual(recordMetadata.Address == Constants.kInvalidAddress, status.Record.CopiedToReadCache, $"key {ii}: {status}");
                     }
                     Assert.IsTrue(status.Found, $"key {key}, status {status}, wasPending {wasPending}");
@@ -784,22 +784,22 @@ class LongStressChainTests
 
         unsafe void runUpdateThread(int tid)
         {
-            using var session = store.NewSession<long, long, Empty, RmwLongFunctions>(new RmwLongFunctions());
+            using ClientSession<long, long, long, long, Empty, RmwLongFunctions> session = store.NewSession<long, long, Empty, RmwLongFunctions>(new RmwLongFunctions());
 
             Random rng = new(tid * 101);
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     long key = ii, input = ii + valueAdd * tid, output = 0;
-                    var status = updateOp == UpdateOp.RMW
+                    Status status = updateOp == UpdateOp.RMW
                                     ? session.RMW(ref key, ref input, ref output)
                                     : session.Upsert(ref key, ref input, ref input, ref output);
                     bool wasPending = status.IsPending;
                     if (wasPending)
                     {
                         Assert.AreNotEqual(UpdateOp.Upsert, updateOp, "Upsert should not go pending");
-                        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                        session.CompletePendingWithOutputs(out CompletedOutputIterator<long, long, long, long, Empty> completedOutputs, wait: true);
                         (status, output) = GetSinglePendingResult(completedOutputs);
 
                         // Record may have been updated in-place if a CTT was done during the pending operation.
@@ -815,7 +815,7 @@ class LongStressChainTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exceptions.
         for (int t = 1; t <= numReadThreads + numWriteThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (t <= numReadThreads)
                 tasks.Add(Task.Factory.StartNew(() => runReadThread(tid)));
             else
@@ -844,7 +844,7 @@ class SpanByteStressChainTests
         // Force collisions to create a chain
         public long GetHashCode64(ref SpanByte k)
         {
-            var value = SpanByteComparer.StaticGetHashCode64(ref k);
+            long value = SpanByteComparer.StaticGetHashCode64(ref k);
             return modRange != HashModulo.NoMod ? value % (long)modRange : value;
         }
     }
@@ -855,7 +855,7 @@ class SpanByteStressChainTests
         DeleteDirectory(MethodTestDir, wait: true);
 
         string filename = Path.Join(MethodTestDir, $"{GetType().Name}.log");
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is DeviceType deviceType)
             {
@@ -870,7 +870,7 @@ class SpanByteStressChainTests
         var logSettings = new LogSettings { LogDevice = log, MemorySizeBits = 15, PageSizeBits = 10, ReadCacheSettings = readCacheSettings };
 
         HashModulo modRange = HashModulo.NoMod;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is HashModulo cr)
             {
@@ -938,7 +938,7 @@ class SpanByteStressChainTests
 
     unsafe void PopulateAndEvict()
     {
-        using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
+        using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
         Span<byte> keyVec = stackalloc byte[sizeof(long)];
         var key = SpanByte.FromPinnedSpan(keyVec);
@@ -946,7 +946,7 @@ class SpanByteStressChainTests
         for (long ii = 0; ii < numKeys; ii++)
         {
             Assert.IsTrue(BitConverter.TryWriteBytes(keyVec, ii));
-            var status = session.Upsert(ref key, ref key);
+            Status status = session.Upsert(ref key, ref key);
             Assert.IsTrue(status.Record.Created, status.ToString());
         }
         session.CompletePending(true);
@@ -980,25 +980,25 @@ class SpanByteStressChainTests
         const int numIterations = 1;
         unsafe void runReadThread(int tid)
         {
-            using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new SpanByteFunctions<Empty>());
 
             Span<byte> keyVec = stackalloc byte[sizeof(long)];
             var key = SpanByte.FromPinnedSpan(keyVec);
 
             Random rng = new(tid * 101);
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     SpanByteAndMemory output = default;
 
                     Assert.IsTrue(BitConverter.TryWriteBytes(keyVec, ii));
-                    var status = session.Read(ref key, ref output);
+                    Status status = session.Read(ref key, ref output);
                     bool wasPending = status.IsPending;
                     if (wasPending)
                     {
-                        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
-                        (status, output) = GetSinglePendingResult(completedOutputs, out var recordMetadata);
+                        session.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty> completedOutputs, wait: true);
+                        (status, output) = GetSinglePendingResult(completedOutputs, out RecordMetadata recordMetadata);
                         Assert.AreEqual(recordMetadata.Address == Constants.kInvalidAddress, status.Record.CopiedToReadCache, $"key {ii}: {status}");
                     }
                     Assert.IsTrue(status.Found, $"tid {tid}, key {ii}, {status}, wasPending {wasPending}, pt 1");
@@ -1015,7 +1015,7 @@ class SpanByteStressChainTests
 
         unsafe void runUpdateThread(int tid)
         {
-            using var session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new RmwSpanByteFunctions());
+            using ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>> session = store.NewSession<SpanByte, SpanByteAndMemory, Empty, SpanByteFunctions<Empty>>(new RmwSpanByteFunctions());
 
             Span<byte> keyVec = stackalloc byte[sizeof(long)];
             var key = SpanByte.FromPinnedSpan(keyVec);
@@ -1023,22 +1023,22 @@ class SpanByteStressChainTests
             var input = SpanByte.FromPinnedSpan(inputVec);
 
             Random rng = new(tid * 101);
-            for (var iteration = 0; iteration < numIterations; ++iteration)
+            for (int iteration = 0; iteration < numIterations; ++iteration)
             {
-                for (var ii = 0; ii < numKeys; ++ii)
+                for (int ii = 0; ii < numKeys; ++ii)
                 {
                     SpanByteAndMemory output = default;
 
                     Assert.IsTrue(BitConverter.TryWriteBytes(keyVec, ii));
                     Assert.IsTrue(BitConverter.TryWriteBytes(inputVec, ii + valueAdd));
-                    var status = updateOp == UpdateOp.RMW
+                    Status status = updateOp == UpdateOp.RMW
                                     ? session.RMW(ref key, ref input, ref output)
                                     : session.Upsert(ref key, ref input, ref input, ref output);
                     bool wasPending = status.IsPending;
                     if (wasPending)
                     {
                         Assert.AreNotEqual(UpdateOp.Upsert, updateOp, "Upsert should not go pending");
-                        session.CompletePendingWithOutputs(out var completedOutputs, wait: true);
+                        session.CompletePendingWithOutputs(out CompletedOutputIterator<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Empty> completedOutputs, wait: true);
                         (status, output) = GetSinglePendingResult(completedOutputs);
 
                         // Record may have been updated in-place if a CTT was done during the pending operation.
@@ -1058,7 +1058,7 @@ class SpanByteStressChainTests
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 1; t <= numReadThreads + numWriteThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (t <= numReadThreads)
                 tasks.Add(Task.Factory.StartNew(() => runReadThread(tid)));
             else

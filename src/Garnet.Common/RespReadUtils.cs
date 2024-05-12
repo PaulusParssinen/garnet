@@ -45,11 +45,11 @@ public static unsafe class RespReadUtils
     {
         bytesRead = 0;
         value = 0;
-        var readHead = ptr;
+        byte* readHead = ptr;
 
         // Fast path for the first 19 digits.
         // NOTE: UINT64 overflows can only happen on digit 20 or later (if integer contains leading zeros).
-        var fastPathEnd = ptr + 19;
+        byte* fastPathEnd = ptr + 19;
         while (readHead < fastPathEnd)
         {
             if (readHead > end)
@@ -57,7 +57,7 @@ public static unsafe class RespReadUtils
                 return false;
             }
 
-            var nextDigit = (uint)(*readHead - '0');
+            uint nextDigit = (uint)(*readHead - '0');
             if (nextDigit > 9)
             {
                 goto Done;
@@ -76,7 +76,7 @@ public static unsafe class RespReadUtils
                 return false;
             }
 
-            var nextDigit = (uint)(*readHead - '0');
+            uint nextDigit = (uint)(*readHead - '0');
             if (nextDigit > 9)
             {
                 goto Done;
@@ -118,14 +118,14 @@ public static unsafe class RespReadUtils
         value = 0;
 
         // Parse optional leading sign
-        if (TryReadSign(ptr, out var negative))
+        if (TryReadSign(ptr, out bool negative))
         {
             ptr++;
             bytesRead = 1;
         }
 
         // Parse digits as ulong
-        if (!TryReadUlong(ref ptr, end, out var number, out var digitsRead))
+        if (!TryReadUlong(ref ptr, end, out ulong number, out ulong digitsRead))
         {
             return false;
         }
@@ -172,14 +172,14 @@ public static unsafe class RespReadUtils
         value = 0;
 
         // Parse optional leading sign
-        if (TryReadSign(ptr, out var negative))
+        if (TryReadSign(ptr, out bool negative))
         {
             ptr++;
             bytesRead = 1;
         }
 
         // Parse digits as ulong
-        if (!TryReadUlong(ref ptr, end, out var number, out var digitsRead))
+        if (!TryReadUlong(ref ptr, end, out ulong number, out ulong digitsRead))
         {
             return false;
         }
@@ -225,8 +225,8 @@ public static unsafe class RespReadUtils
         if (ptr + 3 > end)
             return false;
 
-        var readHead = ptr + 1;
-        var negative = *readHead == '-';
+        byte* readHead = ptr + 1;
+        bool negative = *readHead == '-';
 
         // String length headers must start with a '$', array headers with '*'
         if (*ptr != (isArray ? '*' : '$'))
@@ -251,7 +251,7 @@ public static unsafe class RespReadUtils
         }
 
         // Parse length
-        if (!TryReadUlong(ref readHead, end, out var value, out var digitsRead))
+        if (!TryReadUlong(ref readHead, end, out ulong value, out ulong digitsRead))
         {
             return false;
         }
@@ -305,7 +305,7 @@ public static unsafe class RespReadUtils
         }
 
         // Parse length
-        if (!TryReadLong(ref ptr, end, out number, out var bytesRead))
+        if (!TryReadLong(ref ptr, end, out number, out ulong bytesRead))
         {
             return false;
         }
@@ -346,15 +346,15 @@ public static unsafe class RespReadUtils
         number = 0;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var numberLength, ref ptr, end))
+        if (!ReadLengthHeader(out int numberLength, ref ptr, end))
             return false;
 
         if (ptr + numberLength + 2 > end)
             return false;
 
         // Parse associated integer value
-        var numberStart = ptr;
-        if (!TryReadInt(ref ptr, end, out number, out var bytesRead))
+        byte* numberStart = ptr;
+        if (!TryReadInt(ref ptr, end, out number, out ulong bytesRead))
         {
             return false;
         }
@@ -383,15 +383,15 @@ public static unsafe class RespReadUtils
         number = 0;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var numberLength, ref ptr, end))
+        if (!ReadLengthHeader(out int numberLength, ref ptr, end))
             return false;
 
         if (ptr + numberLength + 2 > end)
             return false;
 
         // Parse associated integer value
-        var numberStart = ptr;
-        if (!TryReadLong(ref ptr, end, out number, out var bytesRead))
+        byte* numberStart = ptr;
+        if (!TryReadLong(ref ptr, end, out number, out ulong bytesRead))
         {
             return false;
         }
@@ -420,15 +420,15 @@ public static unsafe class RespReadUtils
         number = 0;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var numberLength, ref ptr, end))
+        if (!ReadLengthHeader(out int numberLength, ref ptr, end))
             return false;
 
         if (ptr + numberLength + 2 > end)
             return false;
 
         // Parse associated integer value
-        var numberStart = ptr;
-        if (!TryReadUlong(ref ptr, end, out number, out var bytesRead))
+        byte* numberStart = ptr;
+        if (!TryReadUlong(ref ptr, end, out number, out ulong bytesRead))
         {
             return false;
         }
@@ -457,11 +457,11 @@ public static unsafe class RespReadUtils
         result = null;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var length, ref ptr, end))
+        if (!ReadLengthHeader(out int length, ref ptr, end))
             return false;
 
         // Advance read pointer to the end of the array (including terminator)
-        var keyPtr = ptr;
+        byte* keyPtr = ptr;
 
         ptr += length + 2;
 
@@ -498,7 +498,7 @@ public static unsafe class RespReadUtils
         else
         {
             // Parse malformed RESP string header
-            if (!ReadLengthHeader(out var length, ref ptr, end))
+            if (!ReadLengthHeader(out int length, ref ptr, end))
                 return false;
 
             if (length != 1)
@@ -538,7 +538,7 @@ public static unsafe class RespReadUtils
             return false;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var length, ref ptr, end, allowNull: allowNull))
+        if (!ReadLengthHeader(out int length, ref ptr, end, allowNull: allowNull))
             return false;
 
         if (allowNull && length < 0)
@@ -548,7 +548,7 @@ public static unsafe class RespReadUtils
         }
 
         // Extract string content + '\r\n' terminator
-        var keyPtr = ptr;
+        byte* keyPtr = ptr;
 
         ptr += length + 2;
 
@@ -576,7 +576,7 @@ public static unsafe class RespReadUtils
             return false;
 
         // Parse RESP string header
-        if (!ReadLengthHeader(out var length, ref ptr, end))
+        if (!ReadLengthHeader(out int length, ref ptr, end))
             return false;
 
         if (length < 0)
@@ -586,7 +586,7 @@ public static unsafe class RespReadUtils
         }
 
         // Extract string content + '\r\n' terminator
-        var keyPtr = ptr;
+        byte* keyPtr = ptr;
 
         ptr += length + 2;
 
@@ -733,7 +733,7 @@ public static unsafe class RespReadUtils
         result = null;
 
         // Parse RESP array header
-        if (!ReadArrayLength(out var length, ref ptr, end))
+        if (!ReadArrayLength(out int length, ref ptr, end))
         {
             return false;
         }
@@ -746,7 +746,7 @@ public static unsafe class RespReadUtils
 
         // Parse individual strings in the array
         result = new string[length];
-        for (var i = 0; i < length; i++)
+        for (int i = 0; i < length; i++)
         {
             if (*ptr == '$')
             {
@@ -770,7 +770,7 @@ public static unsafe class RespReadUtils
     {
         result = null;
         // Parse RESP array header
-        if (!ReadArrayLength(out var length, ref ptr, end))
+        if (!ReadArrayLength(out int length, ref ptr, end))
         {
             return false;
         }
@@ -783,7 +783,7 @@ public static unsafe class RespReadUtils
 
         // Parse individual strings in the array
         result = new MemoryResult<byte>[length];
-        for (var i = 0; i < length; i++)
+        for (int i = 0; i < length; i++)
         {
             if (*ptr == '$')
             {
@@ -805,14 +805,14 @@ public static unsafe class RespReadUtils
     /// </summary>
     public static bool ReadDoubleWithLengthHeader(out double result, out bool parsed, ref byte* ptr, byte* end)
     {
-        if (!ReadByteArrayWithLengthHeader(out var resultBytes, ref ptr, end))
+        if (!ReadByteArrayWithLengthHeader(out byte[] resultBytes, ref ptr, end))
         {
             result = 0;
             parsed = false;
             return false;
         }
 
-        parsed = Utf8Parser.TryParse(resultBytes, out result, out var bytesConsumed, default) &&
+        parsed = Utf8Parser.TryParse(resultBytes, out result, out int bytesConsumed, default) &&
             bytesConsumed == resultBytes.Length;
         return true;
     }
@@ -823,7 +823,7 @@ public static unsafe class RespReadUtils
     public static bool ReadSpanByteWithLengthHeader(ref Span<byte> result, ref byte* ptr, byte* end)
     {
         // Parse RESP string header
-        if (!ReadLengthHeader(out var len, ref ptr, end))
+        if (!ReadLengthHeader(out int len, ref ptr, end))
         {
             return false;
         }
@@ -835,7 +835,7 @@ public static unsafe class RespReadUtils
             return true;
         }
 
-        var keyPtr = ptr;
+        byte* keyPtr = ptr;
 
         // Parse content: ensure that input contains key + '\r\n'
         ptr += len + 2;
@@ -898,7 +898,7 @@ public static unsafe class RespReadUtils
         if (ptr + 1 >= end)
             return false;
 
-        var start = ptr;
+        byte* start = ptr;
 
         while (ptr < end - 1)
         {
@@ -923,7 +923,7 @@ public static unsafe class RespReadUtils
         if (ptr + 1 >= end)
             return false;
 
-        var start = ptr;
+        byte* start = ptr;
         while (ptr < end - 1)
         {
             if (*(ushort*)ptr == MemoryMarshal.Read<ushort>("\r\n"u8))
@@ -947,7 +947,7 @@ public static unsafe class RespReadUtils
         //1. safe read ksize
         if (ptr + sizeof(int) > end)
             return false;
-        var ksize = *(int*)ptr;
+        int ksize = *(int*)ptr;
         ptr += sizeof(int);
 
         //2. safe read key bytes
@@ -960,7 +960,7 @@ public static unsafe class RespReadUtils
         //3. safe read vsize
         if (ptr + 4 > end)
             return false;
-        var vsize = *(int*)ptr;
+        int vsize = *(int*)ptr;
         ptr += sizeof(int);
 
         //4. safe read value bytes
@@ -985,25 +985,25 @@ public static unsafe class RespReadUtils
         //1. safe read ksize
         if (ptr + 4 > end)
             return false;
-        var keyLen = *(int*)ptr;
+        int keyLen = *(int*)ptr;
         ptr += 4;
 
         //2. safe read keyPtr
         if (ptr + keyLen > end)
             return false;
-        var keyPtr = ptr;
+        byte* keyPtr = ptr;
         ptr += keyLen;
 
         //3. safe read vsize
         if (ptr + 4 > end)
             return false;
-        var valLen = *(int*)ptr;
+        int valLen = *(int*)ptr;
         ptr += 4;
 
         //4. safe read valPtr
         if (ptr + valLen > end)
             return false;
-        var valPtr = ptr;
+        byte* valPtr = ptr;
         ptr += valLen;
 
         //5. safe read expiration info

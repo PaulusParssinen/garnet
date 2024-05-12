@@ -56,8 +56,8 @@ internal class GenericStringTests
         const int totalRecords = 200;
         for (int i = 0; i < totalRecords; i++)
         {
-            var _key = $"{i}";
-            var _value = $"{i}"; ;
+            string _key = $"{i}";
+            string _value = $"{i}"; ;
             session.Upsert(ref _key, ref _value, Empty.Default, 0);
         }
         session.CompletePending(true);
@@ -67,13 +67,13 @@ internal class GenericStringTests
         {
             string input = default;
             string output = default;
-            var key = $"{i}";
-            var value = $"{i}";
+            string key = $"{i}";
+            string value = $"{i}";
 
-            var status = session.Read(ref key, ref input, ref output, Empty.Default, 0);
+            Status status = session.Read(ref key, ref input, ref output, Empty.Default, 0);
             if (status.IsPending)
             {
-                session.CompletePendingWithOutputs(out var outputs, wait: true);
+                session.CompletePendingWithOutputs(out CompletedOutputIterator<string, string, string, string, Empty> outputs, wait: true);
                 (status, output) = GetSinglePendingResult(outputs);
             }
             Assert.IsTrue(status.Found);

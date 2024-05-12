@@ -169,9 +169,9 @@ public abstract class GarnetServerBase : IGarnetServer
         {
             while (activeHandlerCount > 0)
             {
-                foreach (var kvp in activeHandlers)
+                foreach (KeyValuePair<INetworkHandler, byte> kvp in activeHandlers)
                 {
-                    var _handler = kvp.Key;
+                    INetworkHandler _handler = kvp.Key;
                     _handler?.Dispose();
                 }
                 Thread.Yield();

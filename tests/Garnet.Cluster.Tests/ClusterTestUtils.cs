@@ -111,8 +111,8 @@ public partial class ClusterTestUtils
             logger?.LogInformation("({address}:{port}) > {cmd} {args}", endPoint.Address, endPoint.Port, cmd, string.Join(' ', args));
         try
         {
-            var server = GetServer(endPoint);
-            var resp = server.Execute(cmd, args);
+            IServer server = GetServer(endPoint);
+            RedisResult resp = server.Execute(cmd, args);
             return resp;
         }
         catch (Exception ex)
@@ -127,12 +127,12 @@ public partial class ClusterTestUtils
 
     public string NodesMyself(IPEndPoint endPoint, ClusterInfoTag tag, ILogger logger)
     {
-        var nodeConfigInfo = string.Empty;
-        var nodeConfigStr = (string)NodesV2(endPoint, logger);
+        string nodeConfigInfo = string.Empty;
+        string nodeConfigStr = (string)NodesV2(endPoint, logger);
         if (nodeConfigStr != null)
         {
-            var lines = nodeConfigStr.ToString().Split('\n');
-            var properties = lines[0].ToString().Split(' ');
+            string[] lines = nodeConfigStr.ToString().Split('\n');
+            string[] properties = lines[0].ToString().Split(' ');
             int index = (int)tag;
             nodeConfigInfo = index < properties.Length ? properties[index].Trim() : string.Empty;
         }
@@ -144,15 +144,15 @@ public partial class ClusterTestUtils
 
     public string[] NodesMyself(IPEndPoint endPoint, ClusterInfoTag[] tags)
     {
-        var nodeConfigInfo = new string[tags.Length];
-        var nodeConfigStr = (string)NodesV2(endPoint);
+        string[] nodeConfigInfo = new string[tags.Length];
+        string nodeConfigStr = (string)NodesV2(endPoint);
         if (nodeConfigStr != null)
         {
-            var lines = nodeConfigStr.ToString().Split('\n');
-            var properties = lines[0].ToString().Split(' ');
+            string[] lines = nodeConfigStr.ToString().Split('\n');
+            string[] properties = lines[0].ToString().Split(' ');
             for (int i = 0; i < tags.Length; i++)
             {
-                var tag = tags[i];
+                ClusterInfoTag tag = tags[i];
                 int index = (int)tag;
                 nodeConfigInfo[i] = index < properties.Length ? properties[index].Trim() : string.Empty;
             }
@@ -163,21 +163,21 @@ public partial class ClusterTestUtils
     public List<string[]> NodesAll(IPEndPoint endPoint, ClusterInfoTag[] tags, string nodeid = null)
     {
         var nodeConfigInfo = new List<string[]>();
-        var nodeConfigStr = (string)NodesV2(endPoint);
+        string nodeConfigStr = (string)NodesV2(endPoint);
         if (nodeConfigStr != null)
         {
-            var lines = nodeConfigStr.ToString().Split('\n');
-            for (var i = 0; i < lines.Length; i++)
+            string[] lines = nodeConfigStr.ToString().Split('\n');
+            for (int i = 0; i < lines.Length; i++)
             {
-                var properties = lines[i].ToString().Split(' ');
+                string[] properties = lines[i].ToString().Split(' ');
                 if (nodeid != null && !nodeid.Equals(properties[0].Trim()))
                     continue;
 
                 nodeConfigInfo.Add(new string[tags.Length]);
-                for (var j = 0; j < tags.Length; j++)
+                for (int j = 0; j < tags.Length; j++)
                 {
-                    var tag = tags[j];
-                    var index = (int)tag;
+                    ClusterInfoTag tag = tags[j];
+                    int index = (int)tag;
                     nodeConfigInfo[^1][j] = index < properties.Length ? properties[index].Trim() : string.Empty;
                 }
             }
@@ -187,20 +187,20 @@ public partial class ClusterTestUtils
 
     private async Task<bool> WaitForEpochSync(IPEndPoint endPoint)
     {
-        var endpoints = GetEndpointsWithout(endPoint);
-        var configInfo = NodesMyself(endPoint, new[] { ClusterInfoTag.NODEID, ClusterInfoTag.CONFIG_EPOCH });
+        IPEndPoint[] endpoints = GetEndpointsWithout(endPoint);
+        string[] configInfo = NodesMyself(endPoint, new[] { ClusterInfoTag.NODEID, ClusterInfoTag.CONFIG_EPOCH });
         while (true)
         {
             await Task.Delay(endpoints.Length * 100);
         retry:
-            foreach (var endpoint in endpoints)
+            foreach (IPEndPoint endpoint in endpoints)
             {
-                var _configInfo = NodesAll(endpoint, new[] { ClusterInfoTag.NODEID, ClusterInfoTag.CONFIG_EPOCH }, configInfo[0]);
+                List<string[]> _configInfo = NodesAll(endpoint, new[] { ClusterInfoTag.NODEID, ClusterInfoTag.CONFIG_EPOCH }, configInfo[0]);
                 if (_configInfo[0][0] == configInfo[1])
                     ThrowException($"WaitForEpochSync unexpected node id {_configInfo[0][0]} {configInfo[1]}");
 
-                var epoch = long.Parse(configInfo[1]);
-                var _epoch = long.Parse(_configInfo[0][1]);
+                long epoch = long.Parse(configInfo[1]);
+                long _epoch = long.Parse(_configInfo[0][1]);
                 if (_epoch < epoch)
                     goto retry;
             }
@@ -216,8 +216,8 @@ public partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(source);
-            var resp = server.Execute("cluster", "myid");
+            IServer server = redis.GetServer(source);
+            RedisResult resp = server.Execute("cluster", "myid");
             return (string)resp;
         }
         catch (Exception ex)
@@ -249,14 +249,14 @@ public partial class ClusterTestUtils
     private ClientClusterConfig GetClusterConfig(int primary_count, int node_count, List<(int, int)>[] slotRanges, ILogger logger)
     {
         ClientClusterConfig clusterConfig = new(node_count);
-        var endpoints = GetEndpoints();
+        IPEndPoint[] endpoints = GetEndpoints();
         int j = 0;
         for (int i = 0; i < node_count; i++)
         {
-            var nodeid = NodesMyself(endpoints[i], ClusterInfoTag.NODEID, logger: logger);
-            var hostname = NodesMyself(endpoints[i], ClusterInfoTag.ADDRESS, logger: logger).Split(',')[1];
+            string nodeid = NodesMyself(endpoints[i], ClusterInfoTag.NODEID, logger: logger);
+            string hostname = NodesMyself(endpoints[i], ClusterInfoTag.ADDRESS, logger: logger).Split(',')[1];
             bool isPrimary = i < primary_count;
-            var primaryId = isPrimary ? string.Empty : NodesMyself(endpoints[j], ClusterInfoTag.NODEID, logger: logger);
+            string primaryId = isPrimary ? string.Empty : NodesMyself(endpoints[j], ClusterInfoTag.NODEID, logger: logger);
             j = isPrimary ? 0 : (j + 1) % primary_count;
 
             clusterConfig.AddWorker(nodeid,
@@ -276,8 +276,8 @@ public partial class ClusterTestUtils
         if (!ccNode.NodeId.Equals(cNode.NodeId)) return false;
         if (ccNode.IsReplica != cNode.IsReplica) return false;
 
-        var a = ccNode.Slots.ToArray();
-        var b = cNode.Slots.ToArray();
+        SlotRange[] a = ccNode.Slots.ToArray();
+        SlotRange[] b = cNode.Slots.ToArray();
         if (a.Length != b.Length) return false;
 
         for (int i = 0; i < a.Length; i++)
@@ -293,20 +293,20 @@ public partial class ClusterTestUtils
 
     private void WaitForSync(ClientClusterConfig clusterConfig)
     {
-        var expectedConfig = clusterConfig.GetConfigInfo();
+        Dictionary<string, string> expectedConfig = clusterConfig.GetConfigInfo();
         while (true)
         {
         retry:
-            var servers = redis.GetServers();
-            foreach (var server in servers)
+            IServer[] servers = redis.GetServers();
+            foreach (IServer server in servers)
             {
                 int count = expectedConfig.Count;
-                var nodes = server.ClusterNodes()?.Nodes;
+                ICollection<ClusterNode> nodes = server.ClusterNodes()?.Nodes;
                 if (nodes != null)
                 {
-                    foreach (var node in nodes)
+                    foreach (ClusterNode node in nodes)
                     {
-                        if (expectedConfig.TryGetValue(node.NodeId, out var raw))
+                        if (expectedConfig.TryGetValue(node.NodeId, out string raw))
                         {
                             ClientClusterNode ccNode = new ClientClusterNode(raw.Trim());
                             if (NodesEqual(ccNode, node)) count--;
@@ -331,14 +331,14 @@ public partial class ClusterTestUtils
         List<(int, int)>[] customSlotRanges = null,
         ILogger logger = null)
     {
-        var endpoints = GetEndpoints();
-        var node_count = endpoints.Length;
+        IPEndPoint[] endpoints = GetEndpoints();
+        int node_count = endpoints.Length;
         primary_count = primary_count < 0 ? endpoints.Length : primary_count;
         replica_count = replica_count < 0 ? 0 : replica_count;
         Assert.AreEqual(node_count, primary_count + primary_count * replica_count, $"Error primary per replica misconfig mCount: {primary_count}, rCount:{replica_count}");
 
-        var slotRanges = customSlotRanges == null ? GetSlotRanges(primary_count) : customSlotRanges;
-        var clusterConfig = GetClusterConfig(primary_count, node_count, slotRanges, logger);
+        List<(int, int)>[] slotRanges = customSlotRanges == null ? GetSlotRanges(primary_count) : customSlotRanges;
+        ClientClusterConfig clusterConfig = GetClusterConfig(primary_count, node_count, slotRanges, logger);
 
         var shards = new List<ShardInfo>();
         var slots = new List<ushort>();
@@ -346,9 +346,9 @@ public partial class ClusterTestUtils
         // Assign slots to primaries
         for (int i = 0; i < slotRanges.Length; i++)
         {
-            foreach (var slotRange in slotRanges[i])
+            foreach ((int, int) slotRange in slotRanges[i])
             {
-                var endpoint = endpoints[i];
+                IPEndPoint endpoint = endpoints[i];
                 AddSlotsRange(endpoint, new List<(int, int)> { slotRange }, logger);
                 slots.AddRange(Enumerable.Range(slotRange.Item1, slotRange.Item2 - slotRange.Item1 + 1).Select(x => (ushort)x));
                 ShardInfo shardInfo = new()
@@ -376,7 +376,7 @@ public partial class ClusterTestUtils
             SetConfigEpoch(endpoints[i], i + 1, logger);
 
         //Initiate meet
-        var _firstEndpoint = endpoints[0];
+        IPEndPoint _firstEndpoint = endpoints[0];
         for (int i = 1; i < endpoints.Length; i++)
             Meet(_firstEndpoint, endpoints[i], logger);
 
@@ -389,8 +389,8 @@ public partial class ClusterTestUtils
             int j = 0;
             for (int i = primary_count; i < endpoints.Length; i++)
             {
-                var primaryId = GetLocalNodeId(j);
-                var replicaId = GetLocalNodeId(i);
+                string primaryId = GetLocalNodeId(j);
+                string replicaId = GetLocalNodeId(i);
 
                 // Wait until replica knows primary
                 WaitUntilNodeIdIsKnown(i, primaryId, logger);
@@ -399,16 +399,16 @@ public partial class ClusterTestUtils
                 // TryConnectToReplica to succeed for AOF sync
                 WaitUntilNodeIdIsKnown(j, replicaId, logger);
 
-                var primaryEndpoint = endpoints[i];
+                IPEndPoint primaryEndpoint = endpoints[i];
                 string resp = (string)ClusterReplicate(primaryEndpoint, primaryId, logger: logger);
                 {
-                    var msg = "";
+                    string msg = "";
                     for (int k = 0; k < endpoints.Length; k++)
                     {
-                        var ns = ClusterNodes(k, logger).Nodes;
+                        ICollection<ClusterNode> ns = ClusterNodes(k, logger).Nodes;
 
-                        var rawStr = $"[{k}]\n";
-                        foreach (var n in ns)
+                        string rawStr = $"[{k}]\n";
+                        foreach (ClusterNode n in ns)
                         {
                             rawStr += "\t" + n.Raw + "\n";
                         }
@@ -448,7 +448,7 @@ public partial class ClusterTestUtils
 
     public ITransaction CreateClusterTransaction()
     {
-        var db = redis.GetDatabase();
+        IDatabase db = redis.GetDatabase();
         return db.CreateTransaction();
     }
 
@@ -475,13 +475,13 @@ public partial class ClusterTestUtils
         RedisResult result = default;
         try
         {
-            var server = GetServer(nodeIndex);
+            IServer server = GetServer(nodeIndex);
 
-            var txnblockResp = (string)server.Execute("MULTI", new List<object>(), CommandFlags.NoRedirect);
+            string txnblockResp = (string)server.Execute("MULTI", new List<object>(), CommandFlags.NoRedirect);
             Assert.AreEqual(txnblockResp, "OK");
-            foreach (var cmd in commands)
+            foreach ((string, ICollection<object>) cmd in commands)
             {
-                var respCmd = (string)server.Execute(cmd.Item1, cmd.Item2, CommandFlags.NoRedirect);
+                string respCmd = (string)server.Execute(cmd.Item1, cmd.Item2, CommandFlags.NoRedirect);
                 Assert.AreEqual(respCmd, "QUEUED");
             }
 
@@ -489,27 +489,27 @@ public partial class ClusterTestUtils
         }
         catch (Exception ex)
         {
-            var tokens = ex.Message.Split(' ');
+            string[] tokens = ex.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
-                var address = tokens[5].Split(':')[0];
-                var port = int.Parse(tokens[5].Split(':')[1]);
-                var slot = int.Parse(tokens[8]);
-                var responseState = ResponseState.MOVED;
+                string address = tokens[5].Split(':')[0];
+                int port = int.Parse(tokens[5].Split(':')[1]);
+                int slot = int.Parse(tokens[8]);
+                ResponseState responseState = ResponseState.MOVED;
 
                 return new ClusterResponse(address, port, slot, responseState, RedisResult.Create(ex.Message, ResultType.Error));
             }
             else if (tokens.Length > 10 && tokens[0].Equals("Endpoint"))
             {
-                var address = tokens[1].Split(':')[0];
-                var port = int.Parse(tokens[1].Split(':')[1]);
-                var slot = int.Parse(tokens[4]);
-                var responseState = ResponseState.ASK;
+                string address = tokens[1].Split(':')[0];
+                int port = int.Parse(tokens[1].Split(':')[1]);
+                int slot = int.Parse(tokens[4]);
+                ResponseState responseState = ResponseState.ASK;
                 return new ClusterResponse(address, port, slot, responseState, RedisResult.Create(ex.Message, ResultType.Error));
             }
             else if (ex.Message.StartsWith("CLUSTERDOWN"))
             {
-                var responseState = ResponseState.CLUSTERDOWN;
+                ResponseState responseState = ResponseState.CLUSTERDOWN;
                 return new ClusterResponse("", -1, -1, responseState, RedisResult.Create(ex.Message, ResultType.Error));
             }
             logger?.LogError(ex, "Unexpected exception");
@@ -614,7 +614,7 @@ public unsafe partial class ClusterTestUtils
         {
             for (int i = 0; i < nodes.Count; i++)
             {
-                var j = nodes[i];
+                int j = nodes[i];
                 nodeIds[j] = NodesMyself((IPEndPoint)endpoints[j], ClusterInfoTag.NODEID, logger: logger);
             }
         }
@@ -628,13 +628,13 @@ public unsafe partial class ClusterTestUtils
         if (nodes != null)
         {
             endPoints = new EndPointCollection();
-            foreach (var nodeIndex in nodes)
+            foreach (int nodeIndex in nodes)
             {
                 var endpoint = (IPEndPoint)endpoints[nodeIndex];
                 endPoints.Add(endpoint.Address, endpoint.Port);
             }
         }
-        var connOpts = GetRedisConfig(endPoints);
+        ConfigurationOptions connOpts = GetRedisConfig(endPoints);
         InitMultiplexer(connOpts, textWriter, logger: logger);
         nodeIds = GetNodeIds(nodes, logger);
     }
@@ -696,7 +696,7 @@ public unsafe partial class ClusterTestUtils
     public List<int> RandomList(int count, int maxVal)
     {
         List<int> list = new List<int>();
-        var size = r.Next(1, count);
+        int size = r.Next(1, count);
         for (int i = 0; i < size; i++)
         {
             list.Add(r.Next(0, maxVal));
@@ -707,7 +707,7 @@ public unsafe partial class ClusterTestUtils
     public List<int> RandomHset(int count, int maxVal)
     {
         HashSet<int> hset = new HashSet<int>();
-        var size = r.Next(1, count);
+        int size = r.Next(1, count);
         for (int i = 0; i < size; i++)
         {
             hset.Add(r.Next(0, maxVal));
@@ -892,7 +892,7 @@ public unsafe partial class ClusterTestUtils
             port = node.Port;
             address = node.Address;
             slot = HashSlot(key);
-            var strValue = ParseRespToString(result, out values);
+            string strValue = ParseRespToString(result, out values);
             if (strValue != null)
                 value = Encoding.ASCII.GetBytes(strValue);
             return ResponseState.OK;
@@ -936,21 +936,21 @@ public unsafe partial class ClusterTestUtils
 
     public Dictionary<ushort, int> GetSlotPortMapFromNode(int nodeIndex, ILogger logger)
     {
-        var slots = GetOwnedSlotsFromNode(nodeIndex, logger);
+        List<int> slots = GetOwnedSlotsFromNode(nodeIndex, logger);
         int Port = ((IPEndPoint)endpoints[nodeIndex]).Port;
         return slots.Select(slot => new KeyValuePair<ushort, int>((ushort)slot, Port)).ToDictionary(x => x.Key, x => x.Value);
     }
 
     public Dictionary<ushort, int> GetSlotPortMapFromServer(int Port, ILogger logger)
     {
-        var endPoint = GetEndPointFromPort(Port);
-        var slots = GetOwnedSlotsFromNode(endPoint, logger);
+        IPEndPoint endPoint = GetEndPointFromPort(Port);
+        List<int> slots = GetOwnedSlotsFromNode(endPoint, logger);
         return slots.Select(slot => new KeyValuePair<ushort, int>((ushort)slot, Port)).ToDictionary(x => x.Key, x => x.Value);
     }
 
     public static Dictionary<ushort, int> MergeSlotPortMap(Dictionary<ushort, int> a, Dictionary<ushort, int> b)
     {
-        foreach (var pair in b)
+        foreach (KeyValuePair<ushort, int> pair in b)
         {
             Assert.IsTrue(!a.ContainsKey(pair.Key));
             a.Add(pair.Key, pair.Value);
@@ -962,8 +962,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var resp = server.Execute("cluster", "addslotsrange", $"{startSlot}", $"{endSlot}");
+            IServer server = redis.GetServer(endPoint);
+            RedisResult resp = server.Execute("cluster", "addslotsrange", $"{startSlot}", $"{endSlot}");
             Assert.AreEqual((string)resp, "OK");
         }
         catch (Exception ex)
@@ -978,7 +978,7 @@ public unsafe partial class ClusterTestUtils
     public RedisResult AddSlotsRange(IPEndPoint endPoint, List<(int, int)> ranges, ILogger logger)
     {
         ICollection<object> args = new List<object>() { "addslotsrange" };
-        foreach (var range in ranges)
+        foreach ((int, int) range in ranges)
         {
             args.Add(range.Item1);
             args.Add(range.Item2);
@@ -993,8 +993,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var resp = server.Execute("cluster", "set-config-epoch", $"{epoch}");
+            IServer server = redis.GetServer(endPoint);
+            RedisResult resp = server.Execute("cluster", "set-config-epoch", $"{epoch}");
             Assert.AreEqual((string)resp, "OK");
         }
         catch (Exception ex)
@@ -1011,8 +1011,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var resp = server.Execute("cluster", "bumpepoch");
+            IServer server = redis.GetServer(endPoint);
+            RedisResult resp = server.Execute("cluster", "bumpepoch");
             Assert.AreEqual((string)resp, "OK");
             if (waitForSync)
                 WaitForEpochSync(endPoint).GetAwaiter().GetResult();
@@ -1028,16 +1028,16 @@ public unsafe partial class ClusterTestUtils
     {
         if (nodes == null)
             nodes = Enumerable.Range(0, endpoints.Count).ToList();
-        var fromNodeConfig = ClusterNodes(fromNode, logger: logger);
+        ClusterConfiguration fromNodeConfig = ClusterNodes(fromNode, logger: logger);
         while (true)
         {
         retry:
-            foreach (var nodeIndex in nodes)
+            foreach (int nodeIndex in nodes)
             {
                 if (nodeIndex == fromNode)
                     continue;
 
-                var nodeConfig = ClusterNodes(nodeIndex, logger: logger);
+                ClusterConfiguration nodeConfig = ClusterNodes(nodeIndex, logger: logger);
                 if (!MatchConfig(fromNodeConfig, nodeConfig))
                 {
                     BackOff();
@@ -1050,10 +1050,10 @@ public unsafe partial class ClusterTestUtils
 
     public static bool MatchConfig(ClusterConfiguration configA, ClusterConfiguration configB)
     {
-        foreach (var nodeA in configA.Nodes)
+        foreach (ClusterNode nodeA in configA.Nodes)
         {
             bool found = false;
-            foreach (var nodeB in configB.Nodes)
+            foreach (ClusterNode nodeB in configB.Nodes)
             {
 
                 if (!nodeA.NodeId.Equals(nodeB.NodeId))
@@ -1072,8 +1072,8 @@ public unsafe partial class ClusterTestUtils
                     return false;
 
                 //Check if slot info is same
-                var slotsA = nodeA.Slots.ToArray();
-                var slotsB = nodeB.Slots.ToArray();
+                SlotRange[] slotsA = nodeA.Slots.ToArray();
+                SlotRange[] slotsB = nodeB.Slots.ToArray();
 
                 if (slotsA.Length != slotsB.Length)
                     return false;
@@ -1101,7 +1101,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(source);
+            IServer server = redis.GetServer(source);
             server.Execute("auth", username, password);
         }
         catch (Exception ex)
@@ -1118,8 +1118,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(source);
-            var resp = server.Execute("cluster", "meet", $"{target.Address}", $"{target.Port}");
+            IServer server = redis.GetServer(source);
+            RedisResult resp = server.Execute("cluster", "meet", $"{target.Address}", $"{target.Port}");
             Assert.AreEqual((string)resp, "OK");
         }
         catch (Exception ex)
@@ -1136,8 +1136,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(source);
-            var resp = server.Execute("cluster", "banlist");
+            IServer server = redis.GetServer(source);
+            RedisResult resp = server.Execute("cluster", "banlist");
             return (string[])resp;
         }
         catch (Exception ex)
@@ -1151,8 +1151,8 @@ public unsafe partial class ClusterTestUtils
     public static List<string> Nodes(ref LightClientRequest lightClientRequest)
     {
         var result = lightClientRequest.SendCommand($"cluster nodes");
-        var strResult = Encoding.ASCII.GetString(result);
-        var data = strResult.Split('\n');
+        string strResult = Encoding.ASCII.GetString(result);
+        string[] data = strResult.Split('\n');
         List<string> nodeConfig = new();
         for (int i = 1; ; i++)
         {
@@ -1172,9 +1172,9 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var strResult = (string)server.Execute("cluster", "nodes");
-            var data = strResult.Split('\n');
+            IServer server = redis.GetServer(endPoint);
+            string strResult = (string)server.Execute("cluster", "nodes");
+            string[] data = strResult.Split('\n');
             List<string> nodeConfig = new();
 
             for (int i = 0; ; i++)
@@ -1202,17 +1202,17 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var strResult = (string)server.Execute("cluster", "nodes");
-            var data = strResult.Split('\n');
+            IServer server = redis.GetServer(endPoint);
+            string strResult = (string)server.Execute("cluster", "nodes");
+            string[] data = strResult.Split('\n');
             Dictionary<string, Dictionary<ClusterInfoTag, string>> nodeConfig = new();
 
             for (int i = 0; i < data.Length; i++)
             {
                 if (data[i] == "") continue;
 
-                var properties = data[i].Split(' ');
-                var nodeid = properties[0].Trim();
+                string[] properties = data[i].Split(' ');
+                string nodeid = properties[0].Trim();
                 nodeConfig.Add(nodeid, new());
 
                 nodeConfig[nodeid].Add(ClusterInfoTag.ADDRESS, properties[(int)ClusterInfoTag.ADDRESS].Trim());
@@ -1238,19 +1238,19 @@ public unsafe partial class ClusterTestUtils
 
     public string GetConfigEpochOfNodeFromNodeIndex(int nodeIndex, string nodeidOfConfigEpoch, ILogger logger)
     {
-        var dict = NodesDict(nodeIndex, logger);
+        Dictionary<string, Dictionary<ClusterInfoTag, string>> dict = NodesDict(nodeIndex, logger);
         return dict[nodeidOfConfigEpoch][ClusterInfoTag.CONFIG_EPOCH];
     }
 
     public long GetConfigEpoch(int nodeIndex, ILogger logger)
     {
-        var dict = NodesDict(nodeIndex, logger);
+        Dictionary<string, Dictionary<ClusterInfoTag, string>> dict = NodesDict(nodeIndex, logger);
         return long.Parse(dict[nodeIds[nodeIndex]][ClusterInfoTag.CONFIG_EPOCH]);
     }
 
     public void WaitAll(ILogger logger)
     {
-        foreach (var endPoint in endpoints)
+        foreach (EndPoint endPoint in endpoints)
         {
             while (Nodes((IPEndPoint)endPoint, logger).Count != endpoints.Count)
             {
@@ -1261,15 +1261,15 @@ public unsafe partial class ClusterTestUtils
 
     public void WaitUntilNodeIsKnown(int nodeIndex, int toKnowNode, ILogger logger = null)
     {
-        var toKnowNodeId = ClusterNodes(toKnowNode).Nodes.First().NodeId;
+        string toKnowNodeId = ClusterNodes(toKnowNode).Nodes.First().NodeId;
         WaitUntilNodeIdIsKnown(nodeIndex, toKnowNodeId, logger);
     }
 
     public void WaitUntilNodeIsKnownByAllNodes(int nodeIndex, ILogger logger = null)
     {
-        var c = ClusterNodes(nodeIndex, logger);
-        var nodeId = c.Nodes.First().NodeId;
-        var retry = 0;
+        ClusterConfiguration c = ClusterNodes(nodeIndex, logger);
+        string nodeId = c.Nodes.First().NodeId;
+        int retry = 0;
         while (true)
         {
             var configs = new List<ClusterConfiguration>();
@@ -1279,9 +1279,9 @@ public unsafe partial class ClusterTestUtils
                 configs.Add(ClusterNodes(i, logger));
             }
 
-            var count = 0;
-            foreach (var config in configs)
-                foreach (var node in config.Nodes)
+            int count = 0;
+            foreach (ClusterConfiguration config in configs)
+                foreach (ClusterNode node in config.Nodes)
                     if (nodeId.Equals(node.NodeId)) count++;
 
             if (count == endpoints.Count - 1) break;
@@ -1294,10 +1294,10 @@ public unsafe partial class ClusterTestUtils
     {
         while (true)
         {
-            var nodes = ClusterNodes(nodeIndex, logger).Nodes;
+            ICollection<ClusterNode> nodes = ClusterNodes(nodeIndex, logger).Nodes;
 
-            var found = false;
-            foreach (var node in nodes)
+            bool found = false;
+            foreach (ClusterNode node in nodes)
                 if (node.NodeId.Equals(nodeId))
                     found = true;
             if (found) break;
@@ -1307,7 +1307,7 @@ public unsafe partial class ClusterTestUtils
 
     public int CountKeysInSlot(int slot, ILogger logger = null)
     {
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         RedisResult result;
         try
         {
@@ -1328,7 +1328,7 @@ public unsafe partial class ClusterTestUtils
 
     public int CountKeysInSlot(int nodeIndex, int slot, ILogger logger = null)
     {
-        var server = redis.GetServer((IPEndPoint)endpoints[nodeIndex]);
+        IServer server = redis.GetServer((IPEndPoint)endpoints[nodeIndex]);
         RedisResult resp;
         try
         {
@@ -1344,7 +1344,7 @@ public unsafe partial class ClusterTestUtils
 
     public RedisResult[] GetKeysInSlot(int slot, int count, ILogger logger = null)
     {
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         RedisResult result = null;
         try
         {
@@ -1367,8 +1367,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer((IPEndPoint)endpoints[nodeIndex]);
-            var resp = server.Execute("cluster", "getkeysinslot", $"{slot}", $"{keyCount}");
+            IServer server = redis.GetServer((IPEndPoint)endpoints[nodeIndex]);
+            RedisResult resp = server.Execute("cluster", "getkeysinslot", $"{slot}", $"{keyCount}");
 
             return ((RedisResult[])resp).Select(x => Encoding.ASCII.GetBytes((string)x)).ToList();
         }
@@ -1388,15 +1388,15 @@ public unsafe partial class ClusterTestUtils
 
     public List<int> GetOwnedSlotsFromNode(IPEndPoint endPoint, ILogger logger)
     {
-        var nodeConfig = Nodes(endPoint, logger);
-        var nodeInfo = nodeConfig[0].Split(' ');
+        List<string> nodeConfig = Nodes(endPoint, logger);
+        string[] nodeInfo = nodeConfig[0].Split(' ');
 
         var slots = new List<int>();
         if (nodeInfo.Length >= (int)ClusterInfoTag.SLOT)
         {
             for (int i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
             {
-                var range = nodeInfo[i].Split('-');
+                string[] range = nodeInfo[i].Split('-');
                 ushort slotStart = ushort.Parse(range[0]);
                 ushort slotEnd;
                 if (range.Length > 1)
@@ -1413,27 +1413,27 @@ public unsafe partial class ClusterTestUtils
 
     public static string GetNodeIdFromNode(ref LightClientRequest sourceNode)
     {
-        var nodeConfig = Nodes(ref sourceNode);
-        var nodeInfo = nodeConfig[0].Split(' ');
+        List<string> nodeConfig = Nodes(ref sourceNode);
+        string[] nodeInfo = nodeConfig[0].Split(' ');
         return nodeInfo[(int)ClusterInfoTag.NODEID];
     }
 
     public string GetNodeIdFromNode(int nodeIndex, ILogger logger)
     {
-        var nodeConfig = Nodes(nodeIndex, logger: logger);
-        var nodeInfo = nodeConfig[0].Split(' ');
+        List<string> nodeConfig = Nodes(nodeIndex, logger: logger);
+        string[] nodeInfo = nodeConfig[0].Split(' ');
         return nodeInfo[(int)ClusterInfoTag.NODEID];
     }
 
     public int GetMovedAddress(int port, ushort slot, ILogger logger)
     {
-        var nodeConfig = Nodes(GetEndPointFromPort(port), logger);
-        foreach (var configLine in nodeConfig)
+        List<string> nodeConfig = Nodes(GetEndPointFromPort(port), logger);
+        foreach (string configLine in nodeConfig)
         {
-            var nodeInfo = configLine.Split(' ');
+            string[] nodeInfo = configLine.Split(' ');
             for (int i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
             {
-                var range = nodeInfo[i].Split('-');
+                string[] range = nodeInfo[i].Split('-');
                 ushort slotStart = ushort.Parse(range[0]);
                 ushort slotEnd;
                 if (range.Length > 1)
@@ -1441,7 +1441,7 @@ public unsafe partial class ClusterTestUtils
                     slotEnd = ushort.Parse(range[1]);
                     if (slot >= slotStart && slot <= slotEnd)
                     {
-                        var portStr = nodeInfo[(int)ClusterInfoTag.ADDRESS].Split('@')[0].Split(':')[1];
+                        string portStr = nodeInfo[(int)ClusterInfoTag.ADDRESS].Split('@')[0].Split(':')[1];
                         return int.Parse(portStr);
                     }
                 }
@@ -1449,7 +1449,7 @@ public unsafe partial class ClusterTestUtils
                 {
                     if (slot == slotStart)
                     {
-                        var portStr = nodeInfo[(int)ClusterInfoTag.ADDRESS].Split('@')[0].Split(':')[1];
+                        string portStr = nodeInfo[(int)ClusterInfoTag.ADDRESS].Split('@')[0].Split(':')[1];
                         return int.Parse(portStr);
                     }
                 }
@@ -1472,12 +1472,12 @@ public unsafe partial class ClusterTestUtils
     {
         for (int j = 0; j < connections.Length; j++)
         {
-            var nodeConfig = Nodes(ref connections[j])[0];
-            var nodeInfo = nodeConfig.Split(' ');
-            for (var i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
+            string nodeConfig = Nodes(ref connections[j])[0];
+            string[] nodeInfo = nodeConfig.Split(' ');
+            for (int i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
             {
-                var range = nodeInfo[i].Split('-');
-                var slotStart = ushort.Parse(range[0]);
+                string[] range = nodeInfo[i].Split('-');
+                ushort slotStart = ushort.Parse(range[0]);
                 int slotEnd;
                 if (range.Length > 1)
                 {
@@ -1501,14 +1501,14 @@ public unsafe partial class ClusterTestUtils
 
     public int GetSourceNodeIndexFromSlot(ushort slot, ILogger logger)
     {
-        for (var j = 0; j < endpoints.Count; j++)
+        for (int j = 0; j < endpoints.Count; j++)
         {
-            var nodeConfig = Nodes((IPEndPoint)endpoints[j], logger)[0];
-            var nodeInfo = nodeConfig.Split(' ');
-            for (var i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
+            string nodeConfig = Nodes((IPEndPoint)endpoints[j], logger)[0];
+            string[] nodeInfo = nodeConfig.Split(' ');
+            for (int i = (int)ClusterInfoTag.SLOT; i < nodeInfo.Length; i++)
             {
-                var range = nodeInfo[i].Split('-');
-                var slotStart = ushort.Parse(range[0]);
+                string[] range = nodeInfo[i].Split('-');
+                ushort slotStart = ushort.Parse(range[0]);
                 ushort slotEnd;
                 if (range.Length > 1)
                 {
@@ -1532,8 +1532,8 @@ public unsafe partial class ClusterTestUtils
 
     public static void GetEndPointFromResponse(byte[] resp, out int slot, out string address, out int port)
     {
-        var strResp = Encoding.ASCII.GetString(resp);
-        var data = strResp.Split(' ');
+        string strResp = Encoding.ASCII.GetString(resp);
+        string[] data = strResp.Split(' ');
         slot = int.Parse(data[1]);
         address = data[2].Split(':')[0];
         port = int.Parse(data[2].Split(':')[1].Split('\r')[0]);
@@ -1542,7 +1542,7 @@ public unsafe partial class ClusterTestUtils
     public string AddDelSlots(int nodeIndex, List<int> slots, bool addslot, ILogger logger = null)
     {
         var endPoint = ((IPEndPoint)endpoints[nodeIndex]);
-        var server = redis.GetServer(endPoint);
+        IServer server = redis.GetServer(endPoint);
         var objects = slots.Select(x => (object)x).ToList();
         objects.Insert(0, addslot ? "addslots" : "delslots");
 
@@ -1561,7 +1561,7 @@ public unsafe partial class ClusterTestUtils
     public string AddDelSlotsRange(int nodeIndex, List<(int, int)> ranges, bool addslot, ILogger logger = null)
     {
         var endPoint = (IPEndPoint)endpoints[nodeIndex];
-        var server = redis.GetServer(endPoint);
+        IServer server = redis.GetServer(endPoint);
         var objects = ranges.SelectMany(x => new List<object> { x.Item1, x.Item2 }).ToList();
         objects.Insert(0, addslot ? "addslotsrange" : "delslotsrange");
 
@@ -1585,7 +1585,7 @@ public unsafe partial class ClusterTestUtils
 
     public string SetSlot(int nodeIndex, int slot, string state, string nodeid, ILogger logger = null)
     {
-        var server = GetServer(nodeIndex);
+        IServer server = GetServer(nodeIndex);
         try
         {
             return (string)server.Execute("cluster", "setslot", $"{slot}", $"{state}", $"{nodeid}");
@@ -1605,15 +1605,15 @@ public unsafe partial class ClusterTestUtils
 
     public void MigrateSlots(int sourcePort, int targetPort, List<int> slots, bool range = false, string authPassword = null, ILogger logger = null)
     {
-        var sourceEndPoint = GetEndPointFromPort(sourcePort);
-        var targetEndPoint = GetEndPointFromPort(targetPort);
+        IPEndPoint sourceEndPoint = GetEndPointFromPort(sourcePort);
+        IPEndPoint targetEndPoint = GetEndPointFromPort(targetPort);
         MigrateSlots(sourceEndPoint, targetEndPoint, slots, range, authPassword, logger);
     }
 
     public void MigrateSlots(IPEndPoint source, IPEndPoint target, List<int> slots, bool range = false, string authPassword = null, ILogger logger = null)
     {
         // MIGRATE host port <key | ""> destination-db timeout [COPY] [REPLACE] [[AUTH password] | [AUTH2 username password]] [KEYS key [key...]]
-        var server = redis.GetServer(source);
+        IServer server = redis.GetServer(source);
         ICollection<object> args = new List<object>
         {
             target.Address.ToString(),
@@ -1630,12 +1630,12 @@ public unsafe partial class ClusterTestUtils
         }
         args.Add(range ? "SLOTSRANGE" : "SLOTS");
 
-        foreach (var slot in slots)
+        foreach (int slot in slots)
             args.Add(slot);
 
         try
         {
-            var resp = server.Execute("migrate", args);
+            RedisResult resp = server.Execute("migrate", args);
             Assert.AreEqual((string)resp, "OK");
         }
         catch (Exception ex)
@@ -1647,7 +1647,7 @@ public unsafe partial class ClusterTestUtils
 
     public void MigrateKeys(IPEndPoint source, IPEndPoint target, List<byte[]> keys, ILogger logger)
     {
-        var server = redis.GetServer(source);
+        IServer server = redis.GetServer(source);
         ICollection<object> args = new List<object>()
         {
             target.Address.ToString(),
@@ -1657,13 +1657,13 @@ public unsafe partial class ClusterTestUtils
             -1,
             "KEYS"
         };
-        foreach (var key in keys)
+        foreach (byte[] key in keys)
             args.Add(Encoding.ASCII.GetString(key));
 
-        var elapsed = Stopwatch.GetTimestamp();
+        long elapsed = Stopwatch.GetTimestamp();
         try
         {
-            var resp = server.Execute("migrate", args);
+            RedisResult resp = server.Execute("migrate", args);
             Assert.AreEqual((string)resp, "OK");
         }
         catch (Exception ex)
@@ -1677,10 +1677,10 @@ public unsafe partial class ClusterTestUtils
 
     public int MigrateTasks(IPEndPoint endPoint, ILogger logger)
     {
-        var server = redis.GetServer(endPoint);
+        IServer server = redis.GetServer(endPoint);
         try
         {
-            var result = server.Execute("cluster", "MTASKS");
+            RedisResult result = server.Execute("cluster", "MTASKS");
             return int.Parse((string)result);
         }
         catch (Exception ex)
@@ -1698,7 +1698,7 @@ public unsafe partial class ClusterTestUtils
 
     public void WaitForMigrationCleanup(ILogger logger)
     {
-        foreach (var endPoint in endpoints)
+        foreach (EndPoint endPoint in endpoints)
             WaitForMigrationCleanup((IPEndPoint)endPoint, logger);
     }
 
@@ -1715,8 +1715,8 @@ public unsafe partial class ClusterTestUtils
             for (int i = 0; i < endpoints.Count; i++)
             {
                 var endPoint = ((IPEndPoint)endpoints[i]);
-                var server = redis.GetServer(endPoint);
-                var resp = server.Execute("PING");
+                IServer server = redis.GetServer(endPoint);
+                RedisResult resp = server.Execute("PING");
                 while (((string)resp) != "PONG")
                     resp = server.Execute("PING");
             }
@@ -1736,17 +1736,17 @@ public unsafe partial class ClusterTestUtils
         List<SlotItem> slotItems = new();
         try
         {
-            var server = redis.GetServer(endPoint);
-            var result = server.Execute("cluster", "slots");
+            IServer server = redis.GetServer(endPoint);
+            RedisResult result = server.Execute("cluster", "slots");
             if (result.IsNull)
                 return null;
 
             var slotRanges = (RedisResult[])result;
-            foreach (var slotRange in slotRanges)
+            foreach (RedisResult slotRange in slotRanges)
             {
                 SlotItem slotItem = default;
                 var info = (RedisResult[])slotRange;
-                var (startSlot, endSlot) = ((int)info[0], (int)info[1]);
+                (int startSlot, int endSlot) = ((int)info[0], (int)info[1]);
                 Assert.IsTrue(startSlot >= 0 && startSlot <= 16383);
                 Assert.IsTrue(endSlot >= 0 && endSlot <= 16383);
                 slotItem.startSlot = (ushort)startSlot;
@@ -1756,11 +1756,11 @@ public unsafe partial class ClusterTestUtils
                 for (int i = 2; i < info.Length; i++)
                 {
                     var nodeInfo = (RedisResult[])info[i];
-                    var address = (string)nodeInfo[0];
-                    var port = (int)nodeInfo[1];
-                    var nodeid = (string)nodeInfo[2];
+                    string address = (string)nodeInfo[0];
+                    int port = (int)nodeInfo[1];
+                    string nodeid = (string)nodeInfo[2];
                     var hostNameInfo = ((RedisResult[])nodeInfo[3]);
-                    var hostname = (string)hostNameInfo[1];
+                    string hostname = (string)hostNameInfo[1];
 
                     slotItem.nnInfo[i - 2].address = address;
                     slotItem.nnInfo[i - 2].port = port;
@@ -1787,9 +1787,9 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var args = async ? new List<object>() { "replicate", primaryNodeId, "async" } : new List<object>() { "replicate", primaryNodeId };
-            var result = (string)server.Execute("cluster", args);
+            IServer server = redis.GetServer(endPoint);
+            List<object> args = async ? new List<object>() { "replicate", primaryNodeId, "async" } : new List<object>() { "replicate", primaryNodeId };
+            string result = (string)server.Execute("cluster", args);
             Assert.AreEqual("OK", result);
             return result;
         }
@@ -1811,9 +1811,9 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             List<object> args = option == null ? ["failover"] : ["failover", option];
-            var result = (string)server.Execute("cluster", args);
+            string result = (string)server.Execute("cluster", args);
             Assert.AreEqual("OK", result);
             return result;
         }
@@ -1833,12 +1833,12 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(replicaNode);
+            IServer server = redis.GetServer(replicaNode);
             var args = new List<object>() {
                 primaryNode == null ? "NO" : primaryNode.Address.ToString(),
                 primaryNode == null ? "ONE" : primaryNode.Port.ToString()
                 };
-            var result = (string)server.Execute("replicaof", args);
+            string result = (string)server.Execute("replicaof", args);
             Assert.AreEqual("OK", result);
             return result;
         }
@@ -1860,13 +1860,13 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             var args = new List<object>() {
                 "forget",
                 Encoding.ASCII.GetBytes(nodeId),
                 Encoding.ASCII.GetBytes(expirySeconds.ToString())
             };
-            var result = (string)server.Execute("cluster", args);
+            string result = (string)server.Execute("cluster", args);
             Assert.AreEqual("OK", result);
             return result;
         }
@@ -1885,14 +1885,14 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             var args = new List<object>() {
                 "reset",
                 soft ? "soft" : "hard",
                 expiry.ToString()
             };
 
-            var result = (string)server.Execute("cluster", args);
+            string result = (string)server.Execute("cluster", args);
             Assert.AreEqual("OK", result);
             return result;
         }
@@ -1911,7 +1911,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             return server.ClusterNodes();
         }
         catch (Exception ex)
@@ -1926,7 +1926,7 @@ public unsafe partial class ClusterTestUtils
     {
         while (true)
         {
-            var config = ClusterNodes(syncOnNodeIndex, logger);
+            ClusterConfiguration config = ClusterNodes(syncOnNodeIndex, logger);
             if (config.Nodes.Count == count)
                 break;
             BackOff();
@@ -1935,7 +1935,7 @@ public unsafe partial class ClusterTestUtils
     retrySync:
         var configNodes = ClusterNodes(syncOnNodeIndex, logger).Nodes.ToList();
         configNodes.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
-        for (var i = 0; i < endpoints.Count; i++)
+        for (int i = 0; i < endpoints.Count; i++)
         {
             if (i == syncOnNodeIndex) continue;
             var otherConfigNodes = ClusterNodes(i, logger).Nodes.ToList();
@@ -1943,7 +1943,7 @@ public unsafe partial class ClusterTestUtils
 
             if (configNodes.Count != otherConfigNodes.Count) goto retrySync;
 
-            for (var j = 0; j < configNodes.Count; j++)
+            for (int j = 0; j < configNodes.Count; j++)
             {
                 if (!configNodes[j].Equals(otherConfigNodes[j]))
                 {
@@ -1961,14 +1961,14 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var result = server.Execute("cluster", "shards");
+            IServer server = redis.GetServer(endPoint);
+            RedisResult result = server.Execute("cluster", "shards");
             if (result.IsNull)
                 return null;
             List<ShardInfo> shards = [];
 
             var shardArray = (RedisResult[])result;
-            foreach (var shard in shardArray.Select(v => (RedisResult[])v))
+            foreach (RedisResult[] shard in shardArray.Select(v => (RedisResult[])v))
             {
                 Assert.AreEqual(4, shard.Length);
                 var slots = (RedisResult[])shard[1];
@@ -1978,11 +1978,11 @@ public unsafe partial class ClusterTestUtils
                 {
                     slotRanges = []
                 };
-                for (var i = 0; i < slots.Length; i += 2)
+                for (int i = 0; i < slots.Length; i += 2)
                     shardInfo.slotRanges.Add(((int)slots[i], (int)slots[i + 1]));
 
                 shardInfo.nodes = [];
-                foreach (var node in nodes.Select(v => (RedisResult[])v))
+                foreach (RedisResult[] node in nodes.Select(v => (RedisResult[])v))
                 {
                     Assert.AreEqual(12, node.Length);
                     NodeInfo nodeInfo = new()
@@ -2012,7 +2012,7 @@ public unsafe partial class ClusterTestUtils
 
     public ResponseState SetKey(int nodeIndex, byte[] key, byte[] value, out int slot, out string address, out int port, bool asking = false, int expiry = -1, ILogger logger = null)
     {
-        var server = GetServer(nodeIndex);
+        IServer server = GetServer(nodeIndex);
         slot = -1;
         address = GetEndPoint(nodeIndex).Address.ToString();
         port = GetEndPoint(nodeIndex).Port;
@@ -2023,21 +2023,21 @@ public unsafe partial class ClusterTestUtils
             if (expiry == -1)
             {
                 ICollection<object> args = new List<object>() { (object)key, (object)value };
-                var resp = (string)server.Execute("set", args, CommandFlags.NoRedirect);
+                string resp = (string)server.Execute("set", args, CommandFlags.NoRedirect);
                 Assert.AreEqual("OK", resp);
                 return ResponseState.OK;
             }
             else
             {
                 ICollection<object> args = new List<object>() { (object)key, (object)expiry, (object)value };
-                var resp = (string)server.Execute("setex", args, CommandFlags.NoRedirect);
+                string resp = (string)server.Execute("setex", args, CommandFlags.NoRedirect);
                 Assert.AreEqual("OK", resp);
                 return ResponseState.OK;
             }
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -2072,7 +2072,7 @@ public unsafe partial class ClusterTestUtils
 
     public string GetKey(int nodeIndex, byte[] key, out int slot, out string address, out int port, out ResponseState responseState, bool asking = false, ILogger logger = null)
     {
-        var endPoint = GetEndPoint(nodeIndex);
+        IPEndPoint endPoint = GetEndPoint(nodeIndex);
         return GetKey(endPoint, key, out slot, out address, out port, out responseState, asking, logger);
     }
 
@@ -2082,7 +2082,7 @@ public unsafe partial class ClusterTestUtils
         address = endPoint.Address.ToString();
         port = endPoint.Port;
         responseState = ResponseState.NONE;
-        var server = GetServer(endPoint);
+        IServer server = GetServer(endPoint);
         string result;
         if (asking)
             server.Execute("ASKING");
@@ -2096,7 +2096,7 @@ public unsafe partial class ClusterTestUtils
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -2137,10 +2137,10 @@ public unsafe partial class ClusterTestUtils
         slot = -1;
         address = null;
         port = -1;
-        var server = GetServer(nodeIndex);
+        IServer server = GetServer(nodeIndex);
 
         ICollection<object> args = new List<object>();
-        for (var i = 0; i < keys.Count; i++)
+        for (int i = 0; i < keys.Count; i++)
         {
             args.Add(keys[i]);
             args.Add(values[i]);
@@ -2152,7 +2152,7 @@ public unsafe partial class ClusterTestUtils
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -2183,7 +2183,7 @@ public unsafe partial class ClusterTestUtils
         slot = -1;
         address = null;
         port = -1;
-        var server = GetServer(nodeIndex);
+        IServer server = GetServer(nodeIndex);
 
         ICollection<object> args = new List<object>();
         for (int i = 0; i < keys.Count; i++)
@@ -2193,13 +2193,13 @@ public unsafe partial class ClusterTestUtils
 
         try
         {
-            var result = server.Execute("mget", args, CommandFlags.NoRedirect);
+            RedisResult result = server.Execute("mget", args, CommandFlags.NoRedirect);
             getResult = ((RedisResult[])result).Select(x => (byte[])x).ToList();
             return "OK";
         }
         catch (Exception e)
         {
-            var tokens = e.Message.Split(' ');
+            string[] tokens = e.Message.Split(' ');
             if (tokens.Length > 10 && tokens[2].Equals("MOVED"))
             {
                 address = tokens[5].Split(':')[0];
@@ -2229,12 +2229,12 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = GetServer(nodeIndex);
+            IServer server = GetServer(nodeIndex);
             var args = new List<object>() { key };
 
             for (int i = elements.Count - 1; i >= 0; i--) args.Add(elements[i]);
 
-            var result = (int)server.Execute("LPUSH", args);
+            int result = (int)server.Execute("LPUSH", args);
             Assert.AreEqual(elements.Count, result);
         }
         catch (Exception ex)
@@ -2248,10 +2248,10 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = GetServer(nodeIndex);
+            IServer server = GetServer(nodeIndex);
             var args = new List<object>() { key, "0", "-1" };
 
-            var result = server.Execute("LRANGE", args);
+            RedisResult result = server.Execute("LRANGE", args);
             return ((int[])result).ToList();
         }
         catch (Exception ex)
@@ -2266,12 +2266,12 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = GetServer(nodeIndex);
+            IServer server = GetServer(nodeIndex);
             var args = new List<object>() { key };
 
             for (int i = elements.Count - 1; i >= 0; i--) args.Add(elements[i]);
 
-            var result = (int)server.Execute("SADD", args);
+            int result = (int)server.Execute("SADD", args);
             Assert.AreEqual(elements.Count, result);
         }
         catch (Exception ex)
@@ -2285,10 +2285,10 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = GetServer(nodeIndex);
+            IServer server = GetServer(nodeIndex);
             var args = new List<object>() { key };
 
-            var result = server.Execute("SMEMBERS", args);
+            RedisResult result = server.Execute("SMEMBERS", args);
             return ((int[])result).ToList();
         }
         catch (Exception ex)
@@ -2306,7 +2306,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var storeCurrentSafeAofAddress = GetReplicationInfo(endPoint, new ReplicationInfoItem[] { ReplicationInfoItem.STORE_CURRENT_SAFE_AOF_ADDRESS }, logger)[0].Item2;
+            string storeCurrentSafeAofAddress = GetReplicationInfo(endPoint, new ReplicationInfoItem[] { ReplicationInfoItem.STORE_CURRENT_SAFE_AOF_ADDRESS }, logger)[0].Item2;
             return long.Parse(storeCurrentSafeAofAddress);
         }
         catch (Exception ex)
@@ -2324,7 +2324,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var storeRecoveredSafeAofAddress = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.STORE_RECOVERED_SAFE_AOF_ADDRESS }, logger)[0].Item2;
+            string storeRecoveredSafeAofAddress = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.STORE_RECOVERED_SAFE_AOF_ADDRESS }, logger)[0].Item2;
             return long.Parse(storeRecoveredSafeAofAddress);
         }
         catch (Exception ex)
@@ -2342,7 +2342,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var objectStoreCurrentSafeAofAddress = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.OBJECT_STORE_CURRENT_SAFE_AOF_ADDRESS }, logger)[0].Item2;
+            string objectStoreCurrentSafeAofAddress = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.OBJECT_STORE_CURRENT_SAFE_AOF_ADDRESS }, logger)[0].Item2;
             return long.Parse(objectStoreCurrentSafeAofAddress);
         }
         catch (Exception ex)
@@ -2360,7 +2360,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var objectStoreRecoveredSafeAofAddress = GetReplicationInfo(endPoint, new ReplicationInfoItem[] { ReplicationInfoItem.OBJECT_STORE_RECOVERED_SAFE_AOF_ADDRESS }, logger)[0].Item2;
+            string objectStoreRecoveredSafeAofAddress = GetReplicationInfo(endPoint, new ReplicationInfoItem[] { ReplicationInfoItem.OBJECT_STORE_RECOVERED_SAFE_AOF_ADDRESS }, logger)[0].Item2;
             return long.Parse(objectStoreRecoveredSafeAofAddress);
         }
         catch (Exception ex)
@@ -2378,7 +2378,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var replicaCount = GetReplicationInfo(endPoint, [ReplicationInfoItem.CONNECTED_REPLICAS], logger)[0].Item2;
+            string replicaCount = GetReplicationInfo(endPoint, [ReplicationInfoItem.CONNECTED_REPLICAS], logger)[0].Item2;
             return long.Parse(replicaCount);
         }
         catch (Exception ex)
@@ -2413,7 +2413,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var offset = GetReplicationInfo(endPoint, [ReplicationInfoItem.REPLICATION_OFFSET], logger)[0].Item2;
+            string offset = GetReplicationInfo(endPoint, [ReplicationInfoItem.REPLICATION_OFFSET], logger)[0].Item2;
             return long.Parse(offset);
         }
         catch (Exception ex)
@@ -2431,7 +2431,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var sync = GetReplicationInfo(endPoint, [ReplicationInfoItem.PRIMARY_SYNC_IN_PROGRESS], logger)[0].Item2;
+            string sync = GetReplicationInfo(endPoint, [ReplicationInfoItem.PRIMARY_SYNC_IN_PROGRESS], logger)[0].Item2;
             return bool.Parse(sync);
         }
         catch (Exception ex)
@@ -2449,7 +2449,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var failoverState = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.PRIMARY_FAILOVER_STATE }, logger)[0].Item2;
+            string failoverState = GetReplicationInfo(endPoint, new[] { ReplicationInfoItem.PRIMARY_FAILOVER_STATE }, logger)[0].Item2;
             return failoverState;
         }
         catch (Exception ex)
@@ -2465,11 +2465,11 @@ public unsafe partial class ClusterTestUtils
 
     private List<(ReplicationInfoItem, string)> GetReplicationInfo(IPEndPoint endPoint, ReplicationInfoItem[] infoItems, ILogger logger = null)
     {
-        var server = redis.GetServer(endPoint);
+        IServer server = redis.GetServer(endPoint);
         try
         {
             //var result = (string)server.Execute("info", "replication");
-            var result = server.InfoRawAsync("replication").Result;
+            string result = server.InfoRawAsync("replication").Result;
             return ProcessReplicationInfo(result, infoItems);
         }
         catch (Exception ex)
@@ -2483,11 +2483,11 @@ public unsafe partial class ClusterTestUtils
     private static List<(ReplicationInfoItem, string)> ProcessReplicationInfo(string infoSection, ReplicationInfoItem[] infoItem)
     {
         var items = new List<(ReplicationInfoItem, string)>();
-        var data = infoSection.Split('\n');
+        string[] data = infoSection.Split('\n');
         string startsWith;
-        foreach (var ii in infoItem)
+        foreach (ReplicationInfoItem ii in infoItem)
         {
-            foreach (var item in data)
+            foreach (string item in data)
             {
                 switch (ii)
                 {
@@ -2547,7 +2547,7 @@ public unsafe partial class ClusterTestUtils
         while (true)
         {
             primaryReplicationOffset = GetReplicationOffset(primaryIndex, logger);
-            var secondaryReplicationOffset1 = GetReplicationOffset(secondaryIndex, logger);
+            long secondaryReplicationOffset1 = GetReplicationOffset(secondaryIndex, logger);
             if (primaryReplicationOffset == secondaryReplicationOffset1)
                 break;
             BackOff();
@@ -2560,13 +2560,13 @@ public unsafe partial class ClusterTestUtils
         while (true)
         {
 
-            var items = GetReplicationInfo(primaryIndex, [ReplicationInfoItem.ROLE, ReplicationInfoItem.CONNECTED_REPLICAS], logger);
-            var role = items[0].Item2;
+            List<(ReplicationInfoItem, string)> items = GetReplicationInfo(primaryIndex, [ReplicationInfoItem.ROLE, ReplicationInfoItem.CONNECTED_REPLICAS], logger);
+            string role = items[0].Item2;
             Assert.AreEqual(role, "master");
 
             try
             {
-                var count = long.Parse(items[1].Item2);
+                long count = long.Parse(items[1].Item2);
                 if (count == minCount) break;
             }
             catch (Exception ex)
@@ -2583,13 +2583,13 @@ public unsafe partial class ClusterTestUtils
     {
         while (true)
         {
-            var items = GetReplicationInfo(nodeIndex, [ReplicationInfoItem.ROLE, ReplicationInfoItem.PRIMARY_SYNC_IN_PROGRESS], logger);
-            var role = items[0].Item2;
+            List<(ReplicationInfoItem, string)> items = GetReplicationInfo(nodeIndex, [ReplicationInfoItem.ROLE, ReplicationInfoItem.PRIMARY_SYNC_IN_PROGRESS], logger);
+            string role = items[0].Item2;
             if (role.Equals("slave"))
             {
                 try
                 {
-                    var syncInProgress = bool.Parse(items[1].Item2);
+                    bool syncInProgress = bool.Parse(items[1].Item2);
                     if (!syncInProgress) break;
                 }
                 catch (Exception ex)
@@ -2606,7 +2606,7 @@ public unsafe partial class ClusterTestUtils
     {
         while (true)
         {
-            var failoverState = GetFailoverState(nodeIndex, logger);
+            string failoverState = GetFailoverState(nodeIndex, logger);
             if (failoverState.Equals("no-failover")) break;
             BackOff();
         }
@@ -2617,10 +2617,10 @@ public unsafe partial class ClusterTestUtils
 
     public void Checkpoint(IPEndPoint endPoint, ILogger logger = null)
     {
-        var server = redis.GetServer(endPoint);
+        IServer server = redis.GetServer(endPoint);
         try
         {
-            var previousSaveTicks = (long)server.Execute("LASTSAVE");
+            long previousSaveTicks = (long)server.Execute("LASTSAVE");
 #pragma warning disable CS0618 // Type or member is obsolete
             server.Save(SaveType.ForegroundSave);
 #pragma warning restore CS0618 // Type or member is obsolete
@@ -2647,7 +2647,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             return server.LastSave();
         }
         catch (Exception ex)
@@ -2665,10 +2665,10 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             while (true)
             {
-                var lastSaveTime = server.LastSave();
+                DateTime lastSaveTime = server.LastSave();
                 if (lastSaveTime >= time)
                     break;
                 BackOff();
@@ -2688,7 +2688,7 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
+            IServer server = redis.GetServer(endPoint);
             return (int)server.Execute("incrby", key, value);
         }
         catch (Exception ex)
@@ -2706,8 +2706,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var resp = (string)server.Execute("config", "set", parameter, value);
+            IServer server = redis.GetServer(endPoint);
+            string resp = (string)server.Execute("config", "set", parameter, value);
             Assert.AreEqual("OK", resp);
         }
         catch (Exception ex)
@@ -2732,8 +2732,8 @@ public unsafe partial class ClusterTestUtils
                 args.Add(value[i]);
             }
 
-            var server = redis.GetServer(endPoint);
-            var resp = (string)server.Execute("config", args);
+            IServer server = redis.GetServer(endPoint);
+            string resp = (string)server.Execute("config", args);
             Assert.AreEqual("OK", resp);
         }
         catch (Exception ex)
@@ -2750,8 +2750,8 @@ public unsafe partial class ClusterTestUtils
     {
         try
         {
-            var server = redis.GetServer(endPoint);
-            var resp = (string)server.Execute("ACL", "LOAD");
+            IServer server = redis.GetServer(endPoint);
+            string resp = (string)server.Execute("ACL", "LOAD");
             Assert.AreEqual("OK", resp);
         }
         catch (Exception ex)

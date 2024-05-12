@@ -552,7 +552,7 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// <inheritdoc/>
     public Status RMW(ref Key key, ref Input input, ref Output output, ref RMWOptions rmwOptions, out RecordMetadata recordMetadata, Context userContext = default, long serialNo = 0)
     {
-        var keyHash = rmwOptions.KeyHash ?? store.comparer.GetHashCode64(ref key);
+        long keyHash = rmwOptions.KeyHash ?? store.comparer.GetHashCode64(ref key);
         return RMW(ref key, keyHash, ref input, ref output, out recordMetadata, userContext, serialNo);
     }
 
@@ -741,10 +741,10 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     /// <returns></returns>
     public IEnumerable<long> GetPendingRequests()
     {
-        foreach (var kvp in ctx.prevCtx?.ioPendingRequests)
+        foreach (KeyValuePair<long, TsavoriteKV<Key, Value>.PendingContext<Input, Output, Context>> kvp in ctx.prevCtx?.ioPendingRequests)
             yield return kvp.Value.serialNum;
 
-        foreach (var kvp in ctx.ioPendingRequests)
+        foreach (KeyValuePair<long, TsavoriteKV<Key, Value>.PendingContext<Input, Output, Context>> kvp in ctx.ioPendingRequests)
             yield return kvp.Value.serialNum;
     }
 
@@ -756,7 +756,7 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     public bool CompletePendingWithOutputs(out CompletedOutputIterator<Key, Value, Input, Output, Context> completedOutputs, bool wait = false, bool spinWaitForCommit = false)
     {
         InitializeCompletedOutputs();
-        var result = CompletePending(true, wait, spinWaitForCommit);
+        bool result = CompletePending(true, wait, spinWaitForCommit);
         completedOutputs = this.completedOutputs;
         return result;
     }
@@ -769,7 +769,7 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
         InitializeCompletedOutputs();
-        var result = UnsafeCompletePending(tsavoriteSession, true, wait, spinWaitForCommit);
+        bool result = UnsafeCompletePending(tsavoriteSession, true, wait, spinWaitForCommit);
         completedOutputs = this.completedOutputs;
         return result;
     }
@@ -798,8 +798,8 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
     internal bool UnsafeCompletePending<TsavoriteSession>(TsavoriteSession tsavoriteSession, bool getOutputs, bool wait, bool spinWaitForCommit)
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
     {
-        var requestedOutputs = getOutputs ? completedOutputs : default;
-        var result = store.InternalCompletePending(tsavoriteSession, wait, requestedOutputs);
+        CompletedOutputIterator<Key, Value, Input, Output, Context> requestedOutputs = getOutputs ? completedOutputs : default;
+        bool result = store.InternalCompletePending(tsavoriteSession, wait, requestedOutputs);
         if (spinWaitForCommit)
         {
             if (!wait)
@@ -917,7 +917,7 @@ public sealed class ClientSession<Key, Value, Input, Output, Context, Functions>
         // Complete all pending sync operations on session
         await CompletePendingAsync(token: token).ConfigureAwait(false);
 
-        var task = store.CheckpointTask;
+        Task<LinkedCheckpointInfo> task = store.CheckpointTask;
         CommitPoint localCommitPoint = LatestCommitPoint;
         if (localCommitPoint.UntilSerialNo >= ctx.serialNum && localCommitPoint.ExcludedSerialNos?.Count == 0)
             return;

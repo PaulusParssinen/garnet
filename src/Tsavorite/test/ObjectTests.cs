@@ -43,7 +43,7 @@ internal class ObjectTests
     [Category("Smoke")]
     public void ObjectInMemWriteRead()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         MyKey key1 = new() { key = 9999999 };
         MyValue value = new() { value = 23 };
@@ -60,7 +60,7 @@ internal class ObjectTests
     [Category("TsavoriteKV")]
     public void ObjectInMemWriteRead2()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         MyKey key1 = new() { key = 8999998 };
         MyInput input1 = new() { value = 23 };
@@ -87,7 +87,7 @@ internal class ObjectTests
     [Category("Smoke")]
     public void ObjectDiskWriteRead()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         for (int i = 0; i < 2000; i++)
         {
@@ -100,11 +100,11 @@ internal class ObjectTests
         MyKey key2 = new() { key = 23 };
         MyInput input = new();
         MyOutput g1 = new();
-        var status = session.Read(ref key2, ref input, ref g1, Empty.Default, 0);
+        Status status = session.Read(ref key2, ref input, ref g1, Empty.Default, 0);
 
         if (status.IsPending)
         {
-            session.CompletePendingWithOutputs(out var outputs, wait: true);
+            session.CompletePendingWithOutputs(out CompletedOutputIterator<MyKey, MyValue, MyInput, MyOutput, Empty> outputs, wait: true);
             (status, g1) = GetSinglePendingResult(outputs);
         }
 
@@ -164,22 +164,22 @@ internal class ObjectTests
     [Category("TsavoriteKV")]
     public async Task ReadAsyncObjectDiskWriteRead()
     {
-        using var session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
+        using ClientSession<MyKey, MyValue, MyInput, MyOutput, Empty, MyFunctions> session = store.NewSession<MyInput, MyOutput, Empty, MyFunctions>(new MyFunctions());
 
         for (int i = 0; i < 2000; i++)
         {
             var key = new MyKey { key = i };
             var value = new MyValue { value = i };
 
-            var r = await session.UpsertAsync(ref key, ref value);
+            TsavoriteKV<MyKey, MyValue>.UpsertAsyncResult<MyInput, MyOutput, Empty> r = await session.UpsertAsync(ref key, ref value);
             while (r.Status.IsPending)
                 r = await r.CompleteAsync(); // test async version of Upsert completion
         }
 
         var key1 = new MyKey { key = 1989 };
         var input = new MyInput();
-        var readResult = await session.ReadAsync(ref key1, ref input, Empty.Default);
-        var result = readResult.Complete();
+        TsavoriteKV<MyKey, MyValue>.ReadAsyncResult<MyInput, MyOutput, Empty> readResult = await session.ReadAsync(ref key1, ref input, Empty.Default);
+        (Status status, MyOutput output) result = readResult.Complete();
         Assert.IsTrue(result.status.Found);
         Assert.AreEqual(1989, result.output.value.value);
 
@@ -201,7 +201,7 @@ internal class ObjectTests
         {
             var key = new MyKey { key = i };
             input = new MyInput { value = 1 };
-            var r = await session.RMWAsync(ref key, ref input, Empty.Default);
+            TsavoriteKV<MyKey, MyValue>.RmwAsyncResult<MyInput, MyOutput, Empty> r = await session.RMWAsync(ref key, ref input, Empty.Default);
             while (r.Status.IsPending)
             {
                 r = await r.CompleteAsync(); // test async version of RMW completion

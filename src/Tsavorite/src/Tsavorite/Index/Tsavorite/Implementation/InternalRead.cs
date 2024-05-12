@@ -261,7 +261,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
         }
 
         // We're in-memory, so it is safe to get the address now.
-        var physicalAddress = hlog.GetPhysicalAddress(readAtAddress);
+        long physicalAddress = hlog.GetPhysicalAddress(readAtAddress);
 
         // See if we are doing Transient-only locking (LockTable with a non-LockableContext).
         bool doTransientLocking = DoTransientLocking && !tsavoriteSession.IsManualLocking;
@@ -318,7 +318,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // are merely hints for bucket locking.
             if (RevivificationManager.UseFreeRecordPool)
             {
-                var bucketIndex = OverflowBucketLockTable<Key, Value>.GetBucketIndex(pendingContext.keyHash, this);
+                long bucketIndex = OverflowBucketLockTable<Key, Value>.GetBucketIndex(pendingContext.keyHash, this);
                 if (bucketIndex != stackCtx.hei.bucketIndex)
                 {
                     // If the key and/or keyHash were passed in, they do not match what is in the record so ignore them on the retry.

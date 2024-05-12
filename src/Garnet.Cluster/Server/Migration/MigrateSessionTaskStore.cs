@@ -30,7 +30,7 @@ internal sealed class MigrateSessionTaskStore
             _disposed = true;
             for (int i = 0; i < numSessions; i++)
             {
-                var s = sessions[i];
+                MigrateSession s = sessions[i];
                 s.Dispose();
             }
             numSessions = 0;
@@ -59,7 +59,7 @@ internal sealed class MigrateSessionTaskStore
         // Shrink the array if it got too big but avoid often shrinking/growing
         if (numSessions > 0 && (numSessions << 2) < sessions.Length)
         {
-            var oldSessions = sessions;
+            MigrateSession[] oldSessions = sessions;
             var _sessions = new MigrateSession[sessions.Length >> 1];
             Array.Copy(sessions, _sessions, sessions.Length >> 2);
             sessions = _sessions;
@@ -142,7 +142,7 @@ internal sealed class MigrateSessionTaskStore
             if (_disposed) return true;
             for (int i = 0; i < numSessions; i++)
             {
-                var s = sessions[i];
+                MigrateSession s = sessions[i];
 
                 if (s == mSession)
                 {

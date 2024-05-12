@@ -22,8 +22,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         networkSender.GetResponseObject();
 
         byte* d = networkSender.GetResponseObjectHead();
-        var dend = networkSender.GetResponseObjectTail();
-        var dcurr = d; // reserve space for size
+        byte* dend = networkSender.GetResponseObjectTail();
+        byte* dcurr = d; // reserve space for size
 
         while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
             SendAndReset();
@@ -44,8 +44,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         networkSender.GetResponseObject();
 
         byte* d = networkSender.GetResponseObjectHead();
-        var dend = networkSender.GetResponseObjectTail();
-        var dcurr = d; // reserve space for size
+        byte* dend = networkSender.GetResponseObjectTail();
+        byte* dcurr = d; // reserve space for size
 
         RespWriteUtils.WriteArrayLength(4, ref dcurr, dend);
 
@@ -207,14 +207,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
 
             List<byte[]> channels = subscribeBroker.ListAllSubscriptions(this);
-            foreach (var channel in channels)
+            foreach (byte[] channel in channels)
             {
                 while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
                     SendAndReset();
                 while (!RespWriteUtils.WriteBulkString("unsubscribe"u8, ref dcurr, dend))
                     SendAndReset();
 
-                var channelsize = channel.Length - sizeof(int);
+                int channelsize = channel.Length - sizeof(int);
                 fixed (byte* channelPtr = &channel[0])
                 {
                     while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))
@@ -298,14 +298,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             }
 
             List<byte[]> channels = subscribeBroker.ListAllPSubscriptions(this);
-            foreach (var channel in channels)
+            foreach (byte[] channel in channels)
             {
                 while (!RespWriteUtils.WriteArrayLength(3, ref dcurr, dend))
                     SendAndReset();
                 while (!RespWriteUtils.WriteBulkString("punsubscribe"u8, ref dcurr, dend))
                     SendAndReset();
 
-                var channelsize = channel.Length - sizeof(int);
+                int channelsize = channel.Length - sizeof(int);
                 fixed (byte* channelPtr = &channel[0])
                 {
                     while (!RespWriteUtils.WriteBulkString(new Span<byte>(channelPtr + sizeof(int), channelsize), ref dcurr, dend))

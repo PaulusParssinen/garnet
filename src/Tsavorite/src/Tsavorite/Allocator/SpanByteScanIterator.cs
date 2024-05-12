@@ -93,7 +93,7 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
     private bool InitializeGetNext(out long headAddress, out long currentPage)
     {
         currentAddress = nextAddress;
-        var stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
+        long stopAddress = endAddress < hlog.GetTailAddress() ? endAddress : hlog.GetTailAddress();
         if (currentAddress >= stopAddress)
         {
             headAddress = currentPage = 0;
@@ -137,7 +137,7 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
 
         while (totalSizes <= offset)
         {
-            var (_, allocatedSize) = hlog.GetRecordSize(physicalAddress);
+            (int _, int allocatedSize) = hlog.GetRecordSize(physicalAddress);
             if (totalSizes + allocatedSize > offset)
                 break;
             totalSizes += allocatedSize;
@@ -160,7 +160,7 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
             if (!InitializeGetNext(out long headAddress, out long currentPage))
                 return false;
 
-            var offset = currentAddress & hlog.PageSizeMask;
+            long offset = currentAddress & hlog.PageSizeMask;
             long physicalAddress = GetPhysicalAddress(currentAddress, headAddress, currentPage, offset);
             int recordSize = hlog.GetRecordSize(physicalAddress).Item2;
 
@@ -238,10 +238,10 @@ public sealed class SpanByteScanIterator : ScanIteratorBase, ITsavoriteScanItera
             }
 
             epoch?.Resume();
-            var headAddress = hlog.HeadAddress;
+            long headAddress = hlog.HeadAddress;
 
-            var currentPage = currentAddress >> hlog.LogPageSizeBits;
-            var offset = currentAddress & hlog.PageSizeMask;
+            long currentPage = currentAddress >> hlog.LogPageSizeBits;
+            long offset = currentAddress & hlog.PageSizeMask;
 
             long physicalAddress = GetPhysicalAddress(currentAddress, headAddress, currentPage, offset);
 

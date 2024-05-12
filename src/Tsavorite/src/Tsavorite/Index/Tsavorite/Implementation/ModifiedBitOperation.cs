@@ -24,8 +24,8 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
 
         #region Trace back for record in in-memory HybridLog
         FindTag(ref hei);
-        var logicalAddress = hei.Address;
-        var physicalAddress = hlog.GetPhysicalAddress(logicalAddress);
+        long logicalAddress = hei.Address;
+        long physicalAddress = hlog.GetPhysicalAddress(logicalAddress);
 
         if (logicalAddress >= hlog.HeadAddress)
         {

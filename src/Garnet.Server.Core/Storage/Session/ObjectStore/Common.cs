@@ -15,13 +15,13 @@ sealed partial class StorageSession : IDisposable
     unsafe GarnetStatus RMWObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _input = input.SpanByte;
+        SpanByte _input = input.SpanByte;
 
         output = new();
         var _output = new GarnetObjectStoreOutput { spanByteAndMemory = new(SpanByte.FromPinnedPointer((byte*)Unsafe.AsPointer(ref output), ObjectOutputHeader.Size)) };
 
         // Perform RMW on object store
-        var status = objectStoreContext.RMW(ref key, ref _input, ref _output);
+        Status status = objectStoreContext.RMW(ref key, ref _input, ref _output);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref _output, ref objectStoreContext);
@@ -48,10 +48,10 @@ sealed partial class StorageSession : IDisposable
     GarnetStatus RMWObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _input = input.SpanByte;
+        SpanByte _input = input.SpanByte;
 
         // Perform RMW on object store
-        var status = objectStoreContext.RMW(ref key, ref _input, ref outputFooter);
+        Status status = objectStoreContext.RMW(ref key, ref _input, ref outputFooter);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref outputFooter, ref objectStoreContext);
@@ -75,10 +75,10 @@ sealed partial class StorageSession : IDisposable
     GarnetStatus ReadObjectStoreOperationWithOutput<TObjectContext>(byte[] key, ArgSlice input, ref TObjectContext objectStoreContext, ref GarnetObjectStoreOutput outputFooter)
         where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _input = input.SpanByte;
+        SpanByte _input = input.SpanByte;
 
         // Perform read on object store
-        var status = objectStoreContext.Read(ref key, ref _input, ref outputFooter);
+        Status status = objectStoreContext.Read(ref key, ref _input, ref outputFooter);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref outputFooter, ref objectStoreContext);
@@ -105,14 +105,14 @@ sealed partial class StorageSession : IDisposable
         byte* element = null;
         int len = 0;
 
-        var outputSpan = outputFooter.spanByteAndMemory.IsSpanByte ?
+        ReadOnlySpan<byte> outputSpan = outputFooter.spanByteAndMemory.IsSpanByte ?
                          outputFooter.spanByteAndMemory.SpanByte.AsReadOnlySpan() : outputFooter.spanByteAndMemory.AsMemoryReadOnlySpan();
 
         try
         {
             fixed (byte* outputPtr = outputSpan)
             {
-                var refPtr = outputPtr;
+                byte* refPtr = outputPtr;
 
                 if (*refPtr == '-')
                 {
@@ -124,7 +124,7 @@ sealed partial class StorageSession : IDisposable
                     if (isScanOutput)
                     {
                         // Read the first two elements
-                        if (!RespReadUtils.ReadArrayLength(out var outerArraySize, ref refPtr, outputPtr + outputSpan.Length))
+                        if (!RespReadUtils.ReadArrayLength(out int outerArraySize, ref refPtr, outputPtr + outputSpan.Length))
                             return default;
 
                         element = null;
@@ -135,7 +135,7 @@ sealed partial class StorageSession : IDisposable
                     }
 
                     // Get the number of elements
-                    if (!RespReadUtils.ReadArrayLength(out var arraySize, ref refPtr, outputPtr + outputSpan.Length))
+                    if (!RespReadUtils.ReadArrayLength(out int arraySize, ref refPtr, outputPtr + outputSpan.Length))
                         return default;
 
                     // Create the argslice[]
@@ -186,13 +186,13 @@ sealed partial class StorageSession : IDisposable
     unsafe GarnetStatus ReadObjectStoreOperation<TObjectContext>(byte[] key, ArgSlice input, out ObjectOutputHeader output, ref TObjectContext objectStoreContext)
     where TObjectContext : ITsavoriteContext<byte[], IGarnetObject, SpanByte, GarnetObjectStoreOutput, long>
     {
-        var _input = input.SpanByte;
+        SpanByte _input = input.SpanByte;
 
         output = new();
         var _output = new GarnetObjectStoreOutput { spanByteAndMemory = new(SpanByte.FromPinnedPointer((byte*)Unsafe.AsPointer(ref output), ObjectOutputHeader.Size)) };
 
         // Perform RMW on object store
-        var status = objectStoreContext.Read(ref key, ref _input, ref _output);
+        Status status = objectStoreContext.Read(ref key, ref _input, ref _output);
 
         if (status.IsPending)
             CompletePendingForObjectStoreSession(ref status, ref _output, ref objectStoreContext);

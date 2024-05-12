@@ -26,9 +26,9 @@ sealed class WriteWithExpiryTxn : CustomTransactionProcedure
     public override void Main<TGarnetApi>(TGarnetApi api, ArgSlice input, ref MemoryResult<byte> output)
     {
         int offset = 0;
-        var key = GetNextArg(input, ref offset);
-        var value = GetNextArg(input, ref offset);
-        var expiryMs = GetNextArg(input, ref offset);
+        ArgSlice key = GetNextArg(input, ref offset);
+        ArgSlice value = GetNextArg(input, ref offset);
+        ArgSlice expiryMs = GetNextArg(input, ref offset);
 
         api.SETEX(key, value, expiryMs);
         WriteSimpleString(ref output, "SUCCESS");

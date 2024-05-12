@@ -39,7 +39,7 @@ public class ClusterManagementTests
         context.CreateConnection();
         _ = context.clusterTestUtils.SimpleSetupCluster(customSlotRanges: slotRanges, logger: context.logger);
 
-        var slotsResult = context.clusterTestUtils.ClusterSlots(0, context.logger);
+        List<SlotItem> slotsResult = context.clusterTestUtils.ClusterSlots(0, context.logger);
         Assert.IsTrue(slotsResult.Count == 1);
         Assert.AreEqual(startSlot, slotsResult[0].startSlot);
         Assert.AreEqual(endSlot, slotsResult[0].endSlot);
@@ -61,24 +61,24 @@ public class ClusterManagementTests
         slotRanges[2] = [(782, 978), (7345, 11819)];
         _ = context.clusterTestUtils.SimpleSetupCluster(customSlotRanges: slotRanges, logger: context.logger);
 
-        var slotsResult = context.clusterTestUtils.ClusterSlots(0, context.logger);
+        List<SlotItem> slotsResult = context.clusterTestUtils.ClusterSlots(0, context.logger);
         while (slotsResult.Count < 6)
             slotsResult = context.clusterTestUtils.ClusterSlots(0, context.logger);
         Assert.AreEqual(6, slotsResult.Count);
 
         List<(int, (int, int))>[] origSlotRanges = new List<(int, (int, int))>[3];
-        for (var i = 0; i < slotRanges.Length; i++)
+        for (int i = 0; i < slotRanges.Length; i++)
         {
             origSlotRanges[i] = new List<(int, (int, int))>();
-            for (var j = 0; j < slotRanges[i].Count; j++)
+            for (int j = 0; j < slotRanges[i].Count; j++)
                 origSlotRanges[i].Add((i, slotRanges[i][j]));
         }
         var ranges = origSlotRanges.SelectMany(x => x).OrderBy(x => x.Item2.Item1).ToList();
         Assert.IsTrue(slotsResult.Count == ranges.Count);
-        for (var i = 0; i < slotsResult.Count; i++)
+        for (int i = 0; i < slotsResult.Count; i++)
         {
-            var origRange = ranges[i];
-            var retRange = slotsResult[i];
+            (int, (int, int)) origRange = ranges[i];
+            SlotItem retRange = slotsResult[i];
             Assert.AreEqual(origRange.Item2.Item1, retRange.startSlot);
             Assert.AreEqual(origRange.Item2.Item2, retRange.endSlot);
             Assert.IsTrue(retRange.nnInfo.Length == 1);
@@ -92,15 +92,15 @@ public class ClusterManagementTests
     [Test, Order(3)]
     public void ClusterForgetTest()
     {
-        var node_count = 4;
+        int node_count = 4;
         context.CreateInstances(node_count);
         context.CreateConnection();
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(node_count, 0, logger: context.logger);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(node_count, 0, logger: context.logger);
 
-        var nodeIds = context.clusterTestUtils.GetNodeIds(logger: context.logger);
+        string[] nodeIds = context.clusterTestUtils.GetNodeIds(logger: context.logger);
 
         // Forget node0
-        for (var i = 1; i < node_count; i++)
+        for (int i = 1; i < node_count; i++)
         {
             // Issue forget node i to node 0 for 30 seconds
             _ = context.clusterTestUtils.ClusterForget(0, nodeIds[i], 30, context.logger);
@@ -110,39 +110,39 @@ public class ClusterManagementTests
 
         // Retrieve config for nodes 1 to i-1
         List<ClusterConfiguration> configs = new();
-        for (var i = 1; i < node_count; i++)
+        for (int i = 1; i < node_count; i++)
             configs.Add(context.clusterTestUtils.ClusterNodes(i, context.logger));
 
         // Check if indeed nodes 1 to i-1 have forgotten node 0
-        foreach (var config in configs)
-            foreach (var node in config.Nodes)
+        foreach (ClusterConfiguration config in configs)
+            foreach (ClusterNode node in config.Nodes)
                 Assert.AreNotEqual(nodeIds[0], node.NodeId, "node 0 node forgotten");
     }
 
     [Test, Order(4)]
     public void ClusterResetTest()
     {
-        var node_count = 4;
+        int node_count = 4;
         context.CreateInstances(node_count);
         context.CreateConnection();
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(node_count, 0, logger: context.logger);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(node_count, 0, logger: context.logger);
 
         // Get slot ranges for node 0
-        var config = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var slots = config.Nodes.First().Slots;
+        ClusterConfiguration config = context.clusterTestUtils.ClusterNodes(0, context.logger);
+        IList<SlotRange> slots = config.Nodes.First().Slots;
         List<(int, int)> slotRanges = new();
-        foreach (var slot in slots)
+        foreach (SlotRange slot in slots)
             slotRanges.Add((slot.From, slot.To));
 
-        var nodeIds = context.clusterTestUtils.GetNodeIds(logger: context.logger);
+        string[] nodeIds = context.clusterTestUtils.GetNodeIds(logger: context.logger);
         // Issue forget of node 0 to nodes 1 to i-1
-        for (var i = 1; i < node_count; i++)
+        for (int i = 1; i < node_count; i++)
             _ = context.clusterTestUtils.ClusterForget(i, nodeIds[0], 10, context.logger);
 
         try
         {
             // Add data to server
-            var resp = context.clusterTestUtils.GetServer(0).Execute("SET", "wxz", "1234");
+            RedisResult resp = context.clusterTestUtils.GetServer(0).Execute("SET", "wxz", "1234");
             Assert.AreEqual("OK", (string)resp);
 
             resp = context.clusterTestUtils.GetServer(0).Execute("GET", "wxz");
@@ -156,7 +156,7 @@ public class ClusterManagementTests
         // Hard reset node state. clean db data and cluster config
         _ = context.clusterTestUtils.ClusterReset(0, soft: false, 10, context.logger);
         config = context.clusterTestUtils.ClusterNodes(0, context.logger);
-        var node = config.Nodes.First();
+        ClusterNode node = config.Nodes.First();
 
         // Assert node 0 does not know anything about the cluster
         Assert.AreEqual(1, config.Nodes.Count);
@@ -169,7 +169,7 @@ public class ClusterManagementTests
         try
         {
             // Check DB was flushed due to hard reset
-            var resp = context.clusterTestUtils.GetServer(0).Execute("GET", "wxz");
+            RedisResult resp = context.clusterTestUtils.GetServer(0).Execute("GET", "wxz");
             Assert.IsTrue(resp.IsNull, "DB not flushed after HARD reset");
 
             // Add data to server
@@ -195,12 +195,12 @@ public class ClusterManagementTests
     //[Category("CLUSTER")]
     public void ClusterRestartNodeDropGossip()
     {
-        var logger = context.loggerFactory.CreateLogger("ClusterRestartNodeDropGossip");
+        ILogger logger = context.loggerFactory.CreateLogger("ClusterRestartNodeDropGossip");
         context.CreateInstances(defaultShards);
         context.CreateConnection();
-        var (_, _) = context.clusterTestUtils.SimpleSetupCluster(logger: logger);
+        (List<ShardInfo> _, List<ushort> _) = context.clusterTestUtils.SimpleSetupCluster(logger: logger);
 
-        var restartingNode = 2;
+        int restartingNode = 2;
         // Dispose node and delete data
         context.nodes[restartingNode].Dispose(deleteDir: true);
 
@@ -216,10 +216,10 @@ public class ClusterManagementTests
         context.CreateConnection();
 
         Thread.Sleep(5000);
-        for (var i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++)
         {
-            var config = context.clusterTestUtils.ClusterNodes(restartingNode, logger: logger);
-            var knownNodes = config.Nodes.ToArray();
+            ClusterConfiguration config = context.clusterTestUtils.ClusterNodes(restartingNode, logger: logger);
+            ClusterNode[] knownNodes = config.Nodes.ToArray();
             Assert.AreEqual(knownNodes.Length, 1);
             Thread.Sleep(1000);
         }

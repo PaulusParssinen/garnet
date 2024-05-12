@@ -211,7 +211,7 @@ public static unsafe class RespWriteUtils
     /// </summary>
     public static bool WriteBulkString(ReadOnlySpan<byte> item, ref byte* curr, byte* end)
     {
-        var itemDigits = NumUtils.NumDigits(item.Length);
+        int itemDigits = NumUtils.NumDigits(item.Length);
         int totalLen = 1 + itemDigits + 2 + item.Length + 2;
         if (totalLen > (int)(end - curr))
             return false;
@@ -230,7 +230,7 @@ public static unsafe class RespWriteUtils
     /// </summary>
     public static bool WriteAsciiBulkString(ReadOnlySpan<char> chars, ref byte* curr, byte* end)
     {
-        var itemDigits = NumUtils.NumDigits(chars.Length);
+        int itemDigits = NumUtils.NumDigits(chars.Length);
         int totalLen = 1 + itemDigits + 2 + chars.Length + 2;
         if (totalLen > (int)(end - curr))
             return false;
@@ -252,7 +252,7 @@ public static unsafe class RespWriteUtils
         // Calculate the amount of bytes it takes to encoded the UTF16 string as UTF8
         int encodedByteCount = Encoding.UTF8.GetByteCount(chars);
 
-        var itemDigits = NumUtils.NumDigits(encodedByteCount);
+        int itemDigits = NumUtils.NumDigits(encodedByteCount);
         int totalLen = 1 + itemDigits + 2 + encodedByteCount + 2;
         if (totalLen > (int)(end - curr))
             return false;

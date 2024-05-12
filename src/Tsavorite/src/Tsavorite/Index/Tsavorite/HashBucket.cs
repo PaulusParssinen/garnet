@@ -91,7 +91,7 @@ internal unsafe struct HashBucket
         }
 
         // Wait for readers to drain. Another session may hold an SLock on this bucket and need an epoch refresh to unlock, so limit this to avoid deadlock.
-        for (var ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
+        for (int ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
         {
             if ((entry_word & kSharedLatchBitMask) == 0)
                 return true;
@@ -129,7 +129,7 @@ internal unsafe struct HashBucket
         }
 
         // Wait for readers to drain. Another session may hold an SLock on this bucket and need an epoch refresh to unlock, so limit this to avoid deadlock.
-        for (var ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
+        for (int ii = 0; ii < Constants.kMaxReaderLockDrainSpins; ++ii)
         {
             if ((entry_word & kSharedLatchBitMask) == 0)
                 return true;

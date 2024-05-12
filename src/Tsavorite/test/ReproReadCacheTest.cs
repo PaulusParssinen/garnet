@@ -24,9 +24,9 @@ internal class RandomReadCacheTests
 
         public override bool SingleReader(ref SpanByte key, ref SpanByte input, ref SpanByte value, ref SpanByteAndMemory dst, ref ReadInfo readInfo)
         {
-            var keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
-            var inputString = new string(MemoryMarshal.Cast<byte, char>(input.AsReadOnlySpan()));
-            var valueString = new string(MemoryMarshal.Cast<byte, char>(value.AsReadOnlySpan()));
+            string keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
+            string inputString = new string(MemoryMarshal.Cast<byte, char>(input.AsReadOnlySpan()));
+            string valueString = new string(MemoryMarshal.Cast<byte, char>(value.AsReadOnlySpan()));
             Assert.AreEqual(long.Parse(keyString) * 2, long.Parse(valueString));
             Assert.AreEqual(long.Parse(inputString), long.Parse(valueString));
 
@@ -37,9 +37,9 @@ internal class RandomReadCacheTests
         public override void ReadCompletionCallback(ref SpanByte key, ref SpanByte input, ref SpanByteAndMemory output, Context context, Status status, RecordMetadata recordMetadata)
         {
             Assert.IsTrue(status.Found);
-            var keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
-            var inputString = new string(MemoryMarshal.Cast<byte, char>(input.AsReadOnlySpan()));
-            var outputString = new string(MemoryMarshal.Cast<byte, char>(output.AsReadOnlySpan()));
+            string keyString = new string(MemoryMarshal.Cast<byte, char>(key.AsReadOnlySpan()));
+            string inputString = new string(MemoryMarshal.Cast<byte, char>(input.AsReadOnlySpan()));
+            string outputString = new string(MemoryMarshal.Cast<byte, char>(output.AsReadOnlySpan()));
             Assert.AreEqual(long.Parse(keyString) * 2, long.Parse(outputString));
             Assert.AreEqual(long.Parse(inputString), long.Parse(outputString));
             context.Status = status;
@@ -60,8 +60,8 @@ internal class RandomReadCacheTests
         ReadCacheSettings readCacheSettings = default;
         string filename = Path.Join(MethodTestDir, "BasicTests.log");
 
-        var concurrencyControlMode = ConcurrencyControlMode.None;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.None;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ReadCacheMode rcm)
             {
@@ -125,10 +125,10 @@ internal class RandomReadCacheTests
 
         void LocalRead(BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Context, Functions> sessionContext, int i)
         {
-            var keyString = $"{i}";
-            var inputString = $"{i * 2}";
-            var key = MemoryMarshal.Cast<char, byte>(keyString.AsSpan());
-            var input = MemoryMarshal.Cast<char, byte>(inputString.AsSpan());
+            string keyString = $"{i}";
+            string inputString = $"{i * 2}";
+            ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>(keyString.AsSpan());
+            ReadOnlySpan<byte> input = MemoryMarshal.Cast<char, byte>(inputString.AsSpan());
 
             fixed (byte* kptr = key, iptr = input)
             {
@@ -137,11 +137,11 @@ internal class RandomReadCacheTests
                 var sbInput = SpanByte.FromPinnedSpan(input);
                 SpanByteAndMemory output = default;
 
-                var status = sessionContext.Read(ref sbKey, ref sbInput, ref output, context);
+                Status status = sessionContext.Read(ref sbKey, ref sbInput, ref output, context);
 
                 if (status.Found)
                 {
-                    var outputString = new string(MemoryMarshal.Cast<byte, char>(output.AsReadOnlySpan()));
+                    string outputString = new string(MemoryMarshal.Cast<byte, char>(output.AsReadOnlySpan()));
                     Assert.AreEqual(i * 2, long.Parse(outputString));
                     output.Memory?.Dispose();
                     return;
@@ -154,8 +154,8 @@ internal class RandomReadCacheTests
 
         void LocalRun(int startKey, int endKey)
         {
-            var session = store.NewSession<SpanByte, SpanByteAndMemory, Context, Functions>(new Functions());
-            var sessionContext = session.BasicContext;
+            ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Context, Functions> session = store.NewSession<SpanByte, SpanByteAndMemory, Context, Functions>(new Functions());
+            BasicContext<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Context, Functions> sessionContext = session.BasicContext;
 
             // read through the keys in order (works)
             for (int i = startKey; i < endKey; i++)
@@ -170,18 +170,18 @@ internal class RandomReadCacheTests
         const int MaxKeys = 8000;
 
         { // Write the values first (single-threaded, all keys)
-            var session = store.NewSession<SpanByte, SpanByteAndMemory, Context, Functions>(new Functions());
+            ClientSession<SpanByte, SpanByte, SpanByte, SpanByteAndMemory, Context, Functions> session = store.NewSession<SpanByte, SpanByteAndMemory, Context, Functions>(new Functions());
             for (int i = 0; i < MaxKeys; i++)
             {
-                var keyString = $"{i}";
-                var valueString = $"{i * 2}";
-                var key = MemoryMarshal.Cast<char, byte>(keyString.AsSpan());
-                var value = MemoryMarshal.Cast<char, byte>(valueString.AsSpan());
+                string keyString = $"{i}";
+                string valueString = $"{i * 2}";
+                ReadOnlySpan<byte> key = MemoryMarshal.Cast<char, byte>(keyString.AsSpan());
+                ReadOnlySpan<byte> value = MemoryMarshal.Cast<char, byte>(valueString.AsSpan());
                 fixed (byte* k = key, v = value)
                 {
                     var sbKey = SpanByte.FromPinnedSpan(key);
                     var sbValue = SpanByte.FromPinnedSpan(value);
-                    var status = session.Upsert(sbKey, sbValue);
+                    Status status = session.Upsert(sbKey, sbValue);
                     Assert.IsTrue(!status.Found && status.Record.Created, status.ToString());
                 }
             }
@@ -193,12 +193,12 @@ internal class RandomReadCacheTests
             return;
         }
 
-        var numKeysPerThread = MaxKeys / numThreads;
+        int numKeysPerThread = MaxKeys / numThreads;
 
         List<Task> tasks = new();   // Task rather than Thread for propagation of exception.
         for (int t = 0; t < numThreads; t++)
         {
-            var tid = t;
+            int tid = t;
             if (keyContentionMode == KeyContentionMode.Contention)
                 tasks.Add(Task.Factory.StartNew(() => LocalRun(0, MaxKeys)));
             else

@@ -54,7 +54,7 @@ internal class FlakyDeviceTests : TsavoriteLogTestBase
         }
         catch (CommitFailureException e)
         {
-            var errorRangeStart = e.LinkedCommitInfo.CommitInfo.FromAddress;
+            long errorRangeStart = e.LinkedCommitInfo.CommitInfo.FromAddress;
             Assert.LessOrEqual(log.CommittedUntilAddress, errorRangeStart);
             Assert.LessOrEqual(log.FlushedUntilAddress, errorRangeStart);
             return;
@@ -111,20 +111,20 @@ internal class FlakyDeviceTests : TsavoriteLogTestBase
         };
 
         var threads = new List<Thread>();
-        for (var i = 0; i < Environment.ProcessorCount / 2; i++)
+        for (int i = 0; i < Environment.ProcessorCount / 2; i++)
         {
             var t = new Thread(runTask);
             t.Start();
             threads.Add(t);
         }
 
-        foreach (var thread in threads)
+        foreach (Thread thread in threads)
             thread.Join();
 
         // Every thread observed the failure
         Assert.IsTrue(failureList.Count == threads.Count);
         // They all observed the same failure
-        foreach (var failure in failureList)
+        foreach (CommitFailureException failure in failureList)
         {
             Assert.AreEqual(failure.LinkedCommitInfo.CommitInfo, failureList[0].LinkedCommitInfo.CommitInfo);
         }
@@ -170,9 +170,9 @@ internal class FlakyDeviceTests : TsavoriteLogTestBase
 
         // For surviving entries, scan should still work best-effort
         // If endAddress > log.TailAddress then GetAsyncEnumerable() will wait until more entries are added.
-        var endAddress = IsAsync(iteratorType) ? log.CommittedUntilAddress : long.MaxValue;
+        long endAddress = IsAsync(iteratorType) ? log.CommittedUntilAddress : long.MaxValue;
         var recoveredLog = new TsavoriteLog(logSettings);
-        using var iter = recoveredLog.Scan(0, endAddress);
+        using TsavoriteLogScanIterator iter = recoveredLog.Scan(0, endAddress);
         switch (iteratorType)
         {
             case IteratorType.AsyncByteVector:

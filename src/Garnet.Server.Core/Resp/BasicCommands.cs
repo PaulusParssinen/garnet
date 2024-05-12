@@ -39,7 +39,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
         SpanByte input = default;
-        var status = storageApi.GET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o);
+        GarnetStatus status = storageApi.GET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o);
 
         switch (status)
         {
@@ -95,7 +95,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Store index in context, since completions are not in order
             ctx = firstPending == -1 ? 0 : c - firstPending;
 
-            var status = storageApi.GET_WithPending(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o, ctx,
+            GarnetStatus status = storageApi.GET_WithPending(ref Unsafe.AsRef<SpanByte>(keyPtr), ref input, ref o, ctx,
                 out bool isPending);
 
             if (isPending)
@@ -148,8 +148,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Write the outputs to network buffer
             for (int i = 0; i < c - firstPending; i++)
             {
-                var status = outputArr[i].Item1;
-                var output = outputArr[i].Item2;
+                GarnetStatus status = outputArr[i].Item1;
+                SpanByteAndMemory output = outputArr[i].Item2;
                 if (status == GarnetStatus.OK)
                 {
                     if (!output.IsSpanByte)
@@ -259,7 +259,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)keyPtr = ksize;
         *(int*)valPtr = vsize;
 
-        var status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
+        GarnetStatus status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
             SendAndReset();
 
@@ -308,7 +308,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         Span<byte> outputBuffer = stackalloc byte[NumUtils.MaximumFormatInt64Length];
         var output = ArgSlice.FromPinnedSpan(outputBuffer);
 
-        var status = storageApi.SETRANGE(key, value, offset, ref output);
+        GarnetStatus status = storageApi.SETRANGE(key, value, offset, ref output);
 
         while (!RespWriteUtils.WriteIntegerFromBytes(outputBuffer.Slice(0, output.Length), ref dcurr, dend))
             SendAndReset();
@@ -347,7 +347,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
 
-        var status = storageApi.GETRANGE(ref Unsafe.AsRef<SpanByte>(keyPtr), sliceStart, sliceLength, ref o);
+        GarnetStatus status = storageApi.GETRANGE(ref Unsafe.AsRef<SpanByte>(keyPtr), sliceStart, sliceLength, ref o);
 
         if (status == GarnetStatus.OK)
         {
@@ -402,7 +402,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                                                          ? TimeSpan.FromMilliseconds(expiry).Ticks
                                                          : TimeSpan.FromSeconds(expiry).Ticks);
 
-        var status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
+        GarnetStatus status = storageApi.SET(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr));
         while (!RespWriteUtils.WriteDirect(CmdStrings.RESP_OK, ref dcurr, dend))
             SendAndReset();
 
@@ -432,7 +432,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
     private bool NetworkSETEXNX<TGarnetApi>(int count, byte* ptr, ref TGarnetApi storageApi)
         where TGarnetApi : IGarnetApi
     {
-        var _ptr = ptr;
+        byte* _ptr = ptr;
 
         byte* keyPtr = null, valPtr = null;
         int ksize = 0, vsize = 0;
@@ -715,7 +715,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         if (getValue)
         {
             var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-            var status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr),
+            GarnetStatus status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr),
                 ref Unsafe.AsRef<SpanByte>(inputPtr), ref o);
 
             // Status tells us whether an old image was found during RMW or not
@@ -735,7 +735,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
         else
         {
-            var status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr),
+            GarnetStatus status = storageApi.SET_Conditional(ref Unsafe.AsRef<SpanByte>(keyPtr),
                 ref Unsafe.AsRef<SpanByte>(inputPtr));
 
             bool ok = status != GarnetStatus.NOTFOUND;
@@ -794,8 +794,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
         else if (cmd == RespCommand.INCR)
         {
-            var vsize = RespInputHeader.Size + 1;
-            var valPtr = stackalloc byte[vsize];
+            int vsize = RespInputHeader.Size + 1;
+            byte* valPtr = stackalloc byte[vsize];
             ((RespInputHeader*)valPtr)->cmd = cmd;
             ((RespInputHeader*)valPtr)->flags = 0;
             *(valPtr + RespInputHeader.Size) = (byte)'1';
@@ -803,8 +803,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         }
         else if (cmd == RespCommand.DECR)
         {
-            var vsize = RespInputHeader.Size + 2;
-            var valPtr = stackalloc byte[vsize];
+            int vsize = RespInputHeader.Size + 2;
+            byte* valPtr = stackalloc byte[vsize];
             ((RespInputHeader*)valPtr)->cmd = cmd;
             ((RespInputHeader*)valPtr)->flags = 0;
             *(valPtr + RespInputHeader.Size) = (byte)'-';
@@ -822,8 +822,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         Span<byte> outputBuffer = stackalloc byte[NumUtils.MaximumFormatInt64Length + 1];
         var output = ArgSlice.FromPinnedSpan(outputBuffer);
 
-        var status = storageApi.Increment(key, input, ref output);
-        var errorFlag = output.Length == NumUtils.MaximumFormatInt64Length + 1
+        GarnetStatus status = storageApi.Increment(key, input, ref output);
+        OperationError errorFlag = output.Length == NumUtils.MaximumFormatInt64Length + 1
             ? (OperationError)output.Span[0]
             : OperationError.SUCCESS;
 
@@ -873,7 +873,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         Span<byte> outputBuffer = stackalloc byte[NumUtils.MaximumFormatInt64Length];
         var output = SpanByteAndMemory.FromPinnedSpan(outputBuffer);
 
-        var status = storageApi.APPEND(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr),
+        GarnetStatus status = storageApi.APPEND(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(valPtr),
             ref output);
 
         while (!RespWriteUtils.WriteIntegerFromBytes(outputBuffer.Slice(0, output.Length), ref dcurr, dend))
@@ -964,7 +964,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         var keyArgSlice = new ArgSlice(keyPtr, ksize);
 
-        var status = storageApi.GET(keyArgSlice, out ArgSlice value);
+        GarnetStatus status = storageApi.GET(keyArgSlice, out ArgSlice value);
 
         switch (status)
         {
@@ -984,12 +984,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
     private bool NetworkCOMMAND(int count)
     {
-        var subCommand = ReadOnlySpan<byte>.Empty;
+        ReadOnlySpan<byte> subCommand = ReadOnlySpan<byte>.Empty;
         ReadOnlySpan<byte> bufSpan = new(recvBufferPtr, bytesRead);
 
         if (count > 0)
         {
-            subCommand = GetCommand(bufSpan, out var success);
+            subCommand = GetCommand(bufSpan, out bool success);
             if (!success)
                 return false;
         }
@@ -997,12 +997,12 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         // Handle COMMAND COUNT
         if (count > 0 && (subCommand.SequenceEqual(CmdStrings.COUNT) || subCommand.SequenceEqual(CmdStrings.count)))
         {
-            if (!RespCommandsInfo.TryGetRespCommandsInfoCount(out var respCommandCount, true, logger))
+            if (!RespCommandsInfo.TryGetRespCommandsInfoCount(out int respCommandCount, true, logger))
             {
                 respCommandCount = 0;
             }
 
-            var commandCount = storeWrapper.customCommandManager.CustomCommandsInfoCount + respCommandCount;
+            int commandCount = storeWrapper.customCommandManager.CustomCommandsInfoCount + respCommandCount;
 
             while (!RespWriteUtils.WriteInteger(commandCount, ref dcurr, dend))
                 SendAndReset();
@@ -1014,17 +1014,17 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             if (count < 2)
             {
                 var resultSb = new StringBuilder();
-                var cmdCount = 0;
+                int cmdCount = 0;
 
-                foreach (var customCmd in storeWrapper.customCommandManager.CustomCommandsInfo)
+                foreach (RespCommandsInfo customCmd in storeWrapper.customCommandManager.CustomCommandsInfo)
                 {
                     cmdCount++;
                     resultSb.Append(customCmd.RespFormat);
                 }
 
-                if (RespCommandsInfo.TryGetRespCommandsInfo(out var respCommandsInfo, true, logger))
+                if (RespCommandsInfo.TryGetRespCommandsInfo(out IReadOnlyDictionary<string, RespCommandsInfo> respCommandsInfo, true, logger))
                 {
-                    foreach (var cmd in respCommandsInfo.Values)
+                    foreach (RespCommandsInfo cmd in respCommandsInfo.Values)
                     {
                         cmdCount++;
                         resultSb.Append(cmd.RespFormat);
@@ -1041,15 +1041,15 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             {
                 RespWriteUtils.WriteArrayLength(count - 1, ref dcurr, dend);
 
-                for (var i = 0; i < count - 1; i++)
+                for (int i = 0; i < count - 1; i++)
                 {
-                    var cmdNameSpan = GetCommand(bufSpan, out var success);
+                    ReadOnlySpan<byte> cmdNameSpan = GetCommand(bufSpan, out bool success);
                     if (!success)
                         return false;
 
-                    var cmdName = Encoding.ASCII.GetString(cmdNameSpan);
+                    string cmdName = Encoding.ASCII.GetString(cmdNameSpan);
 
-                    if (RespCommandsInfo.TryGetRespCommandInfo(cmdName, out var cmdInfo, logger) ||
+                    if (RespCommandsInfo.TryGetRespCommandInfo(cmdName, out RespCommandsInfo cmdInfo, logger) ||
                         storeWrapper.customCommandManager.TryGetCustomCommandInfo(cmdName, out cmdInfo))
                     {
                         while (!RespWriteUtils.WriteAsciiDirect(cmdInfo.RespFormat, ref dcurr, dend))
@@ -1078,8 +1078,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             if (!DrainCommands(bufSpan, count - 1))
                 return false;
 
-            var subCmdName = Encoding.ASCII.GetString(subCommand);
-            var errorMsg = string.Format(CmdStrings.GenericErrUnknownSubCommand, subCmdName, RespCommand.COMMAND);
+            string subCmdName = Encoding.ASCII.GetString(subCommand);
+            string errorMsg = string.Format(CmdStrings.GenericErrUnknownSubCommand, subCmdName, RespCommand.COMMAND);
 
             while (!RespWriteUtils.WriteError(errorMsg, ref dcurr, dend))
                 SendAndReset();

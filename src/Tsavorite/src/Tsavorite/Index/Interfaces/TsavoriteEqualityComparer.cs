@@ -117,8 +117,8 @@ public sealed class GuidTsavoriteEqualityComparer : ITsavoriteEqualityComparer<G
     /// <inheritdoc />
     public unsafe long GetHashCode64(ref Guid k)
     {
-        var _k = k;
-        var pGuid = (long*)&_k;
+        Guid _k = k;
+        long* pGuid = (long*)&_k;
         return pGuid[0] ^ pGuid[1];
     }
 }

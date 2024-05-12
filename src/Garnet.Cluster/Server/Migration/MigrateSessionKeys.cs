@@ -21,7 +21,7 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <returns>True on success, false otherwise</returns>
     private bool MigrateKeysFromMainStore(ref List<(long, long)> keysWithSize, out List<(long, long)> objectStoreKeys)
     {
-        var bufferSize = 1 << 10;
+        int bufferSize = 1 << 10;
         SectorAlignedMemory buffer = new(bufferSize, 1);
         objectStoreKeys = [];
 
@@ -30,32 +30,32 @@ internal sealed unsafe partial class MigrateSession : IDisposable
             // 4 byte length of input
             // 1 byte RespCommand
             // 1 byte RespInputFlags
-            var inputSize = sizeof(int) + RespInputHeader.Size;
-            var pbCmdInput = stackalloc byte[inputSize];
+            int inputSize = sizeof(int) + RespInputHeader.Size;
+            byte* pbCmdInput = stackalloc byte[inputSize];
 
             ////////////////
             // Build Input//
             ////////////////
-            var pcurr = pbCmdInput;
+            byte* pcurr = pbCmdInput;
             *(int*)pcurr = inputSize - sizeof(int);
             pcurr += sizeof(int);
             // 1. Header
             ((RespInputHeader*)(pcurr))->SetHeader(RespCommandAccessor.MIGRATE, 0);
 
-            var bufPtr = buffer.GetValidPointer();
-            var bufPtrEnd = bufPtr + bufferSize;
-            for (var i = 0; i < keysWithSize.Count; i++)
+            byte* bufPtr = buffer.GetValidPointer();
+            byte* bufPtrEnd = bufPtr + bufferSize;
+            for (int i = 0; i < keysWithSize.Count; i++)
             {
                 // 1. Prepare key pointers
-                var tuple = keysWithSize[i];
-                var keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
-                var ksize = (int)tuple.Item2;
+                (long, long) tuple = keysWithSize[i];
+                byte* keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
+                int ksize = (int)tuple.Item2;
                 keyPtr -= sizeof(int);
                 *(int*)keyPtr = ksize;
 
                 // 2. Read value for key
                 var o = new SpanByteAndMemory(bufPtr, (int)(bufPtrEnd - bufPtr));
-                var status = localServerSession.BasicGarnetApi.Read_MainStore(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
+                GarnetStatus status = localServerSession.BasicGarnetApi.Read_MainStore(ref Unsafe.AsRef<SpanByte>(keyPtr), ref Unsafe.AsRef<SpanByte>(pbCmdInput), ref o);
 
                 // 3. Check if found
                 if (status == GarnetStatus.NOTFOUND) // All keys must exist
@@ -107,24 +107,24 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// <returns>True on success, false otherwise</returns>
     private bool MigrateKeysFromObjectStore(ref List<(long, long)> objectStoreKeys)
     {
-        for (var i = 0; i < objectStoreKeys.Count; i++)
+        for (int i = 0; i < objectStoreKeys.Count; i++)
         {
-            var tuple = objectStoreKeys[i];
-            var keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
-            var ksize = (int)tuple.Item2;
+            (long, long) tuple = objectStoreKeys[i];
+            byte* keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
+            int ksize = (int)tuple.Item2;
 
-            var key = new byte[ksize];
+            byte[] key = new byte[ksize];
             Marshal.Copy((IntPtr)keyPtr, key, 0, ksize);
 
             SpanByte input = default;
             GarnetObjectStoreOutput value = default;
-            var status = localServerSession.BasicGarnetApi.Read_ObjectStore(ref key, ref input, ref value);
+            GarnetStatus status = localServerSession.BasicGarnetApi.Read_ObjectStore(ref key, ref input, ref value);
             if (status == GarnetStatus.NOTFOUND)
                 continue;
 
             if (!ClusterSession.Expired(ref value.garnetObject))
             {
-                var objectData = GarnetObjectSerializer.Serialize(value.garnetObject);
+                byte[] objectData = GarnetObjectSerializer.Serialize(value.garnetObject);
 
                 if (!WriteOrSendObjectStoreKeyValuePair(key, objectData, value.garnetObject.Expiration))
                     return false;
@@ -143,13 +143,13 @@ internal sealed unsafe partial class MigrateSession : IDisposable
     /// </summary>
     public bool MigrateKeys()
     {
-        var keysWithSize = _keysWithSize;
+        List<(long, long)> keysWithSize = _keysWithSize;
         try
         {
             if (!CheckConnection())
                 return false;
             _gcs.InitMigrateBuffer();
-            if (!MigrateKeysFromMainStore(ref keysWithSize, out var objectStoreKeys))
+            if (!MigrateKeysFromMainStore(ref keysWithSize, out List<(long, long)> objectStoreKeys))
                 return false;
 
             if (!clusterProvider.serverOptions.DisableObjects && objectStoreKeys.Count > 0)
@@ -174,11 +174,11 @@ internal sealed unsafe partial class MigrateSession : IDisposable
         if (_copyOption)
             return;
 
-        for (var i = 0; i < keysWithSize.Count; i++)
+        for (int i = 0; i < keysWithSize.Count; i++)
         {
-            var tuple = keysWithSize[i];
-            var keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
-            var ksize = (int)tuple.Item2;
+            (long, long) tuple = keysWithSize[i];
+            byte* keyPtr = (byte*)((IntPtr)tuple.Item1).ToPointer();
+            int ksize = (int)tuple.Item2;
             keyPtr -= sizeof(int);
             *(int*)keyPtr = ksize;
             localServerSession.BasicGarnetApi.DELETE(ref Unsafe.AsRef<SpanByte>(keyPtr));

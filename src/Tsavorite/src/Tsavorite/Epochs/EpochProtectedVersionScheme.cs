@@ -332,8 +332,8 @@ public class EpochProtectedVersionScheme
 
     internal void TryStepStateMachine(VersionSchemeStateMachine expectedMachine = null)
     {
-        var machineLocal = currentMachine;
-        var oldState = state;
+        VersionSchemeStateMachine machineLocal = currentMachine;
+        VersionSchemeState oldState = state;
 
         // Nothing to step
         if (machineLocal == null) return;
@@ -352,7 +352,7 @@ public class EpochProtectedVersionScheme
         }
 
         // Step is in progress or no step is available
-        if (oldState.IsIntermediate() || !machineLocal.GetNextStep(oldState, out var nextState)) return;
+        if (oldState.IsIntermediate() || !machineLocal.GetNextStep(oldState, out VersionSchemeState nextState)) return;
 
         var intermediate = VersionSchemeState.MakeIntermediate(oldState);
         if (!MakeTransition(oldState, intermediate)) return;
@@ -374,7 +374,7 @@ public class EpochProtectedVersionScheme
             epoch.BumpCurrentEpoch(() =>
             {
                 machineLocal.OnEnteringState(old, next);
-                var success = MakeTransition(VersionSchemeState.MakeIntermediate(old), next);
+                bool success = MakeTransition(VersionSchemeState.MakeIntermediate(old), next);
                 machineLocal.AfterEnteringState(next);
                 Debug.Assert(success);
                 TryStepStateMachine(machineLocal);
@@ -410,7 +410,7 @@ public class EpochProtectedVersionScheme
     public StateMachineExecutionStatus TryExecuteStateMachine(VersionSchemeStateMachine stateMachine)
     {
         if (stateMachine.ToVersion() != -1 && stateMachine.ToVersion() <= state.Version) return StateMachineExecutionStatus.FAIL;
-        var actualStateMachine = Interlocked.CompareExchange(ref currentMachine, stateMachine, null);
+        VersionSchemeStateMachine actualStateMachine = Interlocked.CompareExchange(ref currentMachine, stateMachine, null);
         if (actualStateMachine == null)
         {
             // Compute the actual ToVersion of state machine

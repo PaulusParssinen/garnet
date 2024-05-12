@@ -53,7 +53,7 @@ public abstract class GarnetObjectBase : IGarnetObject
             if (serializationState == (int)SerializationPhase.SERIALIZED)
             {
                 // If serialized state is cached, use that
-                var _serialized = serialized;
+                byte[] _serialized = serialized;
                 if (_serialized != null)
                 {
                     writer.Write(Type);

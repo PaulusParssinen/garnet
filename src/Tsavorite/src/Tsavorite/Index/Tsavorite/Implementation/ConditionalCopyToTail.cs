@@ -64,7 +64,7 @@ public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase
             // HandleImmediateRetryStatus may have refreshed the epoch which means HeadAddress etc. may have changed. Re-traverse from the tail to the highest
             // point we just searched (which may have gone below HeadAddress). +1 to LatestLogicalAddress because we have examined that already. Use stackCtx2 to
             // preserve stacKCtx, both for retrying the Insert if needed and for preserving the caller's lock status, etc.
-            var minAddress = stackCtx.recSrc.LatestLogicalAddress + 1;
+            long minAddress = stackCtx.recSrc.LatestLogicalAddress + 1;
             OperationStackContext<Key, Value> stackCtx2 = new(stackCtx.hei.hash);
             bool needIO;
             do

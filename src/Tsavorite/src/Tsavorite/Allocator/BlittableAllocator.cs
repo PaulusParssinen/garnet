@@ -138,14 +138,14 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
     {
         IncrementAllocatedPageCount();
 
-        if (overflowPagePool.TryGet(out var item))
+        if (overflowPagePool.TryGet(out PageUnit item))
         {
             pointers[index] = item.pointer;
             values[index] = item.value;
             return;
         }
 
-        var adjustedSize = PageSize + 2 * sectorSize;
+        int adjustedSize = PageSize + 2 * sectorSize;
 
         byte[] tmp = GC.AllocateArray<byte>(adjustedSize, true);
         long p = (long)Unsafe.AsPointer(ref tmp[0]);
@@ -185,7 +185,7 @@ internal sealed unsafe class BlittableAllocator<Key, Value> : AllocatorBase<Key,
         PageAsyncFlushResult<TContext> asyncResult, IDevice device, IDevice objectLogDevice, long[] localSegmentOffsets, long fuzzyStartLogicalAddress)
     {
         VerifyCompatibleSectorSize(device);
-        var alignedPageSize = (pageSize + (sectorSize - 1)) & ~(sectorSize - 1);
+        int alignedPageSize = (pageSize + (sectorSize - 1)) & ~(sectorSize - 1);
 
         WriteAsync((IntPtr)pointers[flushPage % BufferSize],
                     (ulong)(AlignedPageSizeBytes * (flushPage - startPage)),

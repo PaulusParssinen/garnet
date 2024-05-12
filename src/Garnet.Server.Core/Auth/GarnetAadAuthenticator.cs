@@ -62,7 +62,7 @@ class GarnetAadAuthenticator : IGarnetAuthenticator
             };
             parameters.EnableAadSigningKeyIssuerValidation();
 
-            var identity = _tokenHandler.ValidateToken(Encoding.UTF8.GetString(password), parameters, out var token);
+            ClaimsPrincipal identity = _tokenHandler.ValidateToken(Encoding.UTF8.GetString(password), parameters, out SecurityToken token);
 
             _validFrom = token.ValidFrom;
             _validateTo = token.ValidTo;
@@ -93,12 +93,12 @@ class GarnetAadAuthenticator : IGarnetAuthenticator
 
     private bool IsApplicationAuthorized(IDictionary<string, string> claims)
     {
-        return claims.TryGetValue(_appIdClaim, out var appId) && _authorizedAppIds.Contains(appId);
+        return claims.TryGetValue(_appIdClaim, out string appId) && _authorizedAppIds.Contains(appId);
     }
 
     private bool IsAuthorized()
     {
-        var now = DateTime.UtcNow;
+        DateTime now = DateTime.UtcNow;
         return _authorized && now >= _validFrom && now <= _validateTo;
     }
 
@@ -106,11 +106,11 @@ class GarnetAadAuthenticator : IGarnetAuthenticator
     {
         // appidacr ndicates authentication method of the client. For a public client, the value is 0. When you use the client ID and client secret, the value is 1.
         // When you use a client certificate for authentication, the value is 2.
-        if (claims.TryGetValue(_appIdAcrClaim, out var appIdAcr) &&
+        if (claims.TryGetValue(_appIdAcrClaim, out string appIdAcr) &&
             !string.IsNullOrEmpty(appIdAcr) &&
             string.Compare(appIdAcr, "0", StringComparison.OrdinalIgnoreCase) > 0)
         {
-            return !claims.TryGetValue(_scopeClaim, out var scope) ||
+            return !claims.TryGetValue(_scopeClaim, out string scope) ||
                 string.IsNullOrWhiteSpace(scope);
         }
 

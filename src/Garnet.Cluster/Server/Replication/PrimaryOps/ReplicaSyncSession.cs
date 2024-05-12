@@ -43,11 +43,11 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
     public async Task<bool> SendCheckpoint()
     {
         errorMsg = default;
-        var retryCount = 0;
-        var storeCkptManager = clusterProvider.GetReplicationLogCheckpointManager(StoreType.Main);
-        var objectStoreCkptManager = clusterProvider.GetReplicationLogCheckpointManager(StoreType.Object);
-        var current = clusterProvider.clusterManager.CurrentConfig;
-        var (address, port) = current.GetWorkerAddressFromNodeId(remoteNodeId);
+        int retryCount = 0;
+        ReplicationLogCheckpointManager storeCkptManager = clusterProvider.GetReplicationLogCheckpointManager(StoreType.Main);
+        ReplicationLogCheckpointManager objectStoreCkptManager = clusterProvider.GetReplicationLogCheckpointManager(StoreType.Object);
+        ClusterConfig current = clusterProvider.clusterManager.CurrentConfig;
+        (string address, int port) = current.GetWorkerAddressFromNodeId(remoteNodeId);
 
         if (address == null || port == -1)
         {
@@ -71,17 +71,17 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
             AcquireCheckpointEntry(out localEntry, out aofSyncTaskInfo);
             logger?.LogInformation("Checkpoint search completed");
 
-            var primary_replId = clusterProvider.replicationManager.PrimaryReplId;
-            var primary_replId2 = clusterProvider.replicationManager.PrimaryReplId2;
+            string primary_replId = clusterProvider.replicationManager.PrimaryReplId;
+            string primary_replId2 = clusterProvider.replicationManager.PrimaryReplId2;
 
             // If the replica does not have a checkpoint we will have to send the local if it exists
             // Else we need to compare the checkpoint versions if replica comes from the same history as this primary
-            var canCompareMainStoreCheckpoint = string.IsNullOrEmpty(remoteEntry.storePrimaryReplId) || remoteEntry.storePrimaryReplId.Equals(localEntry.storePrimaryReplId);
-            var canCompareObjectStoreCheckpoint = string.IsNullOrEmpty(remoteEntry.objectStorePrimaryReplId) || remoteEntry.objectStorePrimaryReplId.Equals(localEntry.objectStorePrimaryReplId);
+            bool canCompareMainStoreCheckpoint = string.IsNullOrEmpty(remoteEntry.storePrimaryReplId) || remoteEntry.storePrimaryReplId.Equals(localEntry.storePrimaryReplId);
+            bool canCompareObjectStoreCheckpoint = string.IsNullOrEmpty(remoteEntry.objectStorePrimaryReplId) || remoteEntry.objectStorePrimaryReplId.Equals(localEntry.objectStorePrimaryReplId);
 
             // We can skip sending the local checkpoint if it is of same history and version. Remote checkpoints with greater version will be ovewritten
-            var skipSendingMainStore = localEntry.storeHlogToken == default || (canCompareMainStoreCheckpoint && localEntry.storeVersion == remoteEntry.storeVersion);
-            var skipSendingObjectStore = clusterProvider.serverOptions.DisableObjects || localEntry.objectStoreHlogToken == default || (canCompareObjectStoreCheckpoint && localEntry.objectStoreVersion == remoteEntry.objectStoreVersion);
+            bool skipSendingMainStore = localEntry.storeHlogToken == default || (canCompareMainStoreCheckpoint && localEntry.storeVersion == remoteEntry.storeVersion);
+            bool skipSendingObjectStore = clusterProvider.serverOptions.DisableObjects || localEntry.objectStoreHlogToken == default || (canCompareObjectStoreCheckpoint && localEntry.objectStoreVersion == remoteEntry.objectStoreVersion);
 
             LogFileInfo hlog_size = default;
             long index_size = -1;
@@ -131,7 +131,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                 await SendFileSegments(gcs, localEntry.storeHlogToken, CheckpointFileType.STORE_SNAPSHOT, 0, hlog_size.snapshotFileEndAddress);
 
                 // 4. Send delta log segments
-                var dlog_size = hlog_size.deltaLogTailAddress;
+                long dlog_size = hlog_size.deltaLogTailAddress;
                 await SendFileSegments(gcs, localEntry.storeHlogToken, CheckpointFileType.STORE_DLOG, 0, dlog_size);
 
                 // 5.Send index metadata
@@ -151,7 +151,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                     //send object hlog file segments
                     await SendFileSegments(gcs, localEntry.objectStoreHlogToken, CheckpointFileType.OBJ_STORE_HLOG, obj_hlog_size.hybridLogFileStartAddress, obj_hlog_size.hybridLogFileEndAddress);
 
-                    var hlogSegmentCount = ((obj_hlog_size.hybridLogFileEndAddress - obj_hlog_size.hybridLogFileStartAddress) >> clusterProvider.serverOptions.ObjectStoreSegmentSizeBits()) + 1;
+                    long hlogSegmentCount = ((obj_hlog_size.hybridLogFileEndAddress - obj_hlog_size.hybridLogFileStartAddress) >> clusterProvider.serverOptions.ObjectStoreSegmentSizeBits()) + 1;
                     await SendObjectFiles(gcs, localEntry.objectStoreHlogToken, CheckpointFileType.OBJ_STORE_HLOG_OBJ, (int)hlogSegmentCount);
                 }
 
@@ -162,7 +162,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                     await SendFileSegments(gcs, localEntry.objectStoreHlogToken, CheckpointFileType.OBJ_STORE_SNAPSHOT, 0, obj_hlog_size.snapshotFileEndAddress);
 
                     //send snapshot.obj file segments
-                    var snapshotSegmentCount = (obj_hlog_size.snapshotFileEndAddress >> clusterProvider.serverOptions.ObjectStoreSegmentSizeBits()) + 1;
+                    long snapshotSegmentCount = (obj_hlog_size.snapshotFileEndAddress >> clusterProvider.serverOptions.ObjectStoreSegmentSizeBits()) + 1;
                     await SendObjectFiles(gcs, localEntry.objectStoreHlogToken, CheckpointFileType.OBJ_STORE_SNAPSHOT_OBJ, (int)snapshotSegmentCount);
                 }
 
@@ -171,7 +171,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                     await SendFileSegments(gcs, localEntry.objectStoreIndexToken, CheckpointFileType.OBJ_STORE_INDEX, 0, obj_index_size);
 
                 // 4. Send object store delta file segments
-                var obj_dlog_size = obj_hlog_size.deltaLogTailAddress;
+                long obj_dlog_size = obj_hlog_size.deltaLogTailAddress;
                 if (obj_dlog_size > 0)
                     await SendFileSegments(gcs, localEntry.objectStoreHlogToken, CheckpointFileType.OBJ_STORE_DLOG, 0, obj_dlog_size);
 
@@ -182,10 +182,10 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                 await SendCheckpointMetadata(gcs, objectStoreCkptManager, CheckpointFileType.OBJ_STORE_SNAPSHOT, localEntry.objectStoreHlogToken);
             }
 
-            var recoverFromRemote = !skipSendingMainStore || !skipSendingObjectStore;
-            var replayAOF = false;
-            var RecoveredReplicationOffset = localEntry.GetMinAofCoveredAddress();
-            var beginAddress = RecoveredReplicationOffset;
+            bool recoverFromRemote = !skipSendingMainStore || !skipSendingObjectStore;
+            bool replayAOF = false;
+            long RecoveredReplicationOffset = localEntry.GetMinAofCoveredAddress();
+            long beginAddress = RecoveredReplicationOffset;
             if (!recoverFromRemote)
             {
                 // If replica is ahead of this primary it will force itself to forget and start syncing from RecoveredReplicationOffset
@@ -207,7 +207,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                     }
 
                     // If we are behind this primary we need to decide until where to replay
-                    var replayUntilAddress = replicaAofTailAddress;
+                    long replayUntilAddress = replicaAofTailAddress;
                     // Replica tail is further ahead than committed address of primary
                     if (storeWrapper.appendOnlyFile.CommittedUntilAddress < replayUntilAddress)
                     {
@@ -239,11 +239,11 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                 localEntry.ToByteArray(),
                 beginAddress,
                 RecoveredReplicationOffset).ConfigureAwait(false);
-            var syncFromAofAddress = long.Parse(resp);
+            long syncFromAofAddress = long.Parse(resp);
 
             // Assert that AOF address the replica will be requesting can be served, except in case of:
             // Possible AOF data loss: { using null AOF device } OR { main memory replication AND no on-demand checkpoints }
-            var possibleAofDataLoss = clusterProvider.serverOptions.UseAofNullDevice ||
+            bool possibleAofDataLoss = clusterProvider.serverOptions.UseAofNullDevice ||
                 (clusterProvider.serverOptions.MainMemoryReplication && !clusterProvider.serverOptions.OnDemandCheckpoint);
 
             if (!possibleAofDataLoss)
@@ -251,7 +251,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
                 if (syncFromAofAddress < storeWrapper.appendOnlyFile.BeginAddress)
                 {
                     logger?.LogError("syncFromAofAddress: {syncFromAofAddress} < beginAofAddress: {storeWrapper.appendOnlyFile.BeginAddress}", syncFromAofAddress, storeWrapper.appendOnlyFile.BeginAddress);
-                    var tailEntry = clusterProvider.replicationManager.GetLatestCheckpointEntryFromMemory();
+                    CheckpointEntry tailEntry = clusterProvider.replicationManager.GetLatestCheckpointEntryFromMemory();
                     logger?.LogError("tailEntry:{tailEntry}", tailEntry.GetCheckpointEntryDump());
                     tailEntry.RemoveReader();
                     throw new Exception("Failed syncing because replica requested truncated AOF address");
@@ -294,7 +294,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
     public void AcquireCheckpointEntry(out CheckpointEntry cEntry, out AofSyncTaskInfo aofSyncTaskInfo)
     {
         // Possible AOF data loss: { using null AOF device } OR { main memory replication AND no on-demand checkpoints }
-        var possibleAofDataLoss = clusterProvider.serverOptions.UseAofNullDevice ||
+        bool possibleAofDataLoss = clusterProvider.serverOptions.UseAofNullDevice ||
             (clusterProvider.serverOptions.MainMemoryReplication && !clusterProvider.serverOptions.OnDemandCheckpoint);
 
         aofSyncTaskInfo = null;
@@ -307,7 +307,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
             // Acquire startSaveTime to identify if an external task might have taken the checkpoint for us
             // This is only useful for MainMemoryReplication where we might have multiple replicas attaching
             // We want to share the on-demand checkpoint and ensure that only one replica should succeed when calling TakeOnDemandCheckpoint
-            var lastSaveTime = storeWrapper.lastSaveTime;
+            DateTimeOffset lastSaveTime = storeWrapper.lastSaveTime;
 
             // Retrieve latest checkpoint and lock it from deletion operations
             cEntry = clusterProvider.replicationManager.GetLatestCheckpointEntryFromMemory();
@@ -321,7 +321,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
             }
 
             // Calculate the minimum start address covered by this checkpoint
-            var startAofAddress = cEntry.GetMinAofCoveredAddress();
+            long startAofAddress = cEntry.GetMinAofCoveredAddress();
 
             // If there is possible AOF data loss and we need to take an on-demand checkpoint,
             // then we should take the checkpoint before we register the sync task, because
@@ -352,14 +352,14 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
 
     private async Task SendCheckpointMetadata(GarnetClientSession gcs, ReplicationLogCheckpointManager ckptManager, CheckpointFileType fileType, Guid fileToken)
     {
-        var checkpointMetadata = Array.Empty<byte>();
+        byte[] checkpointMetadata = Array.Empty<byte>();
         if (fileToken != default)
         {
             switch (fileType)
             {
                 case CheckpointFileType.STORE_SNAPSHOT:
                 case CheckpointFileType.OBJ_STORE_SNAPSHOT:
-                    var pageSizeBits = fileType == CheckpointFileType.STORE_SNAPSHOT ? clusterProvider.serverOptions.PageSizeBits() : clusterProvider.serverOptions.ObjectStorePageSizeBits();
+                    int pageSizeBits = fileType == CheckpointFileType.STORE_SNAPSHOT ? clusterProvider.serverOptions.PageSizeBits() : clusterProvider.serverOptions.ObjectStorePageSizeBits();
                     using (var deltaFileDevice = ckptManager.GetDeltaLogDevice(fileToken))
                     {
                         if (deltaFileDevice is not null)
@@ -393,7 +393,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
 
     private async Task SendFileSegments(GarnetClientSession gcs, Guid token, CheckpointFileType type, long startAddress, long endAddress, int batchSize = 1 << 17)
     {
-        var fileTokenBytes = token.ToByteArray();
+        byte[] fileTokenBytes = token.ToByteArray();
         var device = clusterProvider.replicationManager.GetInitializedSegmentFileDevice(token, type);
         logger?.LogInformation("<Begin sending checkpoint file segments {guid} {type} {startAddress} {endAddress}", token, type, startAddress, endAddress);
 
@@ -405,10 +405,10 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
         {
             while (startAddress < endAddress)
             {
-                var num_bytes = startAddress + batchSize < endAddress ?
+                int num_bytes = startAddress + batchSize < endAddress ?
                     batchSize :
                     (int)(endAddress - startAddress);
-                var (pbuffer, readBytes) = ReadInto(device, (ulong)startAddress, num_bytes);
+                (SectorAlignedMemory pbuffer, int readBytes) = ReadInto(device, (ulong)startAddress, num_bytes);
 
                 resp = await gcs.ExecuteSendFileSegments(fileTokenBytes, (int)type, startAddress, pbuffer.GetSlice(readBytes)).ConfigureAwait(false);
                 if (!resp.Equals("OK"))
@@ -440,23 +440,23 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
 
     private async Task SendObjectFiles(GarnetClientSession gcs, Guid token, CheckpointFileType type, int segmentCount, int batchSize = 1 << 17)
     {
-        var fileTokenBytes = token.ToByteArray();
+        byte[] fileTokenBytes = token.ToByteArray();
         IDevice device = null;
         string resp;
         try
         {
-            for (var segment = 0; segment < segmentCount; segment++)
+            for (int segment = 0; segment < segmentCount; segment++)
             {
                 device = clusterProvider.replicationManager.GetInitializedSegmentFileDevice(token, type);
                 Debug.Assert(device != null);
                 device.Initialize(-1);
                 var size = device.GetFileSize(segment);
-                var startAddress = 0L;
+                long startAddress = 0L;
 
                 while (startAddress < size)
                 {
                     var num_bytes = startAddress + batchSize < size ? batchSize : (int)(size - startAddress);
-                    var (pbuffer, readBytes) = ReadInto(device, (ulong)startAddress, num_bytes, segment);
+                    (SectorAlignedMemory pbuffer, int readBytes) = ReadInto(device, (ulong)startAddress, num_bytes, segment);
 
                     resp = await gcs.ExecuteSendFileSegments(fileTokenBytes, (int)type, startAddress, pbuffer.GetSlice(readBytes), segment).ConfigureAwait(false);
                     if (!resp.Equals("OK"))
@@ -503,7 +503,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
         long numBytesToRead = size;
         numBytesToRead = ((numBytesToRead + (device.SectorSize - 1)) & ~(device.SectorSize - 1));
 
-        var pbuffer = bufferPool.Get((int)numBytesToRead);
+        SectorAlignedMemory pbuffer = bufferPool.Get((int)numBytesToRead);
         if (segmentId == -1)
             device.ReadAsync(address, (IntPtr)pbuffer.aligned_pointer, (uint)numBytesToRead, IOCallback, null);
         else
@@ -516,7 +516,7 @@ internal sealed class ReplicaSyncSession(StoreWrapper storeWrapper, ClusterProvi
     {
         if (errorCode != 0)
         {
-            var errorMessage = new Win32Exception((int)errorCode).Message;
+            string errorMessage = new Win32Exception((int)errorCode).Message;
             logger.LogError("[Primary] OverlappedStream GetQueuedCompletionStatus error: {errorCode} msg: {errorMessage}", errorCode, errorMessage);
         }
         semaphore.Release();

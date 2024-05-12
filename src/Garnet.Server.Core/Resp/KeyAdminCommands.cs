@@ -33,7 +33,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         ArgSlice oldKeySlice = new(key1Ptr, ksize1);
         ArgSlice newKeySlice = new(key2Ptr, ksize2);
 
-        var status = storageApi.RENAME(oldKeySlice, newKeySlice);
+        GarnetStatus status = storageApi.RENAME(oldKeySlice, newKeySlice);
 
         switch (status)
         {
@@ -69,7 +69,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         keyPtr -= sizeof(int);
         *(int*)keyPtr = ksize;
 
-        var status = garnetApi.DELETE(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All);
+        GarnetStatus status = garnetApi.DELETE(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All);
 
         // This is only an approximate return value because the deletion of a key on disk is performed as a blind tombstone append
         if (status == GarnetStatus.OK)
@@ -110,7 +110,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)keyPtr = ksize;
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-        var status = garnetApi.GETDEL(ref Unsafe.AsRef<SpanByte>(keyPtr), ref o);
+        GarnetStatus status = garnetApi.GETDEL(ref Unsafe.AsRef<SpanByte>(keyPtr), ref o);
 
         if (status == GarnetStatus.OK)
         {
@@ -154,7 +154,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
                 return false;
 
             ArgSlice key = new(keyPtr, ksize);
-            var status = storageApi.EXISTS(key);
+            GarnetStatus status = storageApi.EXISTS(key);
             if (status == GarnetStatus.OK)
                 exists++;
         }
@@ -188,7 +188,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return true;
 
         ArgSlice key = new(keyPtr, ksize);
-        var status = storageApi.EXISTS(key);
+        GarnetStatus status = storageApi.EXISTS(key);
 
         if (status == GarnetStatus.OK)
         {
@@ -225,7 +225,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         if (!RespReadUtils.ReadIntWithLengthHeader(out int expiryValue, ref ptr, recvBufferPtr + bytesRead))
             return false;
 
-        var expiryMs = command == RespCommand.EXPIRE ? TimeSpan.FromSeconds(expiryValue) : TimeSpan.FromMilliseconds(expiryValue);
+        TimeSpan expiryMs = command == RespCommand.EXPIRE ? TimeSpan.FromSeconds(expiryValue) : TimeSpan.FromMilliseconds(expiryValue);
 
         bool invalidOption = false;
         ExpireOption expireOption = ExpireOption.None;
@@ -254,7 +254,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return true;
 
         var key = new ArgSlice(keyPtr, ksize);
-        var status = command == RespCommand.EXPIRE ?
+        GarnetStatus status = command == RespCommand.EXPIRE ?
                     storageApi.EXPIRE(key, expiryMs, out bool timeoutSet, StoreType.All, expireOption) :
                     storageApi.PEXPIRE(key, expiryMs, out timeoutSet, StoreType.All, expireOption);
 
@@ -293,7 +293,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             return true;
 
         var key = new ArgSlice(keyPtr, ksize);
-        var status = storageApi.PERSIST(key);
+        GarnetStatus status = storageApi.PERSIST(key);
 
         if (status == GarnetStatus.OK)
         {
@@ -333,7 +333,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         *(int*)keyPtr = ksize;
 
         var o = new SpanByteAndMemory(dcurr, (int)(dend - dcurr));
-        var status = command == RespCommand.TTL ?
+        GarnetStatus status = command == RespCommand.TTL ?
                     storageApi.TTL(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All, ref o) :
                     storageApi.PTTL(ref Unsafe.AsRef<SpanByte>(keyPtr), StoreType.All, ref o);
 

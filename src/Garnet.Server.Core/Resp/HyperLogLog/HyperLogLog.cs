@@ -726,7 +726,7 @@ public unsafe class HyperLogLog
         {
             return GetCard(ptr);
         }
-        var E = (HLL_DTYPE)dType switch
+        long E = (HLL_DTYPE)dType switch
         {
             HLL_DTYPE.HLL_SPARSE => CountSparseNCEstimator(ptr),
             HLL_DTYPE.HLL_DENSE => CountDenseNCEstimator(ptr),

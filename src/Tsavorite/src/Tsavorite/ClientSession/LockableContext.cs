@@ -62,7 +62,7 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
         // The key codes are sorted, but there may be duplicates; the sorting is such that exclusive locks come first for each key code,
         // which of course allows the session to do shared operations as well, so we take the first occurrence of each key code.
         // This is the same as DoInternalTryLock but without timeout; it will keep trying until it acquires all locks.
-        var end = start + count - 1;
+        int end = start + count - 1;
 
         int retryCount = 0;
     Retry:
@@ -70,7 +70,7 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
 
         for (int keyIdx = start; keyIdx <= end; ++keyIdx)
         {
-            ref var key = ref keys[keyIdx];
+            ref TLockableKey key = ref keys[keyIdx];
             long currBucketIndex = clientSession.store.LockTable.GetBucketIndex(key.KeyHash);
             if (currBucketIndex != prevBucketIndex)
             {
@@ -106,19 +106,19 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
         // The key codes are sorted, but there may be duplicates; the sorting is such that exclusive locks come first for each key code,
         // which of course allows the session to do shared operations as well, so we take the first occurrence of each key code.
         // This is the same as DoInternalLock but with timeout.
-        var end = start + count - 1;
+        int end = start + count - 1;
 
         // We can't start each retry with a full timeout because we might always fail if someone is not unlocking (e.g. another thread hangs
         // somehow while holding a lock, or the current thread has issued two lock calls on two key sets and the second tries to lock one in
         // the first, and so on). So set the timeout high enough to accommodate as many retries as you want.
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
 
     Retry:
         long prevBucketIndex = -1;
 
         for (int keyIdx = start; keyIdx <= end; ++keyIdx)
         {
-            ref var key = ref keys[keyIdx];
+            ref TLockableKey key = ref keys[keyIdx];
             long currBucketIndex = clientSession.store.LockTable.GetBucketIndex(key.KeyHash);
             if (currBucketIndex != prevBucketIndex)
             {
@@ -135,7 +135,7 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
                 }
 
                 // Cancellation or lock failure before we've completed all keys; we may or may not have locked the current key. Unlock anything we've locked.
-                var unlockIdx = keyIdx - (status == OperationStatus.SUCCESS ? 0 : 1);
+                int unlockIdx = keyIdx - (status == OperationStatus.SUCCESS ? 0 : 1);
                 DoInternalUnlock(clientSession, keys, start, unlockIdx);
 
                 // Lock failure is the only place we check the timeout. If we've exceeded that, or if we've had a cancellation, return false.
@@ -159,7 +159,7 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
         where TsavoriteSession : ITsavoriteSession<Key, Value, Input, Output, Context>
         where TLockableKey : ILockableKey
     {
-        var startTime = DateTime.UtcNow;
+        DateTime startTime = DateTime.UtcNow;
         while (true)
         {
             OperationStatus status = clientSession.store.InternalPromoteLock(key.KeyHash);
@@ -208,7 +208,7 @@ public readonly struct LockableContext<Key, Value, Input, Output, Context, Funct
         // Unlock has to be done in the reverse order of locking, so we take the *last* occurrence of each key there, and keyIdx moves backward.
         for (; keyIdx >= start; --keyIdx)
         {
-            ref var key = ref keys[keyIdx];
+            ref TLockableKey key = ref keys[keyIdx];
             if (keyIdx == start || clientSession.store.LockTable.GetBucketIndex(key.KeyHash) != clientSession.store.LockTable.GetBucketIndex(keys[keyIdx - 1].KeyHash))
             {
                 clientSession.store.InternalUnlock(key.KeyHash, key.LockType);

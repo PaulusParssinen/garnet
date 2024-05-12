@@ -44,10 +44,10 @@ internal class NeedCopyUpdateTests
     public void TryAddTest()
     {
         TryAddTestFunctions functions = new();
-        using var session = store.NewSession<RMWValue, RMWValue, Status, TryAddTestFunctions>(functions);
+        using ClientSession<int, RMWValue, RMWValue, RMWValue, Status, TryAddTestFunctions> session = store.NewSession<RMWValue, RMWValue, Status, TryAddTestFunctions>(functions);
 
         Status status;
-        var key = 1;
+        int key = 1;
         var value1 = new RMWValue { value = 1 };
         var value2 = new RMWValue { value = 2 };
 
@@ -71,7 +71,7 @@ internal class NeedCopyUpdateTests
         store.Log.FlushAndEvict(true);
         status = session.RMW(ref key, ref value2, new(StatusCode.Found), 0); // PENDING + NeedCopyUpdate + Found
         Assert.IsTrue(status.IsPending, status.ToString());
-        session.CompletePendingWithOutputs(out var outputs, true);
+        session.CompletePendingWithOutputs(out CompletedOutputIterator<int, RMWValue, RMWValue, RMWValue, Status> outputs, true);
 
         var output = new RMWValue();
         (status, output) = GetSinglePendingResult(outputs);
@@ -185,7 +185,7 @@ internal class NeedCopyUpdateTestsSinglePage
     public void CopyUpdateFromHeadReadOnlyPageTest()
     {
         RMWSinglePageFunctions functions = new();
-        using var session = store.NewSession<long, long, Empty, RMWSinglePageFunctions>(functions);
+        using ClientSession<long, long, long, long, Empty, RMWSinglePageFunctions> session = store.NewSession<long, long, Empty, RMWSinglePageFunctions>(functions);
 
         // Two records is the most that can "fit" into the first Constants.kFirstValueAddress "range"; therefore when we close pages
         // after flushing, ClosedUntilAddress will be aligned with the end of the page, so we will succeed in the allocation that
@@ -194,7 +194,7 @@ internal class NeedCopyUpdateTestsSinglePage
 
         for (int key = 0; key < recsPerPage - padding; key++)
         {
-            var status = session.RMW(key, key << 32 + key);
+            Status status = session.RMW(key, key << 32 + key);
             Assert.IsTrue(status.IsCompletedSuccessfully, status.ToString());
         }
 
@@ -203,7 +203,7 @@ internal class NeedCopyUpdateTestsSinglePage
         // This should trigger CopyUpdater, after flushing the oldest page (closest to HeadAddress).
         for (int key = 0; key < recsPerPage - padding; key++)
         {
-            var status = session.RMW(key, key << 32 + key);
+            Status status = session.RMW(key, key << 32 + key);
             if (status.IsPending)
                 session.CompletePending(wait: true);
         }

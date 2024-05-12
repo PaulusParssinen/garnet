@@ -50,7 +50,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
     public bool RunTransactionProc(byte id, ArgSlice input, ref MemoryResult<byte> output)
     {
-        var proc = customCommandManagerSession
+        CustomTransactionProcedure proc = customCommandManagerSession
             .GetCustomTransactionProcedure(id, txnManager, scratchBufferManager).Item1;
         return txnManager.RunTransactionProc(id, input, proc, ref output);
 

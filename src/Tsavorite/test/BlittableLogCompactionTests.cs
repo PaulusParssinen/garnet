@@ -26,7 +26,7 @@ public class BlittableLogCompactionTests
         // Force collisions to create a chain
         public long GetHashCode64(ref KeyStruct k)
         {
-            var value = Utility.GetHashCode(k.kfield1);
+            long value = Utility.GetHashCode(k.kfield1);
             return modRange != HashModulo.NoMod ? value % (long)modRange : value;
         }
     }
@@ -37,9 +37,9 @@ public class BlittableLogCompactionTests
         DeleteDirectory(MethodTestDir, wait: true);
         log = Devices.CreateLogDevice(Path.Join(MethodTestDir, "BlittableLogCompactionTests.log"), deleteOnClose: true);
 
-        var concurrencyControlMode = ConcurrencyControlMode.LockTable;
-        var hashMod = HashModulo.NoMod;
-        foreach (var arg in TestContext.CurrentContext.Test.Arguments)
+        ConcurrencyControlMode concurrencyControlMode = ConcurrencyControlMode.LockTable;
+        HashModulo hashMod = HashModulo.NoMod;
+        foreach (object arg in TestContext.CurrentContext.Test.Arguments)
         {
             if (arg is ConcurrencyControlMode locking_mode)
             {
@@ -74,7 +74,7 @@ public class BlittableLogCompactionTests
 
         void drainPending()
         {
-            Assert.IsTrue(session.CompletePendingWithOutputs(out var outputs, wait: true));
+            Assert.IsTrue(session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, int> outputs, wait: true));
             using (outputs)
             {
                 for (; outputs.Next(); --numPending)
@@ -98,7 +98,7 @@ public class BlittableLogCompactionTests
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var status = session.Read(ref key1, ref input, ref output, isDeleted(i) ? 1 : 0, 0);
+            Status status = session.Read(ref key1, ref input, ref output, isDeleted(i) ? 1 : 0, 0);
             if (!status.IsPending)
             {
                 if (isDeleted(i))
@@ -125,10 +125,10 @@ public class BlittableLogCompactionTests
 
     public void BlittableLogCompactionTest1([Values] CompactionType compactionType, [Values(ConcurrencyControlMode.LockTable)] ConcurrencyControlMode concurrencyControlMode)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
 
         const int totalRecords = 2_000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         long compactUntil = 0;
 
         for (int i = 0; i < totalRecords; i++)
@@ -157,10 +157,10 @@ public class BlittableLogCompactionTests
     public void BlittableLogCompactionTest2([Values] CompactionType compactionType, [Values(ConcurrencyControlMode.LockTable)] ConcurrencyControlMode concurrencyControlMode,
                                             [Values(HashModulo.NoMod, HashModulo.Hundred)] HashModulo hashMod)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
 
         const int totalRecords = 2_000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         long compactUntil = 0;
 
         for (int i = 0; i < totalRecords; i++)
@@ -204,10 +204,10 @@ public class BlittableLogCompactionTests
     [Category("Compaction")]
     public void BlittableLogCompactionTest3([Values] CompactionType compactionType, [Values(ConcurrencyControlMode.LockTable)] ConcurrencyControlMode concurrencyControlMode)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
 
         const int totalRecords = 2_000;
-        var start = store.Log.TailAddress;
+        long start = store.Log.TailAddress;
         long compactUntil = 0;
 
         for (int i = 0; i < totalRecords; i++)
@@ -227,7 +227,7 @@ public class BlittableLogCompactionTests
             }
         }
 
-        var tail = store.Log.TailAddress;
+        long tail = store.Log.TailAddress;
         compactUntil = session.Compact(compactUntil, compactionType);
         store.Log.Truncate();
         Assert.AreEqual(compactUntil, store.Log.BeginAddress);
@@ -243,15 +243,15 @@ public class BlittableLogCompactionTests
 
     public void BlittableLogCompactionCustomFunctionsTest1([Values] CompactionType compactionType, [Values(ConcurrencyControlMode.LockTable)] ConcurrencyControlMode concurrencyControlMode)
     {
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
 
         InputStruct input = default;
 
         const int totalRecords = 2000;
-        var start = store.Log.TailAddress;
-        var compactUntil = 0L;
+        long start = store.Log.TailAddress;
+        long compactUntil = 0L;
 
-        for (var i = 0; i < totalRecords; i++)
+        for (int i = 0; i < totalRecords; i++)
         {
             if (i == totalRecords / 2)
                 compactUntil = store.Log.TailAddress;
@@ -261,7 +261,7 @@ public class BlittableLogCompactionTests
             session.Upsert(ref key1, ref value, 0, 0);
         }
 
-        var tail = store.Log.TailAddress;
+        long tail = store.Log.TailAddress;
 
         // Only leave records with even vfield1
         compactUntil = session.Compact(compactUntil, compactionType, default(EvenCompactionFunctions));
@@ -269,18 +269,18 @@ public class BlittableLogCompactionTests
         Assert.AreEqual(compactUntil, store.Log.BeginAddress);
 
         // Read 2000 keys - all should be present
-        for (var i = 0; i < totalRecords; i++)
+        for (int i = 0; i < totalRecords; i++)
         {
             OutputStruct output = default;
             var key1 = new KeyStruct { kfield1 = i, kfield2 = i + 1 };
             var value = new ValueStruct { vfield1 = i, vfield2 = i + 1 };
 
-            var ctx = (i < (totalRecords / 2) && (i % 2 != 0)) ? 1 : 0;
+            int ctx = (i < (totalRecords / 2) && (i % 2 != 0)) ? 1 : 0;
 
-            var status = session.Read(ref key1, ref input, ref output, ctx, 0);
+            Status status = session.Read(ref key1, ref input, ref output, ctx, 0);
             if (status.IsPending)
             {
-                Assert.IsTrue(session.CompletePendingWithOutputs(out var outputs, wait: true));
+                Assert.IsTrue(session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, int> outputs, wait: true));
                 (status, output) = GetSinglePendingResult(outputs);
             }
 
@@ -307,7 +307,7 @@ public class BlittableLogCompactionTests
         // Update: irrelevant as session compaction no longer uses Copy/CopyInPlace
         // This test checks if CopyInPlace returning false triggers call to Copy
 
-        using var session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
+        using ClientSession<KeyStruct, ValueStruct, InputStruct, OutputStruct, int, FunctionsCompaction> session = store.NewSession<InputStruct, OutputStruct, int, FunctionsCompaction>(new FunctionsCompaction());
 
         var key = new KeyStruct { kfield1 = 100, kfield2 = 101 };
         var value = new ValueStruct { vfield1 = 10, vfield2 = 20 };
@@ -315,7 +315,7 @@ public class BlittableLogCompactionTests
         var output = default(OutputStruct);
 
         session.Upsert(ref key, ref value, 0, 0);
-        var status = session.Read(ref key, ref input, ref output, 0, 0);
+        Status status = session.Read(ref key, ref input, ref output, 0, 0);
         Debug.Assert(status.Found);
 
         store.Log.Flush(true);
@@ -330,13 +330,13 @@ public class BlittableLogCompactionTests
         else
             store.Log.Flush(true);
 
-        var compactUntil = session.Compact(store.Log.TailAddress, compactionType);
+        long compactUntil = session.Compact(store.Log.TailAddress, compactionType);
         store.Log.Truncate();
 
         status = session.Read(ref key, ref input, ref output, 0, 0);
         if (status.IsPending)
         {
-            Assert.IsTrue(session.CompletePendingWithOutputs(out var outputs, wait: true));
+            Assert.IsTrue(session.CompletePendingWithOutputs(out CompletedOutputIterator<KeyStruct, ValueStruct, InputStruct, OutputStruct, int> outputs, wait: true));
             (status, output) = GetSinglePendingResult(outputs);
         }
 

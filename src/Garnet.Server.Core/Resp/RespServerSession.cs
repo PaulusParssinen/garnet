@@ -278,14 +278,14 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         dcurr = networkSender.GetResponseObjectHead();
         dend = networkSender.GetResponseObjectTail();
 
-        var _origReadHead = readHead;
+        int _origReadHead = readHead;
 
         while (bytesRead - readHead >= 4)
         {
             // NOTE: Possible optimization: Don't parse if only parsing AUTH and not authenticated.
             (RespCommand cmd, byte subcmd) = ParseCommand(out int count, recvBufferPtr + readHead, out bool success);
 
-            var ptr = recvBufferPtr + readHead;
+            byte* ptr = recvBufferPtr + readHead;
 
             if (cmd != RespCommand.INVALID)
             {
@@ -427,7 +427,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
         if (!_authenticator.IsAuthenticated) return ProcessOtherCommands(cmd, subcmd, count, ref storageApi);
 
-        var success = (cmd, subcmd) switch
+        bool success = (cmd, subcmd) switch
         {
             (RespCommand.MGET, 0) => NetworkMGET(count, ptr, ref storageApi),
             (RespCommand.MSET, 0) => NetworkMSET(count, ptr, ref storageApi),
@@ -659,8 +659,8 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
 
     ReadOnlySpan<byte> GetCommand(ReadOnlySpan<byte> bufSpan, out bool success)
     {
-        var ptr = recvBufferPtr + readHead;
-        var end = recvBufferPtr + bytesRead;
+        byte* ptr = recvBufferPtr + readHead;
+        byte* end = recvBufferPtr + bytesRead;
 
         // Try the command length
         if (!RespReadUtils.ReadLengthHeader(out int length, ref ptr, end))
@@ -684,7 +684,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             RespParsingException.ThrowUnexpectedToken(*ptr);
         }
 
-        var result = bufSpan.Slice(readHead, length);
+        ReadOnlySpan<byte> result = bufSpan.Slice(readHead, length);
         readHead += length + 2;
         success = true;
 
@@ -824,7 +824,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
             // Debug.WriteLine("SEND: [" + Encoding.UTF8.GetString(new Span<byte>(d, (int)(dcurr - d))).Replace("\n", "|").Replace("\r", "!") + "]");
             if (storeWrapper.appendOnlyFile != null && storeWrapper.serverOptions.WaitForCommit)
             {
-                var task = storeWrapper.appendOnlyFile.WaitForCommitAsync();
+                ValueTask task = storeWrapper.appendOnlyFile.WaitForCommitAsync();
                 if (!task.IsCompleted) task.AsTask().GetAwaiter().GetResult();
             }
             int sendBytes = (int)(dcurr - d);
@@ -844,7 +844,7 @@ internal sealed unsafe partial class RespServerSession : ServerSessionBase
         {
             if (storeWrapper.appendOnlyFile != null && storeWrapper.serverOptions.WaitForCommit)
             {
-                var task = storeWrapper.appendOnlyFile.WaitForCommitAsync();
+                ValueTask task = storeWrapper.appendOnlyFile.WaitForCommitAsync();
                 if (!task.IsCompleted) task.AsTask().GetAwaiter().GetResult();
             }
             int sendBytes = (int)(dcurr - d);

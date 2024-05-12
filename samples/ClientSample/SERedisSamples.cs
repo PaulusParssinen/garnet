@@ -36,8 +36,8 @@ public class SERedisSamples
 
     async Task RespPingAsync()
     {
-        using var redis = await ConnectionMultiplexer.ConnectAsync($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        using ConnectionMultiplexer redis = await ConnectionMultiplexer.ConnectAsync($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
+        IDatabase db = redis.GetDatabase(0);
         await db.PingAsync();
         Console.WriteLine("RespPing: Success");
     }
@@ -45,16 +45,16 @@ public class SERedisSamples
     void RespPing()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
         db.Ping();
-        var cname = redis.ClientName;
+        string cname = redis.ClientName;
         Console.WriteLine("RespPing: Success");
     }
 
     void SingleSetRename()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "test1";
         db.StringSet("key1", origValue);
@@ -71,7 +71,7 @@ public class SERedisSamples
     void SingleSetGet()
     {
         using var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         string origValue = "abcdefg";
         db.StringSet("mykey", origValue);
@@ -87,11 +87,11 @@ public class SERedisSamples
     void SingleIncr()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = -100000;
-        var strKey = "key1";
+        int nVal = -100000;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
 
         // string retValue = db.StringGet("key1");
@@ -107,16 +107,16 @@ public class SERedisSamples
     void SingleIncrBy(long nIncr)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 1000;
+        int nVal = 1000;
 
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
-        var s = db.StringGet(strKey);
+        RedisValue s = db.StringGet(strKey);
 
-        var get = db.StringGet(strKey);
+        RedisValue get = db.StringGet(strKey);
         long n = db.StringIncrement(strKey, nIncr);
 
         int nRetVal = Convert.ToInt32(db.StringGet(strKey));
@@ -129,14 +129,14 @@ public class SERedisSamples
     void SingleDecrBy(long nDecr)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 900;
+        int nVal = 900;
 
-        var strKey = "key1";
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
-        var s = db.StringGet(strKey);
+        RedisValue s = db.StringGet(strKey);
 
         long n = db.StringDecrement(strKey, nDecr);
         int nRetVal = Convert.ToInt32(db.StringGet(strKey));
@@ -149,7 +149,7 @@ public class SERedisSamples
     void SingleDecr(string strKey, int nVal)
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
         db.StringSet(strKey, nVal);
@@ -164,10 +164,10 @@ public class SERedisSamples
     void SingleIncrNoKey()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var strKey = "key1";
+        string strKey = "key1";
         int init = Convert.ToInt32(db.StringGet(strKey));
         db.StringIncrement(strKey);
 
@@ -185,11 +185,11 @@ public class SERedisSamples
     void SingleExists()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
 
         bool fExists = db.KeyExists("key1", CommandFlags.None);
@@ -202,11 +202,11 @@ public class SERedisSamples
     void SingleDelete()
     {
         var redis = ConnectionMultiplexer.Connect($"{address}:{port},connectTimeout=999999,syncTimeout=999999");
-        var db = redis.GetDatabase(0);
+        IDatabase db = redis.GetDatabase(0);
 
         // Key storing integer
-        var nVal = 100;
-        var strKey = "key1";
+        int nVal = 100;
+        string strKey = "key1";
         db.StringSet(strKey, nVal);
         db.KeyDelete(strKey);
 

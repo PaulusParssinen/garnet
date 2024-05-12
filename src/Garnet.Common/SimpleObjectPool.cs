@@ -34,7 +34,7 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
     {
         while (allocatedObjects > 0)
         {
-            while (stack.TryPop(out var elem, out bool disposed))
+            while (stack.TryPop(out T elem, out bool disposed))
             {
                 if (disposed)
                     ThrowDisposed();
@@ -55,7 +55,7 @@ public class SimpleObjectPool<T> : IDisposable where T : class, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Checkout()
     {
-        if (!stack.TryPop(out var obj, out bool disposed))
+        if (!stack.TryPop(out T obj, out bool disposed))
         {
             Interlocked.Increment(ref allocatedObjects);
             return factory();

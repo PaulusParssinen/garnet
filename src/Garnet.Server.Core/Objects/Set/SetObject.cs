@@ -57,7 +57,7 @@ public unsafe partial class SetObject : GarnetObjectBase
         int count = reader.ReadInt32();
         for (int i = 0; i < count; i++)
         {
-            var item = reader.ReadBytes(reader.ReadInt32());
+            byte[] item = reader.ReadBytes(reader.ReadInt32());
             set.Add(item);
 
             this.UpdateSize(item);
@@ -83,7 +83,7 @@ public unsafe partial class SetObject : GarnetObjectBase
 
         int count = set.Count;
         writer.Write(count);
-        foreach (var item in set)
+        foreach (byte[] item in set)
         {
             writer.Write(item.Length);
             writer.Write(item);
@@ -131,9 +131,9 @@ public unsafe partial class SetObject : GarnetObjectBase
                     SetRandomMember(_input, input.Length, ref output);
                     break;
                 case SetOperation.SSCAN:
-                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out var cursorInput, out var pattern, out var patternLength, out int limitCount, out int bytesDone))
+                    if (ObjectUtils.ReadScanInput(_input, input.Length, ref output, out int cursorInput, out byte* pattern, out int patternLength, out int limitCount, out int bytesDone))
                     {
-                        Scan(cursorInput, out var items, out var cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
+                        Scan(cursorInput, out List<byte[]> items, out long cursorOutput, count: limitCount, pattern: pattern, patternLength: patternLength);
                         ObjectUtils.WriteScanOutput(items, cursorOutput, ref output, bytesDone);
                     }
                     break;
@@ -147,7 +147,7 @@ public unsafe partial class SetObject : GarnetObjectBase
 
     internal void UpdateSize(byte[] item, bool add = true)
     {
-        var size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.HashSetEntryOverhead;
+        int size = Utility.RoundUp(item.Length, IntPtr.Size) + MemoryUtils.ByteArrayOverhead + MemoryUtils.HashSetEntryOverhead;
         this.Size += add ? size : -size;
         Debug.Assert(this.Size >= MemoryUtils.HashSetOverhead);
     }
@@ -165,7 +165,7 @@ public unsafe partial class SetObject : GarnetObjectBase
         }
 
         int index = 0;
-        foreach (var item in set)
+        foreach (byte[] item in set)
         {
             if (index < start)
             {

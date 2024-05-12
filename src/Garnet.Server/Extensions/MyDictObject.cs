@@ -35,8 +35,8 @@ class MyDict : CustomObjectBase
         int count = reader.ReadInt32();
         for (int i = 0; i < count; i++)
         {
-            var key = reader.ReadBytes(reader.ReadInt32());
-            var value = reader.ReadBytes(reader.ReadInt32());
+            byte[] key = reader.ReadBytes(reader.ReadInt32());
+            byte[] value = reader.ReadBytes(reader.ReadInt32());
             dict.Add(key, value);
 
             UpdateSize(key, value);
@@ -54,7 +54,7 @@ class MyDict : CustomObjectBase
     public override void SerializeObject(BinaryWriter writer)
     {
         writer.Write(dict.Count);
-        foreach (var kvp in dict)
+        foreach (KeyValuePair<byte[], byte[]> kvp in dict)
         {
             writer.Write(kvp.Key.Length);
             writer.Write(kvp.Key);
@@ -70,8 +70,8 @@ class MyDict : CustomObjectBase
             case 0: // MYDICTSET
                 {
                     int offset = 0;
-                    var key = GetNextArg(input, ref offset).ToArray();
-                    var value = GetNextArg(input, ref offset).ToArray();
+                    byte[] key = GetNextArg(input, ref offset).ToArray();
+                    byte[] value = GetNextArg(input, ref offset).ToArray();
 
                     dict[key] = value;
                     UpdateSize(key, value);
@@ -79,8 +79,8 @@ class MyDict : CustomObjectBase
                 }
             case 1: // MYDICTGET
                 {
-                    var key = GetFirstArg(input);
-                    if (dict.TryGetValue(key.ToArray(), out var result))
+                    ReadOnlySpan<byte> key = GetFirstArg(input);
+                    if (dict.TryGetValue(key.ToArray(), out byte[] result))
                         WriteBulkString(ref output, result);
                     else
                         WriteNullBulkString(ref output);
@@ -118,7 +118,7 @@ class MyDict : CustomObjectBase
             return;
         }
 
-        foreach (var item in dict)
+        foreach (KeyValuePair<byte[], byte[]> item in dict)
         {
             if (index < start)
             {
@@ -161,7 +161,7 @@ class MyDict : CustomObjectBase
 
     private void UpdateSize(byte[] key, byte[] value, bool add = true)
     {
-        var size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
+        int size = Utility.RoundUp(key.Length, IntPtr.Size) + Utility.RoundUp(value.Length, IntPtr.Size)
             + (2 * MemoryUtils.ByteArrayOverhead) + MemoryUtils.DictionaryEntryOverhead;
         this.Size += add ? size : -size;
         Debug.Assert(this.Size >= MemoryUtils.DictionaryOverhead);

@@ -67,7 +67,7 @@ internal sealed unsafe class WatchedKeysContainer
         {
             // Double the struct buffer
             sliceBufferSize = sliceBufferSize == 0 ? initialSliceBufferSize : sliceBufferSize * 2;
-            var _oldBuffer = keySlices;
+            WatchedKeySlice[] _oldBuffer = keySlices;
             keySlices = GC.AllocateUninitializedArray<WatchedKeySlice>(sliceBufferSize, true);
             if (_oldBuffer != null) Array.Copy(_oldBuffer, keySlices, _oldBuffer.Length);
         }
@@ -75,15 +75,15 @@ internal sealed unsafe class WatchedKeysContainer
         {
             // Double the watch buffer
             watchBufferSize = watchBufferSize == 0 ? initialWatchBufferSize : watchBufferSize * 2;
-            var _oldBuffer = watchBuffer;
+            byte[] _oldBuffer = watchBuffer;
             watchBuffer = GC.AllocateUninitializedArray<byte>(watchBufferSize, true);
-            var watchBufferPtrBase = (byte*)Unsafe.AsPointer(ref watchBuffer[0]);
+            byte* watchBufferPtrBase = (byte*)Unsafe.AsPointer(ref watchBuffer[0]);
             watchBufferPtr = watchBufferPtrBase + watchBufferHeadAddress;
 
             if (_oldBuffer != null)
             {
                 Array.Copy(_oldBuffer, watchBuffer, _oldBuffer.Length);
-                var oldWatchBufferPtrBase = (byte*)Unsafe.AsPointer(ref _oldBuffer[0]);
+                byte* oldWatchBufferPtrBase = (byte*)Unsafe.AsPointer(ref _oldBuffer[0]);
 
                 // Update pointer for existing watches
                 for (int i = 0; i < sliceCount; i++)
@@ -127,7 +127,7 @@ internal sealed unsafe class WatchedKeysContainer
             WatchedKeySlice watchedKeySlice = keySlices[i];
             if (watchedKeySlice.type == 0) continue;
 
-            var slice = keySlices[i].slice;
+            ArgSlice slice = keySlices[i].slice;
             if (watchedKeySlice.type == StoreType.Main || watchedKeySlice.type == StoreType.All)
                 txnManager.SaveKeyEntryToLock(slice, false, LockType.Shared);
             if (watchedKeySlice.type == StoreType.Object || watchedKeySlice.type == StoreType.All)

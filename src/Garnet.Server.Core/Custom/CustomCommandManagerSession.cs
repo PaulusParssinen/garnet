@@ -21,7 +21,7 @@ internal sealed class CustomCommandManagerSession
     {
         if (sessionTransactionProcMap[id].Item1 == null)
         {
-            var entry = customCommandManager.transactionProcMap[id];
+            CustomTransaction entry = customCommandManager.transactionProcMap[id];
             sessionTransactionProcMap[id].Item1 = entry.proc != null ? entry.proc() : null;
             sessionTransactionProcMap[id].Item2 = entry.NumParams;
 

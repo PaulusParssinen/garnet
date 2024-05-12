@@ -61,11 +61,11 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         bool ch = false;
 
         // Read the options
-        var optsCount = count % 3;
+        int optsCount = count % 3;
         if (optsCount > 0 && optsCount <= 2)
         {
             // Is NX or XX, if not nx then use XX
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var byteOptions, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] byteOptions, ref input_currptr, input + length))
                 return;
             nx = (byteOptions.Length == 2 && (byteOptions[0] == (int)'N' && byteOptions[1] == (int)'X') || (byteOptions[0] == (int)'n' && byteOptions[1] == (int)'x'));
             if (optsCount == 2)
@@ -82,11 +82,11 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
         for (int c = 0; c < count / 3; c++)
         {
-            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var longitude, out var parsed, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double longitude, out bool parsed, ref input_currptr, input + length))
                 return;
-            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var latitude, out parsed, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double latitude, out parsed, ref input_currptr, input + length))
                 return;
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member, ref input_currptr, input + length))
                 return;
 
             if (c < _input->done)
@@ -113,7 +113,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     else if (!nx && scoreStored != score)
                     {
                         sortedSetDict[member] = score;
-                        var success = sortedSet.Remove((scoreStored, member));
+                        bool success = sortedSet.Remove((scoreStored, member));
                         Debug.Assert(success);
                         success = sortedSet.Add((score, member));
                         Debug.Assert(success);
@@ -142,8 +142,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
@@ -156,7 +156,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             while (countDone < count)
             {
                 // Read member
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member, ref input_currptr, input + length))
                     break;
 
                 countDone++;
@@ -172,7 +172,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
                 }
 
-                if (sortedSetDict.TryGetValue(member, out var value52Int))
+                if (sortedSetDict.TryGetValue(member, out double value52Int))
                 {
                     var geohash = server.GeoHash.GetGeoHashCode((long)value52Int);
                     while (!RespWriteUtils.WriteAsciiBulkString(geohash, ref curr, end))
@@ -212,18 +212,18 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
             // Read member
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member1ByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member1ByteArray, ref input_currptr, input + length))
                 return;
 
             // Read member
-            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var member2ByteArray, ref input_currptr, input + length))
+            if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] member2ByteArray, ref input_currptr, input + length))
                 return;
 
             Byte[] units = "M"u8.ToArray();
@@ -289,8 +289,8 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
 
@@ -304,7 +304,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             while (countDone < count)
             {
                 // read member
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var memberByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] memberByteArray, ref input_currptr, input + length))
                     break;
 
                 countDone++;
@@ -367,17 +367,17 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
         MemoryHandle ptrHandle = default;
         byte* ptr = output.SpanByte.ToPointer();
 
-        var curr = ptr;
-        var end = curr + output.Length;
+        byte* curr = ptr;
+        byte* end = curr + output.Length;
 
         ObjectOutputHeader _output = default;
         try
         {
             var opts = new GeoSearchOptions();
-            var opsStr = "FROMMEMBERFROMLONLATBYRADIUSBYBOXASCDESCCOUNTANYWITHCOORDWITHDISTWITHHASH";
+            string opsStr = "FROMMEMBERFROMLONLATBYRADIUSBYBOXASCDESCCOUNTANYWITHCOORDWITHDISTWITHHASH";
             byte[] fromMember = null;
             byte[] byBoxUnits = "M"u8.ToArray();
-            var byRadiusUnits = byBoxUnits;
+            byte[] byRadiusUnits = byBoxUnits;
             double width = 0, height = 0;
             int countValue = 0;
 
@@ -385,9 +385,9 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
             while (count > 0)
             {
                 // Read token
-                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out var tokenByteArray, ref input_currptr, input + length))
+                if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byte[] tokenByteArray, ref input_currptr, input + length))
                     return;
-                var stringToken = Encoding.ASCII.GetString(tokenByteArray).ToUpperInvariant();
+                string stringToken = Encoding.ASCII.GetString(tokenByteArray).ToUpperInvariant();
                 if (opsStr.Contains(stringToken, StringComparison.OrdinalIgnoreCase))
                 {
                     switch (stringToken)
@@ -400,15 +400,15 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                             break;
                         case "FROMLONLAT":
                             // Read two coord
-                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var longitude, out var parsed, ref input_currptr, input + length))
+                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double longitude, out bool parsed, ref input_currptr, input + length))
                                 return;
-                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var latitude, out parsed, ref input_currptr, input + length))
+                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double latitude, out parsed, ref input_currptr, input + length))
                                 return;
                             count -= 2;
                             opts.FromLonLat = true;
                             break;
                         case "BYRADIUS":
-                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out var radius, out parsed, ref input_currptr, input + length))
+                            if (!RespReadUtils.ReadDoubleWithLengthHeader(out double radius, out parsed, ref input_currptr, input + length))
                                 return;
                             // Read units
                             if (!RespReadUtils.ReadByteArrayWithLengthHeader(out byRadiusUnits, ref input_currptr, input + length))
@@ -469,7 +469,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
 
             // Get the results
             // FROMMEMBER
-            if (opts.FromMember && sortedSetDict.TryGetValue(fromMember, out var centerPointScore))
+            if (opts.FromMember && sortedSetDict.TryGetValue(fromMember, out double centerPointScore))
             {
                 (double lat, double lon) = server.GeoHash.GetCoordinatesFromLong((long)centerPointScore);
 
@@ -482,7 +482,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                 else
                 {
                     var responseData = new List<GeoSearchData>();
-                    foreach (var point in sortedSet)
+                    foreach ((double, byte[]) point in sortedSet)
                     {
                         var coorInItem = server.GeoHash.GetCoordinatesFromLong((long)point.Item1);
                         double distance = 0;
@@ -509,7 +509,7 @@ public unsafe partial class SortedSetObject : GarnetObjectBase
                     while (!RespWriteUtils.WriteArrayLength(responseData.Count, ref curr, end))
                         ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);
 
-                    foreach (var item in responseData)
+                    foreach (GeoSearchData item in responseData)
                     {
                         while (!RespWriteUtils.WriteBulkString(item.Member, ref curr, end))
                             ObjectUtils.ReallocateOutput(ref output, ref isMemory, ref ptr, ref ptrHandle, ref curr, ref end);

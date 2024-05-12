@@ -30,8 +30,8 @@ internal sealed partial class FailoverSession : IDisposable
         {
             var tasks = new Task<long>[clients.Length + 1];
 
-            var tcount = 0;
-            foreach (var _gclient in clients)
+            int tcount = 0;
+            foreach (GarnetClient _gclient in clients)
                 tasks[tcount++] = CheckReplicaSync(_gclient);
 
             tasks[clients.Length] = Task.Delay(failoverTimeout).ContinueWith(_ => default(long));
@@ -45,7 +45,7 @@ internal sealed partial class FailoverSession : IDisposable
             }
 
             // Return client for replica that has caught up with replication primary
-            for (var i = 0; i < tasks.Length; i++)
+            for (int i = 0; i < tasks.Length; i++)
             {
                 if (completedTask == tasks[i] && tasks[i].Result == clusterProvider.replicationManager.ReplicationOffset)
                     return clients[i];
@@ -54,9 +54,9 @@ internal sealed partial class FailoverSession : IDisposable
         }
         else
         {
-            var syncTask = CheckReplicaSync(clients[0]);
+            Task<long> syncTask = CheckReplicaSync(clients[0]);
             var timeoutTask = Task.Delay(failoverTimeout, cts.Token);
-            var completedTask = await Task.WhenAny(syncTask, timeoutTask);
+            Task completedTask = await Task.WhenAny(syncTask, timeoutTask);
 
             // Replica trying to failover did not caught up on time so timeout
             if (completedTask == timeoutTask)
@@ -94,9 +94,9 @@ internal sealed partial class FailoverSession : IDisposable
         {
             // Change local node role to suspend any write workload
             status = FailoverStatus.ISSUING_PAUSE_WRITES;
-            var localId = clusterProvider.clusterManager.CurrentConfig.LocalNodeId;
-            var oldRole = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
-            var replicas = clusterProvider.clusterManager.CurrentConfig.GetReplicaIds(localId);
+            string localId = clusterProvider.clusterManager.CurrentConfig.LocalNodeId;
+            NodeRole oldRole = clusterProvider.clusterManager.CurrentConfig.LocalNodeRole;
+            List<string> replicas = clusterProvider.clusterManager.CurrentConfig.GetReplicaIds(localId);
             clusterProvider.clusterManager.TryStopWrites(replicas[0]);
             _ = clusterProvider.WaitForConfigTransition();
 
