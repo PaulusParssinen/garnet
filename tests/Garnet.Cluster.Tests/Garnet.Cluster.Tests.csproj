@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>1701;1702;1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Garnet.Tests\TestUtils.cs" Link="TestUtils.cs" />
+    <Compile Include="..\Garnet.Tests\CredentialManager.cs" Link="CredentialManager.cs" />
+    <Compile Include="..\Garnet.Tests\ServerCredential.cs" Link="ServerCredential.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Garnet.Cluster\Garnet.Cluster.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Common\Garnet.Common.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Hosting\Garnet.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Server.Core\Garnet.Server.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="redis.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

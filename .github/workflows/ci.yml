@@ -143,9 +143,9 @@ jobs:
       - name: Install dependencies
         run: dotnet restore
       - name: Build Tsavorite
-        run: dotnet build libs/storage/Tsavorite/cs/test/Tsavorite.test.csproj --configuration ${{ matrix.configuration }}
+        run: dotnet build libs/storage/Tsavorite/cs/test/Tsavorite.Tests.csproj --configuration ${{ matrix.configuration }}
       - name: Run Tsavorite tests
-        run: dotnet test libs/storage/Tsavorite/cs/test/Tsavorite.test.csproj -f ${{ matrix.framework }} --logger "console;verbosity=detailed" --logger trx --results-directory "TsavoriteTestResults-${{ matrix.os }}-${{ matrix.framework }}-${{ matrix.configuration }}"
+        run: dotnet test libs/storage/Tsavorite/cs/test/Tsavorite.Tests.csproj -f ${{ matrix.framework }} --logger "console;verbosity=detailed" --logger trx --results-directory "TsavoriteTestResults-${{ matrix.os }}-${{ matrix.framework }}-${{ matrix.configuration }}"
         timeout-minutes: 30 
       - name: Upload test results
         uses: actions/upload-artifact@v4

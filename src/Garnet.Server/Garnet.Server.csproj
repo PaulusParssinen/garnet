@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Garnet.Hosting\Garnet.Hosting.csproj" />
+    <ProjectReference Include="..\Garnet.Server.Core\Garnet.Server.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CustomRespCommandsInfo.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="garnet.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

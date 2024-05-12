@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>1701;1702;1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\Garnet.Server\Extensions\DeleteIfMatch.cs" Link="Infrastructure\DeleteIfMatch.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\MGetIfPM.cs" Link="Infrastructure\MGetIfPM.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\MSetPx.cs" Link="Infrastructure\MSetPx.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\MyDictObject.cs" Link="Infrastructure\MyDictObject.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\GetTwoKeysNoTxn.cs" Link="Infrastructure\GetTwoKeysNoTxn.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\ReadWriteTxn.cs" Link="Infrastructure\ReadWriteTxn.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\SampleUpdateTxn.cs" Link="Infrastructure\SampleUpdateTxn.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\SampleDeleteTxn.cs" Link="Infrastructure\SampleDeleteTxn.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\SetIfPM.cs" Link="Infrastructure\SetIfPM.cs" />
+    <Compile Include="..\..\src\Garnet.Server\Extensions\SetWPIfPGT.cs" Link="Infrastructure\SetWPIFPGT.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\src\Garnet.Server\CustomRespCommandsInfo.json" Link="Infrastructure\CustomRespCommandsInfo.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Garnet.Common\Garnet.Common.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Hosting\Garnet.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\Garnet.Server\Garnet.Server.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="redis.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
