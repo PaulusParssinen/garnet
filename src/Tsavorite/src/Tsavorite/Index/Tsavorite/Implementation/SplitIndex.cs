@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.Threading;
-
 namespace Tsavorite
 {
     public unsafe partial class TsavoriteKV<Key, Value> : TsavoriteBase

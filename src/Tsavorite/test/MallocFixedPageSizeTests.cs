@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using NUnit.Framework;
-using Tsavorite;
 using static Tsavorite.Tests.TestUtils;
 
 namespace Tsavorite.Tests

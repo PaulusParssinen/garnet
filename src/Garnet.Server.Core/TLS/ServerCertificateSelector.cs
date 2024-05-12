@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace Garnet.Server.TLS

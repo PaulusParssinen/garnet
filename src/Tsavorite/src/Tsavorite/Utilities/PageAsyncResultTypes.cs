@@ -3,8 +3,6 @@
 
 #define CALLOC
 
-using System.Threading;
-
 namespace Tsavorite
 {
     /// <summary>

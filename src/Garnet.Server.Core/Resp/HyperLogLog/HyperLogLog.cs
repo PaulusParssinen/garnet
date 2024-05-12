@@ -3,9 +3,7 @@
 
 //#define HLL_SINGLE_PFADD_ENABLED
 
-using System;
 #if DEBUG
-using System.Collections.Generic;
 #endif
 using System.Diagnostics;
 using System.Numerics;

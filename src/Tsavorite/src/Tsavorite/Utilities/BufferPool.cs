@@ -6,13 +6,11 @@
 #endif
 // #define CHECK_FOR_LEAKS // disabled by default due to overhead
 
-using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Tsavorite
 {

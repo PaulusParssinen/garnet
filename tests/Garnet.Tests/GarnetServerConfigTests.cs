@@ -1,10 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using CommandLine;
 using Garnet.Common;
@@ -12,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Tsavorite;
-using Tsavorite.Device;
 
 namespace Garnet.Tests
 {

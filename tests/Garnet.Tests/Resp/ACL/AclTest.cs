@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.IO;
 using NUnit.Framework;
 
 namespace Garnet.Tests.Resp.ACL

@@ -1,18 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using Garnet.client;
 using Garnet.Common;
 using Garnet.Server;
 using Garnet.Server.Auth;
@@ -21,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using StackExchange.Redis;
 using Tsavorite;
-using Tsavorite.Device;
 
 namespace Garnet.Tests
 {

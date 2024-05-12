@@ -1,14 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-#pragma warning disable IDE0005 // Using directive is unnecessary.
-using System;
-using System.Collections.Generic;
-using System.Linq;
-#pragma warning restore IDE0005 // Using directive is unnecessary.
 using System.Net;
 using Garnet.Cluster;
-using Garnet.Common;
 using StackExchange.Redis;
 
 namespace GarnetClusterManagement

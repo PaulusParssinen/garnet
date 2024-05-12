@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 
 namespace Garnet.Server.ACL

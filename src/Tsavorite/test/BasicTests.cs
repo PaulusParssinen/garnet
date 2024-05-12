@@ -1,14 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
-using Tsavorite;
 using static Tsavorite.Tests.TestUtils;
 
 namespace Tsavorite.Tests

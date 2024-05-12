@@ -1,12 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using NUnit.Framework;
-using Tsavorite;
 using static Tsavorite.Utility;
 using static Tsavorite.Tests.TestUtils;
 

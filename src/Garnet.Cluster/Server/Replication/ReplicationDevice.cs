@@ -1,10 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using Garnet.client;
-using Tsavorite;
-
 namespace Garnet.Cluster
 {
     internal sealed class ReplicationDevice : IDevice

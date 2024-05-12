@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace Tsavorite

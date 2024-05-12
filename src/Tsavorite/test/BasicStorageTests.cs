@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.IO;
 using NUnit.Framework;
-using Tsavorite;
 using Tsavorite.Device;
 
 namespace Tsavorite.Tests

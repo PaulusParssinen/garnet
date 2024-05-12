@@ -1,11 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 using Tsavorite;
 using Tsavorite.Device;

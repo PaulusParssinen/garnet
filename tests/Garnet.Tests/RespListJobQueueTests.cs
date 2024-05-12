@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using StackExchange.Redis;
 

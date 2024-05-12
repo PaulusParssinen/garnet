@@ -3,8 +3,6 @@
 
 #pragma warning disable 0162
 
-using System.Threading.Tasks;
-
 namespace Tsavorite
 {
     /// <summary>

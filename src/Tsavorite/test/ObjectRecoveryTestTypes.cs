@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.Threading;
-using Tsavorite;
-
 namespace Tsavorite.Tests.recovery.objectstore
 {
     public class AdId : ITsavoriteEqualityComparer<AdId>

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using Garnet.Common;
 using Garnet.networking;
 using Garnet.Server.ACL;

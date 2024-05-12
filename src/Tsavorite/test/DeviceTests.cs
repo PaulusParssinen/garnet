@@ -1,13 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using NUnit.Framework;
-using Tsavorite;
 
 namespace Tsavorite.Tests
 {

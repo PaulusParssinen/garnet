@@ -1,11 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using NUnit.Framework;
-using Tsavorite;
 using Tsavorite.Tests.recovery.sumstore;
 
 namespace Tsavorite.Tests.statemachine

@@ -1,13 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using NUnit.Framework;
-using Tsavorite;
 using static Tsavorite.Tests.TestUtils;
 
 #pragma warning disable IDE0060 // Remove unused parameter: used by Setup

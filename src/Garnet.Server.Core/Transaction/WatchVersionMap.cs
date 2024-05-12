@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Diagnostics;
-using System.Threading;
 using Tsavorite;
 
 namespace Garnet.Server

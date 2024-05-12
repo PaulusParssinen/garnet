@@ -1,13 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using NUnit.Framework;
-using Tsavorite;
 using Tsavorite.Device;
 using Tsavorite.Tests.recovery;
 

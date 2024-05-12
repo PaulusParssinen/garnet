@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using HdrHistogram;
-
 namespace Garnet.Server
 {
     struct LatencyMetricsEntry

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.Threading.Tasks;
 using Garnet.Server.ACL;
 using NUnit.Framework;
 

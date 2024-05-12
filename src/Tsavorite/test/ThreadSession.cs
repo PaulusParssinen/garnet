@@ -1,10 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Threading;
-using Tsavorite;
-
 namespace Tsavorite.Tests.statemachine
 {
     internal static class Extension

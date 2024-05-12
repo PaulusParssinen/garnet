@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Tsavorite
 {

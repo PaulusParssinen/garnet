@@ -1,12 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Garnet.client;
 using Garnet.Common;
 using Garnet.Server;
 using Microsoft.Extensions.Logging;

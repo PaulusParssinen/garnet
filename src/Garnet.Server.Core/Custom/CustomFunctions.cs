@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Buffers;
-using System.Collections.Generic;
 using Garnet.Common;
 
 namespace Garnet.Server

@@ -1,11 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using Tsavorite;
-
 namespace Tsavorite.Tests
 {
     public class ErrorSimulationOptions
