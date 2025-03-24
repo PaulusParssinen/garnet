@@ -17,7 +17,7 @@ namespace Garnet.test
     public class GarnetBitmapTests
     {
         GarnetServer server;
-        Random r;
+        Random random;
 
         [SetUp]
         public void Setup()
@@ -25,7 +25,7 @@ namespace Garnet.test
             TestUtils.DeleteDirectory(TestUtils.MethodTestDir, wait: true);
             server = TestUtils.CreateGarnetServer(TestUtils.MethodTestDir);
             server.Start();
-            r = new Random(674386);
+            random = new Random(674386);
         }
 
         [TearDown]
@@ -35,7 +35,7 @@ namespace Garnet.test
             TestUtils.DeleteDirectory(TestUtils.MethodTestDir);
         }
 
-        private long LongRandom() => r.NextInt64(long.MinValue, long.MaxValue);
+        private long LongRandom() => random.NextInt64(long.MinValue, long.MaxValue);
 
         private ulong ULongRandom() => (ulong)LongRandom();
 
@@ -212,8 +212,8 @@ namespace Garnet.test
 
                 for (int j = 0; j < keyIter; j++)
                 {
-                    long offset = r.Next(0, bitmapBytes << 3);
-                    bool set = r.Next(0, 1) == 0 ? false : true;
+                    long offset = random.Next(0, bitmapBytes << 3);
+                    bool set = random.Next(0, 1) == 0 ? false : true;
 
                     bool returnedVal = db.StringSetBit(sKey, offset, set);
                     bool expectedVal = false;
@@ -245,7 +245,7 @@ namespace Garnet.test
 
                 for (int j = 0; j < keyIter; j++)
                 {
-                    long offset = r.Next(0, bitmapBytes << 3);
+                    long offset = random.Next(0, bitmapBytes << 3);
                     bool returnedVal = db.StringGetBit(sKey, offset);
                     bool expectedVal = false;
                     if (state.ContainsKey(key) && state[key].ContainsKey(offset))
@@ -303,7 +303,7 @@ namespace Garnet.test
 
                 for (var i = 0; i < iter; i++)
                 {
-                    var offset = r.Next(1, maxBitmapLen);
+                    var offset = random.Next(1, maxBitmapLen);
                     var set = !db.StringSetBit(key, offset, true);
                     expectedCount += set ? 1 : 0;
                 }
@@ -367,7 +367,7 @@ namespace Garnet.test
             long maxOffset = 0;
             for (int i = 0; i < iter; i++)
             {
-                long offset = r.Next(1, maxBitmapLen);
+                long offset = random.Next(1, maxBitmapLen);
                 db.StringSetBit(key, offset, true);
                 maxOffset = Math.Max(offset, maxOffset);
                 offsets.Add(offset);
@@ -393,7 +393,7 @@ namespace Garnet.test
             //Test with startOffset
             for (int i = 0; i < iter; i++)
             {
-                int startOffset = r.Next(1, (int)maxSizeInBytes);
+                int startOffset = random.Next(1, (int)maxSizeInBytes);
                 expectedCount = Count(bitmap, startOffset, -1);
                 count = db.StringBitCount(key, startOffset);
 
@@ -403,8 +403,8 @@ namespace Garnet.test
             //Test with startOffset and endOffset
             for (int i = 0; i < iter; i++)
             {
-                int startOffset = r.Next(1, (int)maxSizeInBytes);
-                int endOffset = r.Next(startOffset, (int)maxSizeInBytes);
+                int startOffset = random.Next(1, (int)maxSizeInBytes);
+                int endOffset = random.Next(startOffset, (int)maxSizeInBytes);
                 expectedCount = Count(bitmap, startOffset, endOffset);
                 count = db.StringBitCount(key, startOffset, endOffset);
 
@@ -431,12 +431,12 @@ namespace Garnet.test
             for (int j = 0; j < iter; j++)
             {
                 for (int i = 0; i < buf.Length; i++)
-                    buf[i] = (byte)r.Next(0, 128);
+                    buf[i] = (byte)random.Next(0, 128);
 
                 db.StringSet(key, buf);
 
-                int startOffset = r.Next(1, buf.Length);
-                int endOffset = r.Next(startOffset, buf.Length);
+                int startOffset = random.Next(1, buf.Length);
+                int endOffset = random.Next(startOffset, buf.Length);
 
                 long expectedCount = Count(buf, startOffset, endOffset);
                 count = db.StringBitCount(key, startOffset, endOffset);
@@ -463,11 +463,11 @@ namespace Garnet.test
             //check offsets in range
             for (int j = 0; j < iter; j++)
             {
-                r.NextBytes(buf);
+                random.NextBytes(buf);
                 db.StringSet(key, buf);
 
-                int startOffset = j == 0 ? -10 : r.Next(-maxByteLen, 0);
-                int endOffset = j == 0 ? -1 : r.Next(startOffset, 0);
+                int startOffset = j == 0 ? -10 : random.Next(-maxByteLen, 0);
+                int endOffset = j == 0 ? -1 : random.Next(startOffset, 0);
 
                 expectedCount = Count(buf, startOffset, endOffset);
                 count = db.StringBitCount(key, startOffset, endOffset);
@@ -478,11 +478,11 @@ namespace Garnet.test
             //check negative offsets beyond range
             for (int j = 0; j < iter; j++)
             {
-                r.NextBytes(buf);
+                random.NextBytes(buf);
                 db.StringSet(key, buf);
 
-                int startOffset = j == 0 ? -10 : r.Next(-maxByteLen << 1, -maxByteLen);
-                int endOffset = j == 0 ? -1 : r.Next(startOffset, -maxByteLen);
+                int startOffset = j == 0 ? -10 : random.Next(-maxByteLen << 1, -maxByteLen);
+                int endOffset = j == 0 ? -1 : random.Next(startOffset, -maxByteLen);
 
                 expectedCount = Count(buf, startOffset, endOffset);
                 count = db.StringBitCount(key, startOffset, endOffset);
@@ -512,7 +512,7 @@ namespace Garnet.test
             for (int i = 0; i < keyCount; i++)
             {
                 string sKey = i.ToString();
-                r.NextBytes(bitmap);
+                random.NextBytes(bitmap);
 
                 bitmapList.Add(Count(bitmap));
                 db.StringSet(sKey, bitmap);
@@ -521,7 +521,7 @@ namespace Garnet.test
             int iter = 128;
             for (int i = 0; i < iter; i++)
             {
-                int key = r.Next(0, keyCount);
+                int key = random.Next(0, keyCount);
                 string sKey = key.ToString();
                 long count = db.StringBitCount(sKey);
                 long expectedCount = bitmapList[key];
@@ -543,7 +543,7 @@ namespace Garnet.test
             string key = "mykey";
             int maxBitmapLen = 1 << 12;
             byte[] buf = new byte[maxBitmapLen >> 3];
-            r.NextBytes(buf);
+            random.NextBytes(buf);
             db.StringSet(key, buf);
 
             long expectedCount = Count(buf);
@@ -608,7 +608,7 @@ namespace Garnet.test
             long maxOffset = 0;
             for (var i = 0; i < iter; i++)
             {
-                long offset = r.Next(1, maxBitmapLen);
+                long offset = random.Next(1, maxBitmapLen);
                 _ = db.StringSetBit(key, offset, true);
                 buf = db.StringGet(key);
 
@@ -631,7 +631,7 @@ namespace Garnet.test
 
             for (var i = 0; i < iter; i++)
             {
-                long offset = r.Next(1, (int)maxOffset);
+                long offset = random.Next(1, (int)maxOffset);
                 _ = db.StringSetBit(key, offset, false);
 
                 buf = db.StringGet(key);
@@ -664,13 +664,13 @@ namespace Garnet.test
 
             for (var j = 0; j < iter; j++)
             {
-                r.NextBytes(buf);
+                random.NextBytes(buf);
                 _ = db.StringSet(key, buf);
 
-                var startOffset = r.Next(0, maxByteLen);
-                var endOffset = r.Next(startOffset, maxByteLen);
+                var startOffset = random.Next(0, maxByteLen);
+                var endOffset = random.Next(startOffset, maxByteLen);
 
-                var set = r.Next(0, 1) == 0 ? false : true;
+                var set = random.Next(0, 1) == 0 ? false : true;
                 expectedPos = Bitpos(buf, startOffset, endOffset, set);
                 pos = db.StringBitPosition(key, set, startOffset, endOffset);
 
@@ -685,13 +685,13 @@ namespace Garnet.test
             // check negative offsets in range
             for (var j = 0; j < iter; j++)
             {
-                r.NextBytes(buf);
+                random.NextBytes(buf);
                 _ = db.StringSet(key, buf);
 
-                var startOffset = j == 0 ? -10 : r.Next(-maxByteLen, 0);
-                var endOffset = j == 0 ? -1 : r.Next(startOffset, 0);
+                var startOffset = j == 0 ? -10 : random.Next(-maxByteLen, 0);
+                var endOffset = j == 0 ? -1 : random.Next(startOffset, 0);
 
-                var set = r.Next(0, 1) != 0;
+                var set = random.Next(0, 1) != 0;
                 expectedPos = Bitpos(buf, startOffset, endOffset, set);
                 pos = db.StringBitPosition(key, set, startOffset, endOffset);
                 ClassicAssert.AreEqual(expectedPos, pos, $"{j} {set} {startOffset} {endOffset}");
@@ -724,7 +724,7 @@ namespace Garnet.test
             for (var i = 0; i < keyCount; i++)
             {
                 var sKey = i.ToString();
-                r.NextBytes(bitmap);
+                random.NextBytes(bitmap);
 
                 bitmapList.Add(Bitpos(bitmap, set: true));
                 _ = db.StringSet(sKey, bitmap);
@@ -733,7 +733,7 @@ namespace Garnet.test
             var iter = 128;
             for (var i = 0; i < iter; i++)
             {
-                var key = r.Next(0, keyCount);
+                var key = random.Next(0, keyCount);
                 var sKey = key.ToString();
                 var pos = db.StringBitPosition(sKey, true);
                 var expectedPos = bitmapList[key];
@@ -777,7 +777,7 @@ namespace Garnet.test
             var key = "mykey";
             var maxBitmapLen = 1 << 12;
             var buf = new byte[maxBitmapLen >> 3];
-            r.NextBytes(buf);
+            random.NextBytes(buf);
             db.StringSet(key, buf);
 
             var expectedPos = Bitpos(buf);
@@ -818,24 +818,84 @@ namespace Garnet.test
             }
         }
 
-        [Test, Order(19)]
+        [Test, Order(18)]
         [Category("BITOP")]
-        public void BitOp_Unary_BitwiseNot(
-            [Values(Bitwise.Not)] Bitwise op,
-            [Values(1, 2, 16, 32 + 3, 128 + 32 + 3, 256 + 32 + 3, 512 + 32 + 3, 4096, 4096 + 32, 4096 + 32 + 3)] int bitmapLength)
+        public void BitmapSimpleVarLenBitOpTests()
         {
             using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
             var db = redis.GetDatabase(0);
 
+            int tests = 32;
+            string a = "a";
+            string b = "b";
+            string c = "c";
+            string d = "d";
+            string x = "x";
+
+            RedisKey[] keys = [a, b, c, d];
+            Bitwise[] bitwiseOps = [Bitwise.And, Bitwise.Or, Bitwise.Xor, Bitwise.And, Bitwise.Or, Bitwise.Xor];
+
+            int maxBytes = 512;
+            byte[] dataA = new byte[random.Next(1, maxBytes)];
+            byte[] dataB = new byte[random.Next(1, maxBytes)];
+            byte[] dataC = new byte[random.Next(1, maxBytes)];
+            byte[] dataD = new byte[random.Next(1, maxBytes)];
+
+            for (int j = 0; j < bitwiseOps.Length; j++)
+            {
+                for (int i = 0; i < tests; i++)
+                {
+                    random.NextBytes(dataA);
+                    random.NextBytes(dataB);
+                    random.NextBytes(dataC);
+                    random.NextBytes(dataD);
+
+                    db.StringSet(a, dataA);
+                    db.StringSet(b, dataB);
+                    db.StringSet(c, dataC);
+                    db.StringSet(d, dataD);
+
+                    Func<byte, byte, byte> op = bitwiseOps[j] switch
+                    {
+                        Bitwise.And => static (a, b) => (byte)(a & b),
+                        Bitwise.Or => static (a, b) => (byte)(a | b),
+                        Bitwise.Xor => static (a, b) => (byte)(a ^ b),
+
+                        _ => throw new NotSupportedException()
+                    };
+
+                    byte[] expected = CopyBitmap(dataA);
+                    ApplyBitop(ref expected, dataB, op);
+                    ApplyBitop(ref expected, dataC, op);
+                    ApplyBitop(ref expected, dataD, op);
+
+                    long size = db.StringBitOperation(bitwiseOps[j], x, keys);
+                    ClassicAssert.AreEqual(size, expected.Length);
+
+                    byte[] actual = db.StringGet(x);
+
+                    ClassicAssert.AreEqual(expected, actual);
+                }
+            }
+        }
+
+        [Test, Order(19)]
+        [Category("BITOP")]
+        public void BitOp_Unary_BitwiseNot(
+            [Values(1, 2, 16, 32 + 3, 128 + 32 + 3, 256 + 32 + 3, 512 + 32 + 3, 4096, 4096 + 32, 4096 + 32 + 3)] int bitmapLength)
+        {
+            using var redis = ConnectionMultiplexer.Connect(TestUtils.GetConfig());
+            var db = redis.GetDatabase(0);
+            
             var srcKey = "src";
             var dstKey = "dst";
 
             var srcKeyBitmap = new byte[bitmapLength];
-            r.NextBytes(srcKeyBitmap);
+            random.NextBytes(srcKeyBitmap);
             var expectedBitmap = CopyBitmap(srcKeyBitmap, invert: true);
             db.StringSet(srcKey, srcKeyBitmap);
-
-            var size = db.StringBitOperation(op, dstKey, srcKey);
+            
+            var size = db.StringBitOperation(Bitwise.Not, dstKey, srcKey);
             ClassicAssert.AreEqual(expectedBitmap.Length, size);
 
             byte[] actualBitmap = db.StringGet(dstKey);
@@ -871,7 +931,7 @@ namespace Garnet.test
             for (var i = 0; i < srcKeys.Length; i++)
             {
                 srcKeyBitmaps[i] = new byte[bitmapSize];
-                r.NextBytes(srcKeyBitmaps[i]);
+                random.NextBytes(srcKeyBitmaps[i]);
 
                 srcKeys[i] = "src" + i;
                 db.StringSet(srcKeys[i], srcKeyBitmaps[i]);
@@ -920,7 +980,7 @@ namespace Garnet.test
             for (var i = 0; i < srcKeys.Length; i++)
             {
                 srcKeyBitmaps[i] = new byte[sharedLength + additionalLengths[i]];
-                r.NextBytes(srcKeyBitmaps[i]);
+                random.NextBytes(srcKeyBitmaps[i]);
 
                 srcKeys[i] = "src" + i;
                 db.StringSet(srcKeys[i], srcKeyBitmaps[i]);
@@ -1026,10 +1086,10 @@ namespace Garnet.test
             long expectedValue;
             long returnedValue;
             long redisValue;
-            r = new Random(Guid.NewGuid().GetHashCode());
+            random = new Random(Guid.NewGuid().GetHashCode());
 
             bitmapData = new byte[16];
-            r.NextBytes(bitmapData);
+            random.NextBytes(bitmapData);
             db.StringSet(key, bitmapData);
             for (int i = 0; i < (bitmapData.Length << 3) + 64; i++)//offset in bits
             {
@@ -1083,7 +1143,7 @@ namespace Garnet.test
             //r = new Random(Guid.NewGuid().GetHashCode());
 
             bitmapData = new byte[16];
-            r.NextBytes(bitmapData);
+            random.NextBytes(bitmapData);
             db.StringSet(key, bitmapData);
             for (int i = 0; i < (bitmapData.Length << 3) + 64; i++)//offset in bits
             {
@@ -1138,7 +1198,7 @@ namespace Garnet.test
             for (int i = 0; i < keyCount; i++)
             {
                 bitmapData[i] = new byte[bitmapBytes];
-                r.NextBytes(bitmapData[i]);
+                random.NextBytes(bitmapData[i]);
 
                 int key = i;
                 string sKey = i.ToString();
@@ -1148,11 +1208,11 @@ namespace Garnet.test
             int iter = 1 << 12;
             for (int i = 0; i < iter; i++)
             {
-                int key = r.Next(0, keyCount);
+                int key = random.Next(0, keyCount);
                 byte[] currBitmap = bitmapData[key];
                 string sKey = key.ToString();
-                int offset = r.Next(0, (bitmapData.Length << 3));
-                int bitCount = r.Next(1, 65);
+                int offset = random.Next(0, (bitmapData.Length << 3));
+                int bitCount = random.Next(1, 65);
 
                 //signed
                 expectedValue = GetValueFromBitmap(ref currBitmap, offset, bitCount, true);
@@ -1178,7 +1238,7 @@ namespace Garnet.test
 
                 long value = LongRandom();
 
-                value = (r.Next() & 0x1) == 0x1 ? -value : value;
+                value = (random.Next() & 0x1) == 0x1 ? -value : value;
                 value = value >> (64 - bitCount);
 
                 ClassicAssert.IsTrue(value >= minVal);
@@ -1239,7 +1299,7 @@ namespace Garnet.test
             //r = new Random(Guid.NewGuid().GetHashCode());        
 
             bitmapData = new byte[16];
-            r.NextBytes(bitmapData);
+            random.NextBytes(bitmapData);
             db.StringSet(key, bitmapData);
 
             long oldVal, expectedOldVal;
@@ -1248,8 +1308,8 @@ namespace Garnet.test
             //1. Test signed set bitfield
             for (int i = 0; i < tests; i++)
             {
-                int bitCount = r.Next(1, 64);
-                long offset = r.Next(0, (bitmapData.Length << 3) - bitCount - 1);
+                int bitCount = random.Next(1, 64);
+                long offset = random.Next(0, (bitmapData.Length << 3) - bitCount - 1);
                 //expectedReturnVal = RandomIntBitRange(bitCount);
                 expectedReturnVal = RandomIntBitRange(bitCount, true);
 
@@ -1287,7 +1347,7 @@ namespace Garnet.test
             //r = new Random(Guid.NewGuid().GetHashCode());        
 
             bitmapData = new byte[16];
-            r.NextBytes(bitmapData);
+            random.NextBytes(bitmapData);
             db.StringSet(key, bitmapData);
 
             long oldVal, expectedOldVal;
@@ -1296,8 +1356,8 @@ namespace Garnet.test
             //1. Test signed set bitfield
             for (int i = 0; i < tests; i++)
             {
-                int bitCount = r.Next(1, 64);
-                long offset = r.Next(0, (bitmapData.Length << 3) - bitCount - 1);
+                int bitCount = random.Next(1, 64);
+                long offset = random.Next(0, (bitmapData.Length << 3) - bitCount - 1);
                 //expectedReturnVal = RandomIntBitRange(bitCount);
                 expectedReturnVal = RandomIntBitRange(bitCount, true);
 
@@ -1337,7 +1397,7 @@ namespace Garnet.test
             for (int i = 0; i < keyCount; i++)
             {
                 bitmapData[i] = new byte[bitmapBytes];
-                r.NextBytes(bitmapData[i]);
+                random.NextBytes(bitmapData[i]);
 
                 int key = i;
                 string sKey = i.ToString();
@@ -1352,11 +1412,11 @@ namespace Garnet.test
             int iter = 1 << 12;
             for (int i = 0; i < iter; i++)
             {
-                int key = r.Next(0, keyCount);
+                int key = random.Next(0, keyCount);
                 byte[] currBitmap = bitmapData[key];
                 string sKey = key.ToString();
-                int offset = r.Next(0, (bitmapData.Length << 3));
-                int bitCount = r.Next(1, 65);
+                int offset = random.Next(0, (bitmapData.Length << 3));
+                int bitCount = random.Next(1, 65);
 
                 setNewValue = RandomIntBitRange(bitCount, true);
 
@@ -1493,7 +1553,7 @@ namespace Garnet.test
             int testCheckOverflow = 1 << 15;
             for (int i = 0; i < testCheckOverflow; i++)
             {
-                bitCount = r.Next(1, 64);
+                bitCount = random.Next(1, 64);
 
                 long value = RandomIntBitRange(bitCount, true);
                 long incrBy = RandomIntBitRange(bitCount, true);
@@ -1573,7 +1633,7 @@ namespace Garnet.test
             //signed overflow with wrap and sat
             for (int i = 0; i < tests; i++)
             {
-                bitCount = r.Next(1, 64);
+                bitCount = random.Next(1, 64);
 
                 long value = RandomIntBitRange(bitCount, true);
                 long incrBy = RandomIntBitRange(bitCount, true);
@@ -1663,7 +1723,7 @@ namespace Garnet.test
             int testCheckOverflow = 1 << 15;
             for (int i = 0; i < testCheckOverflow; i++)
             {
-                bitCount = r.Next(1, 64);
+                bitCount = random.Next(1, 64);
 
                 long value = RandomIntBitRange(bitCount, true);
                 long incrBy = RandomIntBitRange(bitCount, true);
@@ -1732,7 +1792,7 @@ namespace Garnet.test
             //signed overflow with wrap and sat
             for (int i = 0; i < tests; i++)
             {
-                bitCount = r.Next(1, 64);
+                bitCount = random.Next(1, 64);
 
                 long value = RandomIntBitRange(bitCount, true);
                 long incrBy = RandomIntBitRange(bitCount, true);
@@ -1803,7 +1863,7 @@ namespace Garnet.test
             for (int i = 0; i < keyCount; i++)
             {
                 bitmapData[i] = new byte[bitmapBytes];
-                r.NextBytes(bitmapData[i]);
+                random.NextBytes(bitmapData[i]);
 
                 int key = i;
                 string sKey = i.ToString();
@@ -1819,11 +1879,11 @@ namespace Garnet.test
             int iter = 1 << 12;
             for (int i = 0; i < iter; i++)
             {
-                int key = r.Next(0, keyCount);
+                int key = random.Next(0, keyCount);
                 byte[] currBitmap = bitmapData[key];
                 string sKey = key.ToString();
-                int offset = r.Next(0, (bitmapData.Length << 3));
-                int bitCount = r.Next(1, 65);
+                int offset = random.Next(0, (bitmapData.Length << 3));
+                int bitCount = random.Next(1, 65);
 
                 setNewValue = RandomIntBitRange(bitCount, true);
                 incrByValue = RandomIntBitRange(bitCount, true);
@@ -1891,7 +1951,7 @@ namespace Garnet.test
 
             for (int i = 0; i < tests; i++)
             {
-                bitCount = r.Next(1, 63);
+                bitCount = random.Next(1, 63);
 
                 long value = RandomIntBitRange(bitCount, false);
                 long incrBy = RandomIntBitRange(bitCount, true);
@@ -2290,7 +2350,7 @@ namespace Garnet.test
             var valueLenBits = valueLen << 3;
             for (var i = 0; i < iter; i++)
             {
-                var offset = r.NextInt64(0, valueLenBits);
+                var offset = random.NextInt64(0, valueLenBits);
                 BitSearch(offset, searchFor: true);
                 BitSearch(offset, searchFor: false);
             }

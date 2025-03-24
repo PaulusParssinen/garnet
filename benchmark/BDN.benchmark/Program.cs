@@ -38,7 +38,7 @@ public class BaseConfig : ManualConfig
             .WithEnvironmentVariables(new EnvironmentVariable("DOTNET_TieredPGO", "0"));
 
         AddJob(
-            Net8BaseJob.WithId(".NET 8"),
+            //Net8BaseJob.WithId(".NET 8"),
             Net9BaseJob.WithId(".NET 9")
             );
     }

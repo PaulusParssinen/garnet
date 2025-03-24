@@ -21,9 +21,6 @@ namespace Garnet.common.Numerics
 
         /// <inheritdoc cref="Invoke(Vector128{byte}, Vector128{byte})"/>
         static abstract Vector256<byte> Invoke(Vector256<byte> x, Vector256<byte> y);
-
-        /// <inheritdoc cref="Invoke(Vector128{byte}, Vector128{byte})"/>
-        static abstract Vector512<byte> Invoke(Vector512<byte> x, Vector512<byte> y);
     }
 
     /// <summary><c>x &amp; y</c></summary>
@@ -35,8 +32,6 @@ namespace Garnet.common.Numerics
         public static Vector128<byte> Invoke(Vector128<byte> x, Vector128<byte> y) => x & y;
         /// <inheritdoc/>
         public static Vector256<byte> Invoke(Vector256<byte> x, Vector256<byte> y) => x & y;
-        /// <inheritdoc/>
-        public static Vector512<byte> Invoke(Vector512<byte> x, Vector512<byte> y) => x & y;
     }
 
     /// <summary><c>x | y</c></summary>
@@ -48,8 +43,6 @@ namespace Garnet.common.Numerics
         public static Vector128<byte> Invoke(Vector128<byte> x, Vector128<byte> y) => x | y;
         /// <inheritdoc/>
         public static Vector256<byte> Invoke(Vector256<byte> x, Vector256<byte> y) => x | y;
-        /// <inheritdoc/>
-        public static Vector512<byte> Invoke(Vector512<byte> x, Vector512<byte> y) => x | y;
     }
 
     /// <summary><c>x ^ y</c></summary>
@@ -61,7 +54,5 @@ namespace Garnet.common.Numerics
         public static Vector128<byte> Invoke(Vector128<byte> x, Vector128<byte> y) => x ^ y;
         /// <inheritdoc/>
         public static Vector256<byte> Invoke(Vector256<byte> x, Vector256<byte> y) => x ^ y;
-        /// <inheritdoc/>
-        public static Vector512<byte> Invoke(Vector512<byte> x, Vector512<byte> y) => x ^ y;
     }
 }
