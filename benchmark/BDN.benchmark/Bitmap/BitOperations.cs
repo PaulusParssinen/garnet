@@ -9,20 +9,23 @@ namespace BDN.benchmark.Bitmap
 {
     public unsafe class BitOperations
     {
-        private const int Alignment = 16;
+        private const int Alignment = 32;
 
         [ParamsSource(nameof(GetKeySizes))]
         public int[] BitmapSizes { get; set; }
 
-        [Params(BitmapOperation.AND)]
+        [Params(BitmapOperation.XOR)]
         public BitmapOperation Op { get; set; }
 
         public IEnumerable<int[]> GetKeySizes()
         {
+            yield return [1 << 21];
             yield return [1 << 21, 1 << 21];
-            yield return [1 << 21, 1 << 21, 1 << 21];
-            yield return [256, 6 * 512 + 7, 512];
+            //yield return [1 << 21, 1 << 21, 1 << 21];
+            //yield return [1 << 21, 1 << 21, 1 << 21, 1 << 21];
+            //yield return [256, 6 * 512 + 7, 512];
             //yield return [1 << 28, 1 << 28];
+            //yield return [1 << 28, 1 << 28, 1 << 28];
         }
 
         private int minBitmapSize;

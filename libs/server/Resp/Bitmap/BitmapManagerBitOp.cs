@@ -19,7 +19,7 @@ namespace Garnet.server
         /// <param name="srcCount">Number of source buffers</param>
         /// <param name="srcPtrs">Array of pointers to source buffers. The array length must be greater than or equal to <paramref name="srcCount"/></param>
         /// <param name="srcEndPtrs">Array of the buffer lengths specified in <paramref name="srcPtrs"/>. The array length must be greater than or equal to <paramref name="srcCount"/></param>
-        /// <param name="dstPtr">Destination buffer to write the result. We currently assume and utilize the fact this buffer is zero-initialized!</param>
+        /// <param name="dstPtr">Destination buffer to write the result</param>
         /// <param name="dstLength">Destination buffer length</param>
         /// <param name="shortestSrcLength">The length of shorted source buffer</param>
         /// <returns></returns>
@@ -69,7 +69,7 @@ namespace Garnet.server
         /// <param name="srcCount">Number of source buffers</param>
         /// <param name="srcPtrs">Array of pointers to source buffers. The array length must be greater than or equal to <paramref name="srcCount"/></param>
         /// <param name="srcEndPtrs">Array of the buffer lengths specified in <paramref name="srcPtrs"/>. The array length must be greater than or equal to <paramref name="srcCount"/></param>
-        /// <param name="dstPtr">Destination buffer to write the result. We currently assume and utilize the fact this buffer is zero-initialized!</param>
+        /// <param name="dstPtr">Destination buffer to write the result</param>
         /// <param name="dstLength">Destination buffer length</param>
         /// <param name="shortestSrcLength">The length of shorted source buffer</param>
         [SkipLocalsInit]
